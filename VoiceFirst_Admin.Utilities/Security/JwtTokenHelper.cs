@@ -3,7 +3,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using VoiceFirst_Admin.Utilities.Models;
+using VoiceFirst_Admin.Utilities.Models.Configuration;
+using VoiceFirst_Admin.Utilities.Models.Contracts;
 
 namespace VoiceFirst_Admin.Utilities.Security;
 
