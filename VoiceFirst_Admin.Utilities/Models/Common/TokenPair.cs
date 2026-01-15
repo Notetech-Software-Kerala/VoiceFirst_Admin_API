@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace VoiceFirst_Admin.Utilities.Models.Contracts
+namespace VoiceFirst_Admin.Utilities.Models.Common
 {
     public class TokenPair
     {

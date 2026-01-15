@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace VoiceFirst_Admin.Utilities.Models.Base;
+namespace VoiceFirst_Admin.Utilities.Models.Common;
 
 public class BaseModel
 {
     public bool IsActive { get; set; }
-
     public int CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
     public int? UpdatedBy { get; set; }
