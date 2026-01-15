@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace VoiceFirst_Admin.Utilities.Models
+namespace VoiceFirst_Admin.Utilities.Models.Contracts
 {
     public class ApiResponse<T>
     {

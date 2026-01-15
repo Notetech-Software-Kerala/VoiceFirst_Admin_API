@@ -7,6 +7,7 @@ namespace VoiceFirst_Admin.Utilities.Models
     public class BaseModel
     {
         public bool IsActive { get; set; }
+
         public int CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; }
         public int? UpdatedBy { get; set; }

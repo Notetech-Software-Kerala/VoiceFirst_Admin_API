@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace VoiceFirst_Admin.Utilities.DTOs;
+namespace VoiceFirst_Admin.Utilities.DTOs.Basic;
 
 public class CommonFilterDto
 {
