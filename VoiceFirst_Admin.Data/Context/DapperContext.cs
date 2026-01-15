@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using VoiceFirst_Admin.Data.Contracts.IContext;
+
 
 
 namespace VoiceFirst_Admin.Data.Context

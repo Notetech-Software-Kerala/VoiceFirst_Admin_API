@@ -1,6 +1,7 @@
 
 
 using VoiceFirst_Admin.Data.Context;
+using VoiceFirst_Admin.Data.Contracts.IContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
