@@ -9,6 +9,8 @@
       "VoiceFirst_Admin.API/1.0.0": {
         "dependencies": {
           "Serilog.AspNetCore": "10.0.0",
+          "Serilog.Sinks.Console": "6.1.1",
+          "Serilog.Sinks.File": "7.0.0",
           "Swashbuckle.AspNetCore": "6.5.0",
           "VoiceFirst_Admin.Business": "1.0.0",
           "VoiceFirst_Admin.Business.Contracts": "1.0.0",
@@ -310,102 +312,6 @@
           "Serilog.Settings.Configuration": "10.0.0",
           "Serilog.Sinks.Console": "6.1.1",
           "Serilog.Sinks.Debug": "3.0.0",
-          "Serilog.Sinks.File": "8.0.0-dev-02318"
-        },
-        "runtime": {
-          "lib/net10.0/Serilog.AspNetCore.dll": {
-            "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.0.0"
-          }
-        }
-      },
-      "Serilog.Extensions.Hosting/10.0.0": {
-        "dependencies": {
-          "Serilog": "4.3.0",
-          "Serilog.Extensions.Logging": "10.0.0"
-        },
-        "runtime": {
-          "lib/net10.0/Serilog.Extensions.Hosting.dll": {
-            "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.0.0"
-          }
-        }
-      },
-      "Serilog.Extensions.Logging/10.0.0": {
-        "dependencies": {
-          "Serilog": "4.3.0"
-        },
-        "runtime": {
-          "lib/net10.0/Serilog.Extensions.Logging.dll": {
-            "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.0.0"
-          }
-        }
-      },
-      "Serilog.Formatting.Compact/3.0.0": {
-        "dependencies": {
-          "Serilog": "4.3.0"
-        },
-        "runtime": {
-          "lib/net8.0/Serilog.Formatting.Compact.dll": {
-            "assemblyVersion": "3.0.0.0",
-            "fileVersion": "3.0.0.0"
-          }
-        }
-      },
-      "Serilog.Settings.Configuration/10.0.0": {
-        "dependencies": {
-          "Microsoft.Extensions.DependencyModel": "10.0.0",
-          "Serilog": "4.3.0"
-        },
-        "runtime": {
-          "lib/net10.0/Serilog.Settings.Configuration.dll": {
-            "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.0.0"
-          }
-        }
-      },
-      "Serilog.Sinks.Console/6.1.1": {
-        "dependencies": {
-          "Serilog": "4.3.0"
-        },
-        "runtime": {
-          "lib/net8.0/Serilog.Sinks.Console.dll": {
-            "assemblyVersion": "6.1.1.0",
-            "fileVersion": "6.1.1.0"
-          }
-        }
-      },
-      "Serilog.Sinks.Debug/3.0.0": {
-        "dependencies": {
-          "Serilog": "4.3.0"
-        },
-        "runtime": {
-          "lib/net8.0/Serilog.Sinks.Debug.dll": {
-            "assemblyVersion": "3.0.0.0",
-            "fileVersion": "3.0.0.0"
-          }
-        }
-      },
-      "Serilog.Sinks.File/8.0.0-dev-02318": {
-        "dependencies": {
-          "Serilog": "4.3.0"
-        },
-        "runtime": {
-          "lib/net9.0/Serilog.Sinks.File.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.0.0"
-          }
-        }
-      },
-      "Swashbuckle.AspNetCore/6.6.2": {
-        "dependencies": {
-          "Serilog": "4.3.0",
-          "Serilog.Extensions.Hosting": "10.0.0",
-          "Serilog.Formatting.Compact": "3.0.0",
-          "Serilog.Settings.Configuration": "10.0.0",
-          "Serilog.Sinks.Console": "6.1.1",
-          "Serilog.Sinks.Debug": "3.0.0",
           "Serilog.Sinks.File": "7.0.0"
         },
         "runtime": {
@@ -631,7 +537,7 @@
           "Microsoft.IdentityModel.Tokens": "8.15.0",
           "Serilog.AspNetCore": "10.0.0",
           "Serilog.Sinks.Console": "6.1.1",
-          "Serilog.Sinks.File": "8.0.0-dev-02318",
+          "Serilog.Sinks.File": "7.0.0",
           "System.IdentityModel.Tokens.Jwt": "8.15.0"
         },
         "runtime": {
@@ -845,14 +751,14 @@
       "path": "serilog.sinks.debug/3.0.0",
       "hashPath": "serilog.sinks.debug.3.0.0.nupkg.sha512"
     },
-    "Serilog.Sinks.File/8.0.0-dev-02318": {
+    "Serilog.Sinks.File/7.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-D99fj7/Fl1ukWMedFgbLoy0rrPxieyQDZ8Exsx5CTERmC/3+8Bs3VTKf/QI8EO8B6hg5Rj+r1nb6hYhZ+kwJng==",
-      "path": "serilog.sinks.file/8.0.0-dev-02318",
-      "hashPath": "serilog.sinks.file.8.0.0-dev-02318.nupkg.sha512"
+      "sha512": "sha512-fKL7mXv7qaiNBUC71ssvn/dU0k9t0o45+qm2XgKAlSt19xF+ijjxyA3R6HmCgfKEKwfcfkwWjayuQtRueZFkYw==",
+      "path": "serilog.sinks.file/7.0.0",
+      "hashPath": "serilog.sinks.file.7.0.0.nupkg.sha512"
     },
-    "Swashbuckle.AspNetCore/6.6.2": {
+    "Swashbuckle.AspNetCore/6.5.0": {
       "type": "package",
       "serviceable": true,
       "sha512": "sha512-FK05XokgjgwlCI6wCT+D4/abtQkL1X1/B9Oas6uIwHFmYrIO9WUD5aLC9IzMs9GnHfUXOtXZ2S43gN1mhs5+aA==",
