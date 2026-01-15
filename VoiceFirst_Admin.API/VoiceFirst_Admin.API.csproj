@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -15,6 +16,10 @@
     <ProjectReference Include="..\VoiceFirst_Admin.Business.Contracts\VoiceFirst_Admin.Business.Contracts.csproj" />
     <ProjectReference Include="..\VoiceFirst_Admin.Utilities\VoiceFirst_Admin.Utilities.csproj" />
     <ProjectReference Include="..\VoiceFirst_Admin.Data\VoiceFirst_Admin.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>

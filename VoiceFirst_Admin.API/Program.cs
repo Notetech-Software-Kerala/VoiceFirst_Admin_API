@@ -2,6 +2,7 @@
 
 using Serilog;
 using VoiceFirst_Admin.Data.Context;
+using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Utilities.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
