@@ -1,5 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceFirst_Admin.Business.Contracts\VoiceFirst_Admin.Business.Contracts.csproj" />
+    <ProjectReference Include="..\VoiceFirst_Admin.Data.Contracts\VoiceFirst_Admin.Data.Contracts.csproj" />
+    <ProjectReference Include="..\VoiceFirst_Admin.Utilities\VoiceFirst_Admin.Utilities.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

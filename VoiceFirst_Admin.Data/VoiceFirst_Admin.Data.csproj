@@ -10,4 +10,9 @@
     <Folder Include="Repositories\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceFirst_Admin.Data.Contracts\VoiceFirst_Admin.Data.Contracts.csproj" />
+    <ProjectReference Include="..\VoiceFirst_Admin.Utilities\VoiceFirst_Admin.Utilities.csproj" />
+  </ItemGroup>
+
 </Project>

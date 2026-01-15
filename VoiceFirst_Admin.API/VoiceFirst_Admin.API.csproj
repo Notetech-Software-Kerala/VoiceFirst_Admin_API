@@ -10,4 +10,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\VoiceFirst_Admin.Business\VoiceFirst_Admin.Business.csproj" />
+    <ProjectReference Include="..\VoiceFirst_Admin.Business.Contracts\VoiceFirst_Admin.Business.Contracts.csproj" />
+    <ProjectReference Include="..\VoiceFirst_Admin.Utilities\VoiceFirst_Admin.Utilities.csproj" />
+  </ItemGroup>
+
 </Project>

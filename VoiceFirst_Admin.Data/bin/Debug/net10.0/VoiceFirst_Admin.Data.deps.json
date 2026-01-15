@@ -1,0 +1,53 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "VoiceFirst_Admin.Data/1.0.0": {
+        "dependencies": {
+          "VoiceFirst_Admin.Data.Contracts": "1.0.0",
+          "VoiceFirst_Admin.Utilities": "1.0.0"
+        },
+        "runtime": {
+          "VoiceFirst_Admin.Data.dll": {}
+        }
+      },
+      "VoiceFirst_Admin.Data.Contracts/1.0.0": {
+        "runtime": {
+          "VoiceFirst_Admin.Data.Contracts.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "VoiceFirst_Admin.Utilities/1.0.0": {
+        "runtime": {
+          "VoiceFirst_Admin.Utilities.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "VoiceFirst_Admin.Data/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "VoiceFirst_Admin.Data.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "VoiceFirst_Admin.Utilities/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
