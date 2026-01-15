@@ -1,0 +1,20 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace VoiceFirst_Admin.Utilities.Models
+{
+    public class ApiResponse<T>
+    {
+        public int StatusCode { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string? Error { get; set; } = string.Empty;
+        public T? Data { get; set; }
+
+        public static ApiResponse<T> Ok(T data, string message, int statusCode = 200, string? error = null)
+            => new() {  StatusCode = statusCode, Message = message, Error = error, Data = data };
+
+        public static ApiResponse<T> Fail(string message, int statusCode = 400, string? error = null)
+            => new() { StatusCode = statusCode, Message = message, Error = error, Data = default };
+    }
+}
