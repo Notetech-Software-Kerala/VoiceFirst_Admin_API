@@ -16,7 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<IDapperContext, DapperContext>();
-
+builder.Services.AddScoped<ISysBusinessActivityRepo,SysBusinessActivityRepo>();
+builder.Services.AddScoped<ISysBusinessActivityService,SysBusinessActivityService>();
 builder.Services.AddControllers();
 // Repository
 builder.Services.AddScoped<IProgramActionRepo, ProgramActionRepo>();
