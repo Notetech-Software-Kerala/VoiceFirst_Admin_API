@@ -16,12 +16,9 @@
   <ItemGroup>
     <ProjectReference Include="..\VoiceFirst_Admin.Business\VoiceFirst_Admin.Business.csproj" />
     <ProjectReference Include="..\VoiceFirst_Admin.Business.Contracts\VoiceFirst_Admin.Business.Contracts.csproj" />
+    <ProjectReference Include="..\VoiceFirst_Admin.Data.Contracts\VoiceFirst_Admin.Data.Contracts.csproj" />
     <ProjectReference Include="..\VoiceFirst_Admin.Utilities\VoiceFirst_Admin.Utilities.csproj" />
     <ProjectReference Include="..\VoiceFirst_Admin.Data\VoiceFirst_Admin.Data.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>

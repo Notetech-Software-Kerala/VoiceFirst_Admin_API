@@ -18,6 +18,12 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string UpdateFailed = "Update failed.";
         public const string Nil = "NIL.";
 
+        // New generic messages
+        public const string PayloadRequired = "Payload is required.";
+        public const string NotFound = "Not found.";
+        public const string Updated = "Updated.";
+        public const string ProgramActionNameAlreadyExists = "ProgramActionName already exists.";
+
         // Auth
         public const string InvalidCredentials = "Invalid credentials.";
         public const string UserNotFound = "User not found.";
