@@ -1,5 +1,5 @@
 using System;
-using VoiceFirst_Admin.Utilities.Models;
+using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.Utilities.Models.Entities;
 
