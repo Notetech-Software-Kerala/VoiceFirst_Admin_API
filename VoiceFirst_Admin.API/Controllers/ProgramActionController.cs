@@ -9,7 +9,7 @@ using VoiceFirst_Admin.Utilities.Constants;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/program-action")]
     [ApiController]
     public class ProgramActionController : ControllerBase
     {
@@ -27,7 +27,7 @@ namespace VoiceFirst_Admin.API.Controllers
 
             // uniqueness check
             if (await _service.ExistsByNameAsync(model.ProgramActionName, null, cancellationToken))
-                return Conflict(ApiResponse<object>.Fail(Messages.ProgramActionNameAlreadyExists, statusCode: 409));
+                return Conflict(ApiResponse<object>.Fail(Messages.ProgramActionNameAlreadyExists, statusCode: StatusCodes.Status409Conflict));
 
             var created = await _service.CreateAsync(model, userId, cancellationToken);
             return CreatedAtAction(nameof(GetById), new { id = created.SysProgramActionId }, ApiResponse<SysProgramActions>.Ok(created, Messages.Created));
@@ -37,8 +37,8 @@ namespace VoiceFirst_Admin.API.Controllers
         public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
         {
             var item = await _service.GetByIdAsync(id, cancellationToken);
-            if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, 404));
-            return Ok(ApiResponse<SysProgramActions>.Ok(item, Messages.Success));
+            if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
+            return Ok(ApiResponse<ProgramActionDto>.Ok(item, Messages.Success));
         }
 
         [HttpGet]
@@ -51,13 +51,13 @@ namespace VoiceFirst_Admin.API.Controllers
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] ProgramActionUpdateDto model, CancellationToken cancellationToken)
         {
-            if (model == null || model.SysProgramActionId != id) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
+            if (model == null || model.ActionId != id) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
 
-            if (await _service.ExistsByNameAsync(model.ProgramActionName ?? string.Empty, id, cancellationToken))
-                return Conflict(ApiResponse<object>.Fail(Messages.ProgramActionNameAlreadyExists, 409));
+            if (await _service.ExistsByNameAsync(model.ActionName ?? string.Empty, id, cancellationToken))
+                return Conflict(ApiResponse<object>.Fail(Messages.ProgramActionNameAlreadyExists, StatusCodes.Status409Conflict));
 
             var ok = await _service.UpdateAsync(model, userId, cancellationToken);
-            if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, 404));
+            if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
             return Ok(ApiResponse<object>.Ok(null!, Messages.Updated, StatusCodes.Status204NoContent));
         }
 

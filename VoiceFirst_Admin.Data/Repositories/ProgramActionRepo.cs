@@ -57,12 +57,13 @@ public class ProgramActionRepo : IProgramActionRepo
             sql.Append(" AND IsActive = @IsActive");
             parameters.Add("IsActive", filter.IsActive.Value ? 1 : 0);
         }
-        else
-        {
-            sql.Append(" AND IsDeleted = 0");
-        }
-
         
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+            sql.Append(" AND ProgramActionName LIKE @Search");
+            parameters.Add("Search", $"%{filter.SearchText}%");
+        }
 
         // search by name (use SortBy field for generic use? keep simple)
         // If caller uses SortBy as a search term, prefer a separate search param — here we support SortBy as column.
@@ -136,7 +137,7 @@ public class ProgramActionRepo : IProgramActionRepo
     {
         var sql = "SELECT COUNT(1) FROM SysProgramActions WHERE ProgramActionName = @Name";
         if (excludeId.HasValue)
-            sql += " AND SysProgramActionId <> @ExcludeId";
+            sql += " AND ActionId <> @ExcludeId";
 
         var cmd = new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();

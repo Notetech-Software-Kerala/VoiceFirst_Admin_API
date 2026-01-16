@@ -4,7 +4,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 
 public class ProgramActionUpdateDto
 {
-     public int SysProgramActionId { get; set; }
-     public string? ProgramActionName { get; set; }
+     public int ActionId { get; set; }
+     public string? ActionName { get; set; }
      public bool? IsActive { get; set; }
 }

@@ -22,7 +22,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PayloadRequired = "Payload is required.";
         public const string NotFound = "Not found.";
         public const string Updated = "Updated.";
-        public const string ProgramActionNameAlreadyExists = "ProgramActionName already exists.";
+        public const string ProgramActionNameAlreadyExists = "ActionName already exists.";
 
         // Auth
         public const string InvalidCredentials = "Invalid credentials.";

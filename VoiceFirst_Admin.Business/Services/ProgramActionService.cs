@@ -31,18 +31,41 @@ namespace VoiceFirst_Admin.Business.Services
             return await _repo.CreateAsync(entity, cancellationToken);
         }
 
-        public Task<SysProgramActions?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-            => _repo.GetByIdAsync(id, cancellationToken);
+        public async Task<ProgramActionDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var entity = await _repo.GetByIdAsync(id, cancellationToken);
+            if (entity == null) return null;
+            var dto = new ProgramActionDto
+            {
+                ActionId = entity.SysProgramActionId,
+                ActionName = entity.ProgramActionName,
+                IsActive = entity.IsActive
+            };
+            return dto;
+        }
 
-        public Task<IEnumerable<SysProgramActions>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
-            => _repo.GetAllAsync(filter, cancellationToken);
+        public async Task<IEnumerable<ProgramActionDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+        {
+            var entities = await _repo.GetAllAsync(filter, cancellationToken);
+            var list = new List<ProgramActionDto>();
+            foreach (var entity in entities)
+            {
+                list.Add(new ProgramActionDto
+                {
+                    ActionId = entity.SysProgramActionId,
+                    ActionName = entity.ProgramActionName,
+                    IsActive = entity.IsActive
+                });
+            }
+            return list;
+        }
 
         public async Task<bool> UpdateAsync(ProgramActionUpdateDto dto,int loginId, CancellationToken cancellationToken = default)
         {
             var entity = new SysProgramActions
             {
-                SysProgramActionId = dto.SysProgramActionId,
-                ProgramActionName = dto.ProgramActionName ?? string.Empty,
+                SysProgramActionId = dto.ActionId,
+                ProgramActionName = dto.ActionName ?? string.Empty,
                 IsActive = dto.IsActive,
                 UpdatedBy = loginId
             };
