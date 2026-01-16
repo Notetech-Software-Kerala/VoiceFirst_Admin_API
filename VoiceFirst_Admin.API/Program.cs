@@ -1,9 +1,11 @@
 
 
+using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Utilities.Middlewares;
+using VoiceFirst_Admin.Utilities.Models.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +20,28 @@ builder.Services.AddSwaggerGen();
 builder.Host.UseSerilog((ctx, lc) =>
     lc.ReadFrom.Configuration(ctx.Configuration));
 
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errorText = string.Join(" | ",
+            context.ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .SelectMany(kvp => kvp.Value!.Errors.Select(e =>
+                    $"{kvp.Key}: {e.ErrorMessage}"))
+        );
 
+        var res = new ApiResponse<object>
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            Message = "Validation failed",
+            Error = errorText,
+            Data = null
+        };
+
+        return new BadRequestObjectResult(res);
+    };
+});
 builder.Services.AddCors(options => {
     options.AddPolicy("CORSPolicy", builder => 
             builder.AllowAnyMethod()
