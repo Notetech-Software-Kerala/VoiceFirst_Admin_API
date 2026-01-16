@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using VoiceFirst_Admin.Utilities.Models;
 
 namespace VoiceFirst_Admin.Utilities.Models.Entities;
 
-public class UserDevice
+public class UserDevice : BaseModel
 {
     public int UserDeviceId { get; set; }
 
@@ -18,11 +19,5 @@ public class UserDevice
     public string OSVersion { get; set; } = string.Empty;
     public string Manufacturer { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
-
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-
-    // DB column is "IsDelete"
-    public bool IsDeleted { get; set; }
 }
 

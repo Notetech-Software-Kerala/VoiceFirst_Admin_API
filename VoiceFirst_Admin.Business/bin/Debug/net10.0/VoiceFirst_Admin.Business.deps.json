@@ -18,35 +18,8 @@
       },
       "AutoMapper/16.0.0": {
         "dependencies": {
-<<<<<<< HEAD
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Options": "10.0.0",
           "Microsoft.IdentityModel.JsonWebTokens": "8.15.0"
         },
-        "runtime": {
-          "lib/net10.0/AutoMapper.dll": {
-            "assemblyVersion": "16.0.0.0",
-            "fileVersion": "16.0.0.0"
-          }
-        }
-      },
-      "AutoMapper.Extensions.Microsoft.DependencyInjection/12.0.1": {
-        "dependencies": {
-          "AutoMapper": "16.0.0",
-          "Microsoft.Extensions.Options": "10.0.0"
-        },
-        "runtime": {
-          "lib/netstandard2.1/AutoMapper.Extensions.Microsoft.DependencyInjection.dll": {
-            "assemblyVersion": "12.0.0.0",
-            "fileVersion": "12.0.1.0"
-          }
-        }
-      },
-      "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.0": {
-=======
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0"
-        },
->>>>>>> 3f81c9be140be9cfdc4831fe016722d1cd2f3380
         "runtime": {
           "lib/net10.0/AutoMapper.dll": {
             "assemblyVersion": "16.0.0.0",
@@ -68,26 +41,6 @@
       "Microsoft.Extensions.DependencyModel/10.0.0": {
         "runtime": {
           "lib/net10.0/Microsoft.Extensions.DependencyModel.dll": {
-            "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.25.52411"
-          }
-        }
-      },
-      "Microsoft.Extensions.Options/10.0.0": {
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Primitives": "10.0.0"
-        },
-        "runtime": {
-          "lib/net10.0/Microsoft.Extensions.Options.dll": {
-            "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.25.52411"
-          }
-        }
-      },
-      "Microsoft.Extensions.Primitives/10.0.0": {
-        "runtime": {
-          "lib/net10.0/Microsoft.Extensions.Primitives.dll": {
             "assemblyVersion": "10.0.0.0",
             "fileVersion": "10.0.25.52411"
           }
@@ -150,7 +103,7 @@
           "Serilog.Settings.Configuration": "10.0.0",
           "Serilog.Sinks.Console": "6.1.1",
           "Serilog.Sinks.Debug": "3.0.0",
-          "Serilog.Sinks.File": "8.0.0-dev-02318"
+          "Serilog.Sinks.File": "7.0.0"
         },
         "runtime": {
           "lib/net10.0/Serilog.AspNetCore.dll": {
@@ -227,14 +180,14 @@
           }
         }
       },
-      "Serilog.Sinks.File/8.0.0-dev-02318": {
+      "Serilog.Sinks.File/7.0.0": {
         "dependencies": {
           "Serilog": "4.3.0"
         },
         "runtime": {
           "lib/net9.0/Serilog.Sinks.File.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.0.0"
+            "assemblyVersion": "7.0.0.0",
+            "fileVersion": "7.0.0.0"
           }
         }
       },
@@ -273,7 +226,7 @@
           "Microsoft.IdentityModel.Tokens": "8.15.0",
           "Serilog.AspNetCore": "10.0.0",
           "Serilog.Sinks.Console": "6.1.1",
-          "Serilog.Sinks.File": "8.0.0-dev-02318",
+          "Serilog.Sinks.File": "7.0.0",
           "System.IdentityModel.Tokens.Jwt": "8.15.0"
         },
         "runtime": {
@@ -292,23 +245,6 @@
       "sha512": ""
     },
     "AutoMapper/16.0.0": {
-<<<<<<< HEAD
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-JIhkKjEsUcIPPbCR7cGQlH3a2ySLW2Tof6CXcJb5WbaoUkniREpJOlC2ROkaM/nck2b5JjptLIUdHvbItGvLGQ==",
-      "path": "automapper/16.0.0",
-      "hashPath": "automapper.16.0.0.nupkg.sha512"
-    },
-    "AutoMapper.Extensions.Microsoft.DependencyInjection/12.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-+g/K+Vpe3gGMKGzjslMOdqNlkikScDjWfVvmWTayrDHaG/n2pPmFBMa+jKX1r/h6BDGFdkyRjAuhFE3ykW+r1g==",
-      "path": "automapper.extensions.microsoft.dependencyinjection/12.0.1",
-      "hashPath": "automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512"
-    },
-    "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.0": {
-=======
->>>>>>> 3f81c9be140be9cfdc4831fe016722d1cd2f3380
       "type": "package",
       "serviceable": true,
       "sha512": "sha512-JIhkKjEsUcIPPbCR7cGQlH3a2ySLW2Tof6CXcJb5WbaoUkniREpJOlC2ROkaM/nck2b5JjptLIUdHvbItGvLGQ==",
@@ -328,20 +264,6 @@
       "sha512": "sha512-RFYJR7APio/BiqdQunRq6DB+nDB6nc2qhHr77mlvZ0q0BT8PubMXN7XicmfzCbrDE/dzhBnUKBRXLTcqUiZDGg==",
       "path": "microsoft.extensions.dependencymodel/10.0.0",
       "hashPath": "microsoft.extensions.dependencymodel.10.0.0.nupkg.sha512"
-    },
-    "Microsoft.Extensions.Options/10.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-8oCAgXOow5XDrY9HaXX1QmH3ORsyZO/ANVHBlhLyCeWTH5Sg4UuqZeOTWJi6484M+LqSx0RqQXDJtdYy2BNiLQ==",
-      "path": "microsoft.extensions.options/10.0.0",
-      "hashPath": "microsoft.extensions.options.10.0.0.nupkg.sha512"
-    },
-    "Microsoft.Extensions.Primitives/10.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-inRnbpCS0nwO/RuoZIAqxQUuyjaknOOnCEZB55KSMMjRhl0RQDttSmLSGsUJN3RQ3ocf5NDLFd2mOQViHqMK5w==",
-      "path": "microsoft.extensions.primitives/10.0.0",
-      "hashPath": "microsoft.extensions.primitives.10.0.0.nupkg.sha512"
     },
     "Microsoft.IdentityModel.Abstractions/8.15.0": {
       "type": "package",
@@ -427,12 +349,12 @@
       "path": "serilog.sinks.debug/3.0.0",
       "hashPath": "serilog.sinks.debug.3.0.0.nupkg.sha512"
     },
-    "Serilog.Sinks.File/8.0.0-dev-02318": {
+    "Serilog.Sinks.File/7.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-D99fj7/Fl1ukWMedFgbLoy0rrPxieyQDZ8Exsx5CTERmC/3+8Bs3VTKf/QI8EO8B6hg5Rj+r1nb6hYhZ+kwJng==",
-      "path": "serilog.sinks.file/8.0.0-dev-02318",
-      "hashPath": "serilog.sinks.file.8.0.0-dev-02318.nupkg.sha512"
+      "sha512": "sha512-fKL7mXv7qaiNBUC71ssvn/dU0k9t0o45+qm2XgKAlSt19xF+ijjxyA3R6HmCgfKEKwfcfkwWjayuQtRueZFkYw==",
+      "path": "serilog.sinks.file/7.0.0",
+      "hashPath": "serilog.sinks.file.7.0.0.nupkg.sha512"
     },
     "System.IdentityModel.Tokens.Jwt/8.15.0": {
       "type": "package",
