@@ -2,8 +2,12 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
+using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Business.Services;
 using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
+using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Data.Repositories;
 using VoiceFirst_Admin.Utilities.Middlewares;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
@@ -11,7 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<IDapperContext, DapperContext>();
-
+builder.Services.AddScoped<ISysBusinessActivityRepo,SysBusinessActivityRepo>();
+builder.Services.AddScoped<ISysBusinessActivityService,SysBusinessActivityService>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

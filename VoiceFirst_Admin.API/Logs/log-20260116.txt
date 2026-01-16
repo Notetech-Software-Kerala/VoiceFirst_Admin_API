@@ -3,3 +3,5 @@
 2026-01-16 12:16:29.622 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
 2026-01-16 12:16:34.603 +05:30 [INF] HTTP GET /WeatherForecast -> 200 in 103 ms
 2026-01-16 14:54:23.778 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-16 16:27:24.659 +05:30 [INF] HTTP POST /api/SysBusinessActivity -> 200 in 47523 ms
+2026-01-16 16:29:29.974 +05:30 [INF] HTTP GET /api/SysBusinessActivity -> 200 in 11277 ms
