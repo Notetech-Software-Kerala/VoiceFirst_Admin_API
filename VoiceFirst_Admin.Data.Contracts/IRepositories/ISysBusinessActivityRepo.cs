@@ -12,6 +12,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<SysBusinessActivity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysBusinessActivity>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default);
         Task<bool> UpdateAsync(SysBusinessActivity entity, CancellationToken cancellationToken = default);
+        Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
+
     }
 }

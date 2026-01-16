@@ -5,7 +5,7 @@ using System.Text;
 using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
-using VoiceFirst_Admin.Utilities.DTOs.Basic;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories;
@@ -52,10 +52,10 @@ public class ProgramActionRepo : IProgramActionRepo
         var parameters = new DynamicParameters();
 
         // deleted filter (default exclude deleted)
-        if (filter.IsDeleted.HasValue)
+        if (filter.IsActive.HasValue)
         {
             sql.Append(" AND IsActive = @IsActive");
-            parameters.Add("IsActive", filter.IsDeleted.Value ? 1 : 0);
+            parameters.Add("IsActive", filter.IsActive.Value ? 1 : 0);
         }
         else
         {
@@ -83,7 +83,7 @@ public class ProgramActionRepo : IProgramActionRepo
         // paging
         if (filter.Limit > 0)
         {
-            var offset = (Math.Max(filter.Page, 1) - 1) * filter.Limit;
+            var offset = (Math.Max(filter.PageNumber, 1) - 1) * filter.Limit;
             sql.Append(" OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY");
             parameters.Add("Offset", offset);
             parameters.Add("Limit", filter.Limit);

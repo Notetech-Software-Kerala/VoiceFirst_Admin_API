@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using VoiceFirst_Admin.Utilities.DTOs.Basic;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 

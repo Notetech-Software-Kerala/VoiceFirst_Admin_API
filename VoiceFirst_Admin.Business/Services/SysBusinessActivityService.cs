@@ -14,86 +14,48 @@ namespace VoiceFirst_Admin.Business.Services
     // Service layer for SysBusinessActivity orchestration
     public class SysBusinessActivityService : ISysBusinessActivityService
     {
-        private readonly ISysBusinessActivityRepo _repository;
+        private readonly ISysBusinessActivityRepo _repo;
 
         public SysBusinessActivityService(ISysBusinessActivityRepo repository)
         {
-            _repository = repository;
+            _repo = repository;
         }
 
-        public async Task<int> CreateAsync
-            (SysBusinessActivityCreateDTO dto,int userId,
-            CancellationToken cancellationToken = default)
+        public async Task<SysBusinessActivity> CreateAsync(SysBusinessActivityCreateDTO dto, int loginId, CancellationToken cancellationToken = default)
         {
             var entity = new SysBusinessActivity
             {
                 BusinessActivityName = dto.Name,
-                CreatedBy = userId,
+                CreatedBy = loginId,
             };
 
-            var created = await _repository.
-                CreateAsync(entity, cancellationToken).ConfigureAwait(false);
-            return created.SysBusinessActivityId;
+            return await _repo.CreateAsync(entity, cancellationToken);
         }
 
-        public async Task<IEnumerable<SysBusinessActivityUpdateDTO>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+        public Task<SysBusinessActivity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+            => _repo.GetByIdAsync(id, cancellationToken);
+
+        public Task<IEnumerable<SysBusinessActivity>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+            => _repo.GetAllAsync(filter, cancellationToken);
+
+        public async Task<bool> UpdateAsync(SysBusinessActivityUpdateDTO dto,int sysBusinessActivityId, int loginId, CancellationToken cancellationToken = default)
         {
-            var items = await _repository.GetAllAsync(filter, cancellationToken).ConfigureAwait(false);
-
-            var result = new List<SysBusinessActivityUpdateDTO>();
-            foreach (var item in items)
+            var entity = new SysBusinessActivity
             {
-                result.Add(new SysBusinessActivityUpdateDTO
-                {
-                    Name = item.BusinessActivityName,
-                    Status = item.IsActive
-                });
-            }
-
-            return result;
-        }
-
-        public async Task<SysBusinessActivityUpdateDTO?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-        {
-            var entity = await _repository.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
-            if (entity == null)
-            {
-                return null;
-            }
-
-            return new SysBusinessActivityUpdateDTO
-            {
-                Name = entity.BusinessActivityName,
-                Status = entity.IsActive
+                SysBusinessActivityId = sysBusinessActivityId,
+                BusinessActivityName = dto.Name ?? string.Empty,
+                IsActive = dto.Status,
+                UpdatedBy = loginId
             };
+
+            return await _repo.UpdateAsync(entity, cancellationToken);
         }
 
-        public async Task<bool> UpdateAsync(int id, SysBusinessActivityUpdateDTO dto, CancellationToken cancellationToken = default)
-        {
-            var existing = await _repository.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
-            if (existing == null)
-            {
-                return false;
-            }
-
-            if (!string.IsNullOrWhiteSpace(dto.Name))
-            {
-                existing.BusinessActivityName = dto.Name;
-            }
-
-            if (dto.Status.HasValue)
-            {
-                existing.IsActive = dto.Status.Value;
-            }
-
-            existing.UpdatedAt = System.DateTime.UtcNow;
-
-            return await _repository.UpdateAsync(existing, cancellationToken).ConfigureAwait(false);
-        }
-
+        public Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
+            => _repo.ExistsByNameAsync(name, excludeId, cancellationToken);
         public Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            return _repository.DeleteAsync(id, cancellationToken);
+            return _repo.DeleteAsync(id, cancellationToken);
         }
     }
 }

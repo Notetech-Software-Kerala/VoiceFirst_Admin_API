@@ -52,5 +52,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string UserCreated = "User created successfully.";
         public const string UserUpdated = "User updated successfully.";
         public const string UserDeletedSuccess = "User deleted successfully.";
+
+
+        public const string SysBusinessActivityAlreadyExists = "Name already exists.";
+        public const string SysBusinessActivityCreated = "BusinessActivity created sucessfully.";
     }
 }
