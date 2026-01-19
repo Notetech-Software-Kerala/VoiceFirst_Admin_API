@@ -34,6 +34,7 @@ System.InvalidOperationException: Unable to resolve service for type 'VoiceFirst
 2026-01-16 16:30:58.268 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
 2026-01-16 16:31:17.591 +05:30 [INF] HTTP POST /api/ProgramAction -> 201 in 5245 ms
 2026-01-16 16:35:11.053 +05:30 [INF] HTTP GET /api/ProgramAction -> 200 in 109 ms
+<<<<<<< HEAD
 2026-01-16 21:38:35.332 +05:30 [INF] HTTP POST /api/sysbusinessactivity -> 200 in 45491 ms
 2026-01-16 21:53:46.055 +05:30 [ERR] Unhandled exception at /api/sysbusinessactivity/1
 Microsoft.Data.SqlClient.SqlException (0x80131904): Invalid column name 'IsDelete'.
@@ -50,11 +51,40 @@ Microsoft.Data.SqlClient.SqlException (0x80131904): Invalid column name 'IsDelet
    at SysBusinessActivityController.GetById(Int32 id, CancellationToken cancellationToken) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.API\Controllers\SysBusinessActivityController.cs:line 42
    at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
    at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+=======
+2026-01-16 18:18:41.554 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-16 18:19:40.874 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-16 18:20:14.041 +05:30 [INF] HTTP POST /api/program-action -> 409 in 5262 ms
+2026-01-16 18:23:56.677 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-16 18:41:52.417 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-16 18:43:37.778 +05:30 [ERR] Unhandled exception at /api/program-action
+Microsoft.Data.SqlClient.SqlException (0x80131904): Invalid column name 'ActionName'.
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryConsumeMetaData()
+   at Microsoft.Data.SqlClient.SqlDataReader.get_MetaData()
+   at Microsoft.Data.SqlClient.SqlCommand.FinishExecuteReader(SqlDataReader ds, RunBehavior runBehavior, String resetOptionsString, Boolean isInternal, Boolean forDescribeParameterEncryption, Boolean shouldCacheForAlwaysEncrypted)
+   at Microsoft.Data.SqlClient.SqlCommand.CompleteAsyncExecuteReader(Boolean isInternal, Boolean forDescribeParameterEncryption)
+   at Microsoft.Data.SqlClient.SqlCommand.InternalEndExecuteReader(IAsyncResult asyncResult, Boolean isInternal, String endMethod)
+   at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderInternal(IAsyncResult asyncResult)
+   at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderAsync(IAsyncResult asyncResult)
+   at Microsoft.Data.SqlClient.SqlCommand.<>c.<InternalExecuteReaderAsync>b__201_1(IAsyncResult asyncResult)
+   at System.Threading.Tasks.TaskFactory`1.FromAsyncCoreLogic(IAsyncResult iar, Func`2 endFunction, Action`1 endAction, Task`1 promise, Boolean requiresSynchronization)
+--- End of stack trace from previous location ---
+   at Dapper.SqlMapper.ExecuteScalarImplAsync[T](IDbConnection cnn, CommandDefinition command) in /_/Dapper/SqlMapper.Async.cs:line 1241
+   at VoiceFirst_Admin.Data.Repositories.ProgramActionRepo.ExistsByNameAsync(String name, Nullable`1 excludeId, CancellationToken cancellationToken)
+   at VoiceFirst_Admin.API.Controllers.ProgramActionController.Create(ProgramActionCreateDto model, CancellationToken cancellationToken) in D:\Voice First\VoiceFirst_Admin.API\Controllers\ProgramActionController.cs:line 29
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Logged|12_1(ControllerActionInvoker invoker)
+>>>>>>> 22c2b710a7169abdf404f297d90cba40e76126e0
    at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
    at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
    at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
    at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
    at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+<<<<<<< HEAD
    at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
    at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
    at VoiceFirst_Admin.Utilities.Middlewares.ExceptionMiddleware.Invoke(HttpContext context) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.Utilities\Middlewares\ExceptionMiddleware.cs:line 25
@@ -64,3 +94,17 @@ Error Number:207,State:1,Class:16
 2026-01-16 21:54:49.351 +05:30 [INF] HTTP GET /api/sysbusinessactivity/1 -> 200 in 12534 ms
 2026-01-16 22:00:48.492 +05:30 [INF] HTTP GET /api/sysbusinessactivity/1 -> 200 in 2963 ms
 2026-01-16 22:50:47.025 +05:30 [INF] HTTP GET /api/sysbusinessactivity -> 200 in 3429 ms
+=======
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at VoiceFirst_Admin.Utilities.Middlewares.ExceptionMiddleware.Invoke(HttpContext context) in D:\Voice First\VoiceFirst_Admin.Utilities\Middlewares\ExceptionMiddleware.cs:line 26
+ClientConnectionId:3aba070e-1130-4801-a06e-b214165717c3
+Error Number:207,State:1,Class:16
+2026-01-16 18:43:37.873 +05:30 [INF] HTTP POST /api/program-action -> 500 in 97899 ms
+2026-01-16 18:44:20.959 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-16 18:44:24.295 +05:30 [INF] HTTP POST /api/program-action -> 201 in 597 ms
+2026-01-16 18:45:16.151 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-16 18:45:47.584 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-16 18:45:52.551 +05:30 [INF] HTTP GET /api/program-action -> 200 in 616 ms
+2026-01-16 18:46:02.816 +05:30 [INF] HTTP POST /api/program-action -> 201 in 129 ms
+>>>>>>> 22c2b710a7169abdf404f297d90cba40e76126e0

@@ -8,6 +8,7 @@ public class CommonFilterDto
 {
     public string? SortBy { get; set; }          // e.g. "UserId", "FirstName", "CreatedAt"
     public string? SortOrder { get; set; }       // "asc" or "desc"
+    public string? SearchText { get; set; }       // "asc" or "desc"
     public int PageNumber { get; set; } = 1;           // default
     public int Limit { get; set; } = 10;         // default
     public bool? IsActive { get; set; }         // null=both, false=0, true=1
