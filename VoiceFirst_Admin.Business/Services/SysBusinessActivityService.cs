@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,42 +16,36 @@ namespace VoiceFirst_Admin.Business.Services
     public class SysBusinessActivityService : ISysBusinessActivityService
     {
         private readonly ISysBusinessActivityRepo _repo;
-
-        public SysBusinessActivityService(ISysBusinessActivityRepo repository)
+        private readonly IMapper _mapper;
+        public SysBusinessActivityService(
+            ISysBusinessActivityRepo repository,
+            IMapper mapper)
         {
             _repo = repository;
+            _mapper = mapper;
         }
 
-        public async Task<SysBusinessActivityDetailsDTO> CreateAsync(
-            SysBusinessActivityCreateDTO dto,
-            int loginId,
-            CancellationToken cancellationToken = default)
+        public async Task<SysBusinessActivityDTO> CreateAsync(
+           SysBusinessActivityCreateDTO dto,
+           int loginId,
+           CancellationToken cancellationToken)
         {
-            if (await _repo.BusinessActivityExistsAsync
-                (dto.Name, null, cancellationToken))
-            {
+            if (await _repo.BusinessActivityExistsAsync(dto.Name, null, cancellationToken))
                 throw new BusinessConflictException(
                     Messages.SysBusinessActivityAlreadyExists,
                     ErrorCodes.BusinessActivityAlreadyExists);
-            }
 
-            var entity = new SysBusinessActivity
-            {
-                BusinessActivityName = dto.Name,
-                CreatedBy = loginId
-            };
-            int createdId
-                = await _repo.CreateAsync(entity, cancellationToken);
+            var entity = _mapper.Map<SysBusinessActivity>(dto);
+            entity.CreatedBy = loginId;
 
-            return new SysBusinessActivityDetailsDTO
-            {
-                Id = createdId,
-                Name = entity.BusinessActivityName,
-                Status = true
-            };
+            entity.SysBusinessActivityId =
+                await _repo.CreateAsync(entity, cancellationToken);
+
+            return _mapper.Map<SysBusinessActivityDTO>(entity);
         }
 
-        public async Task<SysBusinessActivityDetailsDTO?> GetByIdAsync(
+
+        public async Task<SysBusinessActivityDTO?> GetByIdAsync(
             int id,
             CancellationToken cancellationToken = default)
         {
@@ -62,17 +57,11 @@ namespace VoiceFirst_Admin.Business.Services
                     Messages.NotFound,
                     ErrorCodes.BusinessActivityNotFound);
             }
-
-            return new SysBusinessActivityDetailsDTO
-            {
-                Id = entity.SysBusinessActivityId,
-                Name = entity.BusinessActivityName,
-                Status = entity.IsActive
-            };
+            return _mapper.Map<SysBusinessActivityDTO>(entity);
         }
 
 
-        public async Task<SysBusinessActivityDetailsDTO> UpdateAsync(
+        public async Task<SysBusinessActivityDTO> UpdateAsync(
             SysBusinessActivityUpdateDTO dto,
             int sysBusinessActivityId,
             int loginId,
@@ -85,14 +74,9 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.BusinessActivityAlreadyExists);
             }
 
-            var entity = new SysBusinessActivity
-            {
-                SysBusinessActivityId = sysBusinessActivityId,
-                BusinessActivityName = dto.Name ?? string.Empty,
-                IsActive = dto.Status,
-                UpdatedBy = loginId
-            };
 
+            var entity = _mapper.Map<SysBusinessActivity>((dto, sysBusinessActivityId));
+            entity.UpdatedBy = loginId;
             var updated = await _repo.UpdateAsync(entity, cancellationToken);
 
             if (!updated)
@@ -102,20 +86,35 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.BusinessActivityNotFound);
             }
             var updatedEntity = await _repo.GetByIdAsync(sysBusinessActivityId, cancellationToken);
-            return new SysBusinessActivityDetailsDTO
+
+            return _mapper.Map<SysBusinessActivityDTO>(updatedEntity);
+
+        }
+
+
+        public async Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(
+     CommonFilterDto1 filter,
+     CancellationToken cancellationToken)
+        {
+            var pagedEntities = await _repo.GetAllAsync(filter, cancellationToken);
+
+            return new PagedResultDto<SysBusinessActivityDTO>
             {
-                Id = updatedEntity.SysBusinessActivityId,
-                Name = updatedEntity.BusinessActivityName,
-                Status = updatedEntity.IsActive
+                Items = _mapper.Map<IEnumerable<SysBusinessActivityDTO>>(pagedEntities.Items),
+                TotalCount = pagedEntities.TotalCount,
+                PageNumber = pagedEntities.PageNumber,
+                PageSize = pagedEntities.PageSize
             };
         }
 
-        public Task<PagedResultDto<SysBusinessActivity>> GetAllAsync(
-        CommonFilterDto1 filter,
-        CancellationToken cancellationToken)
+        public async Task<List<SysBusinessActivityActiveDTO>> GetActiveAsync(
+    CancellationToken cancellationToken)
         {
-             return _repo.GetAllAsync(filter, cancellationToken);
+            var entities = await _repo.GetActiveAsync(cancellationToken);
+
+            return _mapper.Map<IEnumerable<SysBusinessActivityActiveDTO>>(entities).ToList();
         }
+
 
         public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {

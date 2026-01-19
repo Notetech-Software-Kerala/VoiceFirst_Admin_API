@@ -1,6 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.0" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\VoiceFirst_Admin.Business.Contracts\VoiceFirst_Admin.Business.Contracts.csproj" />
     <ProjectReference Include="..\VoiceFirst_Admin.Data.Contracts\VoiceFirst_Admin.Data.Contracts.csproj" />
     <ProjectReference Include="..\VoiceFirst_Admin.Utilities\VoiceFirst_Admin.Utilities.csproj" />

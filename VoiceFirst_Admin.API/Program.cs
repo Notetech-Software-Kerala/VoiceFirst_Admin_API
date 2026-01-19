@@ -1,5 +1,6 @@
 
 
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using VoiceFirst_Admin.Business.Contracts.IServices;
@@ -8,6 +9,7 @@ using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Data.Repositories;
+using VoiceFirst_Admin.Utilities.Mapping;
 using VoiceFirst_Admin.Utilities.Middlewares;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
@@ -16,8 +18,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<IDapperContext, DapperContext>();
-builder.Services.AddScoped<ISysBusinessActivityRepo,SysBusinessActivityRepo>();
-builder.Services.AddScoped<ISysBusinessActivityService,SysBusinessActivityService>();
+builder.Services.AddScoped<ISysBusinessActivityRepo, SysBusinessActivityRepo>();
+builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
+builder.Services.AddAutoMapper(typeof(SysBusinessActivityProfile).Assembly);
 builder.Services.AddControllers();
 // Repository
 builder.Services.AddScoped<IProgramActionRepo, ProgramActionRepo>();
@@ -28,6 +31,7 @@ builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 
 builder.Host.UseSerilog((ctx, lc) =>
     lc.ReadFrom.Configuration(ctx.Configuration));
@@ -65,6 +69,7 @@ builder.Services.AddCors(options => {
 
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

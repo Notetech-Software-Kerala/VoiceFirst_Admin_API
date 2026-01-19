@@ -6,7 +6,7 @@ using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 [ApiController]
-[Route("api/sysbusinessactivity")]
+[Route("api/businessactivity")]
 public class SysBusinessActivityController : ControllerBase
 {
     private readonly ISysBusinessActivityService _service;
@@ -30,7 +30,7 @@ public class SysBusinessActivityController : ControllerBase
             CreateAsync(model, userId, cancellationToken);
 
         return Ok(         
-            ApiResponse<SysBusinessActivityDetailsDTO>.Ok(
+            ApiResponse<SysBusinessActivityDTO>.Ok(
                 created,
                 Messages.SysBusinessActivityCreated));
     }
@@ -41,8 +41,18 @@ public class SysBusinessActivityController : ControllerBase
     {
         var item = await _service.GetByIdAsync(id, cancellationToken);
 
-        return Ok(ApiResponse<SysBusinessActivityDetailsDTO?>.Ok(
+        return Ok(ApiResponse<SysBusinessActivityDTO?>.Ok(
             item,
+            Messages.SysBusinessActivityRetrieveSucessfully));
+    }
+
+    [HttpGet("active")]
+    public async Task<IActionResult> GetActive(
+     
+      CancellationToken cancellationToken)
+    {//
+        var items = await _service.GetActiveAsync(cancellationToken);
+        return Ok(ApiResponse<object>.Ok(items,
             Messages.SysBusinessActivityRetrieveSucessfully));
     }
 
@@ -51,10 +61,13 @@ public class SysBusinessActivityController : ControllerBase
         [FromQuery] CommonFilterDto1 filter,
         CancellationToken cancellationToken)
     {
+        
         var items = await _service.GetAllAsync(filter, cancellationToken);
-        return Ok(ApiResponse<object>.Ok(items, Messages.SysBusinessActivityRetrieveSucessfully));
+        return Ok(ApiResponse<object>.Ok(items, 
+            Messages.SysBusinessActivityRetrieveSucessfully));
     }
 
+  
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(
         int id,

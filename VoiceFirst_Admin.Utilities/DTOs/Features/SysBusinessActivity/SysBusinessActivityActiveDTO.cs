@@ -1,9 +1,12 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity
 {
-    public class SysBusinessActivityListItemDTO
+    public class SysBusinessActivityActiveDTO
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
     }
 }

@@ -18,7 +18,9 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Shared
         public int PageSize { get; set; } = 10;
 
         // 🔐 Status filters
-        public bool? IsActive { get; set; }
+        public bool? Active { get; set; }
+        public bool? Delete { get; set; }
+
     }
 
     public enum SortDirection
