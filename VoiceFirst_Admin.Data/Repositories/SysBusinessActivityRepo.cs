@@ -22,7 +22,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             ["name"] = "BusinessActivityName",
             ["createdAt"] = "CreatedAt",
             ["updatedAt"] = "UpdatedAt",
-            ["isActive"] = "IsActive"
+            ["isActive"] = "Active"
         };
 
 
@@ -35,7 +35,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsActive = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME()  WHERE SysBusinessActivityId = @Id";
+            const string sql = @"UPDATE SysBusinessActivity SET Active = 0 ,Deleted = 1, DeletedAt = SYSDATETIME()  WHERE SysBusinessActivityId = @Id";
 
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
@@ -70,7 +70,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<SysBusinessActivity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            const string sql = @"SELECT TOP 1 * FROM SysBusinessActivity WHERE SysBusinessActivityId = @Id And IsDeleted = 0;";
+            const string sql = @"SELECT TOP 1 * FROM SysBusinessActivity WHERE SysBusinessActivityId = @Id And Deleted = 0;";
 
             var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
@@ -79,14 +79,14 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         //public async Task<IEnumerable<SysBusinessActivity>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
         //{
-        //    var sql = new StringBuilder("SELECT * FROM SysBusinessActivity WHERE  IsDeleted = 0 1=1");
+        //    var sql = new StringBuilder("SELECT * FROM SysBusinessActivity WHERE  Deleted = 0 1=1");
         //    var parameters = new DynamicParameters();
 
         //    // deleted filter (default exclude deleted)
-        //    if (filter.IsActive.HasValue)
+        //    if (filter.Active.HasValue)
         //    {
-        //        sql.Append(" AND IsActive = @IsActive");
-        //        parameters.Add("IsActive", filter.IsActive.Value ? 1 : 0);
+        //        sql.Append(" AND Active = @Active");
+        //        parameters.Add("Active", filter.Active.Value ? 1 : 0);
         //    }
 
 
@@ -96,7 +96,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         //    if (!string.IsNullOrWhiteSpace(filter.SortBy))
         //    {
         //        var sortOrder = string.Equals(filter.SortOrder, "desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
-        //        var allowedSort = new[] { "BusinessActivityName", "CreatedAt", "UpdatedAt", "IsActive" };
+        //        var allowedSort = new[] { "BusinessActivityName", "CreatedAt", "UpdatedAt", "Active" };
         //        if (allowedSort.Contains(filter.SortBy))
         //        {
         //            sql.Append($" ORDER BY {filter.SortBy} {sortOrder}");
@@ -128,7 +128,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 {
                     var baseSql = new StringBuilder(@"
                 FROM SysBusinessActivity
-                WHERE IsDeleted = 0
+                WHERE Deleted = 0
             ");
 
             var parameters = new DynamicParameters();
@@ -136,8 +136,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             // 🔐 Active filter
             if (filter.IsActive.HasValue)
             {
-                baseSql.Append(" AND IsActive = @IsActive");
-                parameters.Add("IsActive", filter.IsActive.Value);
+                baseSql.Append(" AND Active = @Active");
+                parameters.Add("Active", filter.IsActive.Value);
             }
 
             // 🔍 Search
@@ -202,8 +202,8 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             if (entity.IsActive.HasValue)
             {
-                sets.Add("IsActive = @IsActive");
-                parameters.Add("IsActive", entity.IsActive.Value ? 1 : 0);
+                sets.Add("Active = @Active");
+                parameters.Add("Active", entity.IsActive.Value ? 1 : 0);
             }
 
             // If nothing to update, return false (no-op)
@@ -219,7 +219,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             var sql = new StringBuilder();
             sql.Append("UPDATE SysBusinessActivity SET ");
             sql.Append(string.Join(", ", sets));
-            sql.Append(" WHERE SysBusinessActivityId = @Id AND IsDeleted = 0;");
+            sql.Append(" WHERE SysBusinessActivityId = @Id AND Deleted = 0;");
 
             var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();

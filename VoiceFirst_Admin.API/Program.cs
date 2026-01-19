@@ -8,6 +8,7 @@ using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Data.Repositories;
+using VoiceFirst_Admin.Utilities.Mapping;
 using VoiceFirst_Admin.Utilities.Middlewares;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
@@ -16,14 +17,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<IDapperContext, DapperContext>();
-builder.Services.AddScoped<ISysBusinessActivityRepo,SysBusinessActivityRepo>();
-builder.Services.AddScoped<ISysBusinessActivityService,SysBusinessActivityService>();
+
 builder.Services.AddControllers();
 // Repository
 builder.Services.AddScoped<IProgramActionRepo, ProgramActionRepo>();
+builder.Services.AddScoped<ISysBusinessActivityRepo, SysBusinessActivityRepo>();
 
 // Services
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
+builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
+
+// AutoMapper
+builder.Services.AddAutoMapper(
+    typeof(ProgramActionMappingProfile).Assembly
+);
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

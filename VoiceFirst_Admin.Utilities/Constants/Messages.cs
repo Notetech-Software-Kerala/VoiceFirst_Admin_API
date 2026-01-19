@@ -22,7 +22,6 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PayloadRequired = "Payload is required.";
         public const string NotFound = "Not found.";
         public const string Updated = "Updated.";
-        public const string ProgramActionNameAlreadyExists = "ActionName already exists.";
 
         // Auth
         public const string InvalidCredentials = "Invalid credentials.";
@@ -38,7 +37,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string NotRegistered = "Not registered.";
         public const string RegistrationSuccess = "Registration successful.";
         public const string LoginSuccess = "Login successful.";
-
+        public const string NameAlreadyExists = "Name already exists.";
         // OTP
         public const string InvalidOtp = "Invalid OTP.";
         public const string OtpExpired = "OTP expired.";
@@ -58,6 +57,12 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string SysBusinessActivityCreated = "Business activity created sucessfully.";
         public const string SysBusinessActivityRetrieveSucessfully = "Business activity retrieve sucessfully.";
         public const string SysBusinessActivityUpdatedSucessfully = "Business activity updated sucessfully.";
+
+
+
+        public const string ProgramActionCreated = "Program action created sucessfully.";
+        public const string ProgramActionCreatedRetrieveSucessfully = "Program action retrieve sucessfully.";
+        public const string ProgramActionCreatedUpdatedSucessfully = "Program action updated sucessfully.";
 
     }
 }
