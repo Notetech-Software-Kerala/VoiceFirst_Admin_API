@@ -6,5 +6,5 @@ public class ProgramActionUpdateDto
 {
      public int ActionId { get; set; }
      public string? ActionName { get; set; }
-     public bool? IsActive { get; set; }
+     public bool? Active { get; set; }
 }

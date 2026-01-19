@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
-using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
-using VoiceFirst_Admin.Utilities.Constants;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
@@ -67,7 +69,28 @@ namespace VoiceFirst_Admin.API.Controllers
 
             var ok = await _service.UpdateAsync(model, userId, cancellationToken);
             if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
-            return Ok(ApiResponse<object>.Ok(null!, Messages.ProgramActionCreatedUpdatedSucessfully, StatusCodes.Status204NoContent));
+            var item = await _service.GetByIdAsync(id, cancellationToken);
+            if (item == null)
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    ApiResponse<object>.Fail(Messages.SomethingWentWrong));
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = item.ActionId },
+                ApiResponse<ProgramActionDto>.Ok(item, Messages.ProgramActionCreated));
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id, CommonDeleteDto model, CancellationToken cancellationToken)
+        {
+            if (model == null || model.Id != id) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
+
+            if (await _service.GetByIdAsync( id, cancellationToken)==null)
+                return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
+
+            var ok = await _service.DeleteAsync(model, userId, cancellationToken);
+            if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
+            return Ok(ApiResponse<object>.Ok(null!, Messages.ProgramActionSucessfully, StatusCodes.Status204NoContent));
         }
 
 
