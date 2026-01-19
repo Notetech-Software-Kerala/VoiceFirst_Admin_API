@@ -1,0 +1,22 @@
+2026-01-19 09:53:27.060 +05:30 [INF] HTTP GET /api/sysbusinessactivity -> 200 in 96848 ms
+2026-01-19 10:00:10.868 +05:30 [INF] HTTP GET /api/sysbusinessactivity/1 -> 200 in 3636 ms
+2026-01-19 10:00:20.216 +05:30 [ERR] Unhandled exception at /api/sysbusinessactivity/3
+VoiceFirst_Admin.Utilities.Exceptions.BusinessNotFoundException: Not found.
+   at VoiceFirst_Admin.Business.Services.SysBusinessActivityService.GetByIdAsync(Int32 id, CancellationToken cancellationToken) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.Business\Services\SysBusinessActivityService.cs:line 61
+   at SysBusinessActivityController.GetById(Int32 id, CancellationToken cancellationToken) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.API\Controllers\SysBusinessActivityController.cs:line 42
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at VoiceFirst_Admin.Utilities.Middlewares.ExceptionMiddleware.Invoke(HttpContext context) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.Utilities\Middlewares\ExceptionMiddleware.cs:line 25
+2026-01-19 10:00:20.281 +05:30 [INF] HTTP GET /api/sysbusinessactivity/3 -> 404 in 2884 ms
+2026-01-19 10:20:39.051 +05:30 [INF] HTTP PUT /api/sysbusinessactivity/1 -> 200 in 20502 ms
+2026-01-19 10:20:55.564 +05:30 [INF] HTTP GET /api/sysbusinessactivity/1 -> 200 in 4460 ms
+2026-01-19 10:25:30.767 +05:30 [INF] HTTP PUT /api/sysbusinessactivity/1 -> 200 in 1636 ms
+2026-01-19 10:25:37.048 +05:30 [INF] HTTP GET /api/sysbusinessactivity/1 -> 200 in 1546 ms
+2026-01-19 10:32:25.588 +05:30 [INF] HTTP DELETE /api/sysbusinessactivity/1 -> 200 in 34 ms

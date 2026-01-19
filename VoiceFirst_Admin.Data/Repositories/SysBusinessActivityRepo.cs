@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
@@ -15,6 +15,17 @@ namespace VoiceFirst_Admin.Data.Repositories
     {
         private readonly IDapperContext _context;
 
+        private static readonly Dictionary<string, string> SortColumnMap =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["id"] = "SysBusinessActivityId",
+            ["name"] = "BusinessActivityName",
+            ["createdAt"] = "CreatedAt",
+            ["updatedAt"] = "UpdatedAt",
+            ["isActive"] = "IsActive"
+        };
+
+
         public SysBusinessActivityRepo(IDapperContext context)
         {
             _context = context;
@@ -24,7 +35,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsActive = 0 WHERE SysBusinessActivityId = @Id";
+            const string sql = @"UPDATE SysBusinessActivity SET IsActive = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME()  WHERE SysBusinessActivityId = @Id";
 
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
@@ -38,11 +49,13 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
-        public async Task<SysBusinessActivity> CreateAsync(SysBusinessActivity entity, CancellationToken cancellationToken = default)
+        public async Task<int> CreateAsync
+            (SysBusinessActivity entity, 
+            CancellationToken cancellationToken = default)
         {
             const string sql = @"
-                INSERT INTO SysBusinessActivity (BusinessActivityName, CreatedBy)
-                VALUES (@BusinessActivityName, @CreatedBy);
+                INSERT INTO SysBusinessActivity (BusinessActivityName,CreatedBy)
+                VALUES (@BusinessActivityName,@CreatedBy);
                 SELECT CAST(SCOPE_IDENTITY() AS int);";
 
             var cmd = new CommandDefinition(sql, new
@@ -51,67 +64,130 @@ namespace VoiceFirst_Admin.Data.Repositories
                 entity.CreatedBy,
             }, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
-            var id = await connection.ExecuteScalarAsync<int>(cmd);
-            entity.SysBusinessActivityId = id;
-            return entity;
+            int id = await connection.ExecuteScalarAsync<int>(cmd);      
+            return id;
         }
 
         public async Task<SysBusinessActivity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            const string sql = @"SELECT TOP 1 * FROM SysBusinessActivity WHERE SysBusinessActivityId = @Id;";
+            const string sql = @"SELECT TOP 1 * FROM SysBusinessActivity WHERE SysBusinessActivityId = @Id And IsDeleted = 0;";
 
             var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
             return await connection.QuerySingleOrDefaultAsync<SysBusinessActivity>(cmd);
         }
 
-        public async Task<IEnumerable<SysBusinessActivity>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
-        {
-            var sql = new StringBuilder("SELECT * FROM SysBusinessActivity WHERE 1=1");
+        //public async Task<IEnumerable<SysBusinessActivity>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+        //{
+        //    var sql = new StringBuilder("SELECT * FROM SysBusinessActivity WHERE  IsDeleted = 0 1=1");
+        //    var parameters = new DynamicParameters();
+
+        //    // deleted filter (default exclude deleted)
+        //    if (filter.IsActive.HasValue)
+        //    {
+        //        sql.Append(" AND IsActive = @IsActive");
+        //        parameters.Add("IsActive", filter.IsActive.Value ? 1 : 0);
+        //    }
+
+
+
+        //    // search by name (use SortBy field for generic use? keep simple)
+        //    // If caller uses SortBy as a search term, prefer a separate search param — here we support SortBy as column.
+        //    if (!string.IsNullOrWhiteSpace(filter.SortBy))
+        //    {
+        //        var sortOrder = string.Equals(filter.SortOrder, "desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+        //        var allowedSort = new[] { "BusinessActivityName", "CreatedAt", "UpdatedAt", "IsActive" };
+        //        if (allowedSort.Contains(filter.SortBy))
+        //        {
+        //            sql.Append($" ORDER BY {filter.SortBy} {sortOrder}");
+        //        }
+        //    }
+        //    else
+        //    {
+        //        sql.Append(" ORDER BY SysBusinessActivityId DESC");
+        //    }
+
+        //    // paging
+        //    if (filter.Limit > 0)
+        //    {
+        //        var offset = (Math.Max(filter.PageNumber, 1) - 1) * filter.Limit;
+        //        sql.Append(" OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY");
+        //        parameters.Add("Offset", offset);
+        //        parameters.Add("Limit", filter.Limit);
+        //    }
+
+        //    var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        //    using var connection = _context.CreateConnection();
+        //    return await connection.QueryAsync<SysBusinessActivity>(cmd);
+        //}
+
+
+        public async Task<PagedResultDto<SysBusinessActivity>> GetAllAsync(
+            CommonFilterDto1 filter,
+            CancellationToken cancellationToken = default)
+                {
+                    var baseSql = new StringBuilder(@"
+                FROM SysBusinessActivity
+                WHERE IsDeleted = 0
+            ");
+
             var parameters = new DynamicParameters();
 
-            // deleted filter (default exclude deleted)
+            // 🔐 Active filter
             if (filter.IsActive.HasValue)
             {
-                sql.Append(" AND IsActive = @IsActive");
-                parameters.Add("IsActive", filter.IsActive.Value ? 1 : 0);
+                baseSql.Append(" AND IsActive = @IsActive");
+                parameters.Add("IsActive", filter.IsActive.Value);
             }
-            else
+
+            // 🔍 Search
+            if (!string.IsNullOrWhiteSpace(filter.Search))
             {
-                sql.Append(" AND IsDeleted = 0");
+                baseSql.Append(" AND BusinessActivityName LIKE @Search");
+                parameters.Add("Search", $"%{filter.Search}%");
             }
 
+            // 🔢 Total count (enterprise requirement)
+            var countSql = $"SELECT COUNT(1) {baseSql}";
 
+            // 🔃 Sorting
+            var sortColumn = SortColumnMap.TryGetValue(
+                filter.SortBy ?? string.Empty,
+                out var column)
+                ? column
+                : "SysBusinessActivityId";
 
-            // search by name (use SortBy field for generic use? keep simple)
-            // If caller uses SortBy as a search term, prefer a separate search param � here we support SortBy as column.
-            if (!string.IsNullOrWhiteSpace(filter.SortBy))
-            {
-                var sortOrder = string.Equals(filter.SortOrder, "desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
-                var allowedSort = new[] { "SysBusinessActivityId", "BusinessActivityName", "CreatedAt", "UpdatedAt", "IsActive" };
-                if (allowedSort.Contains(filter.SortBy))
-                {
-                    sql.Append($" ORDER BY {filter.SortBy} {sortOrder}");
-                }
-            }
-            else
-            {
-                sql.Append(" ORDER BY SysBusinessActivityId DESC");
-            }
+            var sortOrder = filter.SortOrder == SortDirection.Asc ? "ASC" : "DESC";
 
-            // paging
-            if (filter.Limit > 0)
-            {
-                var offset = (Math.Max(filter.PageNumber, 1) - 1) * filter.Limit;
-                sql.Append(" OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY");
-                parameters.Add("Offset", offset);
-                parameters.Add("Limit", filter.Limit);
-            }
+            var dataSql = new StringBuilder();
+            dataSql.Append("SELECT * ");
+            dataSql.Append(baseSql);
+            dataSql.Append($" ORDER BY {sortColumn} {sortOrder}");
 
-            var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+            // 📄 Paging
+            var offset = (Math.Max(filter.PageNumber, 1) - 1) * filter.PageSize;
+            dataSql.Append(" OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
+
+            parameters.Add("Offset", offset);
+            parameters.Add("PageSize", filter.PageSize);
+
             using var connection = _context.CreateConnection();
-            return await connection.QueryAsync<SysBusinessActivity>(cmd);
+
+            var totalCount = await connection.ExecuteScalarAsync<int>(
+                new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
+
+            var items = await connection.QueryAsync<SysBusinessActivity>(
+                new CommandDefinition(dataSql.ToString(), parameters, cancellationToken: cancellationToken));
+
+            return new PagedResultDto<SysBusinessActivity>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize
+            };
         }
+
 
         public async Task<bool> UpdateAsync(SysBusinessActivity entity, CancellationToken cancellationToken = default)
         {
@@ -151,7 +227,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             return affected > 0;
         }
 
-        public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
+        public async Task<bool> BusinessActivityExistsAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
             var sql = "SELECT COUNT(1) FROM SysBusinessActivity WHERE BusinessActivityName = @Name";
             if (excludeId.HasValue)
