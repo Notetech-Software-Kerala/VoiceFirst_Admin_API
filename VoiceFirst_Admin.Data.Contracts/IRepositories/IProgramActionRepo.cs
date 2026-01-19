@@ -10,8 +10,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
     {
         Task<SysProgramActions> CreateAsync(SysProgramActions entity, CancellationToken cancellationToken = default);
         Task<SysProgramActions?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-        Task<IEnumerable<SysProgramActions>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<SysProgramActions>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default);
         Task<bool> UpdateAsync(SysProgramActions entity, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(SysProgramActions entity, CancellationToken cancellationToken = default);
         Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
 
     }

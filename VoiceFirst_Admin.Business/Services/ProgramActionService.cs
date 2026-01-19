@@ -1,22 +1,25 @@
-﻿using System;
+﻿using AutoMapper;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
-using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 
 namespace VoiceFirst_Admin.Business.Services
 {
     public class ProgramActionService : IProgramActionService
     {
+        private readonly IMapper _mapper;
         private readonly IProgramActionRepo _repo;
 
-        public ProgramActionService(IProgramActionRepo repo)
+        public ProgramActionService(IMapper mapper, IProgramActionRepo repo)
         {
+            _mapper = mapper;
             _repo = repo;
         }
 
@@ -35,29 +38,21 @@ namespace VoiceFirst_Admin.Business.Services
         {
             var entity = await _repo.GetByIdAsync(id, cancellationToken);
             if (entity == null) return null;
-            var dto = new ProgramActionDto
-            {
-                ActionId = entity.SysProgramActionId,
-                ActionName = entity.ProgramActionName,
-                IsActive = entity.IsActive
-            };
+            var dto = _mapper.Map<ProgramActionDto>(entity);
             return dto;
         }
 
-        public async Task<IEnumerable<ProgramActionDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<ProgramActionDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
         {
             var entities = await _repo.GetAllAsync(filter, cancellationToken);
-            var list = new List<ProgramActionDto>();
-            foreach (var entity in entities)
+            var list = _mapper.Map<IEnumerable<ProgramActionDto>>(entities.Items);
+            return new PagedResultDto<ProgramActionDto>
             {
-                list.Add(new ProgramActionDto
-                {
-                    ActionId = entity.SysProgramActionId,
-                    ActionName = entity.ProgramActionName,
-                    IsActive = entity.IsActive
-                });
-            }
-            return list;
+                Items = list,
+                TotalCount = entities.TotalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.Limit
+            };
         }
 
         public async Task<bool> UpdateAsync(ProgramActionUpdateDto dto,int loginId, CancellationToken cancellationToken = default)
@@ -66,11 +61,22 @@ namespace VoiceFirst_Admin.Business.Services
             {
                 SysProgramActionId = dto.ActionId,
                 ProgramActionName = dto.ActionName ?? string.Empty,
-                IsActive = dto.IsActive,
+                IsActive = dto.Active,
                 UpdatedBy = loginId
             };
 
             return await _repo.UpdateAsync(entity, cancellationToken);
+        }
+        public async Task<bool> DeleteAsync(CommonDeleteDto dto, int loginId, CancellationToken cancellationToken = default)
+        {
+            var entity = new SysProgramActions
+            {
+                SysProgramActionId = dto.Id,
+                DeletedBy = loginId,
+                IsDeleted= dto.Deleted
+            };
+
+            return await _repo.DeleteAsync(entity, cancellationToken);
         }
 
         public Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)

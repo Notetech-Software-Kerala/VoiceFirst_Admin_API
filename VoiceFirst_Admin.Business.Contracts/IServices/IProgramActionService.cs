@@ -12,8 +12,9 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
     {
         Task<SysProgramActions> CreateAsync(ProgramActionCreateDto dto, int loginId, CancellationToken cancellationToken = default);
         Task<ProgramActionDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-        Task<IEnumerable<ProgramActionDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<ProgramActionDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default);
         Task<bool> UpdateAsync(ProgramActionUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(CommonDeleteDto dto, int loginId, CancellationToken cancellationToken = default);
         Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
     }
 }

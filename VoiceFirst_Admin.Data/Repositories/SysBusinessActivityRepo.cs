@@ -42,7 +42,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsActive = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME()  WHERE SysBusinessActivityId = @Id";
+            const string sql = @"UPDATE SysBusinessActivity SET Active = 0 ,Deleted = 1, DeletedAt = SYSDATETIME()  WHERE SysBusinessActivityId = @Id";
 
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
@@ -308,8 +308,8 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             if (entity.IsActive.HasValue)
             {
-                sets.Add("IsActive = @IsActive");
-                parameters.Add("IsActive", entity.IsActive.Value ? 1 : 0);
+                sets.Add("Active = @Active");
+                parameters.Add("Active", entity.IsActive.Value ? 1 : 0);
             }
 
             // If nothing to update, return false (no-op)
@@ -325,7 +325,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             var sql = new StringBuilder();
             sql.Append("UPDATE SysBusinessActivity SET ");
             sql.Append(string.Join(", ", sets));
-            sql.Append(" WHERE SysBusinessActivityId = @Id AND IsDeleted = 0;");
+            sql.Append(" WHERE SysBusinessActivityId = @Id AND Deleted = 0;");
 
             var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36511.14
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11408.102 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoiceFirst_Admin.API", "VoiceFirst_Admin.API\VoiceFirst_Admin.API.csproj", "{C2F9B2E6-7C83-477A-8D8B-C2B0EB7B60BC}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoiceFirst_Admin.Business.Contracts", "VoiceFirst_Admin.Business.Contracts\VoiceFirst_Admin.Business.Contracts.csproj", "{CDBFFB0D-0C7B-455A-BF26-B60B4503B8A6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoiceFirst_Admin.Data.Contracts", "VoiceFirst_Admin.Data.Contracts\VoiceFirst_Admin.Data.Contracts.csproj", "{8CB49B3E-BAC8-4F00-AAFF-36A2AA21F5B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoiceFirst_Admin.Unit_Test", "VoiceFirst_Admin.Unit_Test\VoiceFirst_Admin.Unit_Test.csproj", "{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -97,6 +99,18 @@ Global
 		{8CB49B3E-BAC8-4F00-AAFF-36A2AA21F5B5}.Release|x64.Build.0 = Release|Any CPU
 		{8CB49B3E-BAC8-4F00-AAFF-36A2AA21F5B5}.Release|x86.ActiveCfg = Release|Any CPU
 		{8CB49B3E-BAC8-4F00-AAFF-36A2AA21F5B5}.Release|x86.Build.0 = Release|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Debug|x64.Build.0 = Debug|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Debug|x86.Build.0 = Debug|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Release|x64.ActiveCfg = Release|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Release|x64.Build.0 = Release|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Release|x86.ActiveCfg = Release|Any CPU
+		{9C2659B5-75EC-4AA7-8BE3-E97EDE1600FC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

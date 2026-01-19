@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
-using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
-using VoiceFirst_Admin.Utilities.Constants;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
@@ -19,7 +21,7 @@ namespace VoiceFirst_Admin.API.Controllers
         {
             _service = service;
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProgramActionCreateDto model, CancellationToken cancellationToken)
         {
@@ -27,10 +29,19 @@ namespace VoiceFirst_Admin.API.Controllers
 
             // uniqueness check
             if (await _service.ExistsByNameAsync(model.ProgramActionName, null, cancellationToken))
-                return Conflict(ApiResponse<object>.Fail(Messages.ProgramActionNameAlreadyExists, statusCode: StatusCodes.Status409Conflict));
+                return Conflict(ApiResponse<object>.Fail(Messages.NameAlreadyExists, statusCode: StatusCodes.Status409Conflict));
 
             var created = await _service.CreateAsync(model, userId, cancellationToken);
-            return CreatedAtAction(nameof(GetById), new { id = created.SysProgramActionId }, ApiResponse<SysProgramActions>.Ok(created, Messages.Created));
+
+            var item = await _service.GetByIdAsync(created.SysProgramActionId, cancellationToken);
+            if (item == null)
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    ApiResponse<object>.Fail(Messages.SomethingWentWrong));
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = item.ActionId },
+                ApiResponse<ProgramActionDto>.Ok(item, Messages.ProgramActionCreated));
         }
 
         [HttpGet("{id:int}")]
@@ -38,14 +49,14 @@ namespace VoiceFirst_Admin.API.Controllers
         {
             var item = await _service.GetByIdAsync(id, cancellationToken);
             if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
-            return Ok(ApiResponse<ProgramActionDto>.Ok(item, Messages.Success));
+            return Ok(ApiResponse<ProgramActionDto>.Ok(item, Messages.ProgramActionCreatedRetrieveSucessfully));
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] CommonFilterDto filter, CancellationToken cancellationToken)
         {
             var items = await _service.GetAllAsync(filter, cancellationToken);
-            return Ok(ApiResponse<object>.Ok(items, Messages.Success));
+            return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
         }
 
         [HttpPut("{id:int}")]
@@ -54,11 +65,32 @@ namespace VoiceFirst_Admin.API.Controllers
             if (model == null || model.ActionId != id) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
 
             if (await _service.ExistsByNameAsync(model.ActionName ?? string.Empty, id, cancellationToken))
-                return Conflict(ApiResponse<object>.Fail(Messages.ProgramActionNameAlreadyExists, StatusCodes.Status409Conflict));
+                return Conflict(ApiResponse<object>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict));
 
             var ok = await _service.UpdateAsync(model, userId, cancellationToken);
             if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
-            return Ok(ApiResponse<object>.Ok(null!, Messages.Updated, StatusCodes.Status204NoContent));
+            var item = await _service.GetByIdAsync(id, cancellationToken);
+            if (item == null)
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    ApiResponse<object>.Fail(Messages.SomethingWentWrong));
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = item.ActionId },
+                ApiResponse<ProgramActionDto>.Ok(item, Messages.ProgramActionCreated));
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id, CommonDeleteDto model, CancellationToken cancellationToken)
+        {
+            if (model == null || model.Id != id) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
+
+            if (await _service.GetByIdAsync( id, cancellationToken)==null)
+                return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
+
+            var ok = await _service.DeleteAsync(model, userId, cancellationToken);
+            if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
+            return Ok(ApiResponse<object>.Ok(null!, Messages.ProgramActionSucessfully, StatusCodes.Status204NoContent));
         }
 
 

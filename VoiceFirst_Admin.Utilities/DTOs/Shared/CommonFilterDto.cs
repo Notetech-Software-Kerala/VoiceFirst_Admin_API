@@ -11,5 +11,6 @@ public class CommonFilterDto
     public string? SearchText { get; set; }       // "asc" or "desc"
     public int PageNumber { get; set; } = 1;           // default
     public int Limit { get; set; } = 10;         // default
-    public bool? IsActive { get; set; }         // null=both, false=0, true=1
+    public bool? Active { get; set; }         // null=both, false=0, true=1
+    public bool? Deleted { get; set; }         // null=both, false=0, true=1
 }
