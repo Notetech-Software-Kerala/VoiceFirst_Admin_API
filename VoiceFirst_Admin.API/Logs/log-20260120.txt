@@ -82,4 +82,11 @@
 2026-01-20 16:38:08.890 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 400 in 188 ms
 =======
 >>>>>>> d2bb49a6912bfe0431eda409f4aa3c5d63455d0b
+<<<<<<< HEAD
+2026-01-20 18:54:48.992 +05:30 [INF] HTTP POST /api/program-action -> 201 in 674 ms
+2026-01-20 18:55:17.242 +05:30 [INF] HTTP GET /api/program-action -> 200 in 55 ms
+2026-01-20 18:55:44.843 +05:30 [INF] HTTP GET /api/business-activity -> 200 in 33 ms
+2026-01-20 20:02:06.636 +05:30 [INF] HTTP GET /api/program-action -> 200 in 1433 ms
+=======
 >>>>>>> 494787d447993f213a19e427d883920a03fd446b
+>>>>>>> e159f80300268781af3477bc8edea36df2e74c90
