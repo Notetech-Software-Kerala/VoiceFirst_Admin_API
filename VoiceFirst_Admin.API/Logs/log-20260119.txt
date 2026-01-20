@@ -1167,3 +1167,4 @@ Error Number:156,State:1,Class:15
 2026-01-19 20:45:13.633 +05:30 [INF] HTTP GET /api/program-action -> 200 in 6 ms
 2026-01-19 20:50:25.995 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
 >>>>>>> 403a416599de9d8f7224138f8e1720b4435a20c5
+2026-01-19 21:06:14.840 +05:30 [INF] HTTP GET /api/businessactivity/active -> 200 in 476 ms

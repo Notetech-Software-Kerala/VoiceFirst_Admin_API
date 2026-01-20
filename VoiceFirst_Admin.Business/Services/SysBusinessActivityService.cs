@@ -40,10 +40,24 @@ namespace VoiceFirst_Admin.Business.Services
 
             entity.SysBusinessActivityId =
                 await _repo.CreateAsync(entity, cancellationToken);
-
-            return _mapper.Map<SysBusinessActivityDTO>(entity);
+            var createdEntity = await _repo.GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);       
+            return _mapper.Map<SysBusinessActivityDTO>(createdEntity);
         }
 
+        public async Task<int> RecoverBusinessActivityAsync(
+            int id,
+            int loginId,
+            CancellationToken cancellationToken = default)
+        {
+            var recoveredId = await _repo.RecoverBusinessActivityAsync(id, loginId, cancellationToken);
+            if (recoveredId == 0)
+            {
+                throw new BusinessNotFoundException(
+                    Messages.NotFound,
+                    ErrorCodes.BusinessActivityNotFound);
+            }
+            return recoveredId;
+        }
 
         public async Task<SysBusinessActivityDTO?> GetByIdAsync(
             int id,
@@ -93,7 +107,7 @@ namespace VoiceFirst_Admin.Business.Services
 
 
         public async Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(
-     CommonFilterDto1 filter,
+     CommonFilterDto filter,
      CancellationToken cancellationToken)
         {
             var pagedEntities = await _repo.GetAllAsync(filter, cancellationToken);
@@ -116,9 +130,9 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
-            var deleted = await _repo.DeleteAsync(id, cancellationToken);
+            var deleted = await _repo.DeleteAsync(id,loginId,  cancellationToken);
 
             if (!deleted)
             {

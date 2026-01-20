@@ -6,7 +6,7 @@ using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 [ApiController]
-[Route("api/businessactivity")]
+[Route("api/business-activity")]
 public class SysBusinessActivityController : ControllerBase
 {
     private readonly ISysBusinessActivityService _service;
@@ -18,7 +18,7 @@ public class SysBusinessActivityController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(
+    public async Task<IActionResult> CreateAsync(
         [FromBody] SysBusinessActivityCreateDTO model,
         CancellationToken cancellationToken)
     {
@@ -37,7 +37,7 @@ public class SysBusinessActivityController : ControllerBase
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> 
-        GetById(int id, CancellationToken cancellationToken)
+        GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         var item = await _service.GetByIdAsync(id, cancellationToken);
 
@@ -46,8 +46,8 @@ public class SysBusinessActivityController : ControllerBase
             Messages.SysBusinessActivityRetrieveSucessfully));
     }
 
-    [HttpGet("active")]
-    public async Task<IActionResult> GetActive(
+    [HttpGet("lookup")]
+    public async Task<IActionResult> GetActiveAsync(
      
       CancellationToken cancellationToken)
     {//
@@ -57,8 +57,8 @@ public class SysBusinessActivityController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(
-        [FromQuery] CommonFilterDto1 filter,
+    public async Task<IActionResult> GetAllAsync(
+        [FromQuery] CommonFilterDto filter,
         CancellationToken cancellationToken)
     {
         
@@ -69,7 +69,7 @@ public class SysBusinessActivityController : ControllerBase
 
   
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(
+    public async Task<IActionResult> UpdateAsync(
         int id,
         [FromBody] SysBusinessActivityUpdateDTO model,
         CancellationToken cancellationToken)
@@ -82,11 +82,20 @@ public class SysBusinessActivityController : ControllerBase
         return Ok(ApiResponse<object>.Ok(updatedDto, Messages.SysBusinessActivityUpdatedSucessfully));
     }
 
+    [HttpPut("recover/{id:int}")]
+    public async Task<IActionResult> RecoverAsync(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var recoveredDto = await _service.RecoverBusinessActivityAsync(id, userId, cancellationToken);
+        return Ok(ApiResponse<object>.Ok(recoveredDto, Messages.SysBusinessActivityRecoverSucessfully));
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult>
         Delete(int id, CancellationToken cancellationToken)
     {
-        await _service.DeleteAsync(id, cancellationToken);
+        await _service.DeleteAsync(id, userId, cancellationToken);
         return Ok(ApiResponse<object>.Ok(null!,
             Messages.SysBusinessActivityDeleteSucessfully));
     }
