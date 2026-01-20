@@ -454,7 +454,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             if (entity.IsActive.HasValue)
             {
-                sets.Add("Active = @Active");
+                sets.Add("IsActive = @Active");
                 parameters.Add("Active", entity.IsActive.Value ? 1 : 0);
             }
 
