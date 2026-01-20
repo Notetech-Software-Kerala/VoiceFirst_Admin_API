@@ -59,7 +59,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string SysBusinessActivityUpdatedSucessfully = "Business activity updated sucessfully.";
 
 
-        public const string ProgramActionSucessfully = "Program action deleted sucessfully.";
+        public const string ProgramActionRestoreSucessfully = "Program action restored sucessfully.";
+        public const string ProgramActionDeleteSucessfully = "Program action deleted sucessfully.";
+        public const string ProgramActionAlreadyDeleted = "Program action already deleted.";
+        public const string ProgramActionAlreadyRestored = "Program action already restored.";
         public const string ProgramActionCreated = "Program action created sucessfully.";
         public const string ProgramActionCreatedRetrieveSucessfully = "Program action retrieve sucessfully.";
         public const string ProgramActionCreatedUpdatedSucessfully = "Program action updated sucessfully.";

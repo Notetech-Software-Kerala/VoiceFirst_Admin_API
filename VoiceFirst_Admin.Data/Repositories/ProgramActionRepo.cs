@@ -6,6 +6,7 @@ using System.Text;
 using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 using static Dapper.SqlMapper;
@@ -37,6 +38,20 @@ public class ProgramActionRepo : IProgramActionRepo
         var id = await connection.ExecuteScalarAsync<int>(cmd);
         entity.SysProgramActionId = id;
         return entity;
+    }
+    public async Task<IEnumerable<SysProgramActions>> GetLookupAsync( CancellationToken cancellationToken = default)
+    {
+        var sql = new StringBuilder(@"
+        SELECT
+            SysProgramActionId,
+            ProgramActionName 
+        FROM SysProgramActions
+        WHERE IsDeleted = 0 AND IsActive = 1 ORDER BY ProgramActionName ASC
+        ");
+
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<SysProgramActions>(
+            new CommandDefinition(sql.ToString(), cancellationToken: cancellationToken));
     }
 
     public async Task<SysProgramActions?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -200,17 +215,26 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
     }
     public async Task<bool> DeleteAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
-        const string sql = @"UPDATE SysProgramActions SET IsDeleted = @IsDeleted, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @Id";
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @Id AND IsDeleted = 0;";
         var parameters = new DynamicParameters();
         parameters.Add("Id", entity.SysProgramActionId);
         parameters.Add("DeletedBy", entity.DeletedBy);
-        parameters.Add("IsDeleted", entity.IsDeleted);
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
         var affected = await connection.ExecuteAsync(cmd);
         return affected > 0;
     }
-
+    public async Task<bool> RestoreAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 0, DeletedAt = NULL,DeletedBy=NULL,UpdatedBy = @UpdatedBy,UpdatedAt = SYSDATETIME()  WHERE SysProgramActionId = @Id AND IsDeleted = 1;";
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", entity.SysProgramActionId);
+        parameters.Add("UpdatedBy", entity.UpdatedBy);
+        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(cmd);
+        return affected > 0;
+    }
     public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
         var sql = "SELECT COUNT(1) FROM SysProgramActions WHERE ProgramActionName = @Name AND IsDeleted=0";
@@ -222,4 +246,5 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
         var count = await connection.ExecuteScalarAsync<int>(cmd);
         return count > 0;
     }
+   
 }

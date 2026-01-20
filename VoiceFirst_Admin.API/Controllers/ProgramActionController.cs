@@ -58,6 +58,12 @@ namespace VoiceFirst_Admin.API.Controllers
             var items = await _service.GetAllAsync(filter, cancellationToken);
             return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
         }
+        [HttpGet("lookup")]
+        public async Task<IActionResult> GetLookupAsync( CancellationToken cancellationToken)
+        {
+            var items = await _service.GetLookupAsync( cancellationToken);
+            return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
+        }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] ProgramActionUpdateDto model, CancellationToken cancellationToken)
@@ -81,16 +87,34 @@ namespace VoiceFirst_Admin.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id, CommonDeleteDto model, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            if (model == null || model.Id != id) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
-
-            if (await _service.GetByIdAsync( id, cancellationToken)==null)
+            
+            var item = await _service.GetByIdAsync(id, cancellationToken);
+            if (item == null)
                 return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
 
-            var ok = await _service.DeleteAsync(model, userId, cancellationToken);
+            if(item.Deleted==true)
+                return BadRequest(ApiResponse<object>.Fail(Messages.ProgramActionAlreadyDeleted));
+
+            var ok = await _service.DeleteAsync(id, userId, cancellationToken);
             if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
-            return Ok(ApiResponse<object>.Ok(null!, Messages.ProgramActionSucessfully, StatusCodes.Status204NoContent));
+            return Ok(ApiResponse<object>.Ok(null!, Messages.ProgramActionDeleteSucessfully, StatusCodes.Status204NoContent));
+        }
+        [HttpPut("restore")]
+        public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
+        {
+            
+            var item = await _service.GetByIdAsync(id, cancellationToken);
+            if (item == null)
+                return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
+
+            if (item.Deleted == false)
+                return BadRequest(ApiResponse<object>.Fail(Messages.ProgramActionAlreadyRestored));
+
+            var ok = await _service.RestoreAsync(id, userId, cancellationToken);
+            if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
+            return Ok(ApiResponse<object>.Ok(null!, Messages.ProgramActionRestoreSucessfully, StatusCodes.Status204NoContent));
         }
 
 
