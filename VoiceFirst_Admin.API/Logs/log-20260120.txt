@@ -90,3 +90,50 @@
 =======
 >>>>>>> 494787d447993f213a19e427d883920a03fd446b
 >>>>>>> e159f80300268781af3477bc8edea36df2e74c90
+2026-01-20 22:02:51.713 +05:30 [INF] HTTP GET /api/business-activity -> 200 in 5263 ms
+2026-01-20 22:03:03.316 +05:30 [INF] HTTP DELETE /api/business-activity/1 -> 200 in 41 ms
+2026-01-20 22:06:40.073 +05:30 [ERR] Unhandled exception at /api/business-activity
+VoiceFirst_Admin.Utilities.Exceptions.BusinessConflictException: Business activity already exists but was deleted. You can recover it.
+   at VoiceFirst_Admin.Business.Services.SysBusinessActivityService.CreateAsync(SysBusinessActivityCreateDTO dto, Int32 loginId, CancellationToken cancellationToken) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.Business\Services\SysBusinessActivityService.cs:line 49
+   at SysBusinessActivityController.CreateAsync(SysBusinessActivityCreateDTO model, CancellationToken cancellationToken) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.API\Controllers\SysBusinessActivityController.cs:line 29
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at VoiceFirst_Admin.Utilities.Middlewares.ExceptionMiddleware.Invoke(HttpContext context) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.Utilities\Middlewares\ExceptionMiddleware.cs:line 25
+2026-01-20 22:06:40.155 +05:30 [INF] HTTP POST /api/business-activity -> 409 in 104497 ms
+2026-01-20 22:09:16.405 +05:30 [ERR] Unhandled exception at /api/business-activity
+VoiceFirst_Admin.Utilities.Exceptions.BusinessRecoverableException: Business activity already exists but was deleted. You can recover it.
+   at VoiceFirst_Admin.Business.Services.SysBusinessActivityService.CreateAsync(SysBusinessActivityCreateDTO dto, Int32 loginId, CancellationToken cancellationToken) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.Business\Services\SysBusinessActivityService.cs:line 49
+   at SysBusinessActivityController.CreateAsync(SysBusinessActivityCreateDTO model, CancellationToken cancellationToken) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.API\Controllers\SysBusinessActivityController.cs:line 29
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at VoiceFirst_Admin.Utilities.Middlewares.ExceptionMiddleware.Invoke(HttpContext context) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.Utilities\Middlewares\ExceptionMiddleware.cs:line 25
+2026-01-20 22:09:16.469 +05:30 [INF] HTTP POST /api/business-activity -> 500 in 69786 ms
+2026-01-20 22:10:45.157 +05:30 [ERR] Unhandled exception at /api/business-activity
+VoiceFirst_Admin.Utilities.Exceptions.BusinessRecoverableException: Business activity already exists but was deleted. You can recover it.
+   at VoiceFirst_Admin.Business.Services.SysBusinessActivityService.CreateAsync(SysBusinessActivityCreateDTO dto, Int32 loginId, CancellationToken cancellationToken) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.Business\Services\SysBusinessActivityService.cs:line 49
+   at SysBusinessActivityController.CreateAsync(SysBusinessActivityCreateDTO model, CancellationToken cancellationToken) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.API\Controllers\SysBusinessActivityController.cs:line 29
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at VoiceFirst_Admin.Utilities.Middlewares.ExceptionMiddleware.Invoke(HttpContext context) in H:\VoiceFirst_Admin_API\VoiceFirst_Admin.Utilities\Middlewares\ExceptionMiddleware.cs:line 25
+2026-01-20 22:10:45.220 +05:30 [INF] HTTP POST /api/business-activity -> 410 in 10149 ms

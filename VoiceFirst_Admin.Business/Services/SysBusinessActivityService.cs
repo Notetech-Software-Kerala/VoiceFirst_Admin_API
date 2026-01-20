@@ -45,8 +45,8 @@ namespace VoiceFirst_Admin.Business.Services
                         ErrorCodes.BusinessActivityAlreadyExists);
                 }
 
-                // ♻ Soft-deleted (recoverable)
-                throw new BusinessConflictException(
+                // ♻ RECOVERABLE (Soft Deleted)
+                throw new BusinessRecoverableException(
                     Messages.BusinessActivityAlreadyExistsRecoverable,
                     ErrorCodes.BusinessActivityAlreadyExistsRecoverable);
             }
@@ -120,8 +120,9 @@ namespace VoiceFirst_Admin.Business.Services
                             ErrorCodes.BusinessActivityAlreadyExists);
                     }
 
-                    // ♻ Soft-deleted (recoverable)
-                    throw new BusinessConflictException(
+
+                    // ♻ RECOVERABLE (Soft Deleted)
+                    throw new BusinessRecoverableException(
                         Messages.BusinessActivityAlreadyExistsRecoverable,
                         ErrorCodes.BusinessActivityAlreadyExistsRecoverable);
                 }
@@ -141,7 +142,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (!updated)
                 throw new BusinessNotFoundException(
-                    Messages.NotFound,
+                    Messages.BusinessActivityNotFound,
                     ErrorCodes.BusinessActivityNotFound);
 
             var updatedEntity = await _repo.GetByIdAsync(sysBusinessActivityId, cancellationToken);
