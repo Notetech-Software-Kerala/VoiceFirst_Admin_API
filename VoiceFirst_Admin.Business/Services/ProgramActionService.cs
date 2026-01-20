@@ -36,7 +36,7 @@ namespace VoiceFirst_Admin.Business.Services
             var existingEntity = await _repo.ExistsByNameAsync(dto.ProgramActionName, null, cancellationToken);
 
             if (existingEntity != null && existingEntity.IsDeleted==true)
-                return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status409Conflict);
+                return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
 
             if (existingEntity != null)
                 return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
@@ -95,7 +95,7 @@ namespace VoiceFirst_Admin.Business.Services
             {
                 // if you want special message when existing is deleted:
                 if (existing.IsDeleted==true)
-                    return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status409Conflict);
+                    return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
 
                 return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
             }
