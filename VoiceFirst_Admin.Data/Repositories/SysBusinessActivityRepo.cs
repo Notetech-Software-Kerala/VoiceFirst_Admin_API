@@ -454,7 +454,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             if (entity.IsActive.HasValue)
             {
-                sets.Add("Active = @Active");
+                sets.Add("IsActive = @Active");
                 parameters.Add("Active", entity.IsActive.Value ? 1 : 0);
             }
 
@@ -471,7 +471,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             var sql = new StringBuilder();
             sql.Append("UPDATE SysBusinessActivity SET ");
             sql.Append(string.Join(", ", sets));
-            sql.Append(" WHERE SysBusinessActivityId = @Id AND Deleted = 0;");
+            sql.Append(" WHERE SysBusinessActivityId = @Id AND IsDeleted = 0;");
 
             var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
