@@ -101,7 +101,7 @@ namespace VoiceFirst_Admin.API.Controllers
             if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
             return Ok(ApiResponse<object>.Ok(null!, Messages.ProgramActionDeleteSucessfully, StatusCodes.Status204NoContent));
         }
-        [HttpPut("restore")]
+        [HttpPut("recover/{id:int}")]
         public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
         {
             

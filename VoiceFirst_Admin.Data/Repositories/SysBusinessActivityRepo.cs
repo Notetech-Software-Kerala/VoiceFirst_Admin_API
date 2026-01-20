@@ -17,19 +17,16 @@ namespace VoiceFirst_Admin.Data.Repositories
         private readonly IDapperContext _context;
 
         private static readonly Dictionary<string, string> SortColumnMap =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["id"] = "s.SysBusinessActivityId",
-            ["name"] = "s.BusinessActivityName",
-            ["createdDate"] = "s.CreatedAt",
-            ["modifiedDate"] = "s.UpdatedAt",
-            ["deletedDate"] = "s.DeletedAt",
-            ["active"] = "s.IsActive",
-            ["delete"] = "s.IsDeleted",
-            ["createdUser"] = "cu.FirstName",
-            ["modifiedUser"] = "uu.FirstName",
-            ["deletedUser"] = "du.FirstName"
-        };
+     new(StringComparer.OrdinalIgnoreCase)
+     {
+         ["name"] = "s.BusinessActivityName",
+         ["active"] = "s.IsActive",
+         ["delete"] = "s.IsDeleted",
+         ["createdUser"] = "cu.FirstName",
+         ["modifiedUser"] = "uu.FirstName",
+         ["deletedUser"] = "du.FirstName"
+     };
+
 
 
 
@@ -153,144 +150,293 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
+        private static void ApplyDateRange(
+        StringBuilder sql,
+        DynamicParameters parameters,
+        string? fromDate,
+        string? toDate,
+        string columnName,
+        string paramPrefix)
+            {
+                if (DateTime.TryParse(fromDate, out var from))
+                {
+                    // Start of day
+                    sql.Append($" AND {columnName} >= @{paramPrefix}From");
+                    parameters.Add($"{paramPrefix}From", from.Date);
+                }
+
+                if (DateTime.TryParse(toDate, out var to))
+                {
+                    // End of day → next day (exclusive)
+                    sql.Append($" AND {columnName} < @{paramPrefix}To");
+                    parameters.Add($"{paramPrefix}To", to.Date.AddDays(1));
+                }
+            }
+
+
 
         public async Task<PagedResultDto<SysBusinessActivity>> GetAllAsync(
-       CommonFilterDto1 filter,
-       CancellationToken cancellationToken = default)
-        {
-            var baseSql = new StringBuilder(@"
-        FROM dbo.SysBusinessActivity s
-        INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
-        LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
-        LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
-        WHERE 1 = 1
-    ");
-
-            var parameters = new DynamicParameters();
-
-            // 🔐 Active filter
-            if (filter.Active.HasValue)
+        CommonFilterDto filter,
+        CancellationToken cancellationToken = default)
             {
-                baseSql.Append(" AND s.IsActive = @IsActive");
-                parameters.Add("IsActive", filter.Active.Value);
-            }
+                var baseSql = new StringBuilder(@"
+            FROM dbo.SysBusinessActivity s
+            INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
+            LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
+            LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
+            WHERE 1 = 1
+        ");
 
-            // 🔐 Delete filter
-            if (filter.Delete.HasValue)
-            {
-                baseSql.Append(" AND s.IsDeleted = @IsDeleted");
-                parameters.Add("IsDeleted", filter.Delete.Value);
-            }
+                var parameters = new DynamicParameters();
 
-            // 🔍 Search
-            if (!string.IsNullOrWhiteSpace(filter.Search))
-            {
-                bool isUserSort =
-                    filter.SortBy?.Equals("createdUser", StringComparison.OrdinalIgnoreCase) == true ||
-                    filter.SortBy?.Equals("modifiedUser", StringComparison.OrdinalIgnoreCase) == true ||
-                    filter.SortBy?.Equals("deletedUser", StringComparison.OrdinalIgnoreCase) == true;
-
-                bool isNameSort =
-                    filter.SortBy?.Equals("name", StringComparison.OrdinalIgnoreCase) == true;
-
-                // ---------- DATE SEARCH ----------
-                if (DateTime.TryParse(filter.Search, out var searchDate))
+                // 🔐 Active filter
+                if (filter.Active.HasValue)
                 {
-                    string dateCondition = filter.SortBy?.ToLower() switch
-                    {
-                        "createddate" => "CONVERT(DATE, s.CreatedAt) = @SearchDate",
-                        "modifieddate" => "CONVERT(DATE, s.UpdatedAt) = @SearchDate",
-                        "deleteddate" => "CONVERT(DATE, s.DeletedAt) = @SearchDate",
-                        _ => @"
-                    CONVERT(DATE, s.CreatedAt) = @SearchDate
-                    OR CONVERT(DATE, s.UpdatedAt) = @SearchDate
-                    OR CONVERT(DATE, s.DeletedAt) = @SearchDate
-                "
-                    };
-
-                    baseSql.Append($@"
-                AND (
-                    {(
-                                isNameSort
-                                    ? "s.BusinessActivityName LIKE @Search"
-                                    : $"{BuildUserCondition(filter.SortBy)} OR {dateCondition}"
-                            )}
-                )
-            ");
-
-                    parameters.Add("SearchDate", searchDate.Date);
+                    baseSql.Append(" AND s.IsActive = @IsActive");
+                    parameters.Add("IsActive", filter.Active.Value);
                 }
-                // ---------- TEXT / USER / NAME SEARCH ----------
-                else
+
+                // 🔐 Deleted filter
+                if (filter.Deleted.HasValue)
+                {
+                    baseSql.Append(" AND s.IsDeleted = @IsDeleted");
+                    parameters.Add("IsDeleted", filter.Deleted.Value);
+                }
+
+                // 🔍 TEXT / USER / NAME SEARCH ONLY
+                if (!string.IsNullOrWhiteSpace(filter.SearchText))
                 {
                     baseSql.Append($@"
                 AND (
-                    {(
-                                isNameSort
-                                    ? "s.BusinessActivityName LIKE @Search"
-                                    : BuildUserCondition(filter.SortBy)
-                            )}
+                    {BuildUserCondition(filter.SortBy)}
                 )
             ");
+
+                    parameters.Add("Search", $"%{filter.SearchText}%");
                 }
 
-                parameters.Add("Search", $"%{filter.Search}%");
-            }
+            // 📅 DATE RANGE FILTERS (SEPARATE FIELDS)
+            // 📅 CREATED DATE FILTER
+            ApplyDateRange(
+                baseSql,
+                parameters,
+                filter.CreatedFromDate,
+                filter.CreatedToDate,
+                "s.CreatedAt",
+                "Created");
 
-            // 🔢 Total count
+            // 📅 UPDATED DATE FILTER
+            ApplyDateRange(
+                baseSql,
+                parameters,
+                filter.UpdatedFromDate,
+                filter.UpdatedToDate,
+                "s.UpdatedAt",
+                "Updated");
+
+            // 📅 DELETED DATE FILTER
+            ApplyDateRange(
+                baseSql,
+                parameters,
+                filter.DeletedFromDate,
+                filter.DeletedToDate,
+                "s.DeletedAt",
+                "Deleted");
+
+
+            // 🔢 Total count query
             var countSql = $"SELECT COUNT(1) {baseSql}";
 
-            // 🔃 Sorting (SAFE)
-            var sortColumn = SortColumnMap.TryGetValue(
-                filter.SortBy ?? string.Empty,
-                out var column)
-                ? column
-                : "s.SysBusinessActivityId";
+                // 🔃 SAFE SORTING (ONLY ALLOWED COLUMNS)
+                var sortColumn = SortColumnMap.TryGetValue(
+                    filter.SortBy ?? string.Empty,
+                    out var column)
+                    ? column
+                    : "s.SysBusinessActivityId";
 
-            var sortOrder = filter.SortOrder == SortDirection.Asc ? "ASC" : "DESC";
+                var sortOrder = filter.SortOrder == SortOrder.Asc ? "ASC" : "DESC";
 
-            // 📄 Data query
-            var dataSql = new StringBuilder(@"
-        SELECT
-            s.SysBusinessActivityId,
-            s.BusinessActivityName,
-            s.IsActive,
-            s.CreatedBy,
-            s.CreatedAt,
-            s.UpdatedBy,
-            s.UpdatedAt,
-            s.IsDeleted,
-            s.DeletedBy,
-            s.DeletedAt,
-            CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
-            CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUser,
-            CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
-    ");
+                // 📄 Data query
+                var dataSql = new StringBuilder(@"
+            SELECT
+                s.SysBusinessActivityId,
+                s.BusinessActivityName,
+                s.IsActive,
+                s.CreatedBy,
+                s.CreatedAt,
+                s.UpdatedBy,
+                s.UpdatedAt,
+                s.IsDeleted,
+                s.DeletedBy,
+                s.DeletedAt,
+                CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
+                CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUser,
+                CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
+        ");
 
-            dataSql.Append(baseSql);
-            dataSql.Append($" ORDER BY {sortColumn} {sortOrder}");
-            dataSql.Append(" OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
+                dataSql.Append(baseSql);
+                dataSql.Append($" ORDER BY {sortColumn} {sortOrder}");
+                dataSql.Append(" OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
 
-            var offset = (Math.Max(filter.PageNumber, 1) - 1) * filter.PageSize;
-            parameters.Add("Offset", offset);
-            parameters.Add("PageSize", filter.PageSize);
+                var offset = (Math.Max(filter.PageNumber, 1) - 1) * filter.Limit;
+                parameters.Add("Offset", offset);
+                parameters.Add("PageSize", filter.Limit);
 
-            using var connection = _context.CreateConnection();
+                using var connection = _context.CreateConnection();
 
-            var totalCount = await connection.ExecuteScalarAsync<int>(
-                new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
+                var totalCount = await connection.ExecuteScalarAsync<int>(
+                    new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
 
-            var items = await connection.QueryAsync<SysBusinessActivity>(
-                new CommandDefinition(dataSql.ToString(), parameters, cancellationToken: cancellationToken));
+                var items = await connection.QueryAsync<SysBusinessActivity>(
+                    new CommandDefinition(dataSql.ToString(), parameters, cancellationToken: cancellationToken));
 
-            return new PagedResultDto<SysBusinessActivity>
-            {
-                Items = items.ToList(),
-                TotalCount = totalCount,
-                PageNumber = filter.PageNumber,
-                PageSize = filter.PageSize
-            };
+                return new PagedResultDto<SysBusinessActivity>
+                {
+                    Items = items.ToList(),
+                    TotalCount = totalCount,
+                    PageNumber = filter.PageNumber,
+                    PageSize = filter.Limit
+                };
         }
+
+
+        //    public async Task<PagedResultDto<SysBusinessActivity>> GetAllAsync(
+        //   CommonFilterDto filter,
+        //   CancellationToken cancellationToken = default)
+        //    {
+        //        var baseSql = new StringBuilder(@"
+        //    FROM dbo.SysBusinessActivity s
+        //    INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
+        //    LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
+        //    LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
+        //    WHERE 1 = 1
+        //");
+
+        //        var parameters = new DynamicParameters();
+
+        //        // 🔐 Active filter
+        //        if (filter.Active.HasValue)
+        //        {
+        //            baseSql.Append(" AND s.IsActive = @IsActive");
+        //            parameters.Add("IsActive", filter.Active.Value);
+        //        }
+
+        //        // 🔐 Delete filter
+        //        if (filter.Deleted.HasValue)
+        //        {
+        //            baseSql.Append(" AND s.IsDeleted = @IsDeleted");
+        //            parameters.Add("IsDeleted", filter.Deleted.Value);
+        //        }
+
+        //        // 🔍 Search
+        //        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        //        {
+        //            bool isUserSort =
+        //                filter.SortBy?.Equals("createdUser", StringComparison.OrdinalIgnoreCase) == true ||
+        //                filter.SortBy?.Equals("modifiedUser", StringComparison.OrdinalIgnoreCase) == true ||
+        //                filter.SortBy?.Equals("deletedUser", StringComparison.OrdinalIgnoreCase) == true;
+
+        //            bool isNameSort =
+        //                filter.SortBy?.Equals("name", StringComparison.OrdinalIgnoreCase) == true;
+
+        //            // ---------- DATE SEARCH ----------
+        //            if (DateTime.TryParse(filter.SearchText, out var searchDate))
+        //            {
+        //                string dateCondition = filter.SortBy?.ToLower() switch
+        //                {
+        //                    "createddate" => "CONVERT(DATE, s.CreatedAt) = @SearchDate",
+        //                    "modifieddate" => "CONVERT(DATE, s.UpdatedAt) = @SearchDate",
+        //                    "deleteddate" => "CONVERT(DATE, s.DeletedAt) = @SearchDate",
+        //                    _ => @"
+        //                CONVERT(DATE, s.CreatedAt) = @SearchDate
+        //                OR CONVERT(DATE, s.UpdatedAt) = @SearchDate
+        //                OR CONVERT(DATE, s.DeletedAt) = @SearchDate
+        //            "
+        //                };
+
+        //                baseSql.Append($@"
+        //            AND (
+        //                {(
+        //                            isNameSort
+        //                                ? "s.BusinessActivityName LIKE @Search"
+        //                                : $"{BuildUserCondition(filter.SortBy)} OR {dateCondition}"
+        //                        )}
+        //            )
+        //        ");
+
+        //                parameters.Add("SearchDate", searchDate.Date);
+        //            }
+        //            // ---------- TEXT / USER / NAME SEARCH ----------
+        //            else
+        //            {
+        //                baseSql.Append($@"
+        //            AND (
+        //                {(
+        //                            isNameSort
+        //                                ? "s.BusinessActivityName LIKE @Search"
+        //                                : BuildUserCondition(filter.SortBy)
+        //                        )}
+        //            )
+        //        ");
+        //            }
+
+        //            parameters.Add("Search", $"%{filter.SearchText}%");
+        //        }
+
+        //        // 🔢 Total count
+        //        var countSql = $"SELECT COUNT(1) {baseSql}";
+
+        //        // 🔃 Sorting (SAFE)
+        //        var sortColumn = SortColumnMap.TryGetValue(
+        //            filter.SortBy ?? string.Empty,
+        //            out var column)
+        //            ? column
+        //            : "s.SysBusinessActivityId";
+
+        //        var sortOrder = filter.SortOrder == SortOrder.Asc ? "ASC" : "DESC";
+
+        //        // 📄 Data query
+        //        var dataSql = new StringBuilder(@"
+        //    SELECT
+        //        s.SysBusinessActivityId,
+        //        s.BusinessActivityName,
+        //        s.IsActive,
+        //        s.CreatedBy,
+        //        s.CreatedAt,
+        //        s.UpdatedBy,
+        //        s.UpdatedAt,
+        //        s.IsDeleted,
+        //        s.DeletedBy,
+        //        s.DeletedAt,
+        //        CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
+        //        CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUser,
+        //        CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
+        //");
+
+        //        dataSql.Append(baseSql);
+        //        dataSql.Append($" ORDER BY {sortColumn} {sortOrder}");
+        //        dataSql.Append(" OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
+
+        //        var offset = (Math.Max(filter.PageNumber, 1) - 1) * filter.Limit;
+        //        parameters.Add("Offset", offset);
+        //        parameters.Add("PageSize", filter.Limit);
+
+        //        using var connection = _context.CreateConnection();
+
+        //        var totalCount = await connection.ExecuteScalarAsync<int>(
+        //            new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
+
+        //        var items = await connection.QueryAsync<SysBusinessActivity>(
+        //            new CommandDefinition(dataSql.ToString(), parameters, cancellationToken: cancellationToken));
+
+        //        return new PagedResultDto<SysBusinessActivity>
+        //        {
+        //            Items = items.ToList(),
+        //            TotalCount = totalCount,
+        //            PageNumber = filter.PageNumber,
+        //            PageSize = filter.Limit
+        //        };
+        //    }
 
 
 

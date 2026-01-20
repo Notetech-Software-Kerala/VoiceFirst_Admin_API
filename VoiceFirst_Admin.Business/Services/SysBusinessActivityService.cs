@@ -40,8 +40,8 @@ namespace VoiceFirst_Admin.Business.Services
 
             entity.SysBusinessActivityId =
                 await _repo.CreateAsync(entity, cancellationToken);
-
-            return _mapper.Map<SysBusinessActivityDTO>(entity);
+            var createdEntity = await _repo.GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);       
+            return _mapper.Map<SysBusinessActivityDTO>(createdEntity);
         }
 
         public async Task<int> RecoverBusinessActivityAsync(
@@ -107,7 +107,7 @@ namespace VoiceFirst_Admin.Business.Services
 
 
         public async Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(
-     CommonFilterDto1 filter,
+     CommonFilterDto filter,
      CancellationToken cancellationToken)
         {
             var pagedEntities = await _repo.GetAllAsync(filter, cancellationToken);

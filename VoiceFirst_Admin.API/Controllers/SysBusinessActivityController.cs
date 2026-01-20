@@ -6,7 +6,7 @@ using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 [ApiController]
-[Route("api/businessactivity")]
+[Route("api/business-activity")]
 public class SysBusinessActivityController : ControllerBase
 {
     private readonly ISysBusinessActivityService _service;
@@ -46,7 +46,7 @@ public class SysBusinessActivityController : ControllerBase
             Messages.SysBusinessActivityRetrieveSucessfully));
     }
 
-    [HttpGet("active")]
+    [HttpGet("lookup")]
     public async Task<IActionResult> GetActiveAsync(
      
       CancellationToken cancellationToken)
@@ -58,7 +58,7 @@ public class SysBusinessActivityController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAllAsync(
-        [FromQuery] CommonFilterDto1 filter,
+        [FromQuery] CommonFilterDto filter,
         CancellationToken cancellationToken)
     {
         

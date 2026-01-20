@@ -46,3 +46,24 @@
 2026-01-20 13:17:04.792 +05:30 [INF] HTTP GET /api/program-action -> 200 in 4 ms
 2026-01-20 13:17:12.829 +05:30 [INF] HTTP GET /api/program-action -> 200 in 7 ms
 >>>>>>> a35408e9723b8fbc00ebe1999a44944639b688ef
+2026-01-20 13:24:11.748 +05:30 [INF] HTTP PUT /api/program-action/restore -> 400 in 574 ms
+2026-01-20 13:25:02.784 +05:30 [INF] HTTP GET /api/program-action/lookup -> 200 in 39 ms
+2026-01-20 13:26:37.972 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1364 ms
+2026-01-20 14:43:00.862 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 2814 ms
+2026-01-20 14:43:30.231 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1795 ms
+2026-01-20 14:47:10.557 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 111588 ms
+2026-01-20 14:56:19.255 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 20040 ms
+2026-01-20 14:56:50.656 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 5425 ms
+2026-01-20 15:00:58.718 +05:30 [INF] HTTP GET /api/businessactivity/active -> 200 in 1654 ms
+2026-01-20 15:04:02.303 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 11726 ms
+2026-01-20 15:04:34.408 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 3996 ms
+2026-01-20 15:04:58.398 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 3758 ms
+2026-01-20 15:05:28.971 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 6167 ms
+2026-01-20 15:05:49.819 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 3894 ms
+2026-01-20 15:07:57.954 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 4133 ms
+2026-01-20 15:08:16.558 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 4340 ms
+2026-01-20 15:17:51.686 +05:30 [INF] HTTP PUT /api/program-action/restore -> 400 in 46 ms
+2026-01-20 15:17:58.365 +05:30 [INF] HTTP PUT /api/businessactivity/recover/1 -> 200 in 28 ms
+2026-01-20 15:24:40.470 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 6186 ms
+2026-01-20 15:24:55.346 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1711 ms
+2026-01-20 15:27:31.548 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 2690 ms
