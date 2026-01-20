@@ -68,7 +68,7 @@ public class SysBusinessActivityController : ControllerBase
     }
 
   
-    [HttpPut("{id:int}")]
+    [HttpPatch("{id:int}")]
     public async Task<IActionResult> UpdateAsync(
         int id,
         [FromBody] SysBusinessActivityUpdateDTO model,
@@ -82,7 +82,7 @@ public class SysBusinessActivityController : ControllerBase
         return Ok(ApiResponse<object>.Ok(updatedDto, Messages.SysBusinessActivityUpdatedSucessfully));
     }
 
-    [HttpPut("recover/{id:int}")]
+    [HttpPatch("recover/{id:int}")]
     public async Task<IActionResult> RecoverAsync(
         int id,
         CancellationToken cancellationToken)
