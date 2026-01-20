@@ -16,7 +16,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<bool> UpdateAsync(SysProgramActions entity, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(SysProgramActions entity, CancellationToken cancellationToken = default);
         Task<bool> RestoreAsync(SysProgramActions entity, CancellationToken cancellationToken = default);
-        Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
+        Task<SysProgramActions> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
 
     }
 }

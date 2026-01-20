@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,8 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
+using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Business.Services
@@ -23,17 +26,39 @@ namespace VoiceFirst_Admin.Business.Services
             _repo = repo;
         }
 
-        public async Task<SysProgramActions> CreateAsync(ProgramActionCreateDto dto, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<ProgramActionDto>> CreateAsync(
+                    ProgramActionCreateDto dto, int loginId, CancellationToken cancellationToken = default)
         {
+            if (dto == null)
+                return ApiResponse<ProgramActionDto>.Fail(Messages.PayloadRequired, StatusCodes.Status400BadRequest);
+
+            // Check existing by name
+            var existingEntity = await _repo.ExistsByNameAsync(dto.ProgramActionName, null, cancellationToken);
+
+            if (existingEntity != null && existingEntity.IsDeleted==true)
+                return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status409Conflict);
+
+            if (existingEntity != null)
+                return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+
+            // Create
             var entity = new SysProgramActions
             {
                 ProgramActionName = dto.ProgramActionName,
-                CreatedBy = loginId,
+                CreatedBy = loginId
             };
 
-            return await _repo.CreateAsync(entity, cancellationToken);
-        }
+            var created = await _repo.CreateAsync(entity, cancellationToken);
 
+            // Read back (if you need mapped fields)
+            var createdEntity = await _repo.GetByIdAsync(created.SysProgramActionId, cancellationToken);
+            if (createdEntity == null)
+                return ApiResponse<ProgramActionDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
+
+            var createdDto = _mapper.Map<ProgramActionDto>(createdEntity);
+
+            return ApiResponse<ProgramActionDto>.Ok(createdDto, Messages.ProgramActionCreated, StatusCodes.Status201Created);
+        }
         public async Task<ProgramActionDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             var entity = await _repo.GetByIdAsync(id, cancellationToken);
@@ -62,8 +87,19 @@ namespace VoiceFirst_Admin.Business.Services
             return dto;
 
         }
-        public async Task<bool> UpdateAsync(ProgramActionUpdateDto dto,int id,int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<ProgramActionDto>> UpdateAsync(ProgramActionUpdateDto dto,int id,int loginId, CancellationToken cancellationToken = default)
         {
+            // name uniqueness (exclude current id)
+            var existing = await _repo.ExistsByNameAsync(dto.ActionName ?? string.Empty, id, cancellationToken);
+            if (existing != null)
+            {
+                // if you want special message when existing is deleted:
+                if (existing.IsDeleted==true)
+                    return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status409Conflict);
+
+                return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+            }
+
             var entity = new SysProgramActions
             {
                 SysProgramActionId = id,
@@ -72,33 +108,67 @@ namespace VoiceFirst_Admin.Business.Services
                 UpdatedBy = loginId
             };
 
-            return await _repo.UpdateAsync(entity, cancellationToken);
-        }
-        public async Task<bool> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
-        {   
-            
-            var entity = new SysProgramActions
-            {
-                SysProgramActionId = id,
-                DeletedBy = loginId,
-            };
+            var ok = await _repo.UpdateAsync(entity, cancellationToken);
+            if (!ok)
+                return ApiResponse<ProgramActionDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
 
-            return await _repo.DeleteAsync(entity, cancellationToken);
+            var updatedEntity = await _repo.GetByIdAsync(id, cancellationToken);
+            if (updatedEntity == null)
+                return ApiResponse<ProgramActionDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
+
+            var updatedDto = _mapper.Map<ProgramActionDto>(updatedEntity);
+            return ApiResponse<ProgramActionDto>.Ok(updatedDto, Messages.Updated, StatusCodes.Status200OK);
         }
-        public async Task<bool> RestoreAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
 
-            var entity = new SysProgramActions
+            var entity = await _repo.GetByIdAsync(id, cancellationToken);
+            if (entity == null)
+                return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+            if (entity.IsDeleted==true)
+                return ApiResponse<object>.Fail(Messages.ProgramActionAlreadyDeleted, StatusCodes.Status400BadRequest);
+
+            var ok = await _repo.DeleteAsync(new SysProgramActions
             {
                 SysProgramActionId = id,
-                UpdatedBy = loginId,
-            };
+                DeletedBy = loginId
+            }, cancellationToken);
 
-            return await _repo.RestoreAsync(entity, cancellationToken);
+            if (!ok)
+                return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+            return ApiResponse<object>.Ok(null!, Messages.ProgramActionDeleteSucessfully, StatusCodes.Status200OK);
+        }
+        public async Task<ApiResponse<object>> RestoreAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        {
+
+            var entity = await _repo.GetByIdAsync(id, cancellationToken);
+            if (entity == null)
+                return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+            if (!entity.IsDeleted==true)
+                return ApiResponse<object>.Fail(Messages.ProgramActionAlreadyRestored, StatusCodes.Status400BadRequest);
+
+            var ok = await _repo.RestoreAsync(new SysProgramActions
+            {
+                SysProgramActionId = id,
+                UpdatedBy = loginId
+            }, cancellationToken);
+
+            if (!ok)
+                return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+            return ApiResponse<object>.Ok(null!, Messages.ProgramActionRestoreSucessfully, StatusCodes.Status200OK);
         }
 
-        public Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
-            => _repo.ExistsByNameAsync(name, excludeId, cancellationToken);
+        public async Task<ProgramActionDto> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
+        {
+            var entity = await _repo.ExistsByNameAsync(name, excludeId, cancellationToken);
+            if (entity == null) return null;
+            var dto = _mapper.Map<ProgramActionDto>(entity);
+            return dto;
+        }
 
     }
 }

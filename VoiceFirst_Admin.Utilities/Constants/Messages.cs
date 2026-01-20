@@ -38,6 +38,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string RegistrationSuccess = "Registration successful.";
         public const string LoginSuccess = "Login successful.";
         public const string NameAlreadyExists = "Name already exists.";
+        public const string NameExistsInTrash = "This name exists in trash. Restore it to use again.";
         // OTP
         public const string InvalidOtp = "Invalid OTP.";
         public const string OtpExpired = "OTP expired.";
