@@ -75,34 +75,46 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<SysBusinessActivityDTO> UpdateAsync(
+        
+
+                public async Task<SysBusinessActivityDTO> UpdateAsync(
             SysBusinessActivityUpdateDTO dto,
             int sysBusinessActivityId,
             int loginId,
             CancellationToken cancellationToken = default)
         {
-            if (await _repo.BusinessActivityExistsAsync(dto.Name ?? string.Empty, sysBusinessActivityId, cancellationToken))
+            // uniqueness check ONLY if name is patched
+            if (!string.IsNullOrWhiteSpace(dto.Name))
             {
-                throw new BusinessConflictException(
-                    Messages.SysBusinessActivityAlreadyExists,
-                    ErrorCodes.BusinessActivityAlreadyExists);
+                if (await _repo.BusinessActivityExistsAsync(
+                    dto.Name,
+                    sysBusinessActivityId,
+                    cancellationToken))
+                {
+                    throw new BusinessConflictException(
+                        Messages.SysBusinessActivityAlreadyExists,
+                        ErrorCodes.BusinessActivityAlreadyExists);
+                }
             }
 
+            var entity = new SysBusinessActivity
+            {
+                SysBusinessActivityId = sysBusinessActivityId,
+                BusinessActivityName = dto.Name,
+                IsActive = dto.Status,
+                UpdatedBy = loginId
+            };
 
-            var entity = _mapper.Map<SysBusinessActivity>((dto, sysBusinessActivityId));
-            entity.UpdatedBy = loginId;
             var updated = await _repo.UpdateAsync(entity, cancellationToken);
 
             if (!updated)
-            {
                 throw new BusinessNotFoundException(
                     Messages.NotFound,
                     ErrorCodes.BusinessActivityNotFound);
-            }
+
             var updatedEntity = await _repo.GetByIdAsync(sysBusinessActivityId, cancellationToken);
 
             return _mapper.Map<SysBusinessActivityDTO>(updatedEntity);
-
         }
 
 

@@ -68,7 +68,7 @@ public class SysBusinessActivityController : ControllerBase
     }
 
   
-    [HttpPut("{id:int}")]
+    [HttpPatch("{id:int}")]
     public async Task<IActionResult> UpdateAsync(
         int id,
         [FromBody] SysBusinessActivityUpdateDTO model,
