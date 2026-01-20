@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Collections.Generic;
 using System.Threading;
@@ -26,21 +26,40 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
         public async Task<SysBusinessActivityDTO> CreateAsync(
-           SysBusinessActivityCreateDTO dto,
-           int loginId,
-           CancellationToken cancellationToken)
+      SysBusinessActivityCreateDTO dto,
+      int loginId,
+      CancellationToken cancellationToken)
         {
-            if (await _repo.BusinessActivityExistsAsync(dto.Name, null, cancellationToken))
+            var existingEntity = await _repo.BusinessActivityExistsAsync(
+                dto.Name,
+                null,
+                cancellationToken);
+
+            if (existingEntity is not null)
+            {
+                if (existingEntity.IsDeleted== false)
+                {
+                    // ❌ Active duplicate
+                    throw new BusinessConflictException(
+                        Messages.BusinessActivityAlreadyExists,
+                        ErrorCodes.BusinessActivityAlreadyExists);
+                }
+
+                // ♻ Soft-deleted (recoverable)
                 throw new BusinessConflictException(
-                    Messages.SysBusinessActivityAlreadyExists,
-                    ErrorCodes.BusinessActivityAlreadyExists);
+                    Messages.BusinessActivityAlreadyExistsRecoverable,
+                    ErrorCodes.BusinessActivityAlreadyExistsRecoverable);
+            }
 
             var entity = _mapper.Map<SysBusinessActivity>(dto);
             entity.CreatedBy = loginId;
 
             entity.SysBusinessActivityId =
                 await _repo.CreateAsync(entity, cancellationToken);
-            var createdEntity = await _repo.GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);       
+
+            var createdEntity =
+                await _repo.GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);
+
             return _mapper.Map<SysBusinessActivityDTO>(createdEntity);
         }
 
@@ -86,16 +105,29 @@ namespace VoiceFirst_Admin.Business.Services
             // uniqueness check ONLY if name is patched
             if (!string.IsNullOrWhiteSpace(dto.Name))
             {
-                if (await _repo.BusinessActivityExistsAsync(
-                    dto.Name,
-                    sysBusinessActivityId,
-                    cancellationToken))
+                var existingEntity = await _repo.BusinessActivityExistsAsync(
+               dto.Name,
+               null,
+               cancellationToken);
+
+                if (existingEntity is not null)
                 {
+                    if (existingEntity.IsDeleted == false)
+                    {
+                        // ❌ Active duplicate
+                        throw new BusinessConflictException(
+                            Messages.BusinessActivityAlreadyExists,
+                            ErrorCodes.BusinessActivityAlreadyExists);
+                    }
+
+                    // ♻ Soft-deleted (recoverable)
                     throw new BusinessConflictException(
-                        Messages.SysBusinessActivityAlreadyExists,
-                        ErrorCodes.BusinessActivityAlreadyExists);
+                        Messages.BusinessActivityAlreadyExistsRecoverable,
+                        ErrorCodes.BusinessActivityAlreadyExistsRecoverable);
                 }
             }
+
+
 
             var entity = new SysBusinessActivity
             {
