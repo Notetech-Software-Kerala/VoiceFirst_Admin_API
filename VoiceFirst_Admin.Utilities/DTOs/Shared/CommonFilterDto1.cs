@@ -28,5 +28,6 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Shared
         Asc,
         Desc
     }
+
 }
 

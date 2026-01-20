@@ -6,6 +6,7 @@ using System.Text;
 using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 using static Dapper.SqlMapper;
@@ -37,6 +38,20 @@ public class ProgramActionRepo : IProgramActionRepo
         var id = await connection.ExecuteScalarAsync<int>(cmd);
         entity.SysProgramActionId = id;
         return entity;
+    }
+    public async Task<IEnumerable<SysProgramActions>> GetLookupAsync( CancellationToken cancellationToken = default)
+    {
+        var sql = new StringBuilder(@"
+        SELECT
+            SysProgramActionId,
+            ProgramActionName 
+        FROM SysProgramActions
+        WHERE IsDeleted = 0 AND IsActive = 1 ORDER BY ProgramActionName ASC
+        ");
+
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<SysProgramActions>(
+            new CommandDefinition(sql.ToString(), cancellationToken: cancellationToken));
     }
 
     public async Task<SysProgramActions?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -99,6 +114,47 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
             baseSql.Append(" AND spa.IsActive = @Active");
             parameters.Add("Active", filter.Active.Value);
         }
+        // CreatedAt
+        if (!string.IsNullOrWhiteSpace(filter.CreatedFromDate) &&
+            DateTime.TryParse(filter.CreatedFromDate, out var createdFrom))
+        {
+            baseSql.Append(" AND spa.CreatedAt >= @CreatedFrom");
+            parameters.Add("CreatedFrom", createdFrom);
+        }
+        if (!string.IsNullOrWhiteSpace(filter.CreatedToDate) &&
+            DateTime.TryParse(filter.CreatedToDate, out var createdTo))
+        {
+            baseSql.Append(" AND spa.CreatedAt < DATEADD(day, 1, @CreatedTo)");
+            parameters.Add("CreatedTo", createdTo.Date);
+        }
+
+        // UpdatedAt
+        if (!string.IsNullOrWhiteSpace(filter.UpdatedFromDate) &&
+            DateTime.TryParse(filter.UpdatedFromDate, out var updatedFrom))
+        {
+            baseSql.Append(" AND spa.UpdatedAt >= @UpdatedFrom");
+            parameters.Add("UpdatedFrom", updatedFrom);
+        }
+        if (!string.IsNullOrWhiteSpace(filter.UpdatedToDate) &&
+            DateTime.TryParse(filter.UpdatedToDate, out var updatedTo))
+        {
+            baseSql.Append(" AND spa.UpdatedAt < DATEADD(day, 1, @UpdatedTo)");
+            parameters.Add("UpdatedTo", updatedTo.Date);
+        }
+
+        // DeletedAt
+        if (!string.IsNullOrWhiteSpace(filter.DeletedFromDate) &&
+            DateTime.TryParse(filter.DeletedFromDate, out var deletedFrom))
+        {
+            baseSql.Append(" AND spa.DeletedAt >= @DeletedFrom");
+            parameters.Add("DeletedFrom", deletedFrom);
+        }
+        if (!string.IsNullOrWhiteSpace(filter.DeletedToDate) &&
+            DateTime.TryParse(filter.DeletedToDate, out var deletedTo))
+        {
+            baseSql.Append(" AND spa.DeletedAt < DATEADD(day, 1, @DeletedTo)");
+            parameters.Add("DeletedTo", deletedTo.Date);
+        }
 
         if (!string.IsNullOrWhiteSpace(filter.SearchText))
         {
@@ -125,7 +181,7 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
             ["DeletedDate"] = "spa.DeletedAt",
         };
 
-        var sortOrder = string.Equals(filter.SortOrder, "desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+        var sortOrder = filter.SortOrder == SortOrder.Desc ? "DESC" : "ASC";
         var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "ActionId" : filter.SortBy;
 
         if (!sortMap.TryGetValue(sortKey, out var sortColumn))
@@ -200,17 +256,26 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
     }
     public async Task<bool> DeleteAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
-        const string sql = @"UPDATE SysProgramActions SET IsDeleted = @IsDeleted, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @Id";
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @Id AND IsDeleted = 0;";
         var parameters = new DynamicParameters();
         parameters.Add("Id", entity.SysProgramActionId);
         parameters.Add("DeletedBy", entity.DeletedBy);
-        parameters.Add("IsDeleted", entity.IsDeleted);
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
         var affected = await connection.ExecuteAsync(cmd);
         return affected > 0;
     }
-
+    public async Task<bool> RestoreAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 0, DeletedAt = NULL,DeletedBy=NULL,UpdatedBy = @UpdatedBy,UpdatedAt = SYSDATETIME()  WHERE SysProgramActionId = @Id AND IsDeleted = 1;";
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", entity.SysProgramActionId);
+        parameters.Add("UpdatedBy", entity.UpdatedBy);
+        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(cmd);
+        return affected > 0;
+    }
     public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
         var sql = "SELECT COUNT(1) FROM SysProgramActions WHERE ProgramActionName = @Name AND IsDeleted=0";
@@ -222,4 +287,5 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
         var count = await connection.ExecuteScalarAsync<int>(cmd);
         return count > 0;
     }
+   
 }

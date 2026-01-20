@@ -24,6 +24,10 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.DeletedDate, opt => opt.MapFrom(s => s.DeletedAt))
                 .ForMember(d => d.ModifiedDate, opt => opt.MapFrom(s => s.UpdatedAt));
 
+            CreateMap<SysProgramActions, ProgramActionLookupDto>()
+               .ForMember(d => d.ActionId, opt => opt.MapFrom(s => s.SysProgramActionId))
+               .ForMember(d => d.ActionName, opt => opt.MapFrom(s => s.ProgramActionName));
+
         }
     }
 }

@@ -54,7 +54,14 @@ namespace VoiceFirst_Admin.Business.Services
                 PageSize = filter.Limit
             };
         }
+        public async Task<IEnumerable<ProgramActionLookupDto>> GetLookupAsync(CancellationToken cancellationToken = default)
+        {
+            var entities = await _repo.GetLookupAsync( cancellationToken);
+            if (entities == null) return null;
+            var dto = _mapper.Map<IEnumerable<ProgramActionLookupDto>>(entities);
+            return dto;
 
+        }
         public async Task<bool> UpdateAsync(ProgramActionUpdateDto dto,int loginId, CancellationToken cancellationToken = default)
         {
             var entity = new SysProgramActions
@@ -67,16 +74,27 @@ namespace VoiceFirst_Admin.Business.Services
 
             return await _repo.UpdateAsync(entity, cancellationToken);
         }
-        public async Task<bool> DeleteAsync(CommonDeleteDto dto, int loginId, CancellationToken cancellationToken = default)
-        {
+        public async Task<bool> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        {   
+            
             var entity = new SysProgramActions
             {
-                SysProgramActionId = dto.Id,
+                SysProgramActionId = id,
                 DeletedBy = loginId,
-                IsDeleted= dto.Deleted
             };
 
             return await _repo.DeleteAsync(entity, cancellationToken);
+        }
+        public async Task<bool> RestoreAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        {
+
+            var entity = new SysProgramActions
+            {
+                SysProgramActionId = id,
+                UpdatedBy = loginId,
+            };
+
+            return await _repo.RestoreAsync(entity, cancellationToken);
         }
 
         public Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
