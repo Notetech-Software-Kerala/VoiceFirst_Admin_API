@@ -1,0 +1,14 @@
+2026-01-20 10:44:20.241 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 4122 ms
+2026-01-20 10:45:33.837 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 2286 ms
+2026-01-20 10:46:37.494 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1608 ms
+2026-01-20 11:38:09.761 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 2171 ms
+2026-01-20 11:38:36.369 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1632 ms
+2026-01-20 11:39:02.071 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1494 ms
+2026-01-20 11:40:54.418 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1637 ms
+2026-01-20 11:42:00.339 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1316 ms
+2026-01-20 11:42:11.957 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1425 ms
+2026-01-20 11:42:26.076 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 4022 ms
+2026-01-20 12:02:19.573 +05:30 [INF] HTTP DELETE /api/businessactivity/4 -> 200 in 462 ms
+2026-01-20 12:02:31.575 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1421 ms
+2026-01-20 12:02:47.738 +05:30 [INF] HTTP PUT /api/businessactivity/recover/4 -> 200 in 25 ms
+2026-01-20 12:02:54.148 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1426 ms

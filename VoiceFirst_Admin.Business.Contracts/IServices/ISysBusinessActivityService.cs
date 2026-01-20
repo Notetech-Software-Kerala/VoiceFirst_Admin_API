@@ -13,7 +13,11 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
         Task<SysBusinessActivityDTO?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(CommonFilterDto1 filter, CancellationToken cancellationToken = default);
         Task<SysBusinessActivityDTO> UpdateAsync(SysBusinessActivityUpdateDTO dto,int sysBusinessActivityId, int loginId, CancellationToken cancellationToken = default);
-        Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
         Task<List<SysBusinessActivityActiveDTO>> GetActiveAsync(CancellationToken cancellationToken);
+        Task<int> RecoverBusinessActivityAsync(
+            int id,
+            int loginId,
+            CancellationToken cancellationToken = default);
     }
 }

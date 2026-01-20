@@ -40,9 +40,9 @@ namespace VoiceFirst_Admin.Data.Repositories
 
    
 
-        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(int id,int deletedBy, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET Active = 0 ,Deleted = 1, DeletedAt = SYSDATETIME()  WHERE SysBusinessActivityId = @Id";
+            const string sql = @"UPDATE SysBusinessActivity SET IsActive = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysBusinessActivityId = @Id";
 
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
@@ -51,7 +51,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             }
 
             var affectedRows = await connection.ExecuteAsync(
-                new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, new { Id = id , deletedBy }, cancellationToken: cancellationToken));
             return affectedRows > 0;
         }
 
@@ -345,6 +345,18 @@ namespace VoiceFirst_Admin.Data.Repositories
             return count > 0;
         }
 
+        public async Task<int>RecoverBusinessActivityAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(),IsActive = 1  WHERE SysBusinessActivityId = @Id";
+            using var connection = _context.CreateConnection();
+            if (connection.State != ConnectionState.Open)
+            {
+                connection.Open();
+            }
+            var affectedRows = await connection.ExecuteAsync(
+                new CommandDefinition(sql, new { Id = id, LoginId = loginId }, cancellationToken: cancellationToken));
+            return affectedRows;
+        }
 
     }
 }

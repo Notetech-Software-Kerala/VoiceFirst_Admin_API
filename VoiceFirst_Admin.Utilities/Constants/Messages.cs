@@ -52,12 +52,12 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string UserUpdated = "User updated successfully.";
         public const string UserDeletedSuccess = "User deleted successfully.";
 
+        public const string SysBusinessActivityRecoverSucessfully = "Business activity recover sucessfully.";
         public const string SysBusinessActivityDeleteSucessfully = "Business activity deleted sucessfully.";
         public const string SysBusinessActivityAlreadyExists = "Name already exists.";
         public const string SysBusinessActivityCreated = "Business activity created sucessfully.";
         public const string SysBusinessActivityRetrieveSucessfully = "Business activity retrieve sucessfully.";
         public const string SysBusinessActivityUpdatedSucessfully = "Business activity updated sucessfully.";
-
 
         public const string ProgramActionSucessfully = "Program action deleted sucessfully.";
         public const string ProgramActionCreated = "Program action created sucessfully.";
