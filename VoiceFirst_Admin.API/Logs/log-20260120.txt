@@ -68,3 +68,8 @@
 2026-01-20 15:24:55.346 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1711 ms
 2026-01-20 15:27:31.548 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 2690 ms
 2026-01-20 15:59:03.213 +05:30 [INF] HTTP PUT /api/business-activity/6 -> 200 in 3153 ms
+2026-01-20 16:30:17.884 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 415 in 1 ms
+2026-01-20 16:30:22.587 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 415 in 0 ms
+2026-01-20 16:30:23.295 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 415 in 0 ms
+2026-01-20 16:30:29.511 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 415 in 0 ms
+2026-01-20 16:38:08.890 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 400 in 188 ms
