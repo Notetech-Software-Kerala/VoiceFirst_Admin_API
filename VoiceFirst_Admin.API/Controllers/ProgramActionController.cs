@@ -26,22 +26,10 @@ namespace VoiceFirst_Admin.API.Controllers
         public async Task<IActionResult> Create([FromBody] ProgramActionCreateDto model, CancellationToken cancellationToken)
         {
             if (model == null) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
-
-            // uniqueness check
-            if (await _service.ExistsByNameAsync(model.ProgramActionName, null, cancellationToken))
-                return Conflict(ApiResponse<object>.Fail(Messages.NameAlreadyExists, statusCode: StatusCodes.Status409Conflict));
-
+     
             var created = await _service.CreateAsync(model, userId, cancellationToken);
 
-            var item = await _service.GetByIdAsync(created.SysProgramActionId, cancellationToken);
-            if (item == null)
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    ApiResponse<object>.Fail(Messages.SomethingWentWrong));
-
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = item.ActionId },
-                ApiResponse<ProgramActionDto>.Ok(item, Messages.ProgramActionCreated));
+            return StatusCode(created.StatusCode, created);
         }
 
         [HttpGet("{id:int}")]
@@ -68,52 +56,23 @@ namespace VoiceFirst_Admin.API.Controllers
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] ProgramActionUpdateDto model, CancellationToken cancellationToken)
         {
-            
-            if (await _service.ExistsByNameAsync(model.ActionName ?? string.Empty, id, cancellationToken))
-                return Conflict(ApiResponse<object>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict));
-
-            var ok = await _service.UpdateAsync(model, id, userId, cancellationToken);
-            if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
-            var item = await _service.GetByIdAsync(id, cancellationToken);
-            if (item == null)
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    ApiResponse<object>.Fail(Messages.SomethingWentWrong));
-
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = item.ActionId },
-                ApiResponse<ProgramActionDto>.Ok(item, Messages.ProgramActionCreated));
+            var res = await _service.UpdateAsync( model,id, userId, cancellationToken);
+            return StatusCode(res.StatusCode, res);
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            
-            var item = await _service.GetByIdAsync(id, cancellationToken);
-            if (item == null)
-                return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
 
-            if(item.Deleted==true)
-                return BadRequest(ApiResponse<object>.Fail(Messages.ProgramActionAlreadyDeleted));
-
-            var ok = await _service.DeleteAsync(id, userId, cancellationToken);
-            if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
-            return Ok(ApiResponse<object>.Ok(null!, Messages.ProgramActionDeleteSucessfully, StatusCodes.Status204NoContent));
+            var res = await _service.DeleteAsync(id, userId, cancellationToken);
+            return StatusCode(res.StatusCode, res);
         }
         [HttpPut("recover/{id:int}")]
         public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
         {
-            
-            var item = await _service.GetByIdAsync(id, cancellationToken);
-            if (item == null)
-                return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
 
-            if (item.Deleted == false)
-                return BadRequest(ApiResponse<object>.Fail(Messages.ProgramActionAlreadyRestored));
-
-            var ok = await _service.RestoreAsync(id, userId, cancellationToken);
-            if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
-            return Ok(ApiResponse<object>.Ok(null!, Messages.ProgramActionRestoreSucessfully, StatusCodes.Status204NoContent));
+            var res = await _service.RestoreAsync(id, userId, cancellationToken);
+            return StatusCode(res.StatusCode, res);
         }
 
 

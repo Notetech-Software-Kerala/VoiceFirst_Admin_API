@@ -276,16 +276,16 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
         var affected = await connection.ExecuteAsync(cmd);
         return affected > 0;
     }
-    public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
+    public async Task<SysProgramActions> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var sql = "SELECT COUNT(1) FROM SysProgramActions WHERE ProgramActionName = @Name";
+        var sql = "SELECT * FROM SysProgramActions WHERE ProgramActionName = @Name";
         if (excludeId.HasValue)
             sql += " AND SysProgramActionId <> @ExcludeId";
 
         var cmd = new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
-        var count = await connection.ExecuteScalarAsync<int>(cmd);
-        return count > 0;
+        return await connection.ExecuteScalarAsync<SysProgramActions>(cmd);
+     
     }
    
 }

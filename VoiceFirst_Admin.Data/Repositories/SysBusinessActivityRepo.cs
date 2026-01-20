@@ -9,6 +9,7 @@ using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
+using static Dapper.SqlMapper;
 
 namespace VoiceFirst_Admin.Data.Repositories
 {
@@ -479,16 +480,16 @@ namespace VoiceFirst_Admin.Data.Repositories
             return affected > 0;
         }
 
-        public async Task<bool> BusinessActivityExistsAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
+        public async Task<SysBusinessActivity> BusinessActivityExistsAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
-            var sql = "SELECT COUNT(1) FROM SysBusinessActivity WHERE BusinessActivityName = @Name";
+            var sql = "SELECT * FROM SysBusinessActivity WHERE BusinessActivityName = @Name";
             if (excludeId.HasValue)
                 sql += " AND SysBusinessActivityId <> @ExcludeId";
 
             var cmd = new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
-            var count = await connection.ExecuteScalarAsync<int>(cmd);
-            return count > 0;
+            var entity = await connection.QueryFirstOrDefaultAsync<SysBusinessActivity>(cmd);
+            return entity;
         }
 
         public async Task<int>RecoverBusinessActivityAsync(int id, int loginId, CancellationToken cancellationToken = default)

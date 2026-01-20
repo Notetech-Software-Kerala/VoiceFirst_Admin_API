@@ -32,7 +32,7 @@ public class SysBusinessActivityController : ControllerBase
         return Ok(         
             ApiResponse<SysBusinessActivityDTO>.Ok(
                 created,
-                Messages.SysBusinessActivityCreated));
+                Messages.BusinessActivityCreated));
     }
 
     [HttpGet("{id:int}")]
@@ -43,7 +43,7 @@ public class SysBusinessActivityController : ControllerBase
 
         return Ok(ApiResponse<SysBusinessActivityDTO?>.Ok(
             item,
-            Messages.SysBusinessActivityRetrieveSucessfully));
+            Messages.BusinessActivityRetrieved));
     }
 
     [HttpGet("lookup")]
@@ -53,7 +53,7 @@ public class SysBusinessActivityController : ControllerBase
     {//
         var items = await _service.GetActiveAsync(cancellationToken);
         return Ok(ApiResponse<object>.Ok(items,
-            Messages.SysBusinessActivityRetrieveSucessfully));
+            Messages.BusinessActivityRetrieved));
     }
 
     [HttpGet]
@@ -64,7 +64,7 @@ public class SysBusinessActivityController : ControllerBase
         
         var items = await _service.GetAllAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, 
-            Messages.SysBusinessActivityRetrieveSucessfully));
+            Messages.BusinessActivityRetrieved));
     }
 
   
@@ -79,7 +79,7 @@ public class SysBusinessActivityController : ControllerBase
 
         var updatedDto = await _service.UpdateAsync(model, id, userId, cancellationToken);
 
-        return Ok(ApiResponse<object>.Ok(updatedDto, Messages.SysBusinessActivityUpdatedSucessfully));
+        return Ok(ApiResponse<object>.Ok(updatedDto, Messages.BusinessActivityUpdated));
     }
 
     [HttpPatch("recover/{id:int}")]
@@ -88,7 +88,7 @@ public class SysBusinessActivityController : ControllerBase
         CancellationToken cancellationToken)
     {
         var recoveredDto = await _service.RecoverBusinessActivityAsync(id, userId, cancellationToken);
-        return Ok(ApiResponse<object>.Ok(recoveredDto, Messages.SysBusinessActivityRecoverSucessfully));
+        return Ok(ApiResponse<object>.Ok(recoveredDto, Messages.BusinessActivityRecovered));
     }
 
     [HttpDelete("{id:int}")]
@@ -97,6 +97,6 @@ public class SysBusinessActivityController : ControllerBase
     {
         await _service.DeleteAsync(id, userId, cancellationToken);
         return Ok(ApiResponse<object>.Ok(null!,
-            Messages.SysBusinessActivityDeleteSucessfully));
+            Messages.BusinessActivityDeleted));
     }
 }
