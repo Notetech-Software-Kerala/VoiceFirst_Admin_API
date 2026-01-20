@@ -14,7 +14,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
         Task<ProgramActionDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<IEnumerable<ProgramActionLookupDto>> GetLookupAsync(CancellationToken cancellationToken = default);
         Task<PagedResultDto<ProgramActionDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default);
-        Task<bool> UpdateAsync(ProgramActionUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
+        Task<bool> UpdateAsync(ProgramActionUpdateDto dto,int id, int loginId, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
         Task<bool> RestoreAsync(int id, int loginId, CancellationToken cancellationToken = default);
         Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);

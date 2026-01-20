@@ -60,7 +60,7 @@ public class ProgramActionRepo : IProgramActionRepo
             spa.SysProgramActionId,
             spa.ProgramActionName,
             spa.CreatedAt,
-            spa.isActive,
+            spa.IsActive,
             spa.UpdatedAt,
             spa.IsDeleted,
             spa.DeletedAt,
@@ -230,8 +230,8 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
 
         if (entity.IsActive.HasValue)
         {
-            sets.Add("Active = @Active");
-            parameters.Add("Active", entity.IsActive.Value ? 1 : 0);
+            sets.Add("IsActive = @IsActive");
+            parameters.Add("IsActive", entity.IsActive.Value ? 1 : 0);
         }
 
         // If nothing to update, return false (no-op)
@@ -278,7 +278,7 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
     }
     public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var sql = "SELECT COUNT(1) FROM SysProgramActions WHERE ProgramActionName = @Name AND IsDeleted=0";
+        var sql = "SELECT COUNT(1) FROM SysProgramActions WHERE ProgramActionName = @Name";
         if (excludeId.HasValue)
             sql += " AND SysProgramActionId <> @ExcludeId";
 

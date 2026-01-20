@@ -62,11 +62,11 @@ namespace VoiceFirst_Admin.Business.Services
             return dto;
 
         }
-        public async Task<bool> UpdateAsync(ProgramActionUpdateDto dto,int loginId, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateAsync(ProgramActionUpdateDto dto,int id,int loginId, CancellationToken cancellationToken = default)
         {
             var entity = new SysProgramActions
             {
-                SysProgramActionId = dto.ActionId,
+                SysProgramActionId = id,
                 ProgramActionName = dto.ActionName ?? string.Empty,
                 IsActive = dto.Active,
                 UpdatedBy = loginId
