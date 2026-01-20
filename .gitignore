@@ -1,4 +1,5 @@
 /.vs
+/VoiceFirst_Admin.API/Logs
 /VoiceFirst_Admin.API/obj
 /VoiceFirst_Admin.Business.Contracts/obj
 /VoiceFirst_Admin.Business/obj
