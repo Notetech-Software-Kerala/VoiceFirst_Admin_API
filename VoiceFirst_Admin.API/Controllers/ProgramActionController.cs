@@ -68,12 +68,11 @@ namespace VoiceFirst_Admin.API.Controllers
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] ProgramActionUpdateDto model, CancellationToken cancellationToken)
         {
-            if (model == null || model.ActionId != id) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
-
+            
             if (await _service.ExistsByNameAsync(model.ActionName ?? string.Empty, id, cancellationToken))
                 return Conflict(ApiResponse<object>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict));
 
-            var ok = await _service.UpdateAsync(model, userId, cancellationToken);
+            var ok = await _service.UpdateAsync(model, id, userId, cancellationToken);
             if (!ok) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
             var item = await _service.GetByIdAsync(id, cancellationToken);
             if (item == null)

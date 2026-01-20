@@ -211,7 +211,7 @@ public class ProgramActionControllerTests
     public async Task Update_WithMismatchedId_ShouldReturnBadRequest()
     {
         // Arrange
-        var dto = new ProgramActionUpdateDto { ActionId = 2, ActionName = "Updated" };
+        var dto = new ProgramActionUpdateDto {  ActionName = "Updated" };
 
         // Act
         var result = await _controller.Update(1, dto, CancellationToken.None);
@@ -224,7 +224,7 @@ public class ProgramActionControllerTests
     public async Task Update_WithExistingName_ShouldReturnConflict()
     {
         // Arrange
-        var dto = new ProgramActionUpdateDto { ActionId = 1, ActionName = "ExistingName" };
+        var dto = new ProgramActionUpdateDto {  ActionName = "ExistingName" };
         _serviceMock.Setup(s => s.ExistsByNameAsync("ExistingName", 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -239,12 +239,12 @@ public class ProgramActionControllerTests
     public async Task Update_WithValidData_ShouldReturnCreatedAtAction()
     {
         // Arrange
-        var dto = new ProgramActionUpdateDto { ActionId = 1, ActionName = "UpdatedAction" };
-        var updatedDto = new ProgramActionDto { ActionId = 1, ActionName = "UpdatedAction", Active = true };
+        var dto = new ProgramActionUpdateDto { ActionName = "UpdatedAction" };
+        var updatedDto = new ProgramActionDto { ActionName = "UpdatedAction", Active = true };
 
         _serviceMock.Setup(s => s.ExistsByNameAsync("UpdatedAction", 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
-        _serviceMock.Setup(s => s.UpdateAsync(dto, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _serviceMock.Setup(s => s.UpdateAsync(dto,1, It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _serviceMock.Setup(s => s.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(updatedDto);
@@ -254,18 +254,18 @@ public class ProgramActionControllerTests
 
         // Assert
         result.Should().BeOfType<CreatedAtActionResult>();
-        _serviceMock.Verify(s => s.UpdateAsync(dto, It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+        _serviceMock.Verify(s => s.UpdateAsync(dto,1, It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task Update_WhenUpdateFails_ShouldReturnNotFound()
     {
         // Arrange
-        var dto = new ProgramActionUpdateDto { ActionId = 1, ActionName = "UpdatedAction" };
+        var dto = new ProgramActionUpdateDto {  ActionName = "UpdatedAction" };
 
         _serviceMock.Setup(s => s.ExistsByNameAsync("UpdatedAction", 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
-        _serviceMock.Setup(s => s.UpdateAsync(dto, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _serviceMock.Setup(s => s.UpdateAsync(dto,1, It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act

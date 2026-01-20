@@ -67,9 +67,19 @@
 2026-01-20 15:24:40.470 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 6186 ms
 2026-01-20 15:24:55.346 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 1711 ms
 2026-01-20 15:27:31.548 +05:30 [INF] HTTP GET /api/businessactivity -> 200 in 2690 ms
+<<<<<<< HEAD
+2026-01-20 16:11:15.267 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-20 16:12:14.412 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-20 16:13:35.032 +05:30 [WRN] The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert
+2026-01-20 16:13:50.256 +05:30 [INF] HTTP PUT /api/program-action/3 -> 201 in 705 ms
+=======
 2026-01-20 15:59:03.213 +05:30 [INF] HTTP PUT /api/business-activity/6 -> 200 in 3153 ms
+<<<<<<< HEAD
 2026-01-20 16:30:17.884 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 415 in 1 ms
 2026-01-20 16:30:22.587 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 415 in 0 ms
 2026-01-20 16:30:23.295 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 415 in 0 ms
 2026-01-20 16:30:29.511 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 415 in 0 ms
 2026-01-20 16:38:08.890 +05:30 [INF] HTTP PATCH /api/business-activity/1 -> 400 in 188 ms
+=======
+>>>>>>> d2bb49a6912bfe0431eda409f4aa3c5d63455d0b
+>>>>>>> 494787d447993f213a19e427d883920a03fd446b
