@@ -1,11 +1,13 @@
 
 
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Business.Services;
@@ -85,6 +87,7 @@ var audience = builder.Configuration["Jwt:Audience"]!;
 
 builder.Services.AddSwaggerGen(c =>
 {
+    c.SchemaFilter<EnumSchemaFilter>();
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Voice First Admin", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -143,3 +146,17 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.MapControllers();
 
 app.Run();
+public class EnumSchemaFilter : ISchemaFilter
+{
+    public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+    {
+        if (!context.Type.IsEnum) return;
+
+        schema.Enum.Clear();
+        foreach (var name in Enum.GetNames(context.Type))
+            schema.Enum.Add(new OpenApiString(name));
+
+        schema.Type = "string";
+        schema.Format = null;
+    }
+}

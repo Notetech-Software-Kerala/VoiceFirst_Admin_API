@@ -114,6 +114,47 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
             baseSql.Append(" AND spa.IsActive = @Active");
             parameters.Add("Active", filter.Active.Value);
         }
+        // CreatedAt
+        if (!string.IsNullOrWhiteSpace(filter.CreatedFromDate) &&
+            DateTime.TryParse(filter.CreatedFromDate, out var createdFrom))
+        {
+            baseSql.Append(" AND spa.CreatedAt >= @CreatedFrom");
+            parameters.Add("CreatedFrom", createdFrom);
+        }
+        if (!string.IsNullOrWhiteSpace(filter.CreatedToDate) &&
+            DateTime.TryParse(filter.CreatedToDate, out var createdTo))
+        {
+            baseSql.Append(" AND spa.CreatedAt < DATEADD(day, 1, @CreatedTo)");
+            parameters.Add("CreatedTo", createdTo.Date);
+        }
+
+        // UpdatedAt
+        if (!string.IsNullOrWhiteSpace(filter.UpdatedFromDate) &&
+            DateTime.TryParse(filter.UpdatedFromDate, out var updatedFrom))
+        {
+            baseSql.Append(" AND spa.UpdatedAt >= @UpdatedFrom");
+            parameters.Add("UpdatedFrom", updatedFrom);
+        }
+        if (!string.IsNullOrWhiteSpace(filter.UpdatedToDate) &&
+            DateTime.TryParse(filter.UpdatedToDate, out var updatedTo))
+        {
+            baseSql.Append(" AND spa.UpdatedAt < DATEADD(day, 1, @UpdatedTo)");
+            parameters.Add("UpdatedTo", updatedTo.Date);
+        }
+
+        // DeletedAt
+        if (!string.IsNullOrWhiteSpace(filter.DeletedFromDate) &&
+            DateTime.TryParse(filter.DeletedFromDate, out var deletedFrom))
+        {
+            baseSql.Append(" AND spa.DeletedAt >= @DeletedFrom");
+            parameters.Add("DeletedFrom", deletedFrom);
+        }
+        if (!string.IsNullOrWhiteSpace(filter.DeletedToDate) &&
+            DateTime.TryParse(filter.DeletedToDate, out var deletedTo))
+        {
+            baseSql.Append(" AND spa.DeletedAt < DATEADD(day, 1, @DeletedTo)");
+            parameters.Add("DeletedTo", deletedTo.Date);
+        }
 
         if (!string.IsNullOrWhiteSpace(filter.SearchText))
         {
@@ -140,7 +181,7 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
             ["DeletedDate"] = "spa.DeletedAt",
         };
 
-        var sortOrder = string.Equals(filter.SortOrder, "desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+        var sortOrder = filter.SortOrder == SortOrder.Desc ? "DESC" : "ASC";
         var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "ActionId" : filter.SortBy;
 
         if (!sortMap.TryGetValue(sortKey, out var sortColumn))
