@@ -5,3 +5,7 @@
 /VoiceFirst_Admin.Data.Contracts/obj
 /VoiceFirst_Admin.Data/obj
 /VoiceFirst_Admin.Utilities/obj
+/VoiceFirst_Admin.API/bin
+/VoiceFirst_Admin.Business/bin
+/VoiceFirst_Admin.Data/bin
+/VoiceFirst_Admin.Utilities/bin
