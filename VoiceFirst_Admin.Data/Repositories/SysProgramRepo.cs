@@ -22,20 +22,20 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<SysProgram?> ExistsByNameAsync(int applicationId, string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
-            var sql = new StringBuilder("SELECT TOP 1 * FROM SysProgram WHERE ApplicationId = @ApplicationId AND ProgramName = @ActivityName");
+            var sql = new StringBuilder("SELECT TOP 1 * FROM SysProgram WHERE ApplicationId = @ApplicationId AND ProgramName = @ProgramName");
             if (excludeId.HasValue)
-                sql.Append(" AND ProgramId <> @ExcludeId");
+                sql.Append(" AND SysProgramId <> @ExcludeId");
 
             using var connection = _context.CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<SysProgram>(
-                new CommandDefinition(sql.ToString(), new { ApplicationId = applicationId, Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken));
+                new CommandDefinition(sql.ToString(), new { ApplicationId = applicationId, ProgramName = name, ExcludeId = excludeId }, cancellationToken: cancellationToken));
         }
 
         public async Task<SysProgram?> ExistsByLabelAsync(int applicationId, string label, int? excludeId = null, CancellationToken cancellationToken = default)
         {
             var sql = new StringBuilder("SELECT TOP 1 * FROM SysProgram WHERE ApplicationId = @ApplicationId AND LabelName = @Label");
             if (excludeId.HasValue)
-                sql.Append(" AND ProgramId <> @ExcludeId");
+                sql.Append(" AND SysProgramId <> @ExcludeId");
 
             using var connection = _context.CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<SysProgram>(
@@ -46,7 +46,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         {
             var sql = new StringBuilder("SELECT TOP 1 * FROM SysProgram WHERE ApplicationId = @ApplicationId AND ProgramRoute = @Route");
             if (excludeId.HasValue)
-                sql.Append(" AND ProgramId <> @ExcludeId");
+                sql.Append(" AND SysProgramId <> @ExcludeId");
 
             using var connection = _context.CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<SysProgram>(
@@ -55,10 +55,10 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<SysProgram?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            const string sql = @"SELECT * FROM SysProgram WHERE ProgramId = @ActivityId";
+            const string sql = @"SELECT * FROM SysProgram WHERE SysProgramId = @ProgramId";
             using var connection = _context.CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<SysProgram>(
-                new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, new { ProgramId = id }, cancellationToken: cancellationToken));
         }
 
 
@@ -124,7 +124,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             SELECT 
                 l.ProgramActionId AS ActionId,
                 a.ProgramActionName AS ActionName,
-                ISNULL(l.Active, 1) AS Active,
+                ISNULL(l.IsActive, 1) AS Active,
                 CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
                 l.CreatedAt AS CreatedDate,
                 CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
@@ -133,7 +133,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             INNER JOIN SysProgramActions a ON a.SysProgramActionId = l.ProgramActionId
             INNER JOIN Users uC ON uC.UserId = l.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
-            WHERE l.ProgramId = @ProgramId AND l.Active = 1;
+            WHERE l.ProgramId = @ProgramId AND l.IsActive = 1;
             ";
             using var connection = _context.CreateConnection();
             return await connection.QueryAsync<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkDTO>(
@@ -146,7 +146,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         public async Task<SysProgramActionsLink> GetActiveByIdAsync
           (int SysProgramActionsLink, CancellationToken cancellationToken = default)
         {
-            var sql = "SELECT * FROM SysProgramActionsLink WHERE SysProgramActionLinkId = @SysProgramActionLinkId And Active = 1 ;";
+            var sql = "SELECT * FROM SysProgramActionsLink WHERE SysProgramActionLinkId = @SysProgramActionLinkId And IsActive = 1 ;";
 
             var cmd = new CommandDefinition(sql, new { SysProgramActionsLink = SysProgramActionsLink }, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();

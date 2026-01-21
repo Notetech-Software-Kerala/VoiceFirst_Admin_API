@@ -21,7 +21,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         public async Task<Application> GetActiveByIdAsync
             ( int ApplicationId, CancellationToken cancellationToken = default)
         {
-            var sql = "SELECT * FROM Application WHERE ApplicationId = @ApplicationId And Active = 1;";
+            var sql = "SELECT * FROM Application WHERE ApplicationId = @ApplicationId And IsActive = 1;";
  
             var cmd = new CommandDefinition(sql, new { ApplicationId = ApplicationId }, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
