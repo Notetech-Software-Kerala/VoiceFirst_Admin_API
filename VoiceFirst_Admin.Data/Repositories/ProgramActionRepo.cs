@@ -27,7 +27,7 @@ public class ProgramActionRepo : IProgramActionRepo
     public async Task<SysProgramActions> GetActiveByIdAsync
           (int SysProgramActionId, CancellationToken cancellationToken = default)
     {
-        var sql = "SELECT * FROM SysProgramActions WHERE SysProgramActionId = @SysProgramActionId And Active = 1 And IsDeleted = 0;";
+        var sql = "SELECT * FROM SysProgramActions WHERE SysProgramActionId = @SysProgramActionId And IsActive = 1 And IsDeleted = 0;";
 
         var cmd = new CommandDefinition(sql, new { SysProgramActionId = SysProgramActionId }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -59,7 +59,7 @@ public class ProgramActionRepo : IProgramActionRepo
             SysProgramActionId,
             ProgramActionName 
         FROM SysProgramActions
-        WHERE IsDeleted = 0 AND Active = 1 ORDER BY ProgramActionName ASC
+        WHERE IsDeleted = 0 AND IsActive = 1 ORDER BY ProgramActionName ASC
         ");
 
         using var connection = _context.CreateConnection();
@@ -73,7 +73,7 @@ public class ProgramActionRepo : IProgramActionRepo
             spa.SysProgramActionId,
             spa.ProgramActionName,
             spa.CreatedAt,
-            spa.Active,
+            spa.IsActive,
             spa.UpdatedAt,
             spa.IsDeleted,
             spa.DeletedAt,
@@ -200,7 +200,7 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
         {
             ["ActionId"] = "spa.SysProgramActionId",
             ["ActionName"] = "spa.ProgramActionName",
-            ["Active"] = "spa.Active",
+            ["Active"] = "spa.IsActive",
             ["Deleted"] = "spa.IsDeleted",
             ["CreatedDate"] = "spa.CreatedAt",
             ["ModifiedDate"] = "spa.UpdatedAt",
@@ -219,7 +219,7 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
         // ITEMS (select + order + paging)
         var itemsSql = $@"
             SELECT
-                spa.SysProgramActionId, spa.ProgramActionName, spa.CreatedAt, spa.Active, spa.UpdatedAt, spa.IsDeleted, spa.DeletedAt, uC.UserId AS CreatedById, CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName, uU.UserId AS UpdatedById, CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName, uD.UserId AS DeletedById, CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
+                spa.SysProgramActionId, spa.ProgramActionName, spa.CreatedAt, spa.IsActive, spa.UpdatedAt, spa.IsDeleted, spa.DeletedAt, uC.UserId AS CreatedById, CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName, uU.UserId AS UpdatedById, CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName, uD.UserId AS DeletedById, CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
             {baseSql}
             ORDER BY {sortColumn} {sortOrder}
             OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;
@@ -256,8 +256,8 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
 
         if (entity.IsActive.HasValue)
         {
-            sets.Add("Active = @Active");
-            parameters.Add("Active", entity.IsActive.Value ? 1 : 0);
+            sets.Add("IsActive = @IsActive");
+            parameters.Add("IsActive", entity.IsActive.Value ? 1 : 0);
         }
 
         // If nothing to update, return false (no-op)
@@ -268,12 +268,12 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
         sets.Add("UpdatedBy = @UpdatedBy");
         sets.Add("UpdatedAt = SYSDATETIME()");
         parameters.Add("UpdatedBy", entity.UpdatedBy);
-        parameters.Add("ActivityId", entity.SysProgramActionId);
+        parameters.Add("SysProgramActionId", entity.SysProgramActionId);
 
         var sql = new StringBuilder();
         sql.Append("UPDATE SysProgramActions SET ");
         sql.Append(string.Join(", ", sets));
-        sql.Append(" WHERE SysProgramActionId = @ActivityId AND IsDeleted = 0;");
+        sql.Append(" WHERE SysProgramActionId = @SysProgramActionId AND IsDeleted = 0;");
 
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -282,9 +282,9 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
     }
     public async Task<bool> DeleteAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
-        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @ActivityId AND IsDeleted = 0;";
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @SysProgramActionId AND IsDeleted = 0;";
         var parameters = new DynamicParameters();
-        parameters.Add("ActivityId", entity.SysProgramActionId);
+        parameters.Add("SysProgramActionId", entity.SysProgramActionId);
         parameters.Add("DeletedBy", entity.DeletedBy);
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -293,9 +293,9 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
     }
     public async Task<bool> RestoreAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
-        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 0, DeletedAt = NULL,DeletedBy=NULL,UpdatedBy = @UpdatedBy,UpdatedAt = SYSDATETIME()  WHERE SysProgramActionId = @ActivityId AND IsDeleted = 1;";
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 0, DeletedAt = NULL,DeletedBy=NULL,UpdatedBy = @UpdatedBy,UpdatedAt = SYSDATETIME()  WHERE SysProgramActionId = @SysProgramActionId AND IsDeleted = 1;";
         var parameters = new DynamicParameters();
-        parameters.Add("ActivityId", entity.SysProgramActionId);
+        parameters.Add("SysProgramActionId", entity.SysProgramActionId);
         parameters.Add("UpdatedBy", entity.UpdatedBy);
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -304,7 +304,7 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
     }
     public async Task<SysProgramActions> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var sql = "SELECT * FROM SysProgramActions WHERE ProgramActionName = @ActivityName";
+        var sql = "SELECT * FROM SysProgramActions WHERE ProgramActionName = @Name";
         if (excludeId.HasValue)
             sql += " AND SysProgramActionId <> @ExcludeId";
 
