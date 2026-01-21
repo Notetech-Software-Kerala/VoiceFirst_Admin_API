@@ -40,7 +40,7 @@ public class PostOfficeController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] CommonFilterDto filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll([FromQuery] PostOfficeFilterDto filter, CancellationToken cancellationToken)
     {
         var items = await _service.GetAllAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
@@ -53,7 +53,7 @@ public class PostOfficeController : ControllerBase
         return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
     }
 
-    [HttpPut("{id:int}")]
+    [HttpPatch("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] PostOfficeUpdateDto model, CancellationToken cancellationToken)
     {
         var res = await _service.UpdateAsync(model, id, userId, cancellationToken);
@@ -67,7 +67,7 @@ public class PostOfficeController : ControllerBase
         return StatusCode(res.StatusCode, res);
     }
 
-    [HttpPut("recover/{id:int}")]
+    [HttpPatch("recover/{id:int}")]
     public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
     {
         var res = await _service.RestoreAsync(id, userId, cancellationToken);

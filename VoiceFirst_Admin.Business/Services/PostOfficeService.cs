@@ -80,7 +80,7 @@ public class PostOfficeService : IPostOfficeService
         return dto;
     }
 
-    public async Task<PagedResultDto<PostOfficeDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<PostOfficeDto>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default)
     {
         var entities = await _repo.GetAllAsync(filter, cancellationToken);
         var list = new List<PostOfficeDto>();

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
@@ -11,7 +12,7 @@ public interface IPostOfficeRepo
 {
     Task<PostOffice> CreateAsync(PostOffice entity, CancellationToken cancellationToken = default);
     Task<PostOffice?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<PagedResultDto<PostOffice>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default);
+    Task<PagedResultDto<PostOffice>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOffice>> GetLookupAsync(CancellationToken cancellationToken = default);
     Task<PostOffice?> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
     Task<bool> UpdateAsync(PostOffice entity, CancellationToken cancellationToken = default);
