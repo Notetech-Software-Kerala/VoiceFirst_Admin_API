@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
@@ -29,8 +30,53 @@ namespace VoiceFirst_Admin.API.Controllers
                 return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
           
 
-            var created = await _service.CreateAsync(model, userId, cancellationToken);
-            return StatusCode(created.StatusCode, created);
+            var result = await _service.CreateAsync(model, userId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById([FromRoute] int id, CancellationToken cancellationToken)
+        {
+            var result = await _service.GetByIdAsync(id, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
+
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)
+        {
+
+            var result = await _service.DeleteAsync(id,userId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
+
+
+        [HttpPatch("recover/{id:int}")]
+        public async Task<IActionResult> RecoverAsync(
+            int id,
+            CancellationToken cancellationToken)
+        {
+            var result = await _service.RecoverProgramAsync(id, userId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
+
+
+        //[HttpGet("lookup")]
+        //public async Task<IActionResult> GetActiveAsync(
+
+        //  CancellationToken cancellationToken)
+        //{
+        //    var result = await _service.GetActiveAsync(cancellationToken);
+        //    return StatusCode(result.StatusCode, result);
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllAsync(
+            [FromQuery] VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramFilterDTO filter,
+            CancellationToken cancellationToken)
+        {
+            var items = await _service.GetAllAsync(filter, cancellationToken);
+            return Ok(ApiResponse<object>.Ok(items, Messages.ProgramRetrieved));
         }
     }
 }

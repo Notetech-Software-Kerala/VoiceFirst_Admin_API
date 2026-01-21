@@ -27,7 +27,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
           .ForMember(d => d.ActivityId, o => o.MapFrom(s => s.SysBusinessActivityId))
           .ForMember(d => d.ActivityName, o => o.MapFrom(s => s.BusinessActivityName))
           .ForMember(d => d.Active, o => o.MapFrom(s => s.IsActive))
-          .ForMember(d => d.Delete, o => o.MapFrom(s => s.IsDeleted))
+          .ForMember(d => d.Deleted, o => o.MapFrom(s => s.IsDeleted))
           .ForMember(d => d.CreatedUser, o => o.MapFrom(s => s.CreatedUserName))
           .ForMember(d => d.CreatedDate, o => o.MapFrom(s => s.CreatedAt))
           .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.UpdatedUserName))
