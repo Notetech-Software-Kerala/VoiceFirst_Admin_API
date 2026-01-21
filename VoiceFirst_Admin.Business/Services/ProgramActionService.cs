@@ -89,16 +89,20 @@ namespace VoiceFirst_Admin.Business.Services
         }
         public async Task<ApiResponse<ProgramActionDto>> UpdateAsync(ProgramActionUpdateDto dto,int id,int loginId, CancellationToken cancellationToken = default)
         {
-            // name uniqueness (exclude current id)
-            var existing = await _repo.ExistsByNameAsync(dto.ActionName ?? string.Empty, id, cancellationToken);
-            if (existing != null)
+            if (dto.ActionName != null)
             {
-                // if you want special message when existing is deleted:
-                if (existing.IsDeleted==true)
-                    return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
+                // name uniqueness (exclude current id)
+                var existing = await _repo.ExistsByNameAsync(dto.ActionName ?? string.Empty, id, cancellationToken);
+                if (existing != null)
+                {
+                    // if you want special message when existing is deleted:
+                    if (existing.IsDeleted == true)
+                        return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
 
-                return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+                    return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+                }
             }
+            
 
             var entity = new SysProgramActions
             {

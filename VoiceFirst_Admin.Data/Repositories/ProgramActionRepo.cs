@@ -96,10 +96,10 @@ public class ProgramActionRepo : IProgramActionRepo
 
         // FROM + WHERE (shared)
         var baseSql = new StringBuilder(@"
-FROM SysProgramActions spa
-INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
-LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
-LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
+            FROM SysProgramActions spa
+            INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
+            LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
             ");
 
         // filters (apply ONLY here so both count + items match)
@@ -297,7 +297,7 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
 
         var cmd = new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
-        return await connection.ExecuteScalarAsync<SysProgramActions>(cmd);
+        return await connection.QueryFirstOrDefaultAsync<SysProgramActions>(cmd);
      
     }
    
