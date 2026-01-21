@@ -67,7 +67,7 @@ namespace VoiceFirst_Admin.Business.Services
             return dto;
         }
 
-        public async Task<PagedResultDto<ProgramActionDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<ProgramActionDto>> GetAllAsync(ProgramActionFilterDto filter, CancellationToken cancellationToken = default)
         {
             var entities = await _repo.GetAllAsync(filter, cancellationToken);
             var list = _mapper.Map<IEnumerable<ProgramActionDto>>(entities.Items);

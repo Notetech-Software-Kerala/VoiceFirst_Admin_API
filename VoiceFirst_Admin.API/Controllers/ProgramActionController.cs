@@ -41,7 +41,7 @@ namespace VoiceFirst_Admin.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] CommonFilterDto filter, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAll([FromQuery] ProgramActionFilterDto filter, CancellationToken cancellationToken)
         {
             var items = await _service.GetAllAsync(filter, cancellationToken);
             return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
