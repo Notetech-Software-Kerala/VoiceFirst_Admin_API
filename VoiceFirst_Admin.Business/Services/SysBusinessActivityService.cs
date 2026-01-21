@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Exceptions;
@@ -151,18 +152,31 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(
-     CommonFilterDto filter,
-     CancellationToken cancellationToken)
-        {
-            var pagedEntities = await _repo.GetAllAsync(filter, cancellationToken);
+     //   public async Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(
+     //BusinessActivityFilterDTO filter,
+     //CancellationToken cancellationToken)
+     //   {
+     //       var pagedEntities = await _repo.GetAllAsync(filter, cancellationToken);
 
+     //       return new PagedResultDto<SysBusinessActivityDTO>
+     //       {
+     //           Items = _mapper.Map<IEnumerable<SysBusinessActivityDTO>>(pagedEntities.Items),
+     //           TotalCount = pagedEntities.TotalCount,
+     //           PageNumber = pagedEntities.PageNumber,
+     //           PageSize = pagedEntities.PageSize
+     //       };
+     //   }
+
+        public async Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(BusinessActivityFilterDTO filter, CancellationToken cancellationToken = default)
+        {
+            var entities = await _repo.GetAllAsync(filter, cancellationToken);
+            var list = _mapper.Map<IEnumerable<SysBusinessActivityDTO>>(entities.Items);
             return new PagedResultDto<SysBusinessActivityDTO>
             {
-                Items = _mapper.Map<IEnumerable<SysBusinessActivityDTO>>(pagedEntities.Items),
-                TotalCount = pagedEntities.TotalCount,
-                PageNumber = pagedEntities.PageNumber,
-                PageSize = pagedEntities.PageSize
+                Items = list,
+                TotalCount = entities.TotalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.Limit
             };
         }
 

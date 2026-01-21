@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -27,13 +28,15 @@ namespace VoiceFirst_Admin.Utilities.Mapping
           .ForMember(d => d.ActivityName, o => o.MapFrom(s => s.BusinessActivityName))
           .ForMember(d => d.Active, o => o.MapFrom(s => s.IsActive))
           .ForMember(d => d.Delete, o => o.MapFrom(s => s.IsDeleted))
-          .ForMember(d => d.CreatedUser, o => o.MapFrom(s => s.CreatedUser))
+          .ForMember(d => d.CreatedUser, o => o.MapFrom(s => s.CreatedUserName))
           .ForMember(d => d.CreatedDate, o => o.MapFrom(s => s.CreatedAt))
-          .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.UpdatedUser))
+          .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.UpdatedUserName))
           .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt))
-          .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUser))
+          .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUserName))
           .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedAt))
           ;
+
+         
 
             CreateMap<SysBusinessActivity, SysBusinessActivityActiveDTO>()
            .ForMember(d => d.ActivityId, o => o.MapFrom(s => s.SysBusinessActivityId))
