@@ -41,7 +41,7 @@ namespace VoiceFirst_Admin.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] CommonFilterDto filter, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAll([FromQuery] ProgramActionFilterDto filter, CancellationToken cancellationToken)
         {
             var items = await _service.GetAllAsync(filter, cancellationToken);
             return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
@@ -53,7 +53,7 @@ namespace VoiceFirst_Admin.API.Controllers
             return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
         }
 
-        [HttpPut("{id:int}")]
+        [HttpPatch("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] ProgramActionUpdateDto model, CancellationToken cancellationToken)
         {
             var res = await _service.UpdateAsync( model,id, userId, cancellationToken);
@@ -67,7 +67,7 @@ namespace VoiceFirst_Admin.API.Controllers
             var res = await _service.DeleteAsync(id, userId, cancellationToken);
             return StatusCode(res.StatusCode, res);
         }
-        [HttpPut("recover/{id:int}")]
+        [HttpPatch("recover/{id:int}")]
         public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
         {
 

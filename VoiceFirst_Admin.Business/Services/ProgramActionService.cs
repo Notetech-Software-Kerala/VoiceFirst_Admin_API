@@ -67,7 +67,7 @@ namespace VoiceFirst_Admin.Business.Services
             return dto;
         }
 
-        public async Task<PagedResultDto<ProgramActionDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<ProgramActionDto>> GetAllAsync(ProgramActionFilterDto filter, CancellationToken cancellationToken = default)
         {
             var entities = await _repo.GetAllAsync(filter, cancellationToken);
             var list = _mapper.Map<IEnumerable<ProgramActionDto>>(entities.Items);
@@ -89,16 +89,20 @@ namespace VoiceFirst_Admin.Business.Services
         }
         public async Task<ApiResponse<ProgramActionDto>> UpdateAsync(ProgramActionUpdateDto dto,int id,int loginId, CancellationToken cancellationToken = default)
         {
-            // name uniqueness (exclude current id)
-            var existing = await _repo.ExistsByNameAsync(dto.ActionName ?? string.Empty, id, cancellationToken);
-            if (existing != null)
+            if (dto.ActionName != null)
             {
-                // if you want special message when existing is deleted:
-                if (existing.IsDeleted==true)
-                    return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
+                // name uniqueness (exclude current id)
+                var existing = await _repo.ExistsByNameAsync(dto.ActionName ?? string.Empty, id, cancellationToken);
+                if (existing != null)
+                {
+                    // if you want special message when existing is deleted:
+                    if (existing.IsDeleted == true)
+                        return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
 
-                return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+                    return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+                }
             }
+            
 
             var entity = new SysProgramActions
             {

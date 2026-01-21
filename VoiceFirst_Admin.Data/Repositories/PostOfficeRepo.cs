@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,7 +50,7 @@ public class PostOfficeRepo : IPostOfficeRepo
                 po.PostOfficeName,
                 po.CountryId,
                 po.CreatedAt,
-                po.Active,
+                po.IsActive,
                 po.UpdatedAt,
                 po.IsDeleted,
                 po.DeletedAt,
@@ -303,22 +304,50 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
     public async Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdAsync(int postOfficeId, CancellationToken cancellationToken = default)
     {
         const string sql = @"SELECT
-                PostOfficeZipCodeId,
-                PostOfficeId,
-                ZipCode,
-                CreatedAt,
-                IsActive,
-                UpdatedAt,
-                IsDeleted,
-                DeletedAt
-            FROM PostOfficeZipCode
-            WHERE PostOfficeId = @PostOfficeId AND IsDeleted = 0;";
+                po.PostOfficeZipCodeId,
+                po.PostOfficeId,
+                po.ZipCode,
+                po.CreatedAt,
+                po.IsActive,
+                po.UpdatedAt,
+                po.IsDeleted,
+                po.DeletedAt,
+                uC.UserId AS CreatedById,
+                CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+                uU.UserId AS UpdatedById,
+                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName FROM PostOfficeZipCode po
+INNER JOIN Users uC ON uC.UserId = po.CreatedBy
+LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
+            WHERE PostOfficeId = @PostOfficeId AND po.IsDeleted = 0;";
 
         var cmd = new CommandDefinition(sql, new { PostOfficeId = postOfficeId }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<PostOfficeZipCode>(cmd);
     }
+    public async Task<IEnumerable<PostOfficeZipCode>> GetAllZipCodesAsync(string SearchText, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"SELECT
+                po.PostOfficeZipCodeId,
+                po.PostOfficeId,
+                po.ZipCode,
+                po.CreatedAt,
+                po.IsActive,
+                po.UpdatedAt,
+                po.IsDeleted,
+                po.DeletedAt,
+                uC.UserId AS CreatedById,
+                CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+                uU.UserId AS UpdatedById,
+                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName FROM PostOfficeZipCode po
+                INNER JOIN Users uC ON uC.UserId = po.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
+                            WHERE ZipCode lINK @ZipCode AND po.IsDeleted = 0;";
+        var param = new { ZipCode = $"%{SearchText}%" };
 
+        var cmd = new CommandDefinition(sql, param, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<PostOfficeZipCode>(cmd);
+    }
     public async Task BulkUpsertZipCodesAsync(int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default)
     {
         using var connection = _context.CreateConnection();

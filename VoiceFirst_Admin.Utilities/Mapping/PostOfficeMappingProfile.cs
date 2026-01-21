@@ -22,6 +22,13 @@ public class PostOfficeMappingProfile : Profile
 
         CreateMap<PostOffice, PostOfficeLookupDto>();
 
-        CreateMap<PostOfficeZipCode, PostOfficeZipCodeDto>().ReverseMap();
+        CreateMap<PostOfficeZipCode, PostOfficeZipCodeDto>()
+            .ForMember(d => d.ZipCodeId, opt => opt.MapFrom(s => s.PostOfficeZipCodeId))
+            .ForMember(d => d.ZipCode, opt => opt.MapFrom(s => s.ZipCode))
+            .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))
+                .ForMember(d => d.CreatedUser, opt => opt.MapFrom(s => s.CreatedUserName))
+                .ForMember(d => d.ModifiedUser, opt => opt.MapFrom(s => s.UpdatedUserName))
+                .ForMember(d => d.CreatedDate, opt => opt.MapFrom(s => s.CreatedAt))
+                .ForMember(d => d.ModifiedDate, opt => opt.MapFrom(s => s.UpdatedAt)); ;
     }
 }

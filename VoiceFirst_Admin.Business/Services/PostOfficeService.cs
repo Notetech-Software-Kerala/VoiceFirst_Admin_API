@@ -107,13 +107,17 @@ public class PostOfficeService : IPostOfficeService
 
     public async Task<ApiResponse<PostOfficeDto>> UpdateAsync(PostOfficeUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
     {
-        var existing = await _repo.ExistsByNameAsync(dto.PostOfficeName ?? string.Empty, id, cancellationToken);
-        if (existing != null)
+        if (dto.PostOfficeName != null)
         {
-            if (existing.IsDeleted == true)
-                return ApiResponse<PostOfficeDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
 
-            return ApiResponse<PostOfficeDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+            var existing = await _repo.ExistsByNameAsync(dto.PostOfficeName ?? string.Empty, id, cancellationToken);
+            if (existing != null)
+            {
+                if (existing.IsDeleted == true)
+                    return ApiResponse<PostOfficeDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
+
+                return ApiResponse<PostOfficeDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+            }
         }
 
         var entity = new PostOffice
@@ -139,7 +143,7 @@ public class PostOfficeService : IPostOfficeService
             if (string.IsNullOrWhiteSpace(z.ZipCode)) continue;
             zipEntities.Add(new PostOfficeZipCode
             {
-                PostOfficeZipCodeId = z.PostOfficeZipCodeId ?? 0,
+                PostOfficeZipCodeId = z.ZipCodeId ?? 0,
                 PostOfficeId = updatedEntity.PostOfficeId,
                 ZipCode = z.ZipCode.Trim(),
                 UpdatedBy = loginId

@@ -8,12 +8,12 @@ public enum SortOrder { Asc, Desc }
 public class CommonFilterDto
 {
    
-    public string? SortBy { get; set; }          // e.g. "UserId", "FirstName", "CreatedAt"
-    public SortOrder SortOrder { get; set; } = SortOrder.Asc;
-    public string? SearchBy { get; set; } // e.g. "CreatedUser", "UpdatedUser"
-    public string? SearchText { get; set; }       // "asc" or "desc"
-    public int PageNumber { get; set; } = 1;           // default
-    public int Limit { get; set; } = 10;         // default
+    public string? SortBy { get; set; }                     // e.g. "UserId", "FirstName", "CreatedAt"
+    public SortOrder SortOrder { get; set; } = SortOrder.Asc;    // "asc" or "desc"
+
+    public string? SearchText { get; set; }         
+    public int PageNumber { get; set; } = 1;        // default
+    public int Limit { get; set; } = 10;            // default
     public string? CreatedFromDate { get; set; }
     public string? CreatedToDate { get; set; }
 
@@ -23,6 +23,6 @@ public class CommonFilterDto
     public string? DeletedFromDate { get; set; }
     public string? DeletedToDate { get; set; }
 
-    public bool? Active { get; set; }         // null=both, false=0, true=1
-    public bool? Deleted { get; set; }         // null=both, false=0, true=1
+    public bool? Active { get; set; }               // null=both, false=0, true=1
+    public bool? Deleted { get; set; }              // null=both, false=0, true=1
 }

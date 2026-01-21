@@ -73,18 +73,18 @@ public class ProgramActionRepo : IProgramActionRepo
 
             uD.UserId   AS DeletedById,
             CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
-        FROM SysProgramActions spa
-        INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
-        LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
-        LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy
-         WHERE SysProgramActionId = @Id;";
+            FROM SysProgramActions spa
+            INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
+            LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy
+             WHERE SysProgramActionId = @Id;";
 
         var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
         return await connection.QuerySingleOrDefaultAsync<SysProgramActions>(cmd);
     }
 
-    public async Task<PagedResultDto<SysProgramActions>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<SysProgramActions>> GetAllAsync(ProgramActionFilterDto filter, CancellationToken cancellationToken = default)
     {
         var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
         var limit = filter.Limit <= 0 ? 10 : filter.Limit;
@@ -96,10 +96,10 @@ public class ProgramActionRepo : IProgramActionRepo
 
         // FROM + WHERE (shared)
         var baseSql = new StringBuilder(@"
-FROM SysProgramActions spa
-INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
-LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
-LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
+            FROM SysProgramActions spa
+            INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
+            LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
             ");
 
         // filters (apply ONLY here so both count + items match)
@@ -156,25 +156,20 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
             parameters.Add("DeletedTo", deletedTo.Date);
         }
 
-        var searchByMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["ActionName"] = "spa.ProgramActionName",
-            ["CreatedUser"] = "CONCAT(uC.FirstName, ' ', uC.LastName)",
-            ["ModifiedUser"] = "CONCAT(uU.FirstName, ' ', uU.LastName)",
-            ["DeletedUser"] = "CONCAT(uD.FirstName, ' ', uD.LastName)",
-        };
+        // filter.SearchBy is ProgramActionSearchBy?
+var searchByMap = new Dictionary<ProgramActionSearchBy, string>
+{
+    [ProgramActionSearchBy.ActionName]  = "spa.ProgramActionName",
+    [ProgramActionSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
+    [ProgramActionSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+    [ProgramActionSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
+};
 
-        if (!string.IsNullOrWhiteSpace(filter.SearchText))
-        {
-            if (!string.IsNullOrWhiteSpace(filter.SearchBy) &&
-                searchByMap.TryGetValue(filter.SearchBy, out var col))
-            {
-                baseSql.Append($" AND {col} LIKE @Search");
-                parameters.Add("Search", $"%{filter.SearchText}%");
-            }
-            else
-            {
-                // default: search across multiple columns
+if (!string.IsNullOrWhiteSpace(filter.SearchText))
+{
+    if (filter.SearchBy.HasValue && searchByMap.TryGetValue(filter.SearchBy.Value, out var col))
+        baseSql.Append($" AND {col} LIKE @Search");
+    else
                 baseSql.Append(@"
             AND (
                 spa.ProgramActionName LIKE @Search
@@ -182,9 +177,10 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
              OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
              OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
             )");
-                parameters.Add("Search", $"%{filter.SearchText}%");
-            }
-        }
+
+            parameters.Add("Search", $"%{filter.SearchText}%");
+}
+
 
         // sorting (items only)
         var sortMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -301,7 +297,7 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
 
         var cmd = new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
-        return await connection.ExecuteScalarAsync<SysProgramActions>(cmd);
+        return await connection.QueryFirstOrDefaultAsync<SysProgramActions>(cmd);
      
     }
    
