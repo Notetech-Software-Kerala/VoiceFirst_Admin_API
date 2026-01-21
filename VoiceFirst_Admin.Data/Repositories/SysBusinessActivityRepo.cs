@@ -21,7 +21,7 @@ namespace VoiceFirst_Admin.Data.Repositories
      new(StringComparer.OrdinalIgnoreCase)
      {
          ["name"] = "s.BusinessActivityName",
-         ["active"] = "s.IsActive",
+         ["active"] = "s.Active",
          ["delete"] = "s.IsDeleted",
          ["createdUser"] = "cu.FirstName",
          ["modifiedUser"] = "uu.FirstName",
@@ -40,7 +40,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<bool> DeleteAsync(int id,int deletedBy, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsActive = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysBusinessActivityId = @Id";
+            const string sql = @"UPDATE SysBusinessActivity SET Active = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysBusinessActivityId = @ActivityId";
 
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
@@ -81,7 +81,7 @@ namespace VoiceFirst_Admin.Data.Repositories
     SELECT 
         s.SysBusinessActivityId        ,
         s.BusinessActivityName         ,
-        s.IsActive                     ,
+        s.Active                     ,
         s.IsDeleted                    ,
         s.CreatedAt                  ,
         s.UpdatedAt                  ,
@@ -100,7 +100,7 @@ namespace VoiceFirst_Admin.Data.Repositories
     INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
     LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
     LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
-    WHERE s.SysBusinessActivityId = @Id;
+    WHERE s.SysBusinessActivityId = @ActivityId;
     ";
 
             using var connection = _context.CreateConnection();
@@ -110,6 +110,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             return entity;
         }
 
+
+
         public async Task<IEnumerable<SysBusinessActivity?>> GetActiveAsync(
         CancellationToken cancellationToken = default)
             {
@@ -118,7 +120,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 SysBusinessActivityId,
                 BusinessActivityName       
                 FROM dbo.SysBusinessActivity 
-                WHERE  isDeleted = 0 And isActive = 1;
+                WHERE  isDeleted = 0 And isActive = 1 ORDER BY BusinessActivityName ASC;
                 ";
 
                 using var connection = _context.CreateConnection();
@@ -301,19 +303,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
-        //    public async Task<PagedResultDto<SysBusinessActivity>> GetAllAsync(
-        //   CommonFilterDto filter,
-        //   CancellationToken cancellationToken = default)
-        //    {
-        //        var baseSql = new StringBuilder(@"
-        //    FROM dbo.SysBusinessActivity s
-        //    INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
-        //    LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
-        //    LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
-        //    WHERE 1 = 1
-        //");
 
-        //        var parameters = new DynamicParameters();
 
         //        // 🔐 Active filter
         //        if (filter.Active.HasValue)
@@ -322,12 +312,6 @@ namespace VoiceFirst_Admin.Data.Repositories
         //            parameters.Add("Active", filter.Active.Value);
         //        }
 
-        //        // 🔐 Delete filter
-        //        if (filter.Deleted.HasValue)
-        //        {
-        //            baseSql.Append(" AND s.IsDeleted = @IsDeleted");
-        //            parameters.Add("IsDeleted", filter.Deleted.Value);
-        //        }
 
         //        // 🔍 Search
         //        if (!string.IsNullOrWhiteSpace(filter.SearchText))
@@ -455,7 +439,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             if (entity.IsActive.HasValue)
             {
-                sets.Add("IsActive = @Active");
+                sets.Add("Active = @Active");
                 parameters.Add("Active", entity.IsActive.Value ? 1 : 0);
             }
 
@@ -467,12 +451,12 @@ namespace VoiceFirst_Admin.Data.Repositories
             sets.Add("UpdatedBy = @UpdatedBy");
             sets.Add("UpdatedAt = SYSDATETIME()");
             parameters.Add("UpdatedBy", entity.UpdatedBy);
-            parameters.Add("Id", entity.SysBusinessActivityId);
+            parameters.Add("ActivityId", entity.SysBusinessActivityId);
 
             var sql = new StringBuilder();
             sql.Append("UPDATE SysBusinessActivity SET ");
             sql.Append(string.Join(", ", sets));
-            sql.Append(" WHERE SysBusinessActivityId = @Id AND IsDeleted = 0;");
+            sql.Append(" WHERE SysBusinessActivityId = @ActivityId AND IsDeleted = 0;");
 
             var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
@@ -482,7 +466,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<SysBusinessActivity> BusinessActivityExistsAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
-            var sql = "SELECT * FROM SysBusinessActivity WHERE BusinessActivityName = @Name";
+            var sql = "SELECT * FROM SysBusinessActivity WHERE BusinessActivityName = @ActivityName";
             if (excludeId.HasValue)
                 sql += " AND SysBusinessActivityId <> @ExcludeId";
 
@@ -494,7 +478,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<int>RecoverBusinessActivityAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(),Active = 1  WHERE SysBusinessActivityId = @Id";
+            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(),Active = 1  WHERE SysBusinessActivityId = @ActivityId";
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
             {

@@ -37,7 +37,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string NotRegistered = "Not registered.";
         public const string RegistrationSuccess = "Registration successful.";
         public const string LoginSuccess = "Login successful.";
-        public const string NameAlreadyExists = "Name already exists.";
+        public const string NameAlreadyExists = "ActivityName already exists.";
         public const string NameExistsInTrash = "This name exists in trash. Restore it to use again.";
         // OTP
         public const string InvalidOtp = "Invalid OTP.";
@@ -78,7 +78,51 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string BusinessActivityUpdated = 
             "Business activity updated sucessfully.";
 
+        // ===== SYS Program  =====
+        public const string ProgramNameAlreadyExists =
+            "Program name already exists in this application.";
 
+        public const string ProgramLabelAlreadyExists =
+     "Program label already exists in this application.";
+
+        public const string ProgramRouteAlreadyExists =
+     "Program route already exists in this application.";
+
+        public const string ProgramAlreadyExistsRecoverable =
+            "Program already exists but was deleted. You can recover it.";
+
+        public const string ProgramNameAlreadyExistsRecoverable =
+         "Program  already exists with this name but was deleted. You can recover it.";
+
+        public const string ProgramLabelAlreadyExistsRecoverable =
+         "Program  already exists with this label but was deleted. You can recover it.";
+
+        public const string ProgramRouteAlreadyExistsRecoverable =
+         "Program  already exists with this route but was deleted. You can recover it.";
+
+        public const string ProgramCreated =
+            "Program created successfully.";
+
+        public const string ProgramRecovered =
+            "Program recovered successfully.";
+
+        public const string ProgramNotFound =
+            "Program not found.";
+        public const string ProgramDeleted =
+            "Program deleted sucessfully.";
+
+        public const string ProgramRetrieved =
+            "Program retrieve sucessfully.";
+
+        public const string ProgramUpdated =
+            "Program updated sucessfully.";
+
+        // ===== SYS Program ACTIVITY =====
+        public const string PlatformNotFound =
+           "PlatForm not found.";
+
+        public const string ProgramActionNotFound =
+         "Program Action  not found.";
         public const string ProgramActionRestoreSucessfully = "Program action restored sucessfully.";
         public const string ProgramActionDeleteSucessfully = "Program action deleted sucessfully.";
         public const string ProgramActionAlreadyDeleted = "Program action already deleted.";
