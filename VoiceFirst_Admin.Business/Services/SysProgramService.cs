@@ -214,5 +214,13 @@ namespace VoiceFirst_Admin.Business.Services
             };
         }
 
+        public async Task<ApiResponse<IEnumerable<SysProgramByApplicationIdDTO>>> GetAllActiveByApplicationIdAsync(
+            int applicationId,
+            CancellationToken cancellationToken = default)
+        {
+            var items = await _repo.GetAllActiveByApplicationIdAsync(applicationId, cancellationToken);
+            return ApiResponse<IEnumerable<SysProgramByApplicationIdDTO>>.Ok(items, Messages.ProgramRetrieved);
+        }
+
     }
 }

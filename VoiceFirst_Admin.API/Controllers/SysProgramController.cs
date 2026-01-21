@@ -78,5 +78,12 @@ namespace VoiceFirst_Admin.API.Controllers
             var items = await _service.GetAllAsync(filter, cancellationToken);
             return Ok(ApiResponse<object>.Ok(items, Messages.ProgramRetrieved));
         }
+
+        [HttpGet("active-by-application/{applicationId:int}")]
+        public async Task<IActionResult> GetAllActiveByApplicationIdAsync(int applicationId, CancellationToken cancellationToken)
+        {
+            var result = await _service.GetAllActiveByApplicationIdAsync(applicationId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

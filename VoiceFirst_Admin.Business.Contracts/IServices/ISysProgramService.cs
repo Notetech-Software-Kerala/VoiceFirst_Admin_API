@@ -31,5 +31,9 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
         Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> GetAllAsync(
             VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramFilterDTO filter,
             CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<IEnumerable<SysProgramByApplicationIdDTO>>> GetAllActiveByApplicationIdAsync(
+            int applicationId,
+            CancellationToken cancellationToken = default);
     }
 }
