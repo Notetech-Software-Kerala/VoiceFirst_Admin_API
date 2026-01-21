@@ -10,6 +10,7 @@ public class CommonFilterDto
    
     public string? SortBy { get; set; }          // e.g. "UserId", "FirstName", "CreatedAt"
     public SortOrder SortOrder { get; set; } = SortOrder.Asc;
+    public string? SearchBy { get; set; } // e.g. "CreatedUser", "UpdatedUser"
     public string? SearchText { get; set; }       // "asc" or "desc"
     public int PageNumber { get; set; } = 1;           // default
     public int Limit { get; set; } = 10;         // default

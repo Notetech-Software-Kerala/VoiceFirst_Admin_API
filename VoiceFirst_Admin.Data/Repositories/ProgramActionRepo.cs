@@ -111,8 +111,8 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
 
         if (filter.Active.HasValue)
         {
-            baseSql.Append(" AND spa.IsActive = @Active");
-            parameters.Add("Active", filter.Active.Value);
+            baseSql.Append(" AND spa.IsActive = @IsActive");
+            parameters.Add("IsActive", filter.Active.Value);
         }
         // CreatedAt
         if (!string.IsNullOrWhiteSpace(filter.CreatedFromDate) &&
@@ -156,17 +156,34 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
             parameters.Add("DeletedTo", deletedTo.Date);
         }
 
+        var searchByMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["ActionName"] = "spa.ProgramActionName",
+            ["CreatedUser"] = "CONCAT(uC.FirstName, ' ', uC.LastName)",
+            ["ModifiedUser"] = "CONCAT(uU.FirstName, ' ', uU.LastName)",
+            ["DeletedUser"] = "CONCAT(uD.FirstName, ' ', uD.LastName)",
+        };
+
         if (!string.IsNullOrWhiteSpace(filter.SearchText))
         {
-            baseSql.Append(@"
-             AND (
-                    spa.ProgramActionName LIKE @Search
-                 OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
-                 OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
-                 OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
-             )
-            ");
-            parameters.Add("Search", $"%{filter.SearchText}%");
+            if (!string.IsNullOrWhiteSpace(filter.SearchBy) &&
+                searchByMap.TryGetValue(filter.SearchBy, out var col))
+            {
+                baseSql.Append($" AND {col} LIKE @Search");
+                parameters.Add("Search", $"%{filter.SearchText}%");
+            }
+            else
+            {
+                // default: search across multiple columns
+                baseSql.Append(@"
+            AND (
+                spa.ProgramActionName LIKE @Search
+             OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
+             OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
+             OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
+            )");
+                parameters.Add("Search", $"%{filter.SearchText}%");
+            }
         }
 
         // sorting (items only)

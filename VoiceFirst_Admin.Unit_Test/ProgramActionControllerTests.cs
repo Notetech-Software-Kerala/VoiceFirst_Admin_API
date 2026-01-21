@@ -44,7 +44,7 @@ public class ProgramActionControllerTests
     public async Task Create_WithExistingName_ShouldReturnConflict()
     {
         // Arrange
-        var dto = new ProgramActionCreateDto { ProgramActionName = "ExistingAction" };
+        var dto = new ProgramActionCreateDto { ActionName = "ExistingAction" };
         _serviceMock.Setup(s => s.ExistsByNameAsync("ExistingAction", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -63,7 +63,7 @@ public class ProgramActionControllerTests
     public async Task Create_WithValidData_ShouldReturnCreatedAtAction()
     {
         // Arrange
-        var dto = new ProgramActionCreateDto { ProgramActionName = "NewAction" };
+        var dto = new ProgramActionCreateDto { ActionName = "NewAction" };
         var createdEntity = new SysProgramActions { SysProgramActionId = 1, ProgramActionName = "NewAction" };
         var programActionDto = new ProgramActionDto { ActionId = 1, ActionName = "NewAction", Active = true };
 
@@ -88,7 +88,7 @@ public class ProgramActionControllerTests
     public async Task Create_WhenGetByIdReturnsNull_ShouldReturn500()
     {
         // Arrange
-        var dto = new ProgramActionCreateDto { ProgramActionName = "NewAction" };
+        var dto = new ProgramActionCreateDto { ActionName = "NewAction" };
         var createdEntity = new SysProgramActions { SysProgramActionId = 1, ProgramActionName = "NewAction" };
 
         _serviceMock.Setup(s => s.ExistsByNameAsync("NewAction", null, It.IsAny<CancellationToken>()))
@@ -379,7 +379,7 @@ public class ProgramActionControllerTests
     public async Task Create_ShouldPassCancellationToken()
     {
         // Arrange
-        var dto = new ProgramActionCreateDto { ProgramActionName = "Test" };
+        var dto = new ProgramActionCreateDto { ActionName = "Test" };
         var cts = new CancellationTokenSource();
         var token = cts.Token;
 

@@ -51,6 +51,14 @@ namespace VoiceFirst_Admin.Utilities.Middlewares
                             conflict.ErrorCode);
                         break;
 
+                    case BusinessRecoverableException conflict:
+                        statusCode = StatusCodes.Status410Gone;
+                        response = ApiResponse<object>.Fail(
+                            conflict.Message,
+                            statusCode,
+                            conflict.ErrorCode);
+                        break;
+
                     case BusinessValidationException validation:
                         statusCode = StatusCodes.Status400BadRequest;
                         response = ApiResponse<object>.Fail(

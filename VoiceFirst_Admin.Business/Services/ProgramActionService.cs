@@ -33,7 +33,7 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<ProgramActionDto>.Fail(Messages.PayloadRequired, StatusCodes.Status400BadRequest);
 
             // Check existing by name
-            var existingEntity = await _repo.ExistsByNameAsync(dto.ProgramActionName, null, cancellationToken);
+            var existingEntity = await _repo.ExistsByNameAsync(dto.ActionName, null, cancellationToken);
 
             if (existingEntity != null && existingEntity.IsDeleted==true)
                 return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
@@ -44,7 +44,7 @@ namespace VoiceFirst_Admin.Business.Services
             // Create
             var entity = new SysProgramActions
             {
-                ProgramActionName = dto.ProgramActionName,
+                ProgramActionName = dto.ActionName,
                 CreatedBy = loginId
             };
 
