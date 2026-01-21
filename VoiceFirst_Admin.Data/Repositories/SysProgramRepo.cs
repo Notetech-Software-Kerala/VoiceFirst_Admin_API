@@ -143,7 +143,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
 
-        public async Task<SysProgramActionsLink> GetActiveByIdAsync
+        public async Task<SysProgramActionsLink?> GetActiveByIdAsync
           (int SysProgramActionsLink, CancellationToken cancellationToken = default)
         {
             var sql = "SELECT * FROM SysProgramActionsLink WHERE SysProgramActionLinkId = @SysProgramActionLinkId And IsActive = 1 ;";
