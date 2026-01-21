@@ -50,7 +50,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             }
 
             var affectedRows = await connection.ExecuteAsync(
-                new CommandDefinition(sql, new { Id = id , deletedBy }, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, new { ActivityId = id , deletedBy }, cancellationToken: cancellationToken));
             return affectedRows > 0;
         }
 
@@ -89,13 +89,13 @@ namespace VoiceFirst_Admin.Data.Repositories
         s.DeletedAt                   ,
 
         -- Created User
-        CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
+        CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUserName,
 
         -- Updated User
-        CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUser,
+        CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUserName,
 
         -- Deleted User
-        CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
+        CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUserName
 
     FROM dbo.SysBusinessActivity s
     INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
@@ -106,7 +106,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             using var connection = _context.CreateConnection();
             var entity= await connection.QuerySingleOrDefaultAsync<SysBusinessActivity>(
-                new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken)
+                new CommandDefinition(sql, new { ActivityId = id }, cancellationToken: cancellationToken)
             );
             return entity;
         }
@@ -513,7 +513,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 connection.Open();
             }
             var affectedRows = await connection.ExecuteAsync(
-                new CommandDefinition(sql, new { Id = id, LoginId = loginId }, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, new { ActivityId = id, LoginId = loginId }, cancellationToken: cancellationToken));
             return affectedRows;
         }
 
