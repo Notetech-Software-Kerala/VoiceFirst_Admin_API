@@ -27,6 +27,7 @@ builder.Services.AddControllers();
 // Repository
 builder.Services.AddScoped<IProgramActionRepo, ProgramActionRepo>();
 builder.Services.AddScoped<ISysBusinessActivityRepo, SysBusinessActivityRepo>();
+builder.Services.AddScoped<IPostOfficeRepo, PostOfficeRepo>();
 builder.Services.AddScoped<ISysProgramRepo, SysProgramRepo>();
 builder.Services.AddScoped<IApplicationRepo, ApplicationRepo>();
 
