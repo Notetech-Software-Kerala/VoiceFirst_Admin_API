@@ -12,7 +12,7 @@ public interface IPostOfficeService
     Task<ApiResponse<PostOfficeDto>> CreateAsync(PostOfficeCreateDto dto, int loginId, CancellationToken cancellationToken = default);
     Task<PostOfficeDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOfficeLookupDto>> GetLookupAsync(CancellationToken cancellationToken = default);
-    Task<PagedResultDto<PostOfficeDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default);
+    Task<PagedResultDto<PostOfficeDto>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default);
     Task<ApiResponse<PostOfficeDto>> UpdateAsync(PostOfficeUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default);
     Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
     Task<ApiResponse<object>> RestoreAsync(int id, int loginId, CancellationToken cancellationToken = default);

@@ -9,6 +9,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface IProgramActionRepo
     {
+        Task<SysProgramActions> GetActiveByIdAsync
+          (int SysProgramActionId, CancellationToken cancellationToken = default);
         Task<SysProgramActions> CreateAsync(SysProgramActions entity, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysProgramActions>> GetLookupAsync(CancellationToken cancellationToken = default);
         Task<SysProgramActions?> GetByIdAsync(int id, CancellationToken cancellationToken = default);

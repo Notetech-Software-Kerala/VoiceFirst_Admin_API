@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
@@ -71,7 +72,7 @@ public class PostOfficeRepo : IPostOfficeRepo
         return await connection.QuerySingleOrDefaultAsync<PostOffice>(cmd);
     }
 
-    public async Task<PagedResultDto<PostOffice>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<PostOffice>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default)
     {
         var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
         var limit = filter.Limit <= 0 ? 10 : filter.Limit;
@@ -138,19 +139,57 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
             baseSql.Append(" AND po.DeletedAt < DATEADD(day, 1, @DeletedTo)");
             parameters.Add("DeletedTo", deletedTo.Date);
         }
+        var searchByMap = new Dictionary<PostOfficeSearchBy, string>
+        {
+            [PostOfficeSearchBy.PostOfficeName] = "po.PostOfficeName",
+            [PostOfficeSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
+            [PostOfficeSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+            [PostOfficeSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)",
+
+            // ZipCode cannot be a single column on po; handle separately (see below)
+        };
 
         if (!string.IsNullOrWhiteSpace(filter.SearchText))
         {
-            baseSql.Append(@"
-             AND (
-                    po.PostOfficeName LIKE @Search
-                 OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
-                 OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
-                 OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
-             )
-            ");
+            // If SearchBy = ZipCode, use EXISTS on PostOfficeZipCode
+            if (filter.SearchBy == PostOfficeSearchBy.ZipCode)
+            {
+                baseSql.Append(@"
+            AND EXISTS (
+                SELECT 1
+                FROM PostOfficeZipCode pz
+                WHERE pz.PostOfficeId = po.PostOfficeId
+                  AND pz.IsDeleted = 0
+                  AND pz.ZipCode LIKE @Search
+            )");
+            }
+            else if (filter.SearchBy.HasValue && searchByMap.TryGetValue(filter.SearchBy.Value, out var col))
+            {
+                baseSql.Append($" AND {col} LIKE @Search");
+            }
+            else
+            {
+                // Default: search across everything (name + users + zipcode)
+                baseSql.Append(@"
+            AND (
+                   po.PostOfficeName LIKE @Search
+                OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
+                OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
+                OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
+                OR EXISTS (
+                    SELECT 1
+                    FROM PostOfficeZipCode pz
+                    WHERE pz.PostOfficeId = po.PostOfficeId
+                      AND pz.IsDeleted = 0
+                      AND pz.ZipCode LIKE @Search
+                )
+            )");
+            }
+
             parameters.Add("Search", $"%{filter.SearchText}%");
         }
+
+
 
         var sortMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {

@@ -22,6 +22,19 @@ public class ProgramActionRepo : IProgramActionRepo
         _context = context;
     }
 
+
+
+    public async Task<SysProgramActions> GetActiveByIdAsync
+          (int SysProgramActionId, CancellationToken cancellationToken = default)
+    {
+        var sql = "SELECT * FROM SysProgramActions WHERE SysProgramActionId = @SysProgramActionId And IsActive = 1 And IsDeleted = 0;";
+
+        var cmd = new CommandDefinition(sql, new { SysProgramActionId = SysProgramActionId }, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var entity = await connection.QueryFirstOrDefaultAsync<SysProgramActions>(cmd);
+        return entity;
+    }
+
     public async Task<SysProgramActions> CreateAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
         const string sql = @"
@@ -255,12 +268,12 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
         sets.Add("UpdatedBy = @UpdatedBy");
         sets.Add("UpdatedAt = SYSDATETIME()");
         parameters.Add("UpdatedBy", entity.UpdatedBy);
-        parameters.Add("Id", entity.SysProgramActionId);
+        parameters.Add("SysProgramActionId", entity.SysProgramActionId);
 
         var sql = new StringBuilder();
         sql.Append("UPDATE SysProgramActions SET ");
         sql.Append(string.Join(", ", sets));
-        sql.Append(" WHERE SysProgramActionId = @Id AND IsDeleted = 0;");
+        sql.Append(" WHERE SysProgramActionId = @SysProgramActionId AND IsDeleted = 0;");
 
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -269,9 +282,9 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
     }
     public async Task<bool> DeleteAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
-        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @Id AND IsDeleted = 0;";
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @SysProgramActionId AND IsDeleted = 0;";
         var parameters = new DynamicParameters();
-        parameters.Add("Id", entity.SysProgramActionId);
+        parameters.Add("SysProgramActionId", entity.SysProgramActionId);
         parameters.Add("DeletedBy", entity.DeletedBy);
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -280,9 +293,9 @@ if (!string.IsNullOrWhiteSpace(filter.SearchText))
     }
     public async Task<bool> RestoreAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
-        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 0, DeletedAt = NULL,DeletedBy=NULL,UpdatedBy = @UpdatedBy,UpdatedAt = SYSDATETIME()  WHERE SysProgramActionId = @Id AND IsDeleted = 1;";
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 0, DeletedAt = NULL,DeletedBy=NULL,UpdatedBy = @UpdatedBy,UpdatedAt = SYSDATETIME()  WHERE SysProgramActionId = @SysProgramActionId AND IsDeleted = 1;";
         var parameters = new DynamicParameters();
-        parameters.Add("Id", entity.SysProgramActionId);
+        parameters.Add("SysProgramActionId", entity.SysProgramActionId);
         parameters.Add("UpdatedBy", entity.UpdatedBy);
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();

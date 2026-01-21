@@ -40,7 +40,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<bool> DeleteAsync(int id,int deletedBy, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsActive = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysBusinessActivityId = @Id";
+            const string sql = @"UPDATE SysBusinessActivity SET IsActive = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysBusinessActivityId = @ActivityId";
 
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
@@ -100,7 +100,7 @@ namespace VoiceFirst_Admin.Data.Repositories
     INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
     LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
     LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
-    WHERE s.SysBusinessActivityId = @Id;
+    WHERE s.SysBusinessActivityId = @ActivityId;
     ";
 
             using var connection = _context.CreateConnection();
@@ -110,6 +110,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             return entity;
         }
 
+
+
         public async Task<IEnumerable<SysBusinessActivity?>> GetActiveAsync(
         CancellationToken cancellationToken = default)
             {
@@ -118,7 +120,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 SysBusinessActivityId,
                 BusinessActivityName       
                 FROM dbo.SysBusinessActivity 
-                WHERE  isDeleted = 0 And isActive = 1;
+                WHERE  isDeleted = 0 And isActive = 1 ORDER BY BusinessActivityName ASC;
                 ";
 
                 using var connection = _context.CreateConnection();
@@ -301,143 +303,8 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
-        //    public async Task<PagedResultDto<SysBusinessActivity>> GetAllAsync(
-        //   CommonFilterDto filter,
-        //   CancellationToken cancellationToken = default)
-        //    {
-        //        var baseSql = new StringBuilder(@"
-        //    FROM dbo.SysBusinessActivity s
-        //    INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
-        //    LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
-        //    LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
-        //    WHERE 1 = 1
-        //");
 
-        //        var parameters = new DynamicParameters();
 
-        //        // 🔐 Active filter
-        //        if (filter.Active.HasValue)
-        //        {
-        //            baseSql.Append(" AND s.Active = @Active");
-        //            parameters.Add("Active", filter.Active.Value);
-        //        }
-
-        //        // 🔐 Delete filter
-        //        if (filter.Deleted.HasValue)
-        //        {
-        //            baseSql.Append(" AND s.IsDeleted = @IsDeleted");
-        //            parameters.Add("IsDeleted", filter.Deleted.Value);
-        //        }
-
-        //        // 🔍 Search
-        //        if (!string.IsNullOrWhiteSpace(filter.SearchText))
-        //        {
-        //            bool isUserSort =
-        //                filter.SortBy?.Equals("createdUser", StringComparison.OrdinalIgnoreCase) == true ||
-        //                filter.SortBy?.Equals("modifiedUser", StringComparison.OrdinalIgnoreCase) == true ||
-        //                filter.SortBy?.Equals("deletedUser", StringComparison.OrdinalIgnoreCase) == true;
-
-        //            bool isNameSort =
-        //                filter.SortBy?.Equals("name", StringComparison.OrdinalIgnoreCase) == true;
-
-        //            // ---------- DATE SEARCH ----------
-        //            if (DateTime.TryParse(filter.SearchText, out var searchDate))
-        //            {
-        //                string dateCondition = filter.SortBy?.ToLower() switch
-        //                {
-        //                    "createddate" => "CONVERT(DATE, s.CreatedAt) = @SearchDate",
-        //                    "modifieddate" => "CONVERT(DATE, s.UpdatedAt) = @SearchDate",
-        //                    "deleteddate" => "CONVERT(DATE, s.DeletedAt) = @SearchDate",
-        //                    _ => @"
-        //                CONVERT(DATE, s.CreatedAt) = @SearchDate
-        //                OR CONVERT(DATE, s.UpdatedAt) = @SearchDate
-        //                OR CONVERT(DATE, s.DeletedAt) = @SearchDate
-        //            "
-        //                };
-
-        //                baseSql.Append($@"
-        //            AND (
-        //                {(
-        //                            isNameSort
-        //                                ? "s.BusinessActivityName LIKE @Search"
-        //                                : $"{BuildUserCondition(filter.SortBy)} OR {dateCondition}"
-        //                        )}
-        //            )
-        //        ");
-
-        //                parameters.Add("SearchDate", searchDate.Date);
-        //            }
-        //            // ---------- TEXT / USER / NAME SEARCH ----------
-        //            else
-        //            {
-        //                baseSql.Append($@"
-        //            AND (
-        //                {(
-        //                            isNameSort
-        //                                ? "s.BusinessActivityName LIKE @Search"
-        //                                : BuildUserCondition(filter.SortBy)
-        //                        )}
-        //            )
-        //        ");
-        //            }
-
-        //            parameters.Add("Search", $"%{filter.SearchText}%");
-        //        }
-
-        //        // 🔢 Total count
-        //        var countSql = $"SELECT COUNT(1) {baseSql}";
-
-        //        // 🔃 Sorting (SAFE)
-        //        var sortColumn = SortColumnMap.TryGetValue(
-        //            filter.SortBy ?? string.Empty,
-        //            out var column)
-        //            ? column
-        //            : "s.SysBusinessActivityId";
-
-        //        var sortOrder = filter.SortOrder == SortOrder.Asc ? "ASC" : "DESC";
-
-        //        // 📄 Data query
-        //        var dataSql = new StringBuilder(@"
-        //    SELECT
-        //        s.SysBusinessActivityId,
-        //        s.BusinessActivityName,
-        //        s.Active,
-        //        s.CreatedBy,
-        //        s.CreatedAt,
-        //        s.UpdatedBy,
-        //        s.UpdatedAt,
-        //        s.IsDeleted,
-        //        s.DeletedBy,
-        //        s.DeletedAt,
-        //        CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
-        //        CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUser,
-        //        CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
-        //");
-
-        //        dataSql.Append(baseSql);
-        //        dataSql.Append($" ORDER BY {sortColumn} {sortOrder}");
-        //        dataSql.Append(" OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
-
-        //        var offset = (Math.Max(filter.PageNumber, 1) - 1) * filter.Limit;
-        //        parameters.Add("Offset", offset);
-        //        parameters.Add("PageSize", filter.Limit);
-
-        //        using var connection = _context.CreateConnection();
-
-        //        var totalCount = await connection.ExecuteScalarAsync<int>(
-        //            new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
-
-        //        var items = await connection.QueryAsync<SysBusinessActivity>(
-        //            new CommandDefinition(dataSql.ToString(), parameters, cancellationToken: cancellationToken));
-
-        //        return new PagedResultDto<SysBusinessActivity>
-        //        {
-        //            Items = items.ToList(),
-        //            TotalCount = totalCount,
-        //            PageNumber = filter.PageNumber,
-        //            PageSize = filter.Limit
-        //        };
-        //    }
 
 
 
@@ -467,12 +334,12 @@ namespace VoiceFirst_Admin.Data.Repositories
             sets.Add("UpdatedBy = @UpdatedBy");
             sets.Add("UpdatedAt = SYSDATETIME()");
             parameters.Add("UpdatedBy", entity.UpdatedBy);
-            parameters.Add("Id", entity.SysBusinessActivityId);
+            parameters.Add("ActivityId", entity.SysBusinessActivityId);
 
             var sql = new StringBuilder();
             sql.Append("UPDATE SysBusinessActivity SET ");
             sql.Append(string.Join(", ", sets));
-            sql.Append(" WHERE SysBusinessActivityId = @Id AND IsDeleted = 0;");
+            sql.Append(" WHERE SysBusinessActivityId = @ActivityId AND IsDeleted = 0;");
 
             var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
@@ -482,7 +349,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<SysBusinessActivity> BusinessActivityExistsAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
-            var sql = "SELECT * FROM SysBusinessActivity WHERE BusinessActivityName = @Name";
+            var sql = "SELECT * FROM SysBusinessActivity WHERE BusinessActivityName = @ActivityName";
             if (excludeId.HasValue)
                 sql += " AND SysBusinessActivityId <> @ExcludeId";
 
@@ -494,7 +361,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<int>RecoverBusinessActivityAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(),Active = 1  WHERE SysBusinessActivityId = @Id";
+            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(),IsActive = 1  WHERE SysBusinessActivityId = @ActivityId";
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
             {
