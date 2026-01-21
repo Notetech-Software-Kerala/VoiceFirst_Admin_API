@@ -29,14 +29,18 @@ builder.Services.AddControllers();
 // Repository
 builder.Services.AddScoped<IProgramActionRepo, ProgramActionRepo>();
 builder.Services.AddScoped<ISysBusinessActivityRepo, SysBusinessActivityRepo>();
+builder.Services.AddScoped<ISysProgramRepo, SysProgramRepo>();
+builder.Services.AddScoped<IApplicationRepo, ApplicationRepo>();
 
 // Services
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
 builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
+builder.Services.AddScoped<ISysProgramService, SysProgramService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(
-    typeof(ProgramActionMappingProfile).Assembly
+    typeof(ProgramActionMappingProfile).Assembly,
+    typeof(SysProgramMappingProfile).Assembly
 );
 
 

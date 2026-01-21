@@ -12,19 +12,19 @@ namespace VoiceFirst_Admin.Utilities.Mapping
         public SysBusinessActivityProfile()
         {
             CreateMap<SysBusinessActivityCreateDTO, SysBusinessActivity>()
-                .ForMember(d => d.BusinessActivityName, o => o.MapFrom(s => s.Name))
+                .ForMember(d => d.BusinessActivityName, o => o.MapFrom(s => s.ActivityName))
                 .ForMember(d => d.IsActive, o => o.MapFrom(s => true));
 
             CreateMap<(SysBusinessActivityUpdateDTO,int Id), SysBusinessActivity>()
-                .ForMember(d => d.BusinessActivityName, o => o.MapFrom(s => s.Item1.Name))
+                .ForMember(d => d.BusinessActivityName, o => o.MapFrom(s => s.Item1.ActivityName))
                 .ForMember(d=>d.SysBusinessActivityId,o=>o.MapFrom(s => s.Id))
-                .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Item1.Status));
+                .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Item1.Active));
 
         
 
             CreateMap<SysBusinessActivity, SysBusinessActivityDTO>()
-          .ForMember(d => d.Id, o => o.MapFrom(s => s.SysBusinessActivityId))
-          .ForMember(d => d.Name, o => o.MapFrom(s => s.BusinessActivityName))
+          .ForMember(d => d.ActivityId, o => o.MapFrom(s => s.SysBusinessActivityId))
+          .ForMember(d => d.ActivityName, o => o.MapFrom(s => s.BusinessActivityName))
           .ForMember(d => d.Active, o => o.MapFrom(s => s.IsActive))
           .ForMember(d => d.Delete, o => o.MapFrom(s => s.IsDeleted))
           .ForMember(d => d.CreatedUser, o => o.MapFrom(s => s.CreatedUser))
@@ -36,8 +36,8 @@ namespace VoiceFirst_Admin.Utilities.Mapping
           ;
 
             CreateMap<SysBusinessActivity, SysBusinessActivityActiveDTO>()
-           .ForMember(d => d.Id, o => o.MapFrom(s => s.SysBusinessActivityId))
-           .ForMember(d => d.Name, o => o.MapFrom(s => s.BusinessActivityName))     
+           .ForMember(d => d.ActivityId, o => o.MapFrom(s => s.SysBusinessActivityId))
+           .ForMember(d => d.ActivityName, o => o.MapFrom(s => s.BusinessActivityName))     
            ;
 
         }

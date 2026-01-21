@@ -22,6 +22,19 @@ public class ProgramActionRepo : IProgramActionRepo
         _context = context;
     }
 
+
+
+    public async Task<SysProgramActions> GetActiveByIdAsync
+          (int SysProgramActionId, CancellationToken cancellationToken = default)
+    {
+        var sql = "SELECT * FROM SysProgramActions WHERE SysProgramActionId = @SysProgramActionId And Active = 1 And IsDeleted = 0;";
+
+        var cmd = new CommandDefinition(sql, new { SysProgramActionId = SysProgramActionId }, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var entity = await connection.QueryFirstOrDefaultAsync<SysProgramActions>(cmd);
+        return entity;
+    }
+
     public async Task<SysProgramActions> CreateAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
         const string sql = @"
@@ -46,7 +59,7 @@ public class ProgramActionRepo : IProgramActionRepo
             SysProgramActionId,
             ProgramActionName 
         FROM SysProgramActions
-        WHERE IsDeleted = 0 AND IsActive = 1 ORDER BY ProgramActionName ASC
+        WHERE IsDeleted = 0 AND Active = 1 ORDER BY ProgramActionName ASC
         ");
 
         using var connection = _context.CreateConnection();
@@ -60,7 +73,7 @@ public class ProgramActionRepo : IProgramActionRepo
             spa.SysProgramActionId,
             spa.ProgramActionName,
             spa.CreatedAt,
-            spa.IsActive,
+            spa.Active,
             spa.UpdatedAt,
             spa.IsDeleted,
             spa.DeletedAt,
@@ -77,7 +90,7 @@ public class ProgramActionRepo : IProgramActionRepo
         INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
         LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
         LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy
-         WHERE SysProgramActionId = @Id;";
+         WHERE SysProgramActionId = @ActivityId;";
 
         var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -111,7 +124,7 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
 
         if (filter.Active.HasValue)
         {
-            baseSql.Append(" AND spa.IsActive = @Active");
+            baseSql.Append(" AND spa.Active = @Active");
             parameters.Add("Active", filter.Active.Value);
         }
         // CreatedAt
@@ -174,7 +187,7 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
         {
             ["ActionId"] = "spa.SysProgramActionId",
             ["ActionName"] = "spa.ProgramActionName",
-            ["Active"] = "spa.IsActive",
+            ["Active"] = "spa.Active",
             ["Deleted"] = "spa.IsDeleted",
             ["CreatedDate"] = "spa.CreatedAt",
             ["ModifiedDate"] = "spa.UpdatedAt",
@@ -193,7 +206,7 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
         // ITEMS (select + order + paging)
         var itemsSql = $@"
             SELECT
-                spa.SysProgramActionId, spa.ProgramActionName, spa.CreatedAt, spa.IsActive, spa.UpdatedAt, spa.IsDeleted, spa.DeletedAt, uC.UserId AS CreatedById, CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName, uU.UserId AS UpdatedById, CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName, uD.UserId AS DeletedById, CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
+                spa.SysProgramActionId, spa.ProgramActionName, spa.CreatedAt, spa.Active, spa.UpdatedAt, spa.IsDeleted, spa.DeletedAt, uC.UserId AS CreatedById, CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName, uU.UserId AS UpdatedById, CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName, uD.UserId AS DeletedById, CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
             {baseSql}
             ORDER BY {sortColumn} {sortOrder}
             OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;
@@ -230,8 +243,8 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
 
         if (entity.IsActive.HasValue)
         {
-            sets.Add("IsActive = @IsActive");
-            parameters.Add("IsActive", entity.IsActive.Value ? 1 : 0);
+            sets.Add("Active = @Active");
+            parameters.Add("Active", entity.IsActive.Value ? 1 : 0);
         }
 
         // If nothing to update, return false (no-op)
@@ -242,12 +255,12 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
         sets.Add("UpdatedBy = @UpdatedBy");
         sets.Add("UpdatedAt = SYSDATETIME()");
         parameters.Add("UpdatedBy", entity.UpdatedBy);
-        parameters.Add("Id", entity.SysProgramActionId);
+        parameters.Add("ActivityId", entity.SysProgramActionId);
 
         var sql = new StringBuilder();
         sql.Append("UPDATE SysProgramActions SET ");
         sql.Append(string.Join(", ", sets));
-        sql.Append(" WHERE SysProgramActionId = @Id AND IsDeleted = 0;");
+        sql.Append(" WHERE SysProgramActionId = @ActivityId AND IsDeleted = 0;");
 
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -256,9 +269,9 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
     }
     public async Task<bool> DeleteAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
-        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @Id AND IsDeleted = 0;";
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy=@DeletedBy  WHERE SysProgramActionId = @ActivityId AND IsDeleted = 0;";
         var parameters = new DynamicParameters();
-        parameters.Add("Id", entity.SysProgramActionId);
+        parameters.Add("ActivityId", entity.SysProgramActionId);
         parameters.Add("DeletedBy", entity.DeletedBy);
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -267,9 +280,9 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
     }
     public async Task<bool> RestoreAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
-        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 0, DeletedAt = NULL,DeletedBy=NULL,UpdatedBy = @UpdatedBy,UpdatedAt = SYSDATETIME()  WHERE SysProgramActionId = @Id AND IsDeleted = 1;";
+        const string sql = @"UPDATE SysProgramActions SET IsDeleted = 0, DeletedAt = NULL,DeletedBy=NULL,UpdatedBy = @UpdatedBy,UpdatedAt = SYSDATETIME()  WHERE SysProgramActionId = @ActivityId AND IsDeleted = 1;";
         var parameters = new DynamicParameters();
-        parameters.Add("Id", entity.SysProgramActionId);
+        parameters.Add("ActivityId", entity.SysProgramActionId);
         parameters.Add("UpdatedBy", entity.UpdatedBy);
         var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -278,7 +291,7 @@ LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
     }
     public async Task<SysProgramActions> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var sql = "SELECT * FROM SysProgramActions WHERE ProgramActionName = @Name";
+        var sql = "SELECT * FROM SysProgramActions WHERE ProgramActionName = @ActivityName";
         if (excludeId.HasValue)
             sql += " AND SysProgramActionId <> @ExcludeId";
 

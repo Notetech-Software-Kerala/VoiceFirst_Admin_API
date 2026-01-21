@@ -2,8 +2,8 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity
 {
     public class SysBusinessActivityDTO
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public int ActivityId { get; set; }
+        public string ActivityName { get; set; } = string.Empty;
         public bool Active { get; set; }
         public bool Delete { get; set; }
         public string CreatedUser { get; set; } = string.Empty;

@@ -17,14 +17,16 @@ public class SysBusinessActivityController : ControllerBase
         _service = service;
     }
 
+
     [HttpPost]
     public async Task<IActionResult> CreateAsync(
         [FromBody] SysBusinessActivityCreateDTO model,
         CancellationToken cancellationToken)
     {
         if (model == null)
-            return BadRequest(ApiResponse<object>.
-                Fail(Messages.PayloadRequired));
+            return Ok(ApiResponse<object>.
+                Fail(Messages.PayloadRequired,
+                Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest));
 
         var created = await _service.
             CreateAsync(model, userId, cancellationToken);
@@ -34,6 +36,7 @@ public class SysBusinessActivityController : ControllerBase
                 created,
                 Messages.BusinessActivityCreated));
     }
+
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> 
@@ -46,6 +49,8 @@ public class SysBusinessActivityController : ControllerBase
             Messages.BusinessActivityRetrieved));
     }
 
+
+
     [HttpGet("lookup")]
     public async Task<IActionResult> GetActiveAsync(
      
@@ -55,6 +60,7 @@ public class SysBusinessActivityController : ControllerBase
         return Ok(ApiResponse<object>.Ok(items,
             Messages.BusinessActivityRetrieved));
     }
+
 
     [HttpGet]
     public async Task<IActionResult> GetAllAsync(
@@ -75,11 +81,14 @@ public class SysBusinessActivityController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (model == null || id == 0)
-            return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
+            return Ok(ApiResponse<object>.Fail(
+                Messages.PayloadRequired,
+                Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest));
 
         var updatedDto = await _service.UpdateAsync(model, id, userId, cancellationToken);
 
-        return Ok(ApiResponse<object>.Ok(updatedDto, Messages.BusinessActivityUpdated));
+        return Ok(ApiResponse<object>.Ok(updatedDto, 
+            Messages.BusinessActivityUpdated));
     }
 
     [HttpPatch("recover/{id:int}")]

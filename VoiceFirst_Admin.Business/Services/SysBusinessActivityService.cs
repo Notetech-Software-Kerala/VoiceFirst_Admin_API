@@ -31,7 +31,7 @@ namespace VoiceFirst_Admin.Business.Services
       CancellationToken cancellationToken)
         {
             var existingEntity = await _repo.BusinessActivityExistsAsync(
-                dto.Name,
+                dto.ActivityName,
                 null,
                 cancellationToken);
 
@@ -103,10 +103,10 @@ namespace VoiceFirst_Admin.Business.Services
             CancellationToken cancellationToken = default)
         {
             // uniqueness check ONLY if name is patched
-            if (!string.IsNullOrWhiteSpace(dto.Name))
+            if (!string.IsNullOrWhiteSpace(dto.ActivityName))
             {
                 var existingEntity = await _repo.BusinessActivityExistsAsync(
-               dto.Name,
+               dto.ActivityName,
                null,
                cancellationToken);
 
@@ -133,8 +133,8 @@ namespace VoiceFirst_Admin.Business.Services
             var entity = new SysBusinessActivity
             {
                 SysBusinessActivityId = sysBusinessActivityId,
-                BusinessActivityName = dto.Name,
-                IsActive = dto.Status,
+                BusinessActivityName = dto.ActivityName,
+                IsActive = dto.Active,
                 UpdatedBy = loginId
             };
 

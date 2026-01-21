@@ -12,4 +12,7 @@ public class SysProgram : BaseModel
     public string ProgramRoute { get; set; } = string.Empty;
     public int ApplicationId { get; set; }
     public int CompanyId { get; set; }
+
+    public List<SysProgramActions> Actions { get; set; } 
+        = new List<SysProgramActions>();
 }
