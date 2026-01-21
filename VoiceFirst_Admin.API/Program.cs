@@ -30,12 +30,14 @@ builder.Services.AddScoped<ISysBusinessActivityRepo, SysBusinessActivityRepo>();
 builder.Services.AddScoped<IPostOfficeRepo, PostOfficeRepo>();
 builder.Services.AddScoped<ISysProgramRepo, SysProgramRepo>();
 builder.Services.AddScoped<IApplicationRepo, ApplicationRepo>();
+builder.Services.AddScoped<ICountryRepo, CountryRepo>();
 
 // Services
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
 builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
 builder.Services.AddScoped<IPostOfficeService, PostOfficeService>();
 builder.Services.AddScoped<ISysProgramService, SysProgramService>();
+builder.Services.AddScoped<ICountryService, CountryService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(

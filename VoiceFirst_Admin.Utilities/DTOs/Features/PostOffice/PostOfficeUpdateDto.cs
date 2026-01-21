@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 public class PostOfficeUpdateDto
 {
-    public string PostOfficeName { get; set; } = string.Empty;
+    public string? PostOfficeName { get; set; } 
     public int? CountryId { get; set; }
-    public bool IsActive { get; set; }
-    public IEnumerable<PostOfficeZipCodeDto> ZipCodes { get; set; } = new List<PostOfficeZipCodeDto>();
+    public bool? IsActive { get; set; }
+    public IEnumerable<ZipCodeUpdateDto> ZipCodes { get; set; } = new List<ZipCodeUpdateDto>();
 }
