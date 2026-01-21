@@ -11,6 +11,7 @@ public class PostOfficeMappingProfile : Profile
         CreateMap<PostOffice, PostOfficeDto>()
             .ForMember(d => d.PostOfficeId, opt => opt.MapFrom(s => s.PostOfficeId))
                 .ForMember(d => d.PostOfficeName, opt => opt.MapFrom(s => s.PostOfficeName))
+                .ForMember(d => d.CountryName, opt => opt.MapFrom(s => s.CountryName))
                 .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))
                 .ForMember(d => d.Deleted, opt => opt.MapFrom(s => s.IsDeleted))
                 .ForMember(d => d.CreatedUser, opt => opt.MapFrom(s => s.CreatedUserName))
@@ -22,7 +23,7 @@ public class PostOfficeMappingProfile : Profile
 
         CreateMap<PostOffice, PostOfficeLookupDto>();
 
-        CreateMap<PostOfficeZipCode, PostOfficeZipCodeDto>()
+        CreateMap<PostOfficeZipCode, ZipCodeDto>()
             .ForMember(d => d.ZipCodeId, opt => opt.MapFrom(s => s.PostOfficeZipCodeId))
             .ForMember(d => d.ZipCode, opt => opt.MapFrom(s => s.ZipCode))
             .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))

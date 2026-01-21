@@ -13,6 +13,7 @@ using VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
+using static Dapper.SqlMapper;
 
 namespace VoiceFirst_Admin.Data.Repositories;
 
@@ -55,6 +56,7 @@ public class PostOfficeRepo : IPostOfficeRepo
                 po.UpdatedAt,
                 po.IsDeleted,
                 po.DeletedAt,
+                Country.CountryName,
                 uC.UserId   AS CreatedById,
                 CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
                 uU.UserId   AS UpdatedById,
@@ -63,6 +65,7 @@ public class PostOfficeRepo : IPostOfficeRepo
                 CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
             FROM PostOffice po
             INNER JOIN Users uC ON uC.UserId = po.CreatedBy
+            INNER JOIN Country ON Country.CountryId = po.CountryId
             LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
             LEFT JOIN Users uD ON uD.UserId = po.DeletedBy
             WHERE po.PostOfficeId = @Id;";
@@ -85,6 +88,7 @@ public class PostOfficeRepo : IPostOfficeRepo
         var baseSql = new StringBuilder(@"
 FROM PostOffice po
 INNER JOIN Users uC ON uC.UserId = po.CreatedBy
+INNER JOIN Country ON Country.CountryId = po.CountryId
 LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
 LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
             ");
@@ -142,6 +146,7 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
         var searchByMap = new Dictionary<PostOfficeSearchBy, string>
         {
             [PostOfficeSearchBy.PostOfficeName] = "po.PostOfficeName",
+            [PostOfficeSearchBy.CountryName] = "po.CountryName",
             [PostOfficeSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
             [PostOfficeSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
             [PostOfficeSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)",
@@ -176,6 +181,7 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
                 OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
                 OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
                 OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
+                OR Country.CountryName LIKE @Search 
                 OR EXISTS (
                     SELECT 1
                     FROM PostOfficeZipCode pz
@@ -194,6 +200,7 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
         var sortMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["PostOfficeId"] = "po.PostOfficeId",
+            ["CountryName"] = "Country.CountryName",
             ["PostOfficeName"] = "po.PostOfficeName",
             ["Active"] = "po.IsActive",
             ["Deleted"] = "po.IsDeleted",
@@ -221,6 +228,7 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
                 po.IsDeleted,
                 po.DeletedAt,
                 uC.UserId AS CreatedById,
+                Country.CountryName,
                 CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
                 uU.UserId AS UpdatedById,
                 CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
@@ -255,7 +263,7 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
             PostOfficeId,
             PostOfficeName 
         FROM PostOffice
-        WHERE IsDeleted = 0 AND Active = 1 ORDER BY PostOfficeName ASC
+        WHERE IsDeleted = 0 AND IsActive = 1 ORDER BY PostOfficeName ASC
         ");
 
         using var connection = _context.CreateConnection();
@@ -293,8 +301,8 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
 
         if (entity.IsActive.HasValue)
         {
-            sets.Add("Active = @Active");
-            parameters.Add("Active", entity.IsActive.Value ? 1 : 0);
+            sets.Add("IsActive = @IsActive");
+            parameters.Add("IsActive", entity.IsActive.Value ? 1 : 0);
         }
 
         if (sets.Count == 0)
@@ -396,9 +404,7 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
         try
         {
             // load existing
-            const string selectSql = @"SELECT PostOfficeZipCodeId, PostOfficeId, ZipCode FROM PostOfficeZipCode WHERE PostOfficeId = @PostOfficeId AND IsDeleted = 0;";
-            var existing = (await connection.QueryAsync<PostOfficeZipCode>(
-                new CommandDefinition(selectSql, new { PostOfficeId = postOfficeId }, transaction, cancellationToken: cancellationToken))).ToList();
+            
 
             var incomingList = zipCodes.ToList();
 
@@ -407,27 +413,45 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
             {
                 if (z.PostOfficeZipCodeId > 0)
                 {
-                    const string updateSql = @"UPDATE PostOfficeZipCode SET ZipCode = @ZipCode, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE PostOfficeZipCodeId = @Id;";
-                    await connection.ExecuteAsync(
-                        new CommandDefinition(updateSql, new { Id = z.PostOfficeZipCodeId, z.ZipCode, z.UpdatedBy }, transaction, cancellationToken: cancellationToken));
+                    var sets = new List<string>();
+                    var parameters = new DynamicParameters();
+
+                    
+                    if (!string.IsNullOrWhiteSpace(z.ZipCode))
+                    {
+                        sets.Add("ZipCode = @ZipCode");
+                        parameters.Add("ZipCode", z.ZipCode);
+                    }
+
+                    
+
+                    if (z.IsActive.HasValue)
+                    {
+                        sets.Add("IsActive = @IsActive");
+                        parameters.Add("IsActive", z.IsActive.Value ? 1 : 0);
+                    }
+                    parameters.Add("UpdatedBy", z.UpdatedBy);
+                    parameters.Add("Id", z.PostOfficeZipCodeId);
+                    var sql = new StringBuilder();
+                    sql.Append("UPDATE PostOfficeZipCode SET UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME(), ");
+                    sql.Append(string.Join(", ", sets));
+                    sql.Append(" WHERE PostOfficeId = @Id AND IsDeleted = 0;");
+
+                    var cmd = new CommandDefinition(sql.ToString(), parameters, transaction, cancellationToken: cancellationToken);
+                
+                    var affected = await connection.ExecuteAsync(cmd);
                 }
                 else
                 {
-                    const string insertSql = @"INSERT INTO PostOfficeZipCode (PostOfficeId, ZipCode, CreatedBy) VALUES (@PostOfficeId, @ZipCode, @CreatedBy);";
+                    const string insertSql = @"INSERT INTO PostOfficeZipCode (PostOfficeId, ZipCode, CreatedBy) VALUES (@PostOfficeId, @ZipCode, @UpdatedBy);";
                     await connection.ExecuteAsync(
-                        new CommandDefinition(insertSql, new { PostOfficeId = postOfficeId, z.ZipCode, z.CreatedBy }, transaction, cancellationToken: cancellationToken));
+                        new CommandDefinition(insertSql, new { PostOfficeId = postOfficeId, z.ZipCode, z.UpdatedBy }, transaction, cancellationToken: cancellationToken));
                 }
             }
 
             // delete missing
-            var incomingIds = incomingList.Where(x => x.PostOfficeZipCodeId > 0).Select(x => x.PostOfficeZipCodeId).ToHashSet();
-            var toDelete = existing.Where(x => !incomingIds.Contains(x.PostOfficeZipCodeId)).ToList();
-            foreach (var del in toDelete)
-            {
-                const string deleteSql = @"UPDATE PostOfficeZipCode SET IsDeleted = 1, DeletedAt = SYSDATETIME() WHERE PostOfficeZipCodeId = @Id;";
-                await connection.ExecuteAsync(
-                    new CommandDefinition(deleteSql, new { Id = del.PostOfficeZipCodeId }, transaction, cancellationToken: cancellationToken));
-            }
+            
+            
 
             transaction.Commit();
         }

@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -107,7 +108,7 @@ public class PostOfficeService : IPostOfficeService
 
     public async Task<ApiResponse<PostOfficeDto>> UpdateAsync(PostOfficeUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
     {
-        if (dto.PostOfficeName != null)
+        if (dto.PostOfficeName != null || dto.IsActive!=null || dto.CountryId!=null)
         {
 
             var existing = await _repo.ExistsByNameAsync(dto.PostOfficeName ?? string.Empty, id, cancellationToken);
@@ -118,39 +119,44 @@ public class PostOfficeService : IPostOfficeService
 
                 return ApiResponse<PostOfficeDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
             }
+            var entity = new PostOffice
+            {
+                PostOfficeId = id,
+                PostOfficeName = dto.PostOfficeName ?? string.Empty,
+                CountryId = dto.CountryId,
+                IsActive = dto.IsActive,
+                UpdatedBy = loginId
+            };
+
+            var ok = await _repo.UpdateAsync(entity, cancellationToken);
+            if (!ok)
+                return ApiResponse<PostOfficeDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+        }
+        else if (dto.ZipCodes.Count() > 0)
+        {
+            var zipEntities = new List<PostOfficeZipCode>();
+            foreach (var z in dto.ZipCodes)
+            {
+                
+                zipEntities.Add(new PostOfficeZipCode
+                {
+                    PostOfficeZipCodeId = z.ZipCodeId ?? 0,
+                    PostOfficeId = id,
+                    IsActive = z.Active,
+                    ZipCode = z.ZipCode.Trim()?? "",
+                    UpdatedBy = loginId
+                });
+            }
+
+            await _repo.BulkUpsertZipCodesAsync(id, zipEntities, cancellationToken);
         }
 
-        var entity = new PostOffice
-        {
-            PostOfficeId = id,
-            PostOfficeName = dto.PostOfficeName ?? string.Empty,
-            CountryId = dto.CountryId,
-            IsActive = dto.IsActive,
-            UpdatedBy = loginId
-        };
-
-        var ok = await _repo.UpdateAsync(entity, cancellationToken);
-        if (!ok)
-            return ApiResponse<PostOfficeDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
 
         var updatedEntity = await _repo.GetByIdAsync(id, cancellationToken);
         if (updatedEntity == null)
             return ApiResponse<PostOfficeDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
         // sync zip codes: add new, update existing, remove missing
-        var zipEntities = new List<PostOfficeZipCode>();
-        foreach (var z in dto.ZipCodes)
-        {
-            if (string.IsNullOrWhiteSpace(z.ZipCode)) continue;
-            zipEntities.Add(new PostOfficeZipCode
-            {
-                PostOfficeZipCodeId = z.ZipCodeId ?? 0,
-                PostOfficeId = updatedEntity.PostOfficeId,
-                ZipCode = z.ZipCode.Trim(),
-                UpdatedBy = loginId
-            });
-        }
-
-        await _repo.BulkUpsertZipCodesAsync(updatedEntity.PostOfficeId, zipEntities, cancellationToken);
+        
 
         var updatedDto = await MapWithZipCodesAsync(updatedEntity, cancellationToken);
         return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.Updated, StatusCodes.Status200OK);
@@ -210,7 +216,7 @@ public class PostOfficeService : IPostOfficeService
     {
         var dto = _mapper.Map<PostOfficeDto>(entity);
         var zips = await _repo.GetZipCodesByPostOfficeIdAsync(entity.PostOfficeId, cancellationToken);
-        dto.ZipCodes = _mapper.Map<IEnumerable<PostOfficeZipCodeDto>>(zips);
+        dto.ZipCodes = _mapper.Map<IEnumerable<ZipCodeDto>>(zips);
         return dto;
     }
 }
