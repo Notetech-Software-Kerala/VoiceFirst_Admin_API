@@ -114,7 +114,6 @@ jobs:
           } else {
             throw "Health check failed with status code $($response.StatusCode)"
           }
-          Write-Host "Health check skipped for now"
 
       - name: Notify deployment status
         if: always()
