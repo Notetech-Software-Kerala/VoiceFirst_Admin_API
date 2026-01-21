@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Collections.Generic;
 using System.Threading;
@@ -8,8 +9,10 @@ using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Exceptions;
+using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Business.Services
@@ -26,7 +29,7 @@ namespace VoiceFirst_Admin.Business.Services
             _mapper = mapper;
         }
 
-        public async Task<SysBusinessActivityDTO> CreateAsync(
+        public async Task<ApiResponse<SysBusinessActivityDTO>> CreateAsync(
       SysBusinessActivityCreateDTO dto,
       int loginId,
       CancellationToken cancellationToken)
@@ -41,15 +44,19 @@ namespace VoiceFirst_Admin.Business.Services
                 if (existingEntity.IsDeleted== false)
                 {
                     // ❌ Active duplicate
-                    throw new BusinessConflictException(
-                        Messages.BusinessActivityAlreadyExists,
-                        ErrorCodes.BusinessActivityAlreadyExists);
+                    
+                    return ApiResponse<SysBusinessActivityDTO>.Fail
+                       (Messages.BusinessActivityAlreadyExists,
+                       StatusCodes.Status409Conflict,
+                       ErrorCodes.BusinessActivityAlreadyExists
+                       );
                 }
-
-                // ♻ RECOVERABLE (Soft Deleted)
-                throw new BusinessRecoverableException(
-                    Messages.BusinessActivityAlreadyExistsRecoverable,
-                    ErrorCodes.BusinessActivityAlreadyExistsRecoverable);
+                return ApiResponse<SysBusinessActivityDTO>.Fail
+                    (Messages.BusinessActivityAlreadyExistsRecoverable,
+                    StatusCodes.Status422UnprocessableEntity,
+                    ErrorCodes.BusinessActivityAlreadyExistsRecoverable
+                    );
+            
             }
 
             var entity = _mapper.Map<SysBusinessActivity>(dto);
@@ -61,22 +68,27 @@ namespace VoiceFirst_Admin.Business.Services
             var createdEntity =
                 await _repo.GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);
 
-            return _mapper.Map<SysBusinessActivityDTO>(createdEntity);
+             var createdDto = _mapper.Map<SysBusinessActivityDTO>(createdEntity);
+
+            return ApiResponse<SysBusinessActivityDTO>.Ok(createdDto, Messages.BusinessActivityCreated,StatusCodes.Status201Created);
         }
 
-        public async Task<int> RecoverBusinessActivityAsync(
+        public async Task<ApiResponse<SysBusinessActivityDTO>> RecoverBusinessActivityAsync(
             int id,
             int loginId,
             CancellationToken cancellationToken = default)
         {
-            var recoveredId = await _repo.RecoverBusinessActivityAsync(id, loginId, cancellationToken);
-            if (recoveredId == 0)
+            var rowAffect = await _repo.RecoverBusinessActivityAsync(id, loginId, cancellationToken);
+            if (rowAffect <= 0)
             {
                 throw new BusinessNotFoundException(
                     Messages.NotFound,
                     ErrorCodes.BusinessActivityNotFound);
             }
-            return recoveredId;
+            var dto = await GetByIdAsync(id, cancellationToken);
+            return ApiResponse<SysBusinessActivityDTO>.
+                Ok(dto, Messages.ProgramRecovered);
+
         }
 
         public async Task<SysBusinessActivityDTO?> GetByIdAsync(

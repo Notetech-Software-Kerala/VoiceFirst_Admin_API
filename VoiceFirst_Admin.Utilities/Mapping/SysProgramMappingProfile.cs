@@ -14,7 +14,15 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.Route, opt => opt.MapFrom(s => s.ProgramRoute))
                 .ForMember(d => d.PlatformId, opt => opt.MapFrom(s => s.ApplicationId))
                 .ForMember(d => d.CompanyId, opt => opt.MapFrom(s => s.CompanyId))
-                .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive ?? true));
+               .ForMember(d => d.Active, o => o.MapFrom(s => s.IsActive))
+              .ForMember(d => d.Deleted, o => o.MapFrom(s => s.IsDeleted))
+              .ForMember(d => d.CreatedUser, o => o.MapFrom(s => s.CreatedUserName))
+              .ForMember(d => d.CreatedDate, o => o.MapFrom(s => s.CreatedAt))
+              .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.UpdatedUserName))
+              .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt))
+              .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUserName))
+              .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedAt))
+             ;
 
             CreateMap<SysProgramCreateDTO, SysProgram>()
                 .ForMember(d => d.ProgramName, opt => opt.MapFrom(s => s.ProgramName))

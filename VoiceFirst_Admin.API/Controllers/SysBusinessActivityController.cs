@@ -27,14 +27,10 @@ public class SysBusinessActivityController : ControllerBase
             return Ok(ApiResponse<object>.
                 Fail(Messages.PayloadRequired,
                 Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest));
-
+            
         var created = await _service.
             CreateAsync(model, userId, cancellationToken);
-
-        return Ok(         
-            ApiResponse<SysBusinessActivityDTO>.Ok(
-                created,
-                Messages.BusinessActivityCreated));
+        return StatusCode(created.StatusCode, created);
     }
 
 
@@ -55,7 +51,7 @@ public class SysBusinessActivityController : ControllerBase
     public async Task<IActionResult> GetActiveAsync(
      
       CancellationToken cancellationToken)
-    {//
+    {
         var items = await _service.GetActiveAsync(cancellationToken);
         return Ok(ApiResponse<object>.Ok(items,
             Messages.BusinessActivityRetrieved));
@@ -102,10 +98,10 @@ public class SysBusinessActivityController : ControllerBase
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult>
-        Delete(int id, CancellationToken cancellationToken)
+        DeleteAsync(int id, CancellationToken cancellationToken)
     {
         await _service.DeleteAsync(id, userId, cancellationToken);
-        return Ok(ApiResponse<object>.Ok(null!,
+        return Ok(ApiResponse<bool>.Ok(true,
             Messages.BusinessActivityDeleted));
     }
 }

@@ -18,16 +18,16 @@ namespace VoiceFirst_Admin.Data.Repositories
     {
         private readonly IDapperContext _context;
 
-        private static readonly Dictionary<string, string> SortColumnMap =
-     new(StringComparer.OrdinalIgnoreCase)
-     {
-         ["name"] = "s.BusinessActivityName",
-         ["active"] = "s.IsActive",
-         ["delete"] = "s.IsDeleted",
-         ["createdUser"] = "cu.FirstName",
-         ["modifiedUser"] = "uu.FirstName",
-         ["deletedUser"] = "du.FirstName"
-     };
+     //   private static readonly Dictionary<string, string> SortColumnMap =
+     //new(StringComparer.OrdinalIgnoreCase)
+     //{
+     //    ["name"] = "s.BusinessActivityName",
+     //    ["active"] = "s.IsActive",
+     //    ["delete"] = "s.IsDeleted",
+     //    ["createdUser"] = "cu.FirstName",
+     //    ["modifiedUser"] = "uu.FirstName",
+     //    ["deletedUser"] = "du.FirstName"
+     //};
 
 
 
@@ -132,176 +132,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             }
 
 
-        //private static string BuildUserCondition(string? sortBy)
-        //{
-        //    return sortBy?.ToLower() switch
-        //    {
-        //        "createduser" =>
-        //            "s.CreatedBy IS NOT NULL AND (cu.FirstName LIKE @Search OR cu.LastName LIKE @Search)",
-
-        //        "modifieduser" =>
-        //            "s.UpdatedBy IS NOT NULL AND (uu.FirstName LIKE @Search OR uu.LastName LIKE @Search)",
-
-        //        "deleteduser" =>
-        //            "s.DeletedBy IS NOT NULL AND (du.FirstName LIKE @Search OR du.LastName LIKE @Search)",
-
-        //        _ => @"
-        //    (cu.FirstName LIKE @Search OR cu.LastName LIKE @Search)
-        //    OR (uu.FirstName LIKE @Search OR uu.LastName LIKE @Search)
-        //    OR (du.FirstName LIKE @Search OR du.LastName LIKE @Search)
-        //"
-        //    };
-        //}
-
-
-        //private static void ApplyDateRange(
-        //StringBuilder sql,
-        //DynamicParameters parameters,
-        //string? fromDate,
-        //string? toDate,
-        //string columnName,
-        //string paramPrefix)
-        //{
-        //    if (DateTime.TryParse(fromDate, out var from))
-        //    {
-        //        // Start of day
-        //        sql.Append($" AND {columnName} >= @{paramPrefix}From");
-        //        parameters.Add($"{paramPrefix}From", from.Date);
-        //    }
-
-        //    if (DateTime.TryParse(toDate, out var to))
-        //    {
-        //        // End of day → next day (exclusive)
-        //        sql.Append($" AND {columnName} < @{paramPrefix}To");
-        //        parameters.Add($"{paramPrefix}To", to.Date.AddDays(1));
-        //    }
-        //}
-
-
-
-        //public async Task<PagedResultDto<SysBusinessActivity>> GetAllAsync(
-        //CommonFilterDto filter,
-        //CancellationToken cancellationToken = default)
-        //{
-        //    var baseSql = new StringBuilder(@"
-        //    FROM dbo.SysBusinessActivity s
-        //    INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
-        //    LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
-        //    LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
-        //    WHERE 1 = 1
-        //");
-
-        //    var parameters = new DynamicParameters();
-
-        //    // 🔐 Active filter
-        //    if (filter.Active.HasValue)
-        //    {
-        //        baseSql.Append(" AND s.IsActive = @Active");
-        //        parameters.Add("Active", filter.Active.Value);
-        //    }
-
-        //    // 🔐 Deleted filter
-        //    if (filter.Deleted.HasValue)
-        //    {
-        //        baseSql.Append(" AND s.IsDeleted = @IsDeleted");
-        //        parameters.Add("IsDeleted", filter.Deleted.Value);
-        //    }
-
-        //    // 🔍 TEXT / USER / NAME SEARCH ONLY
-        //    if (!string.IsNullOrWhiteSpace(filter.SearchText))
-        //    {
-        //        baseSql.Append($@"
-        //        AND (
-        //            {BuildUserCondition(filter.SortBy)}
-        //        )
-        //    ");
-
-        //        parameters.Add("Search", $"%{filter.SearchText}%");
-        //    }
-
-        //    // 📅 DATE RANGE FILTERS (SEPARATE FIELDS)
-        //    // 📅 CREATED DATE FILTER
-        //    ApplyDateRange(
-        //        baseSql,
-        //        parameters,
-        //        filter.CreatedFromDate,
-        //        filter.CreatedToDate,
-        //        "s.CreatedAt",
-        //        "Created");
-
-        //    // 📅 UPDATED DATE FILTER
-        //    ApplyDateRange(
-        //        baseSql,
-        //        parameters,
-        //        filter.UpdatedFromDate,
-        //        filter.UpdatedToDate,
-        //        "s.UpdatedAt",
-        //        "Updated");
-
-        //    // 📅 DELETED DATE FILTER
-        //    ApplyDateRange(
-        //        baseSql,
-        //        parameters,
-        //        filter.DeletedFromDate,
-        //        filter.DeletedToDate,
-        //        "s.DeletedAt",
-        //        "Deleted");
-
-
-        //    // 🔢 Total count query
-        //    var countSql = $"SELECT COUNT(1) {baseSql}";
-
-        //    // 🔃 SAFE SORTING (ONLY ALLOWED COLUMNS)
-        //    var sortColumn = SortColumnMap.TryGetValue(
-        //        filter.SortBy ?? string.Empty,
-        //        out var column)
-        //        ? column
-        //        : "s.SysBusinessActivityId";
-
-        //    var sortOrder = filter.SortOrder == SortOrder.Asc ? "ASC" : "DESC";
-
-        //    // 📄 Data query
-        //    var dataSql = new StringBuilder(@"
-        //    SELECT
-        //        s.SysBusinessActivityId,
-        //        s.BusinessActivityName,
-        //        s.IsActive,
-        //        s.CreatedBy,
-        //        s.CreatedAt,
-        //        s.UpdatedBy,
-        //        s.UpdatedAt,
-        //        s.IsDeleted,
-        //        s.DeletedBy,
-        //        s.DeletedAt,
-        //        CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
-        //        CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUser,
-        //        CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
-        //");
-
-        //    dataSql.Append(baseSql);
-        //    dataSql.Append($" ORDER BY {sortColumn} {sortOrder}");
-        //    dataSql.Append(" OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
-
-        //    var offset = (Math.Max(filter.PageNumber, 1) - 1) * filter.Limit;
-        //    parameters.Add("Offset", offset);
-        //    parameters.Add("PageSize", filter.Limit);
-
-        //    using var connection = _context.CreateConnection();
-
-        //    var totalCount = await connection.ExecuteScalarAsync<int>(
-        //        new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
-
-        //    var items = await connection.QueryAsync<SysBusinessActivity>(
-        //        new CommandDefinition(dataSql.ToString(), parameters, cancellationToken: cancellationToken));
-
-        //    return new PagedResultDto<SysBusinessActivity>
-        //    {
-        //        Items = items.ToList(),
-        //        TotalCount = totalCount,
-        //        PageNumber = filter.PageNumber,
-        //        PageSize = filter.Limit
-        //    };
-        //}
+       
 
 
         public async Task<PagedResultDto<SysBusinessActivity>> GetAllAsync(BusinessActivityFilterDTO filter, CancellationToken cancellationToken = default)
@@ -498,7 +329,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             if (excludeId.HasValue)
                 sql += " AND SysBusinessActivityId <> @ExcludeId";
 
-            var cmd = new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
+            var cmd = new CommandDefinition(sql, new { ActivityName = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
             var entity = await connection.QueryFirstOrDefaultAsync<SysBusinessActivity>(cmd);
             return entity;
