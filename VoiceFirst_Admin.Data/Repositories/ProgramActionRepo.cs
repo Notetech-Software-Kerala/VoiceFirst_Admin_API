@@ -73,11 +73,11 @@ public class ProgramActionRepo : IProgramActionRepo
 
             uD.UserId   AS DeletedById,
             CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
-        FROM SysProgramActions spa
-        INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
-        LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
-        LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy
-         WHERE SysProgramActionId = @Id;";
+            FROM SysProgramActions spa
+            INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
+            LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy
+             WHERE SysProgramActionId = @Id;";
 
         var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
