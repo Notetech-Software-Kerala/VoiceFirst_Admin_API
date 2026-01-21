@@ -108,12 +108,12 @@ jobs:
         shell: powershell
         run: |
           Start-Sleep -Seconds 5
-          # $response = Invoke-WebRequest -Uri "http://localhost/VoiceFirstAdminAPI/health" -UseBasicParsing -ErrorAction SilentlyContinue
-          # if ($response.StatusCode -eq 200) {
-          #   Write-Host "Health check passed"
-          # } else {
-          #   throw "Health check failed with status code $($response.StatusCode)"
-          # }
+          $response = Invoke-WebRequest -Uri "http://localhost/api/health" -UseBasicParsing -ErrorAction SilentlyContinue
+          if ($response -and $response.StatusCode -eq 200) {
+            Write-Host "Health check passed"
+          } else {
+            throw "Health check failed with status code $($response.StatusCode)"
+          }
           Write-Host "Health check skipped for now"
 
       - name: Notify deployment status
