@@ -50,15 +50,14 @@ jobs:
           if (-not $siteExists) {
             Write-Host "Creating website: $websiteName"
             New-Item -ItemType Directory -Path $sitePath -Force | Out-Null
-            & "C:\Windows\System32\inetsrv\appcmd.exe" add site /name:$websiteName /physicalPath:$sitePath /bindings:"http/*:80:$($env:COMPUTERNAME)"
-            & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /+bindings:"[protocol='http',bindingInformation='*:80:localhost']"
+            & "C:\Windows\System32\inetsrv\appcmd.exe" add site /name:$websiteName /physicalPath:$sitePath /bindings:"http/*:80:localhost"
             Write-Host "Website created and bound to port 80"
           } else {
             Write-Host "Website already exists"
           }
           
           # Assign app pool to website
-          & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /applicationPool:$appPoolName
+          & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /[path='/'].applicationPool:$appPoolName
           Write-Host "Application pool assigned to website"
 
       - name: Stop IIS Application Pool
