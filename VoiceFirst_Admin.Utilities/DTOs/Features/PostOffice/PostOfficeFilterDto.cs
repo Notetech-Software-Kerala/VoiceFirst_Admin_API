@@ -14,6 +14,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice
 public enum PostOfficeSearchBy
 {
     PostOfficeName,
+    CountryName,
     ZipCode,
     CreatedUser,
     UpdatedUser,

@@ -7,5 +7,6 @@ public class PostOffice : BaseModel
 {
     public int PostOfficeId { get; set; }
     public string PostOfficeName { get; set; } = string.Empty;
+    public string? CountryName { get; set; } = string.Empty;
     public int? CountryId { get; set; }
 }
