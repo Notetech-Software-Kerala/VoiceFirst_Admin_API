@@ -1,0 +1,115 @@
+name: Deploy VoiceFirst_Admin API
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, windows]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./publish
+
+      - name: Create/Configure IIS Application Pool
+        shell: powershell
+        run: |
+          $appPoolName = "VoiceFirstAdminAPI"
+          $websiteName = "VoiceFirstAdminAPI"
+          $sitePath = "C:\inetpub\wwwroot\VoiceFirstAdminAPI"
+          
+          # Check if app pool exists
+          $appPoolExists = & "C:\Windows\System32\inetsrv\appcmd.exe" list apppool /name:$appPoolName 2>$null
+          if (-not $appPoolExists) {
+            Write-Host "Creating application pool: $appPoolName"
+            & "C:\Windows\System32\inetsrv\appcmd.exe" add apppool /name:$appPoolName /managedRuntimeVersion:"" /managedPipelineMode:Integrated
+            Write-Host "Application pool created"
+          } else {
+            Write-Host "Application pool already exists"
+          }
+          
+          # Check if website exists
+          $siteExists = & "C:\Windows\System32\inetsrv\appcmd.exe" list site /name:$websiteName 2>$null
+          if (-not $siteExists) {
+            Write-Host "Creating website: $websiteName"
+            New-Item -ItemType Directory -Path $sitePath -Force | Out-Null
+            & "C:\Windows\System32\inetsrv\appcmd.exe" add site /name:$websiteName /physicalPath:$sitePath /bindings:"http/*:80:$($env:COMPUTERNAME)"
+            & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /+bindings:"[protocol='http',bindingInformation='*:80:localhost']"
+            Write-Host "Website created and bound to port 80"
+          } else {
+            Write-Host "Website already exists"
+          }
+          
+          # Assign app pool to website
+          & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /applicationPool:$appPoolName
+          Write-Host "Application pool assigned to website"
+
+      - name: Stop IIS Application Pool
+        shell: powershell
+        run: |
+          try {
+            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:"VoiceFirstAdminAPI" -ErrorAction Stop
+            Write-Host "Application pool stopped successfully"
+          } catch {
+            Write-Host "Application pool not found or already stopped"
+          }
+        continue-on-error: true
+
+      - name: Deploy to IIS
+        shell: powershell
+        run: |
+          $deployPath = "C:\inetpub\wwwroot\VoiceFirstAdminAPI"
+          Write-Host "Deploying to $deployPath"
+          if (Test-Path $deployPath) {
+            Remove-Item -Path $deployPath -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          New-Item -ItemType Directory -Path $deployPath -Force | Out-Null
+          Copy-Item -Path "./publish/*" -Destination $deployPath -Recurse -Force
+          Write-Host "Files deployed successfully to $deployPath"
+
+      - name: Start IIS Application Pool
+        shell: powershell
+        run: |
+          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:"VoiceFirstAdminAPI"
+          Start-Sleep -Seconds 3
+          Write-Host "Application pool started"
+
+      - name: Verify deployment
+        shell: powershell
+        run: |
+          Start-Sleep -Seconds 5
+          # $response = Invoke-WebRequest -Uri "http://localhost/VoiceFirstAdminAPI/health" -UseBasicParsing -ErrorAction SilentlyContinue
+          # if ($response.StatusCode -eq 200) {
+          #   Write-Host "Health check passed"
+          # } else {
+          #   throw "Health check failed with status code $($response.StatusCode)"
+          # }
+          Write-Host "Health check skipped for now"
+
+      - name: Notify deployment status
+        if: always()
+        shell: powershell
+        run: |
+          if ("${{ job.status }}" -eq "success") {
+            Write-Host "✅ Deployment successful!"
+          } else {
+            Write-Host "❌ Deployment failed!"
+            exit 1
+          }
