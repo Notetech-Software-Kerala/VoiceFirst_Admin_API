@@ -64,7 +64,7 @@ public class SysBusinessActivityController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAllAsync(
-        [FromQuery] CommonFilterDto filter,
+        [FromQuery] BusinessActivityFilterDTO filter,
         CancellationToken cancellationToken)
     {
         
