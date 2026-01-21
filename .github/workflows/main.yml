@@ -39,7 +39,7 @@ jobs:
           $appPoolExists = & "C:\Windows\System32\inetsrv\appcmd.exe" list apppool /name:$appPoolName 2>$null
           if (-not $appPoolExists) {
             Write-Host "Creating application pool: $appPoolName"
-            & "C:\Windows\System32\inetsrv\appcmd.exe" add apppool /name:$appPoolName /managedRuntimeVersion:"" /managedPipelineMode:Integrated
+            & "C:\Windows\System32\inetsrv\appcmd.exe" add apppool /name:$appPoolName /managedRuntimeVersion:"v4.0" /managedPipelineMode:Integrated
             Write-Host "Application pool created"
           } else {
             Write-Host "Application pool already exists"
@@ -59,6 +59,11 @@ jobs:
           # Assign app pool to website
           & "C:\Windows\System32\inetsrv\appcmd.exe" set app "$websiteName/" /applicationPool:$appPoolName
           Write-Host "Application pool assigned to website"
+          
+          # Enable ASP.NET for the website
+          & "C:\Windows\System32\inetsrv\appcmd.exe" set config "$websiteName/" -section:system.webServer/security/authentication /anonymousAuthentication.enabled:true /commit:apphost
+          & "C:\Windows\System32\inetsrv\appcmd.exe" set config "$websiteName/" -section:system.webServer/handlers /+[name='aspNetCore',path='*',verb='*',modules='AspNetCoreModule',scriptProcessor='%windir%\system32\inetsrv\aspnetcore.dll',resourceType='Unspecified'] /commit:apphost
+          Write-Host "ASP.NET enabled for website"
 
       - name: Stop IIS Application Pool
         shell: powershell
