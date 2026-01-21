@@ -76,7 +76,9 @@ jobs:
         shell: powershell
         run: |
           try {
-            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:"VoiceFirstAdminAPI" -ErrorAction Stop
+            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:"VoiceFirstAdminAPI"
+            Write-Host "Stopping application pool..."
+            Start-Sleep -Seconds 5
             Write-Host "Application pool stopped successfully"
           } catch {
             Write-Host "Application pool not found or already stopped"
