@@ -22,17 +22,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<IDapperContext, DapperContext>();
-builder.Services.AddScoped<ISysBusinessActivityRepo, SysBusinessActivityRepo>();
-builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
 builder.Services.AddAutoMapper(typeof(SysBusinessActivityProfile).Assembly);
 builder.Services.AddControllers();
 // Repository
 builder.Services.AddScoped<IProgramActionRepo, ProgramActionRepo>();
 builder.Services.AddScoped<ISysBusinessActivityRepo, SysBusinessActivityRepo>();
-
+builder.Services.AddScoped<IPostOfficeRepo, PostOfficeRepo>();
 // Services
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
 builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
+builder.Services.AddScoped<IPostOfficeService, PostOfficeService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(

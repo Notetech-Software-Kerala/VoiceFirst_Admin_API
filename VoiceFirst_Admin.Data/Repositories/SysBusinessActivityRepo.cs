@@ -193,8 +193,8 @@ namespace VoiceFirst_Admin.Data.Repositories
                 // 🔐 Active filter
                 if (filter.Active.HasValue)
                 {
-                    baseSql.Append(" AND s.IsActive = @IsActive");
-                    parameters.Add("IsActive", filter.Active.Value);
+                    baseSql.Append(" AND s.IsActive = @Active");
+                    parameters.Add("Active", filter.Active.Value);
                 }
 
                 // 🔐 Deleted filter
@@ -318,8 +318,8 @@ namespace VoiceFirst_Admin.Data.Repositories
         //        // 🔐 Active filter
         //        if (filter.Active.HasValue)
         //        {
-        //            baseSql.Append(" AND s.IsActive = @IsActive");
-        //            parameters.Add("IsActive", filter.Active.Value);
+        //            baseSql.Append(" AND s.Active = @Active");
+        //            parameters.Add("Active", filter.Active.Value);
         //        }
 
         //        // 🔐 Delete filter
@@ -401,7 +401,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         //    SELECT
         //        s.SysBusinessActivityId,
         //        s.BusinessActivityName,
-        //        s.IsActive,
+        //        s.Active,
         //        s.CreatedBy,
         //        s.CreatedAt,
         //        s.UpdatedBy,
@@ -494,7 +494,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<int>RecoverBusinessActivityAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(),IsActive = 1  WHERE SysBusinessActivityId = @Id";
+            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(),Active = 1  WHERE SysBusinessActivityId = @Id";
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
             {
