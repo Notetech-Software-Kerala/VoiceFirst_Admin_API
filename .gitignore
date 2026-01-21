@@ -1,0 +1,7 @@
+/.vs
+/VoiceFirst_Admin.API/obj
+/VoiceFirst_Admin.Business.Contracts/obj
+/VoiceFirst_Admin.Business/obj
+/VoiceFirst_Admin.Data.Contracts/obj
+/VoiceFirst_Admin.Data/obj
+/VoiceFirst_Admin.Utilities/obj
