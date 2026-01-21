@@ -60,10 +60,17 @@ jobs:
           & "C:\Windows\System32\inetsrv\appcmd.exe" set app "$websiteName/" /applicationPool:$appPoolName
           Write-Host "Application pool assigned to website"
           
-          # Enable ASP.NET for the website
-          & "C:\Windows\System32\inetsrv\appcmd.exe" set config "$websiteName/" -section:system.webServer/security/authentication /anonymousAuthentication.enabled:true /commit:apphost
-          & "C:\Windows\System32\inetsrv\appcmd.exe" set config "$websiteName/" -section:system.webServer/handlers /+[name='aspNetCore',path='*',verb='*',modules='AspNetCoreModule',scriptProcessor='%windir%\system32\inetsrv\aspnetcore.dll',resourceType='Unspecified'] /commit:apphost
-          Write-Host "ASP.NET enabled for website"
+          # Enable ASP.NET and configure authentication
+          Import-Module WebAdministration
+          $sitePath = "IIS:\Sites\$websiteName"
+          
+          # Enable anonymous authentication
+          Set-WebConfigurationProperty -Filter "/system.webServer/security/authentication/anonymousAuthentication" -Name "enabled" -Value "true" -PSPath $sitePath
+          Write-Host "Anonymous authentication enabled"
+          
+          # Ensure the site is started
+          Start-WebSite -Name $websiteName -ErrorAction SilentlyContinue
+          Write-Host "ASP.NET configured for website"
 
       - name: Stop IIS Application Pool
         shell: powershell
