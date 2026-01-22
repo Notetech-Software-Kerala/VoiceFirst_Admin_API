@@ -78,6 +78,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string BusinessActivityUpdated = 
             "Business activity updated sucessfully.";
 
+
+        public const string ApplicationRetrieved =
+            "Application retrieve sucessfully.";
+
         // ===== SYS Program  =====
         public const string ProgramNameAlreadyExists =
             "Program name already exists in this application.";
