@@ -59,10 +59,10 @@ public class CountryService : ICountryService
         };
     }
 
-    public async Task<IEnumerable<DivisionOneDto>> GetDivisionOneActiveByCountryIdAsync(int countryId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<DivisionOneLookUpDto>> GetDivisionOneActiveByCountryIdAsync(int countryId, CancellationToken cancellationToken = default)
     {
         var items = await _repo.GetDivisionOneActiveByCountryIdAsync(countryId, cancellationToken);
-        return _mapper.Map<IEnumerable<DivisionOneDto>>(items);
+        return _mapper.Map<IEnumerable<DivisionOneLookUpDto>>(items);
     }
 
 
@@ -83,10 +83,10 @@ public class CountryService : ICountryService
         };
     }
 
-    public async Task<IEnumerable<DivisionTwoDto>> GetDivisionTwoActiveByDivisionOneIdAsync(int divisionOneId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<DivisionTwoLookUpDto>> GetDivisionTwoActiveByDivisionOneIdAsync(int divisionOneId, CancellationToken cancellationToken = default)
     {
         var items = await _repo.GetDivisionTwoActiveByDivisionOneIdAsync(divisionOneId, cancellationToken);
-        return _mapper.Map<IEnumerable<DivisionTwoDto>>(items);
+        return _mapper.Map<IEnumerable<DivisionTwoLookUpDto>>(items);
     }
 
 
@@ -106,9 +106,9 @@ public class CountryService : ICountryService
         };
     }
 
-    public async Task<IEnumerable<DivisionThreeDto>> GetDivisionThreeActiveByDivisionTwoIdAsync(int divisionTwoId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<DivisionThreeLookUpDto>> GetDivisionThreeActiveByDivisionTwoIdAsync(int divisionTwoId, CancellationToken cancellationToken = default)
     {
         var items = await _repo.GetDivisionThreeActiveByDivisionTwoIdAsync(divisionTwoId, cancellationToken);
-        return _mapper.Map<IEnumerable<DivisionThreeDto>>(items);
+        return _mapper.Map<IEnumerable<DivisionThreeLookUpDto>>(items);
     }
 }

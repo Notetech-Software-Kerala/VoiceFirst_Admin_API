@@ -1,4 +1,7 @@
+using Azure.Core;
 using Dapper;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
@@ -209,7 +213,7 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
             ["DeletedDate"] = "po.DeletedAt",
         };
 
-        var sortOrder = filter.SortOrder == SortOrder.Desc ? "DESC" : "ASC";
+        var sortOrder = filter.SortOrder == Utilities.DTOs.Shared.SortOrder.Desc ? "DESC" : "ASC";
         var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "PostOfficeId" : filter.SortBy;
 
         if (!sortMap.TryGetValue(sortKey, out var sortColumn))
@@ -365,7 +369,7 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
                 CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName FROM PostOfficeZipCode po
 INNER JOIN Users uC ON uC.UserId = po.CreatedBy
 LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
-            WHERE PostOfficeId = @PostOfficeId AND po.IsDeleted = 0;";
+            WHERE PostOfficeId = @PostOfficeId ";
 
         var cmd = new CommandDefinition(sql, new { PostOfficeId = postOfficeId }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -395,12 +399,12 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<PostOfficeZipCode>(cmd);
     }
-    public async Task BulkUpsertZipCodesAsync(int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default)
+    public async Task<BulkUpsertError?> BulkUpsertZipCodesAsync(int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default)
     {
         using var connection = _context.CreateConnection();
         connection.Open();
         using var transaction = connection.BeginTransaction();
-
+        string? currentZip = null;
         try
         {
             // load existing
@@ -411,6 +415,7 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
             // update or insert
             foreach (var z in incomingList)
             {
+                currentZip = z.ZipCode?.Trim();
                 if (z.PostOfficeZipCodeId > 0)
                 {
                     var sets = new List<string>();
@@ -443,9 +448,9 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
                 }
                 else
                 {
-                    const string insertSql = @"INSERT INTO PostOfficeZipCode (PostOfficeId, ZipCode, CreatedBy) VALUES (@PostOfficeId, @ZipCode, @UpdatedBy);";
+                    const string insertSql = @"INSERT INTO PostOfficeZipCode (PostOfficeId, ZipCode, CreatedBy) VALUES (@PostOfficeId, @ZipCode, @CreatedBy);";
                     await connection.ExecuteAsync(
-                        new CommandDefinition(insertSql, new { PostOfficeId = postOfficeId, z.ZipCode, z.UpdatedBy }, transaction, cancellationToken: cancellationToken));
+                        new CommandDefinition(insertSql, new { PostOfficeId = postOfficeId, z.ZipCode, z.CreatedBy }, transaction, cancellationToken: cancellationToken));
                 }
             }
 
@@ -454,11 +459,45 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
             
 
             transaction.Commit();
+            return null;
         }
-        catch
+        catch (SqlException ex) when (ex.Number == 2601 || ex.Number == 2627)
+        {
+            // ? SQL unique constraint error
+            transaction.Rollback();
+            var sql = "SELECT * FROM PostOfficeZipCode WHERE ZipCode = @ZipCode";
+         
+
+            var cmd = new CommandDefinition(sql, new { ZipCode = currentZip }, cancellationToken: cancellationToken);
+            var item= await connection.QueryFirstOrDefaultAsync<SysProgramActions>(cmd);
+            if(item==null)
+                return new BulkUpsertError
+                {
+                    Message = Messages.AlreadyExist,
+                    StatuaCode = StatusCodes.Status404NotFound
+                };
+            else if (item.IsDeleted == true)
+            {
+                return new BulkUpsertError
+                {
+                    Message = $"ZipCode '{currentZip ?? "(unknown)"}' exists in trash. Restore it to use again. ",
+                    StatuaCode = StatusCodes.Status422UnprocessableEntity
+                };
+            }
+            else
+            {
+                return new BulkUpsertError
+                {
+                    Message = $"ZipCode '{currentZip ?? "(unknown)"}' already exists.",
+                    StatuaCode = StatusCodes.Status409Conflict
+                };
+            }
+                
+        }
+        catch (Exception ex)
         {
             transaction.Rollback();
-            throw;
+            throw new InvalidOperationException("Bulk upsert failed: " + ex.Message, ex);
         }
     }
 }
