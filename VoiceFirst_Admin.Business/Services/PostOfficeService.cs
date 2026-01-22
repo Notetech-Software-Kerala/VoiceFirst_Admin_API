@@ -108,7 +108,7 @@ public class PostOfficeService : IPostOfficeService
 
     public async Task<ApiResponse<PostOfficeDto>> UpdateAsync(PostOfficeUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
     {
-        if (dto.PostOfficeName != null || dto.IsActive!=null || dto.CountryId!=null)
+        if (dto.PostOfficeName != null || dto.Active!=null || dto.CountryId!=null)
         {
 
             var existing = await _repo.ExistsByNameAsync(dto.PostOfficeName ?? string.Empty, id, cancellationToken);
@@ -124,7 +124,7 @@ public class PostOfficeService : IPostOfficeService
                 PostOfficeId = id,
                 PostOfficeName = dto.PostOfficeName ?? string.Empty,
                 CountryId = dto.CountryId,
-                IsActive = dto.IsActive,
+                IsActive = dto.Active,
                 UpdatedBy = loginId
             };
 
