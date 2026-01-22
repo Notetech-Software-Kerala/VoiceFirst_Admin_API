@@ -41,7 +41,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<bool> DeleteAsync(int id,int deletedBy, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsActive = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysBusinessActivityId = @ActivityId";
+            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysBusinessActivityId = @ActivityId";
 
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
@@ -337,7 +337,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<int>RecoverBusinessActivityAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(),IsActive = 1  WHERE SysBusinessActivityId = @ActivityId";
+            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME() WHERE SysBusinessActivityId = @ActivityId";
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
             {

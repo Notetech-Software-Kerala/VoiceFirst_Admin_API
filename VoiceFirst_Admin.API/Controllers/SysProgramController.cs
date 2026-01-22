@@ -85,5 +85,15 @@ namespace VoiceFirst_Admin.API.Controllers
             var result = await _service.GetAllActiveByApplicationIdAsync(applicationId, cancellationToken);
             return StatusCode(result.StatusCode, result);
         }
+
+        [HttpPatch("{id:int}")]
+        public async Task<IActionResult> UpdateAsync(int id, [FromBody] VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramUpdateDTO model, CancellationToken cancellationToken)
+        {
+            if (model == null)
+                return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
+
+            var result = await _service.UpdateAsync(id, model, userId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

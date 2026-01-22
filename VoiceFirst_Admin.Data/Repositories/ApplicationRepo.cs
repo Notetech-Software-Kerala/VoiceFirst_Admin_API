@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Application;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories
@@ -27,6 +28,14 @@ namespace VoiceFirst_Admin.Data.Repositories
             using var connection = _context.CreateConnection();
             var entity = await connection.QueryFirstOrDefaultAsync<Application>(cmd);
             return entity;
+        }
+
+        public async Task<IEnumerable<ApplicationActiveDTO>> GetActiveAsync(CancellationToken cancellationToken = default)
+        {
+            var sql = "SELECT ApplicationId As PlatformId, ApplicationName As PlatformName FROM Application WHERE IsActive = 1 ORDER BY ApplicationName ASC;";
+            using var connection = _context.CreateConnection();
+            var entities = await connection.QueryAsync<ApplicationActiveDTO>(new CommandDefinition(sql, cancellationToken: cancellationToken));
+            return entities;
         }
 
     }
