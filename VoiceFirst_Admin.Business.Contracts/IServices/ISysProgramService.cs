@@ -41,5 +41,8 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
             VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramUpdateDTO dto,
             int loginId,
             CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramLookUp>>> GetProgramLookupAsync(CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>>> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken = default);
     }
 }

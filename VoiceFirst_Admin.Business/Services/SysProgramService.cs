@@ -223,6 +223,18 @@ namespace VoiceFirst_Admin.Business.Services
             return ApiResponse<IEnumerable<SysProgramByApplicationIdDTO>>.Ok(items, Messages.ProgramRetrieved);
         }
 
+        public async Task<ApiResponse<IEnumerable<SysProgramLookUp>>> GetProgramLookupAsync(CancellationToken cancellationToken = default)
+        {
+            var items = await _repo.GetProgramLookupAsync(cancellationToken);
+            return ApiResponse<IEnumerable<SysProgramLookUp>>.Ok(items, Messages.ProgramRetrieved);
+        }
+
+        public async Task<ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>>> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken = default)
+        {
+            var items = await _repo.GetActionLookupByProgramIdAsync(programId, cancellationToken);
+            return ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>>.Ok(items, Messages.ProgramRetrieved);
+        }
+
         public async Task<ApiResponse<SysProgramDto>> UpdateAsync(
             int programId,
             SysProgramUpdateDTO dto,

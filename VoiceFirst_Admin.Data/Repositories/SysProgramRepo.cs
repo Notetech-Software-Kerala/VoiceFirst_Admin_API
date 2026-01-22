@@ -23,6 +23,61 @@ namespace VoiceFirst_Admin.Data.Repositories
             _context = context;
         }
 
+        public async Task<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramLookUp>> GetProgramLookupAsync(CancellationToken cancellationToken = default)
+        {
+            //const string sql = @"
+            //SELECT 
+            //    p.SysProgramId AS ProgramId,
+            //    p.ProgramName,
+            //    p.LabelName AS Label,
+            //    p.ProgramRoute AS Route,
+            //    ISNULL(a.ApplicationName,'') AS PlatformName,
+            //    ISNULL(c.CompanyName,'') AS CompanyName
+            //FROM SysProgram p
+            //LEFT JOIN Application a ON a.ApplicationId = p.ApplicationId
+            //LEFT JOIN Company c ON c.CompanyId = p.CompanyId
+            //WHERE p.IsDeleted = 0 AND p.IsActive = 1
+            //ORDER BY p.ProgramName ASC;";
+
+            const string sql = @"
+            SELECT 
+                p.SysProgramId AS ProgramId,
+                p.ProgramName,
+                p.LabelName AS Label,
+                p.ProgramRoute AS Route,
+                ISNULL(a.ApplicationName,'') AS PlatformName                
+            FROM SysProgram p
+            LEFT JOIN Application a ON a.ApplicationId = p.ApplicationId          
+            WHERE p.IsDeleted = 0 AND p.IsActive = 1
+            ORDER BY p.ProgramName ASC;";
+
+            using var connection = _context.CreateConnection();
+            var items = (await connection.QueryAsync<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramLookUp>(
+                new CommandDefinition(sql, cancellationToken: cancellationToken))).ToList();
+
+            foreach (var item in items)
+            {
+                var actions = await GetActionLookupByProgramIdAsync(item.ProgramId, cancellationToken);
+                item.Action = actions.ToList();
+            }
+
+            return items;
+        }
+
+        public async Task<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+            SELECT 
+                l.SysProgramActionLinkId AS ActionLinkId,
+                a.ProgramActionName AS ActionName
+            FROM SysProgramActionsLink l
+            INNER JOIN SysProgramActions a ON a.SysProgramActionId = l.ProgramActionId
+            WHERE l.ProgramId = @ProgramId AND l.IsActive = 1;";
+            using var connection = _context.CreateConnection();
+            return await connection.QueryAsync<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>(
+                new CommandDefinition(sql, new { ProgramId = programId }, cancellationToken: cancellationToken));
+        }
+
         public async Task<bool> UpdateAsync(VoiceFirst_Admin.Utilities.Models.Entities.SysProgram entity, CancellationToken cancellationToken = default)
         {
             var sets = new List<string>();
