@@ -37,7 +37,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string NotRegistered = "Not registered.";
         public const string RegistrationSuccess = "Registration successful.";
         public const string LoginSuccess = "Login successful.";
-        public const string NameAlreadyExists = "ActivityName already exists.";
+        public const string NameAlreadyExists = "Name already exists.";
         public const string NameExistsInTrash = "This name exists in trash. Restore it to use again.";
         // OTP
         public const string InvalidOtp = "Invalid OTP.";
@@ -135,13 +135,25 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ProgramActionAlreadyDeleted = "Program action already deleted.";
         public const string ProgramActionAlreadyRestored = "Program action already restored.";
         public const string ProgramActionCreated = "Program action created sucessfully.";
-        public const string ProgramActionCreatedRetrieveSucessfully = "Program action retrieve sucessfully.";
-        public const string ProgramActionCreatedUpdatedSucessfully = "Program action updated sucessfully.";
+        public const string ProgramActionRetrieveSucessfully = "Program action retrieve sucessfully.";
+        public const string ProgramActionUpdatedSucessfully = "Program action updated sucessfully.";
+        public const string ProgramActionNameAlreadyExists = "Program action name already exists.";
+        public const string ProgramActionNameExistsInTrash = "This program action name exists in trash. Restore it to use again.";
 
         public const string CountryRetrieveSucessfully = "Country retrieve sucessfully.";
         public const string DivisionOneRetrieveSucessfully = "Division one retrieve sucessfully.";
         public const string DivisionTwoRetrieveSucessfully = "Division two retrieve sucessfully.";
         public const string DivisionThreeRetrieveSucessfully = "Division three retrieve sucessfully.";
+
+        public const string PostOfficeRestoreSucessfully = "Post office restored sucessfully.";
+        public const string PostOfficeDeleteSucessfully = "Post office deleted sucessfully.";
+        public const string PostOfficeAlreadyDeleted = "Post office already deleted.";
+        public const string PostOfficeAlreadyRestored = "Post office already restored.";
+        public const string PostOfficeCreated = "Post officen created sucessfully.";
+        public const string PostOfficeRetrieveSucessfully = "Post office retrieve sucessfully.";
+        public const string PostOfficeUpdatedSucessfully = "Post office updated sucessfully.";
+        public const string PostOfficeNameAlreadyExists = "Post office name already exists.";
+        public const string PostOfficeNameExistsInTrash = "This post office name exists in trash. Restore it to use again.";
 
     }
 }

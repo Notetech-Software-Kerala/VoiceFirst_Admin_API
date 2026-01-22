@@ -443,9 +443,9 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
                 }
                 else
                 {
-                    const string insertSql = @"INSERT INTO PostOfficeZipCode (PostOfficeId, ZipCode, CreatedBy) VALUES (@PostOfficeId, @ZipCode, @UpdatedBy);";
+                    const string insertSql = @"INSERT INTO PostOfficeZipCode (PostOfficeId, ZipCode, CreatedBy) VALUES (@PostOfficeId, @ZipCode, @CreatedBy);";
                     await connection.ExecuteAsync(
-                        new CommandDefinition(insertSql, new { PostOfficeId = postOfficeId, z.ZipCode, z.UpdatedBy }, transaction, cancellationToken: cancellationToken));
+                        new CommandDefinition(insertSql, new { PostOfficeId = postOfficeId, z.ZipCode, z.CreatedBy }, transaction, cancellationToken: cancellationToken));
                 }
             }
 

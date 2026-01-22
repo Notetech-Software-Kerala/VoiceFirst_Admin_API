@@ -36,10 +36,10 @@ namespace VoiceFirst_Admin.Business.Services
             var existingEntity = await _repo.ExistsByNameAsync(dto.ActionName, null, cancellationToken);
 
             if (existingEntity != null && existingEntity.IsDeleted==true)
-                return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
+                return ApiResponse<ProgramActionDto>.Fail(Messages.ProgramActionNameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
 
             if (existingEntity != null)
-                return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+                return ApiResponse<ProgramActionDto>.Fail(Messages.ProgramActionNameAlreadyExists, StatusCodes.Status409Conflict);
 
             // Create
             var entity = new SysProgramActions
@@ -97,9 +97,9 @@ namespace VoiceFirst_Admin.Business.Services
                 {
                     // if you want special message when existing is deleted:
                     if (existing.IsDeleted == true)
-                        return ApiResponse<ProgramActionDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
+                        return ApiResponse<ProgramActionDto>.Fail(Messages.ProgramActionNameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
 
-                    return ApiResponse<ProgramActionDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+                    return ApiResponse<ProgramActionDto>.Fail(Messages.ProgramActionNameAlreadyExists, StatusCodes.Status409Conflict);
                 }
             }
             
@@ -121,7 +121,7 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<ProgramActionDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
 
             var updatedDto = _mapper.Map<ProgramActionDto>(updatedEntity);
-            return ApiResponse<ProgramActionDto>.Ok(updatedDto, Messages.Updated, StatusCodes.Status200OK);
+            return ApiResponse<ProgramActionDto>.Ok(updatedDto, Messages.ProgramActionUpdatedSucessfully, StatusCodes.Status200OK);
         }
         public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {

@@ -33,10 +33,10 @@ public class PostOfficeService : IPostOfficeService
         var existingEntity = await _repo.ExistsByNameAsync(dto.PostOfficeName, null, cancellationToken);
 
         if (existingEntity != null && existingEntity.IsDeleted == true)
-            return ApiResponse<PostOfficeDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
+            return ApiResponse<PostOfficeDto>.Fail(Messages.PostOfficeNameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
 
         if (existingEntity != null)
-            return ApiResponse<PostOfficeDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+            return ApiResponse<PostOfficeDto>.Fail(Messages.PostOfficeNameAlreadyExists, StatusCodes.Status409Conflict);
 
         var entity = new PostOffice
         {
@@ -70,7 +70,7 @@ public class PostOfficeService : IPostOfficeService
 
         var createdDto = await MapWithZipCodesAsync(createdEntity, cancellationToken);
 
-        return ApiResponse<PostOfficeDto>.Ok(createdDto, Messages.ProgramActionCreated, StatusCodes.Status201Created);
+        return ApiResponse<PostOfficeDto>.Ok(createdDto, Messages.PostOfficeCreated, StatusCodes.Status201Created);
     }
 
     public async Task<PostOfficeDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -115,9 +115,9 @@ public class PostOfficeService : IPostOfficeService
             if (existing != null)
             {
                 if (existing.IsDeleted == true)
-                    return ApiResponse<PostOfficeDto>.Fail(Messages.NameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
+                    return ApiResponse<PostOfficeDto>.Fail(Messages.PostOfficeNameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
 
-                return ApiResponse<PostOfficeDto>.Fail(Messages.NameAlreadyExists, StatusCodes.Status409Conflict);
+                return ApiResponse<PostOfficeDto>.Fail(Messages.PostOfficeNameAlreadyExists, StatusCodes.Status409Conflict);
             }
             var entity = new PostOffice
             {
@@ -144,7 +144,8 @@ public class PostOfficeService : IPostOfficeService
                     PostOfficeId = id,
                     IsActive = z.Active,
                     ZipCode = z.ZipCode.Trim()?? "",
-                    UpdatedBy = loginId
+                    UpdatedBy = loginId,
+                    CreatedBy = loginId,
                 });
             }
 
@@ -159,7 +160,7 @@ public class PostOfficeService : IPostOfficeService
         
 
         var updatedDto = await MapWithZipCodesAsync(updatedEntity, cancellationToken);
-        return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.Updated, StatusCodes.Status200OK);
+        return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status201Created);
     }
 
     public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
@@ -169,7 +170,7 @@ public class PostOfficeService : IPostOfficeService
             return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
 
         if (entity.IsDeleted == true)
-            return ApiResponse<object>.Fail(Messages.ProgramActionAlreadyDeleted, StatusCodes.Status400BadRequest);
+            return ApiResponse<object>.Fail(Messages.PostOfficeAlreadyDeleted, StatusCodes.Status400BadRequest);
 
         var ok = await _repo.DeleteAsync(new PostOffice
         {
@@ -180,7 +181,7 @@ public class PostOfficeService : IPostOfficeService
         if (!ok)
             return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
 
-        return ApiResponse<object>.Ok(null!, Messages.ProgramActionDeleteSucessfully, StatusCodes.Status200OK);
+        return ApiResponse<object>.Ok(null!, Messages.PostOfficeDeleteSucessfully, StatusCodes.Status200OK);
     }
 
     public async Task<ApiResponse<object>> RestoreAsync(int id, int loginId, CancellationToken cancellationToken = default)
@@ -190,7 +191,7 @@ public class PostOfficeService : IPostOfficeService
             return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
 
         if (!entity.IsDeleted == true)
-            return ApiResponse<object>.Fail(Messages.ProgramActionAlreadyRestored, StatusCodes.Status400BadRequest);
+            return ApiResponse<object>.Fail(Messages.PostOfficeAlreadyRestored, StatusCodes.Status400BadRequest);
 
         var ok = await _repo.RestoreAsync(new PostOffice
         {
@@ -201,7 +202,7 @@ public class PostOfficeService : IPostOfficeService
         if (!ok)
             return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
 
-        return ApiResponse<object>.Ok(null!, Messages.ProgramActionRestoreSucessfully, StatusCodes.Status200OK);
+        return ApiResponse<object>.Ok(null!, Messages.PostOfficeRestoreSucessfully, StatusCodes.Status200OK);
     }
 
     public async Task<PostOfficeDto?> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
