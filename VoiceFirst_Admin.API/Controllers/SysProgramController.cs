@@ -95,5 +95,19 @@ namespace VoiceFirst_Admin.API.Controllers
             var result = await _service.UpdateAsync(id, model, userId, cancellationToken);
             return StatusCode(result.StatusCode, result);
         }
+
+        [HttpGet("lookup")]
+        public async Task<IActionResult> GetProgramLookupAsync(CancellationToken cancellationToken)
+        {
+            var result = await _service.GetProgramLookupAsync(cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        //[HttpGet("{programId:int}/action-lookup")]
+        //public async Task<IActionResult> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken)
+        //{
+        //    var result = await _service.GetActionLookupByProgramIdAsync(programId, cancellationToken);
+        //    return StatusCode(result.StatusCode, result);
+        //}
     }
 }
