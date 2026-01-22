@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/plan")]
     [ApiController]
     public class PlanController : ControllerBase
     {
