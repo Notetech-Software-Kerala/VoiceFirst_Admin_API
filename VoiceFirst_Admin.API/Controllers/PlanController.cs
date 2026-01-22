@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
@@ -43,7 +44,7 @@ namespace VoiceFirst_Admin.API.Controllers
         public async Task<IActionResult> GetAllAsync([FromQuery] VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanFilterDto filter, CancellationToken cancellationToken)
         {
             var result = await _planService.GetAllAsync(filter, cancellationToken);
-            return Ok(VoiceFirst_Admin.Utilities.Models.Common.ApiResponse<object>.Ok(result, VoiceFirst_Admin.Utilities.Constants.Messages.PlanRetrieved));
+            return Ok(ApiResponse<object>.Ok(result, VoiceFirst_Admin.Utilities.Constants.Messages.PlanRetrieved));
         }
 
         [HttpPatch("{planId:int}")]
