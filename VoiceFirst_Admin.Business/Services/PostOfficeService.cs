@@ -149,7 +149,11 @@ public class PostOfficeService : IPostOfficeService
                 });
             }
 
-            await _repo.BulkUpsertZipCodesAsync(id, zipEntities, cancellationToken);
+            var result=await _repo.BulkUpsertZipCodesAsync(id, zipEntities, cancellationToken);
+            if (result != null)
+            {
+                return ApiResponse<PostOfficeDto>.Fail(result.Message, result.StatuaCode);
+            }
         }
 
 
