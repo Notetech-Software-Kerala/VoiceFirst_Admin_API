@@ -103,11 +103,11 @@ namespace VoiceFirst_Admin.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        //[HttpGet("{programId:int}/action-lookup")]
-        //public async Task<IActionResult> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken)
-        //{
-        //    var result = await _service.GetActionLookupByProgramIdAsync(programId, cancellationToken);
-        //    return StatusCode(result.StatusCode, result);
-        //}
+        [HttpGet("{programId:int}/action-lookup")]
+        public async Task<IActionResult> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken)
+        {
+            var result = await _service.GetActionLookupByProgramIdAsync(programId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }
