@@ -35,5 +35,11 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
         Task<ApiResponse<IEnumerable<SysProgramByApplicationIdDTO>>> GetAllActiveByApplicationIdAsync(
             int applicationId,
             CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> UpdateAsync(
+            int programId,
+            VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramUpdateDTO dto,
+            int loginId,
+            CancellationToken cancellationToken = default);
     }
 }

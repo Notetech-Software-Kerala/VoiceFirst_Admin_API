@@ -7,6 +7,7 @@ using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories
@@ -22,6 +23,99 @@ namespace VoiceFirst_Admin.Data.Repositories
             _context = context;
         }
 
+        public async Task<bool> UpdateAsync(VoiceFirst_Admin.Utilities.Models.Entities.SysProgram entity, CancellationToken cancellationToken = default)
+        {
+            var sets = new List<string>();
+            var parameters = new DynamicParameters();
+
+            if (!string.IsNullOrWhiteSpace(entity.ProgramName))
+            {
+                sets.Add("ProgramName = @ProgramName");
+                parameters.Add("ProgramName", entity.ProgramName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(entity.LabelName))
+            {
+                sets.Add("LabelName = @LabelName");
+                parameters.Add("LabelName", entity.LabelName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(entity.ProgramRoute))
+            {
+                sets.Add("ProgramRoute = @ProgramRoute");
+                parameters.Add("ProgramRoute", entity.ProgramRoute);
+            }
+
+            if (entity.ApplicationId > 0)
+            {
+                sets.Add("ApplicationId = @ApplicationId");
+                parameters.Add("ApplicationId", entity.ApplicationId);
+            }
+
+            if (entity.CompanyId > 0)
+            {
+                sets.Add("CompanyId = @CompanyId");
+                parameters.Add("CompanyId", entity.CompanyId);
+            }
+
+            if (entity.IsActive.HasValue)
+            {
+                sets.Add("IsActive = @IsActive");
+                parameters.Add("IsActive", entity.IsActive.Value);
+            }
+
+            if (sets.Count == 0)
+                return false;
+
+            sets.Add("UpdatedBy = @UpdatedBy");
+            sets.Add("UpdatedAt = SYSDATETIME()");
+            parameters.Add("UpdatedBy", entity.UpdatedBy);
+            parameters.Add("ProgramId", entity.SysProgramId);
+
+            var sql = new StringBuilder();
+            sql.Append("UPDATE SysProgram SET ");
+            sql.Append(string.Join(", ", sets));
+            sql.Append(" WHERE SysProgramId = @ProgramId AND IsDeleted = 0;");
+
+            using var connection = _context.CreateConnection();
+            var affected = await connection.ExecuteAsync(new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken));
+            return affected > 0;
+        }
+
+        public async Task UpsertProgramActionLinksAsync(int programId, IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkUpdateDTO> actions, int userId, CancellationToken cancellationToken = default)
+        {
+            const string selectSql = @"SELECT TOP 1 * FROM SysProgramActionsLink WHERE ProgramId = @ProgramId AND ProgramActionId = @ActionId";
+            const string insertSql = @"INSERT INTO SysProgramActionsLink (ProgramId, ProgramActionId, IsActive, CreatedBy, CreatedAt) VALUES (@ProgramId, @ActionId, @IsActive, @CreatedBy, SYSDATETIME())";
+            const string updateSql = @"UPDATE SysProgramActionsLink SET IsActive = @IsActive, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE ProgramId = @ProgramId AND ProgramActionId = @ActionId";
+
+            using var connection = _context.CreateConnection();
+            if (connection.State != ConnectionState.Open) connection.Open();
+            using var tx = connection.BeginTransaction();
+            try
+            {
+                foreach (var action in actions)
+                {
+                    var existing = await connection.QueryFirstOrDefaultAsync<VoiceFirst_Admin.Utilities.Models.Entities.SysProgramActionsLink>(
+                        new CommandDefinition(selectSql, new { ProgramId = programId, ActionId = action.ActionId }, transaction: tx, cancellationToken: cancellationToken));
+
+                    if (existing == null)
+                    {
+                        await connection.ExecuteAsync(new CommandDefinition(insertSql, new { ProgramId = programId, ActionId = action.ActionId, IsActive = action.Active, CreatedBy = userId }, transaction: tx, cancellationToken: cancellationToken));
+                    }
+                    else
+                    {
+                        await connection.ExecuteAsync(new CommandDefinition(updateSql, new { ProgramId = programId, ActionId = action.ActionId, IsActive = action.Active, UpdatedBy = userId }, transaction: tx, cancellationToken: cancellationToken));
+                    }
+                }
+
+                tx.Commit();
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+        }
         public async Task<SysProgram?> ExistsByNameAsync(int applicationId, string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
             var sql = new StringBuilder("SELECT TOP 1 * FROM SysProgram WHERE ApplicationId = @ApplicationId AND ProgramName = @ProgramName");
@@ -55,15 +149,15 @@ namespace VoiceFirst_Admin.Data.Repositories
                 new CommandDefinition(sql.ToString(), new { ApplicationId = applicationId, Route = route, ExcludeId = excludeId }, cancellationToken: cancellationToken));
         }
 
-        public async Task<SysProgram?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<SysProgram?> GetActiveByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            const string sql = @"SELECT * FROM SysProgram WHERE SysProgramId = @ProgramId";
+            const string sql = @"SELECT * FROM SysProgram WHERE SysProgramId = @ProgramId And IsActive = 1 And IsDeleted = 0 ;";
             using var connection = _context.CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<SysProgram>(
                 new CommandDefinition(sql, new { ProgramId = id }, cancellationToken: cancellationToken));
         }
 
-        public async Task<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto?> SysProgramGetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<SysProgramDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
         //    const string sql = @"
         //SELECT 
@@ -100,8 +194,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             p.ApplicationId AS PlatformId,
             ISNULL(a.ApplicationName,'') AS PlatformName,
             
-            ISNULL(p.IsActive,1) AS Active,
-            ISNULL(p.IsDeleted,0) AS [Delete],
+            p.IsActive AS Active,
+            p.IsDeleted AS [Deleted],
             CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
             p.CreatedAt AS CreatedDate,
             ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
@@ -116,7 +210,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         WHERE p.SysProgramId = @ProgramId;";
 
             using var connection = _context.CreateConnection();
-            var dto = await connection.QueryFirstOrDefaultAsync<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>(
+            var dto = await connection.QueryFirstOrDefaultAsync<SysProgramDto>(
                 new CommandDefinition(sql, new { ProgramId = id }, cancellationToken: cancellationToken));
             if (dto == null) return null;
 
@@ -124,6 +218,11 @@ namespace VoiceFirst_Admin.Data.Repositories
             dto.Action = links.ToList();
             return dto;
         }
+
+
+    
+
+
 
 
 
@@ -185,7 +284,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             SELECT 
                 l.ProgramActionId AS ActionId,
                 a.ProgramActionName AS ActionName,
-                ISNULL(l.IsActive, 1) AS Active,
+                l.IsActive AS Active,
                 CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
                 l.CreatedAt AS CreatedDate,
                 CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
@@ -194,7 +293,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             INNER JOIN SysProgramActions a ON a.SysProgramActionId = l.ProgramActionId
             INNER JOIN Users uC ON uC.UserId = l.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
-            WHERE l.ProgramId = @ProgramId AND l.IsActive = 1;
+            WHERE l.ProgramId = @ProgramId ;
             ";
             using var connection = _context.CreateConnection();
             return await connection.QueryAsync<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkDTO>(
@@ -204,7 +303,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
 
-        public async Task<SysProgramActionsLink?> GetActiveByIdAsync
+        public async Task<SysProgramActionsLink?> GetProgramActionsLinkActiveByIdAsync
           (int SysProgramActionsLink, CancellationToken cancellationToken = default)
         {
             var sql = "SELECT * FROM SysProgramActionsLink WHERE SysProgramActionLinkId = @SysProgramActionLinkId And IsActive = 1 ;";
@@ -218,7 +317,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<bool> DeleteAsync(int id, int deletedBy, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysProgram SET IsActive = 0 ,IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysProgramId = @ProgramId";
+            const string sql = @"UPDATE SysProgram SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysProgramId = @ProgramId";
 
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
@@ -234,7 +333,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<int> RecoverProgramAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysProgram SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(),IsActive = 1  WHERE SysProgramId = @ProgramId";
+            const string sql = @"UPDATE SysProgram SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME() WHERE SysProgramId = @ProgramId";
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
             {
@@ -490,7 +589,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         //    };
         //}
 
-        public async Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramFilterDTO filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<SysProgramDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramFilterDTO filter, CancellationToken cancellationToken = default)
         {
             var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             var limit = filter.Limit <= 0 ? 10 : filter.Limit;
@@ -614,8 +713,8 @@ namespace VoiceFirst_Admin.Data.Repositories
                 p.ApplicationId AS PlatformId,
                 ISNULL(a.ApplicationName,'') AS PlatformName,
               
-                ISNULL(p.IsActive,1) AS Active,
-                ISNULL(p.IsDeleted,0) AS [Delete],
+               p.IsActive Active,
+               p.IsDeleted AS [Deleted],
                 CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
                 p.CreatedAt AS CreatedDate,
                 ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,

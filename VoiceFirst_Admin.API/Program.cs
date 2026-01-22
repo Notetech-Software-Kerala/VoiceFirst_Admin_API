@@ -35,6 +35,7 @@ builder.Services.AddScoped<ICountryRepo, CountryRepo>();
 // Services
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
 builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
+builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<IPostOfficeService, PostOfficeService>();
 builder.Services.AddScoped<ISysProgramService, SysProgramService>();
 builder.Services.AddScoped<ICountryService, CountryService>();
