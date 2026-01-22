@@ -138,5 +138,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ProgramActionCreatedRetrieveSucessfully = "Program action retrieve sucessfully.";
         public const string ProgramActionCreatedUpdatedSucessfully = "Program action updated sucessfully.";
 
+        public const string CountryRetrieveSucessfully = "Country retrieve sucessfully.";
+        public const string DivisionOneRetrieveSucessfully = "Division one retrieve sucessfully.";
+        public const string DivisionTwoRetrieveSucessfully = "Division two retrieve sucessfully.";
+        public const string DivisionThreeRetrieveSucessfully = "Division three retrieve sucessfully.";
+
     }
 }

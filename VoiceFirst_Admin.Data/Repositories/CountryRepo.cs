@@ -229,7 +229,7 @@ public class CountryRepo : ICountryRepo
     public async Task<IEnumerable<DivisionOne>> GetDivisionOneActiveByCountryIdAsync(int countryId, CancellationToken cancellationToken = default)
     {
         const string sql = @"SELECT po.DivisionOneId, po.DivisionOneName,Country.CountryName, po.CountryId, po.IsActive, po.IsDeleted
-                             FROM DivisionOne
+                             FROM DivisionOne po
                              INNER JOIN Country ON Country.CountryId = po.CountryId
                              WHERE po.CountryId = @CountryId AND po.IsActive = 1 AND po.IsDeleted = 0
                              ORDER BY po.DivisionOneName ASC;";
@@ -336,7 +336,7 @@ public class CountryRepo : ICountryRepo
     {
         const string sql = @"SELECT po.DivisionTwoId, po.DivisionTwoName, po.DivisionOneId,DivisionOne.DivisionOneName,po.IsActive, po.IsDeleted
                              FROM DivisionTwo po
-                             INNER JOIN DivisionOne ON DivisionOne.DivisionOneId = po.CountryId
+                             INNER JOIN DivisionOne ON DivisionOne.DivisionOneId = po.DivisionOneId
                              WHERE po.DivisionOneId = @DivisionOneId AND po.IsActive = 1 AND po.IsDeleted = 0
                              ORDER BY po.DivisionTwoName ASC;";
 
