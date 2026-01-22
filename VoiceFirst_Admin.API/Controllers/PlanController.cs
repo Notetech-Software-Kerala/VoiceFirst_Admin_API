@@ -57,6 +57,22 @@ namespace VoiceFirst_Admin.API.Controllers
             var res = await _planService.UpdateAsync(planId, model, userId, cancellationToken);
             return StatusCode(res.StatusCode, res);
         }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)
+        {
+            const int userId = 1;
+            var result = await _planService.DeleteAsync(id, userId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPatch("recover/{id:int}")]
+        public async Task<IActionResult> RecoverAsync(int id, CancellationToken cancellationToken)
+        {
+            const int userId = 1;
+            var result = await _planService.RecoverPlanAsync(id, userId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 
 }

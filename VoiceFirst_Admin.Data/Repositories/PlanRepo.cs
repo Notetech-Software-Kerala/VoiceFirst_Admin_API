@@ -23,6 +23,22 @@ namespace VoiceFirst_Admin.Data.Repositories
             _context = context;
         }
 
+        public async Task<bool> DeleteAsync(int id, int deletedBy, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"UPDATE dbo.[Plan] SET IsActive = 0, IsDeleted = 1, DeletedAt = SYSDATETIME(), DeletedBy = @DeletedBy WHERE PlanId = @PlanId";
+            using var connection = _context.CreateConnection();
+            var affected = await connection.ExecuteAsync(new CommandDefinition(sql, new { PlanId = id, DeletedBy = deletedBy }, cancellationToken: cancellationToken));
+            return affected > 0;
+        }
+
+        public async Task<int> RecoverPlanAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"UPDATE dbo.[Plan] SET IsDeleted = 0, DeletedBy = NULL, DeletedAt = NULL, UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(), IsActive = 1 WHERE PlanId = @PlanId";
+            using var connection = _context.CreateConnection();
+            var affected = await connection.ExecuteAsync(new CommandDefinition(sql, new { PlanId = id, LoginId = loginId }, cancellationToken: cancellationToken));
+            return affected;
+        }
+
         public async Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<PlanDetailDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanFilterDto filter, CancellationToken cancellationToken = default)
         {
             var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;

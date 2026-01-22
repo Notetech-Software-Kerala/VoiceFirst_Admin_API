@@ -115,5 +115,25 @@ namespace VoiceFirst_Admin.Business.Services
             };
         }
 
+        public async Task<ApiResponse<bool>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        {
+            var deleted = await _planRepository.DeleteAsync(id, loginId, cancellationToken);
+            if (!deleted)
+            {
+                return ApiResponse<bool>.Fail(Messages.NotFound, StatusCodes.Status404NotFound, ErrorCodes.NotFound);
+            }
+            return ApiResponse<bool>.Ok(true, Messages.Success);
+        }
+
+        public async Task<ApiResponse<int>> RecoverPlanAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        {
+            var recovered = await _planRepository.RecoverPlanAsync(id, loginId, cancellationToken);
+            if (recovered <= 0)
+            {
+                return ApiResponse<int>.Fail(Messages.NotFound, StatusCodes.Status404NotFound, ErrorCodes.NotFound);
+            }
+            return ApiResponse<int>.Ok(recovered, Messages.Success);
+        }
+
     }
 }
