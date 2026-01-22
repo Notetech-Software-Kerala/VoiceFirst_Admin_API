@@ -6,6 +6,6 @@ public class PostOfficeUpdateDto
 {
     public string? PostOfficeName { get; set; } 
     public int? CountryId { get; set; }
-    public bool? IsActive { get; set; }
+    public bool? Active { get; set; }
     public IEnumerable<ZipCodeUpdateDto> ZipCodes { get; set; } = new List<ZipCodeUpdateDto>();
 }
