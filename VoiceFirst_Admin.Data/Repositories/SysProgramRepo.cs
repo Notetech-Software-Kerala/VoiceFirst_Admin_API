@@ -5,6 +5,8 @@ using System.Text;
 using Dapper;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories
@@ -177,7 +179,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             }
         }
 
-        public async Task<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkDTO>> GetLinksByProgramIdAsync(int programId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<SysProgramActionLinkDTO>> GetLinksByProgramIdAsync(int programId, CancellationToken cancellationToken = default)
         {
             const string sql = @"
             SELECT 
@@ -242,6 +244,89 @@ namespace VoiceFirst_Admin.Data.Repositories
                 new CommandDefinition(sql, new { ProgramId = id, LoginId = loginId }, cancellationToken: cancellationToken));
             return affectedRows;
         }
+
+        public async Task<IEnumerable<SysProgramByApplicationIdDTO>> GetAllActiveByApplicationIdAsync(int applicationId, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+            SELECT
+                p.SysProgramId AS ProgramId,
+                p.ProgramName                
+            FROM SysProgram p         
+            WHERE p.ApplicationId = @ApplicationId AND p.IsActive = 1 AND p.IsDeleted = 0
+            ORDER BY p.ProgramName ASC;";
+
+            using var connection = _context.CreateConnection();
+            var items = (await connection.QueryAsync<SysProgramByApplicationIdDTO>(
+                new CommandDefinition(sql, new { ApplicationId = applicationId }, cancellationToken: cancellationToken))).ToList();
+
+            foreach (var item in items)
+            {
+                var links = await GetLinksByProgramIdForApplicationIdAsync(item.ProgramId, cancellationToken);
+                item.Action = links.ToList();
+            }
+
+            return items;
+        }
+
+
+        public async Task<IEnumerable<SysProgramActionLinkByApplicationIdDTO>> GetLinksByProgramIdForApplicationIdAsync(int programId, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+            SELECT 
+                l.SysProgramActionLinkId AS ActionLinkId,
+                a.ProgramActionName AS ActionName               
+            FROM SysProgramActionsLink l
+            INNER JOIN SysProgramActions a ON a.SysProgramActionId = l.ProgramActionId
+        
+            WHERE l.ProgramId = @ProgramId AND l.IsActive = 1;
+            ";
+            using var connection = _context.CreateConnection();
+            return await connection.QueryAsync<SysProgramActionLinkByApplicationIdDTO>(
+                new CommandDefinition(sql, new { ProgramId = programId }, cancellationToken: cancellationToken));
+        }
+
+
+        //public async Task<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> GetAllActiveByApplicationIdAsync(int applicationId, CancellationToken cancellationToken = default)
+        //{
+        //    const string sql = @"
+        //    SELECT
+        //        p.SysProgramId AS ProgramId,
+        //        p.ProgramName,
+        //        p.LabelName AS Label,
+        //        p.ProgramRoute AS Route,
+        //        p.ApplicationId AS PlatformId,
+        //        ISNULL(a.ApplicationName,'') AS PlatformName,
+        //        p.CompanyId,
+        //        ISNULL(c.CompanyName,'') AS CompanyName,
+        //        ISNULL(p.IsActive,1) AS Active,
+        //        ISNULL(p.IsDeleted,0) AS [Delete],
+        //        CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+        //        p.CreatedAt AS CreatedDate,
+        //        ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
+        //        p.UpdatedAt AS ModifiedDate,
+        //        ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
+        //        p.DeletedAt AS DeletedDate
+        //    FROM SysProgram p
+        //    LEFT JOIN Application a ON a.ApplicationId = p.ApplicationId
+        //    LEFT JOIN Company c ON c.CompanyId = p.CompanyId
+        //    INNER JOIN Users uC ON uC.UserId = p.CreatedBy
+        //    LEFT JOIN Users uU ON uU.UserId = p.UpdatedBy
+        //    LEFT JOIN Users uD ON uD.UserId = p.DeletedBy
+        //    WHERE p.ApplicationId = @ApplicationId AND p.IsActive = 1 AND p.IsDeleted = 0
+        //    ORDER BY p.ProgramName ASC;";
+
+        //    using var connection = _context.CreateConnection();
+        //    var items = (await connection.QueryAsync<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>(
+        //        new CommandDefinition(sql, new { ApplicationId = applicationId }, cancellationToken: cancellationToken))).ToList();
+
+        //    foreach (var item in items)
+        //    {
+        //        var links = await GetLinksByProgramIdAsync(item.ProgramId, cancellationToken);
+        //        item.Action = links.ToList();
+        //    }
+
+        //    return items;
+        //}
 
         //public async Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramFilterDTO filter, CancellationToken cancellationToken = default)
         //{

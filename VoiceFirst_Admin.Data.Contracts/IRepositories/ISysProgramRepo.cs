@@ -19,6 +19,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<SysProgram> CreateAsync(SysProgram entity, List<int> permissionIds, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysProgramActionLinkDTO>> GetLinksByProgramIdAsync(int programId, CancellationToken cancellationToken = default);
         Task<int> RecoverProgramAsync(int id, int loginId, CancellationToken cancellationToken = default);
-        Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramFilterDTO filter, CancellationToken cancellationToken = default);
+        Task<IEnumerable<SysProgramByApplicationIdDTO>> GetAllActiveByApplicationIdAsync(int applicationId, CancellationToken cancellationToken = default);
+        Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<SysProgramDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramFilterDTO filter, CancellationToken cancellationToken = default);
     }
 }
