@@ -194,8 +194,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             p.ApplicationId AS PlatformId,
             ISNULL(a.ApplicationName,'') AS PlatformName,
             
-            ISNULL(p.IsActive,1) AS Active,
-            ISNULL(p.IsDeleted,0) AS [Delete],
+            p.IsActive AS Active,
+            p.IsDeleted AS [Deleted],
             CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
             p.CreatedAt AS CreatedDate,
             ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
@@ -210,7 +210,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         WHERE p.SysProgramId = @ProgramId;";
 
             using var connection = _context.CreateConnection();
-            var dto = await connection.QueryFirstOrDefaultAsync<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>(
+            var dto = await connection.QueryFirstOrDefaultAsync<SysProgramDto>(
                 new CommandDefinition(sql, new { ProgramId = id }, cancellationToken: cancellationToken));
             if (dto == null) return null;
 
@@ -284,7 +284,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             SELECT 
                 l.ProgramActionId AS ActionId,
                 a.ProgramActionName AS ActionName,
-                ISNULL(l.IsActive, 1) AS Active,
+                l.IsActive AS Active,
                 CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
                 l.CreatedAt AS CreatedDate,
                 CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
@@ -713,8 +713,8 @@ namespace VoiceFirst_Admin.Data.Repositories
                 p.ApplicationId AS PlatformId,
                 ISNULL(a.ApplicationName,'') AS PlatformName,
               
-                ISNULL(p.IsActive,1) AS Active,
-                ISNULL(p.IsDeleted,0) AS [Delete],
+               p.IsActive Active,
+               p.IsDeleted AS [Deleted],
                 CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
                 p.CreatedAt AS CreatedDate,
                 ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,

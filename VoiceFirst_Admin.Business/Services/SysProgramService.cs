@@ -238,7 +238,19 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.NotFound);
             }
 
+            if(existing.ApplicationId != dto.PlatformId && (dto.PlatformId != null || dto.PlatformId >=0))
+            {
+                var app = await _applicationRepo.GetActiveByIdAsync(dto.PlatformId.Value, cancellationToken);
+                if (app == null)
+                {
+                    return ApiResponse<SysProgramDto>.Fail(
+                        Messages.PlatformNotFound,
+                        StatusCodes.Status404NotFound,
+                        ErrorCodes.PlatFormNotFound);
+                }
+            }
             var applicationId = dto.PlatformId ?? existing.ApplicationId;
+
 
             if (!string.IsNullOrWhiteSpace(dto.ProgramName))
             {
