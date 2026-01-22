@@ -15,6 +15,7 @@ public class DivisionMappingProfile : Profile
                 .ForMember(d => d.DivOneName, opt => opt.MapFrom(s => s.DivisionOneName))
                 .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))
                 .ForMember(d => d.Deleted, opt => opt.MapFrom(s => s.IsDeleted));
+
         CreateMap<DivisionTwo, DivisionTwoDto>()
                 .ForMember(d => d.DivTwoId, opt => opt.MapFrom(s => s.DivisionTwoId))
                 .ForMember(d => d.DivOneId, opt => opt.MapFrom(s => s.DivisionOneId))
@@ -29,5 +30,16 @@ public class DivisionMappingProfile : Profile
                 .ForMember(d => d.DivThreeName, opt => opt.MapFrom(s => s.DivisionThreeName))
                 .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))
                 .ForMember(d => d.Deleted, opt => opt.MapFrom(s => s.IsDeleted));
+
+        CreateMap<DivisionOne, DivisionOneLookUpDto>()
+                .ForMember(d => d.DivOneId, opt => opt.MapFrom(s => s.DivisionOneId))
+                .ForMember(d => d.DivOneName, opt => opt.MapFrom(s => s.DivisionOneName));
+
+        CreateMap<DivisionTwo, DivisionTwoLookUpDto>()
+                .ForMember(d => d.DivTwoId, opt => opt.MapFrom(s => s.DivisionTwoId))
+                .ForMember(d => d.DivTwoName, opt => opt.MapFrom(s => s.DivisionTwoName));
+        CreateMap<DivisionThree, DivisionThreeLookUpDto>()
+                .ForMember(d => d.DivThreeId, opt => opt.MapFrom(s => s.DivisionThreeId))
+                .ForMember(d => d.DivThreeName, opt => opt.MapFrom(s => s.DivisionThreeName));
     }
 }

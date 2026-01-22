@@ -37,20 +37,20 @@ namespace VoiceFirst_Admin.API.Controllers
         {
             var item = await _service.GetByIdAsync(id, cancellationToken);
             if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
-            return Ok(ApiResponse<ProgramActionDto>.Ok(item, Messages.ProgramActionCreatedRetrieveSucessfully));
+            return Ok(ApiResponse<ProgramActionDto>.Ok(item, Messages.ProgramActionRetrieveSucessfully));
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] ProgramActionFilterDto filter, CancellationToken cancellationToken)
         {
             var items = await _service.GetAllAsync(filter, cancellationToken);
-            return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
+            return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionRetrieveSucessfully));
         }
         [HttpGet("lookup")]
         public async Task<IActionResult> GetLookupAsync( CancellationToken cancellationToken)
         {
             var items = await _service.GetLookupAsync( cancellationToken);
-            return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionCreatedRetrieveSucessfully));
+            return Ok(ApiResponse<object>.Ok(items, Messages.ProgramActionRetrieveSucessfully));
         }
 
         [HttpPatch("{id:int}")]
