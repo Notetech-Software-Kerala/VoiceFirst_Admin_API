@@ -31,6 +31,7 @@ builder.Services.AddScoped<IPostOfficeRepo, PostOfficeRepo>();
 builder.Services.AddScoped<ISysProgramRepo, SysProgramRepo>();
 builder.Services.AddScoped<IApplicationRepo, ApplicationRepo>();
 builder.Services.AddScoped<ICountryRepo, CountryRepo>();
+builder.Services.AddScoped<IPlanRepo, PlanRepo>();
 
 // Services
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
@@ -39,7 +40,7 @@ builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<IPostOfficeService, PostOfficeService>();
 builder.Services.AddScoped<ISysProgramService, SysProgramService>();
 builder.Services.AddScoped<ICountryService, CountryService>();
-
+builder.Services.AddScoped<IPlanService, PlanService>();
 // AutoMapper
 builder.Services.AddAutoMapper(
     typeof(ProgramActionMappingProfile).Assembly,

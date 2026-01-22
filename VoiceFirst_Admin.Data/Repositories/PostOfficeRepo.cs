@@ -146,7 +146,7 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
         var searchByMap = new Dictionary<PostOfficeSearchBy, string>
         {
             [PostOfficeSearchBy.PostOfficeName] = "po.PostOfficeName",
-            [PostOfficeSearchBy.CountryName] = "po.CountryName",
+            [PostOfficeSearchBy.CountryName] = "Country.CountryName",
             [PostOfficeSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
             [PostOfficeSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
             [PostOfficeSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)",

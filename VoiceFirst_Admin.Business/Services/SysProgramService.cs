@@ -223,6 +223,18 @@ namespace VoiceFirst_Admin.Business.Services
             return ApiResponse<IEnumerable<SysProgramByApplicationIdDTO>>.Ok(items, Messages.ProgramRetrieved);
         }
 
+        public async Task<ApiResponse<IEnumerable<SysProgramLookUp>>> GetProgramLookupAsync(CancellationToken cancellationToken = default)
+        {
+            var items = await _repo.GetProgramLookupAsync(cancellationToken);
+            return ApiResponse<IEnumerable<SysProgramLookUp>>.Ok(items, Messages.ProgramRetrieved);
+        }
+
+        public async Task<ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>>> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken = default)
+        {
+            var items = await _repo.GetActionLookupByProgramIdAsync(programId, cancellationToken);
+            return ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>>.Ok(items, Messages.ProgramRetrieved);
+        }
+
         public async Task<ApiResponse<SysProgramDto>> UpdateAsync(
             int programId,
             SysProgramUpdateDTO dto,
@@ -238,7 +250,19 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.NotFound);
             }
 
+            if(existing.ApplicationId != dto.PlatformId && (dto.PlatformId != null || dto.PlatformId >=0))
+            {
+                var app = await _applicationRepo.GetActiveByIdAsync(dto.PlatformId.Value, cancellationToken);
+                if (app == null)
+                {
+                    return ApiResponse<SysProgramDto>.Fail(
+                        Messages.PlatformNotFound,
+                        StatusCodes.Status404NotFound,
+                        ErrorCodes.PlatFormNotFound);
+                }
+            }
             var applicationId = dto.PlatformId ?? existing.ApplicationId;
+
 
             if (!string.IsNullOrWhiteSpace(dto.ProgramName))
             {
