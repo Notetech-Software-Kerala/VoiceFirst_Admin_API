@@ -6,6 +6,10 @@ on:
 jobs:
   build-and-deploy:
     runs-on: [self-hosted, windows]
+    env:
+      APP_POOL_NAME: "VoiceFirst_Admin_Web_API"
+      WEBSITE_NAME: "VoiceFirst_Admin_Web_API"
+      DEPLOY_PATH: "D:\\VoiceFirst_Admin_ApiPublish"
     
     steps:
       - name: Checkout code
@@ -31,9 +35,9 @@ jobs:
       - name: Create/Configure IIS Application Pool
         shell: powershell
         run: |
-          $appPoolName = "VoiceFirst_Admin_Web_API"
-          $websiteName = "VoiceFirst_Admin_Web_API"
-          $sitePath = "D:\\VoiceFirst_Admin_ApiPublish"
+          $appPoolName = $env:APP_POOL_NAME
+          $websiteName = $env:WEBSITE_NAME
+          $sitePath = $env:DEPLOY_PATH
           
           # Check if app pool exists
           $appPoolExists = & "C:\Windows\System32\inetsrv\appcmd.exe" list apppool /name:$appPoolName 2>$null
@@ -65,7 +69,7 @@ jobs:
         shell: powershell
         run: |
           try {
-            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:$appPoolName -ErrorAction Stop
+            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:$env:APP_POOL_NAME -ErrorAction Stop
             Write-Host "Application pool stopped successfully"
           } catch {
             Write-Host "Application pool not found or already stopped"
@@ -75,7 +79,7 @@ jobs:
       - name: Deploy to IIS
         shell: powershell
         run: |
-          $deployPath = "D:\\VoiceFirst_Admin_ApiPublish"
+          $deployPath = $env:DEPLOY_PATH
           Write-Host "Deploying to $deployPath"
           if (Test-Path $deployPath) {
             Remove-Item -Path $deployPath -Recurse -Force -ErrorAction SilentlyContinue
@@ -87,7 +91,7 @@ jobs:
       - name: Start IIS Application Pool
         shell: powershell
         run: |
-          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:$appPoolName
+          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:$env:APP_POOL_NAME
           Start-Sleep -Seconds 3
           Write-Host "Application pool started"
 
