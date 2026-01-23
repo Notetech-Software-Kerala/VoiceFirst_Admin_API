@@ -2,8 +2,6 @@ name: Deploy VoiceFirst_Admin API
 
 on:
   workflow_dispatch:
-    branches:
-      - develop
 
 jobs:
   build-and-deploy:
