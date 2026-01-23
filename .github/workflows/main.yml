@@ -65,7 +65,7 @@ jobs:
         shell: powershell
         run: |
           try {
-            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:"$appPoolName" -ErrorAction Stop
+            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:$appPoolName -ErrorAction Stop
             Write-Host "Application pool stopped successfully"
           } catch {
             Write-Host "Application pool not found or already stopped"
@@ -87,7 +87,7 @@ jobs:
       - name: Start IIS Application Pool
         shell: powershell
         run: |
-          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:"$appPoolName"
+          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:$appPoolName
           Start-Sleep -Seconds 3
           Write-Host "Application pool started"
 
