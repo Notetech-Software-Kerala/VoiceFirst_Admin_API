@@ -31,9 +31,9 @@ jobs:
       - name: Create/Configure IIS Application Pool
         shell: powershell
         run: |
-          $appPoolName = "VoiceFirstAdminAPI"
-          $websiteName = "VoiceFirstAdminAPI"
-          $sitePath = "C:\inetpub\wwwroot\VoiceFirstAdminAPI"
+          $appPoolName = "VoiceFirst_Admin_Web_API"
+          $websiteName = "VoiceFirst_Admin_Web_API"
+          $sitePath = "D:\VoiceFirst_Admin_ApiPublish"
           
           # Check if app pool exists
           $appPoolExists = & "C:\Windows\System32\inetsrv\appcmd.exe" list apppool /name:$appPoolName 2>$null
@@ -50,9 +50,9 @@ jobs:
           if (-not $siteExists) {
             Write-Host "Creating website: $websiteName"
             New-Item -ItemType Directory -Path $sitePath -Force | Out-Null
-            & "C:\Windows\System32\inetsrv\appcmd.exe" add site /name:$websiteName /physicalPath:$sitePath /bindings:"http/*:80:$($env:COMPUTERNAME)"
-            & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /+bindings:"[protocol='http',bindingInformation='*:80:localhost']"
-            Write-Host "Website created and bound to port 80"
+            & "C:\Windows\System32\inetsrv\appcmd.exe" add site /name:$websiteName /physicalPath:$sitePath /bindings:"http/*:8010:"
+            & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /+bindings:"[protocol='http',bindingInformation='*:8010:']"
+            Write-Host "Website created and bound to port 8010"
           } else {
             Write-Host "Website already exists"
           }
