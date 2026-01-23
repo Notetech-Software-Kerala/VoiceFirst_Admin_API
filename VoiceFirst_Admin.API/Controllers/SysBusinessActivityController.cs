@@ -24,13 +24,17 @@ public class SysBusinessActivityController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (model == null)
-            return Ok(ApiResponse<object>.
+            return BadRequest(ApiResponse<SysBusinessActivityDTO?>.
                 Fail(Messages.PayloadRequired,
-                Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest));
+               StatusCodes.Status400BadRequest,
+               ErrorCodes.Payload));
             
-        var created = await _service.
+        var apiResponse = await _service.
             CreateAsync(model, userId, cancellationToken);
-        return StatusCode(created.StatusCode, created);
+      
+        return StatusCode(apiResponse.StatusCode,
+            apiResponse);
+
     }
 
 
@@ -93,7 +97,7 @@ public class SysBusinessActivityController : ControllerBase
         CancellationToken cancellationToken)
     {
         var recoveredDto = await _service.RecoverBusinessActivityAsync(id, userId, cancellationToken);
-        return Ok(ApiResponse<object>.Ok(recoveredDto, Messages.BusinessActivityRecovered));
+        return StatusCode(recoveredDto.StatusCode, recoveredDto);
     }
 
     [HttpDelete("{id:int}")]

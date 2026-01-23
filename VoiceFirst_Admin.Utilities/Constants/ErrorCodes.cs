@@ -8,6 +8,7 @@
         public const string Conflict = "CONFLICT";
         public const string Unauthorized = "UNAUTHORIZED";
         public const string Forbidden = "FORBIDDEN";
+        public const string Payload = "PAYLOAD_REQUIRED";
         public const string InternalServerError = "INTERNAL_SERVER_ERROR";
 
         public const string PlatFormAlreadyExists = "PLATFORM_EXISTS";

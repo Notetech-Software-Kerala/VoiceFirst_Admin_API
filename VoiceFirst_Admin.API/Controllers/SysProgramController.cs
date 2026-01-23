@@ -27,11 +27,14 @@ namespace VoiceFirst_Admin.API.Controllers
             CancellationToken cancellationToken)
         {
             if (model == null)
-                return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
+                return BadRequest(ApiResponse<object>.
+                    Fail(Messages.PayloadRequired,
+                     StatusCodes.Status400BadRequest,
+                     ErrorCodes.Payload));
           
-
-            var result = await _service.CreateAsync(model, userId, cancellationToken);
-            return StatusCode(result.StatusCode, result);
+            var apiResponse = await _service.CreateAsync(model,
+                userId, cancellationToken);
+            return StatusCode(apiResponse.StatusCode, apiResponse);
         }
 
         [HttpGet("{id}")]

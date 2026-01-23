@@ -10,7 +10,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
     public interface ISysBusinessActivityRepo
     {
         Task<int> CreateAsync(SysBusinessActivity entity, CancellationToken cancellationToken = default);
-        Task<SysBusinessActivity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<SysBusinessActivityDTO?> GetByIdAsync(int ActivityId, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysBusinessActivity>> GetAllAsync(BusinessActivityFilterDTO filter, CancellationToken cancellationToken = default);        Task<bool> UpdateAsync(SysBusinessActivity entity, CancellationToken cancellationToken = default);
         Task<SysBusinessActivity> BusinessActivityExistsAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id,int deletedBy, CancellationToken cancellationToken = default);

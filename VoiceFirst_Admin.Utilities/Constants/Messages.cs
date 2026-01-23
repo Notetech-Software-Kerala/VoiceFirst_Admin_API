@@ -56,31 +56,34 @@ namespace VoiceFirst_Admin.Utilities.Constants
        
         // ===== SYS BUSINESS ACTIVITY =====
         public const string BusinessActivityAlreadyExists =
-            "Business activity name already exists.";
+            "Activity name already exists.Please add another name";
 
         public const string BusinessActivityAlreadyExistsRecoverable =
-            "Business activity already exists but was deleted. You can recover it.";
+            "Activity already exists but was deleted. You can recover it.";
 
         public const string BusinessActivityCreated =
-            "Business activity created successfully.";
+            "Activity  created successfully.";
 
         public const string BusinessActivityRecovered =
-            "Business activity recovered successfully.";
+            "Activity recovered successfully.";
 
         public const string BusinessActivityNotFound =
-            "Business activity not found.";
+            "Activity  not found.";
         public const string BusinessActivityDeleted =
-            "Business activity deleted sucessfully.";
+            "Activity  deleted sucessfully.";
 
-        public const string BusinessActivityRetrieved = 
-            "Business activity retrieve sucessfully.";
+        public const string BusinessActivityRetrieved =
+            "Activity retrieve sucessfully.";
 
-        public const string BusinessActivityUpdated = 
-            "Business activity updated sucessfully.";
+        public const string BusinessActivityUpdated =
+            "Activity updated sucessfully.";
+
+        public const string BusinessActivityCreationFailed =
+            "Activity Createion failed";
 
 
         public const string ApplicationRetrieved =
-            "Application retrieve sucessfully.";
+            "Platform retrieve sucessfully.";
 
         public const string PlanRetrieved =
            "Plan retrieve sucessfully.";
@@ -123,13 +126,15 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string ProgramUpdated =
             "Program updated sucessfully.";
-
+        public const string BaseRefreshMessage =
+            "Please refresh and try again.";
         // ===== SYS Program ACTIVITY =====
         public const string PlatformNotFound =
-           "PlatForm not found.";
+         "Selected platform is not available." + BaseRefreshMessage;
 
         public const string ProgramActionNotFound =
-         "Program Action  not found.";
+         "Some selected actions are no longer available."+ BaseRefreshMessage;
+
         public const string ProgramActionRestoreSucessfully = "Program action restored sucessfully.";
         public const string ProgramActionDeleteSucessfully = "Program action deleted sucessfully.";
         public const string ProgramActionAlreadyDeleted = "Program action already deleted.";
