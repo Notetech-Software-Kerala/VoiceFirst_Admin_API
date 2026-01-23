@@ -33,7 +33,7 @@ jobs:
         run: |
           $appPoolName = "VoiceFirst_Admin_Web_API"
           $websiteName = "VoiceFirst_Admin_Web_API"
-          $sitePath = "D:\VoiceFirst_Admin_ApiPublish"
+          $sitePath = "D:\\VoiceFirst_Admin_ApiPublish"
           
           # Check if app pool exists
           $appPoolExists = & "C:\Windows\System32\inetsrv\appcmd.exe" list apppool /name:$appPoolName 2>$null
@@ -65,7 +65,7 @@ jobs:
         shell: powershell
         run: |
           try {
-            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:"VoiceFirstAdminAPI" -ErrorAction Stop
+            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:"$appPoolName" -ErrorAction Stop
             Write-Host "Application pool stopped successfully"
           } catch {
             Write-Host "Application pool not found or already stopped"
@@ -75,19 +75,19 @@ jobs:
       - name: Deploy to IIS
         shell: powershell
         run: |
-          $deployPath = "C:\inetpub\wwwroot\VoiceFirstAdminAPI"
+          $deployPath = "D:\\VoiceFirst_Admin_ApiPublish"
           Write-Host "Deploying to $deployPath"
           if (Test-Path $deployPath) {
             Remove-Item -Path $deployPath -Recurse -Force -ErrorAction SilentlyContinue
           }
           New-Item -ItemType Directory -Path $deployPath -Force | Out-Null
           Copy-Item -Path "./publish/*" -Destination $deployPath -Recurse -Force
-          Write-Host "Files deployed successfully to $deployPath"
+          Write-Host "Files copied successfully to $deployPath"
 
       - name: Start IIS Application Pool
         shell: powershell
         run: |
-          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:"VoiceFirstAdminAPI"
+          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:"$appPoolName"
           Start-Sleep -Seconds 3
           Write-Host "Application pool started"
 
