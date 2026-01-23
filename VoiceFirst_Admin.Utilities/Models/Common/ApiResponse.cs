@@ -15,7 +15,7 @@ namespace VoiceFirst_Admin.Utilities.Models.Common
         public static ApiResponse<T> Ok(T data, string message, int statusCode = StatusCodes.Status200OK, string? error = null)
             => new() {  StatusCode = statusCode, Message = message, Error = error, Data = data };
 
-        public static ApiResponse<T> Fail(string message, int statusCode = StatusCodes.Status400BadRequest, string? error = null)
-            => new() { StatusCode = statusCode, Message = message, Error = error, Data = default };
+        public static ApiResponse<T> Fail(string message, int statusCode = StatusCodes.Status400BadRequest, string? error = null, T data = default)
+            => new() { StatusCode = statusCode, Message = message, Error = error, Data = data };
     }
 }

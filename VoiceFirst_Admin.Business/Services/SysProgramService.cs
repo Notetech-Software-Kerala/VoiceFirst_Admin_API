@@ -46,7 +46,8 @@ namespace VoiceFirst_Admin.Business.Services
 
             // Platform check (Application)
             var app = await _applicationRepo.
-                GetActiveByIdAsync(dto.PlatformId, cancellationToken);
+                GetActiveByIdAsync(dto.PlatformId,
+                cancellationToken);
 
             if (app == null)
                 return ApiResponse<SysProgramDto>.Fail(
@@ -61,7 +62,9 @@ namespace VoiceFirst_Admin.Business.Services
             {
                 foreach (var pid in dto.ActionIds)
                 {
-                    var perm = await _programActionRepo.GetActiveByIdAsync(pid, cancellationToken);
+                    var perm = await _programActionRepo.
+                        GetActiveByIdAsync(pid, cancellationToken);
+
                     if (perm == null)
 
                         return ApiResponse<SysProgramDto>.Fail(
@@ -235,13 +238,18 @@ namespace VoiceFirst_Admin.Business.Services
             return ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>>.Ok(items, Messages.ProgramRetrieved);
         }
 
+
+
         public async Task<ApiResponse<SysProgramDto>> UpdateAsync(
             int programId,
             SysProgramUpdateDTO dto,
             int loginId,
             CancellationToken cancellationToken = default)
         {
-            var existing = await _repo.GetActiveByIdAsync(programId, cancellationToken);
+
+            var existing = await _repo.GetActiveByIdAsync
+                (programId, cancellationToken);
+
             if (existing == null)
             {
                 return ApiResponse<SysProgramDto>.Fail(

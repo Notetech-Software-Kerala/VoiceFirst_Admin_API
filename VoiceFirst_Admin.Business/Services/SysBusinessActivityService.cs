@@ -30,10 +30,10 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
         public async Task<ApiResponse<SysBusinessActivityDTO>> CreateAsync(
-      SysBusinessActivityCreateDTO dto,
-      int loginId,
-      CancellationToken cancellationToken)
-        {
+          SysBusinessActivityCreateDTO dto,
+          int loginId,
+          CancellationToken cancellationToken)
+            {
             var existingEntity = await _repo.BusinessActivityExistsAsync(
                 dto.ActivityName,
                 null,
@@ -51,13 +51,17 @@ namespace VoiceFirst_Admin.Business.Services
                        ErrorCodes.BusinessActivityAlreadyExists
                        );
                 }
-                return ApiResponse<SysBusinessActivityDTO>.Fail
-                    (Messages.BusinessActivityAlreadyExistsRecoverable,
-                    StatusCodes.Status422UnprocessableEntity,
-                    ErrorCodes.BusinessActivityAlreadyExistsRecoverable
-                    );
-            
+                return ApiResponse<SysBusinessActivityDTO>.Fail(                    
+                     Messages.BusinessActivityAlreadyExistsRecoverable,
+                     StatusCodes.Status422UnprocessableEntity,
+                      ErrorCodes.BusinessActivityAlreadyExists,
+                      new SysBusinessActivityDTO
+                      {
+                          ActivityId = existingEntity.SysBusinessActivityId
+                      }
+                 );
             }
+
 
             var entity = _mapper.Map<SysBusinessActivity>(dto);
             entity.CreatedBy = loginId;
@@ -65,13 +69,22 @@ namespace VoiceFirst_Admin.Business.Services
             entity.SysBusinessActivityId =
                 await _repo.CreateAsync(entity, cancellationToken);
 
-            var createdEntity =
-                await _repo.GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);
+            if(entity.SysBusinessActivityId <= 0)
+            {
+                return ApiResponse<SysBusinessActivityDTO>.Fail(
+                    Messages.SomethingWentWrong,
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCodes.InternalServerError);
+            }
 
-             var createdDto = _mapper.Map<SysBusinessActivityDTO>(createdEntity);
+            var createdDto =
+                await _repo.GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);
 
             return ApiResponse<SysBusinessActivityDTO>.Ok(createdDto, Messages.BusinessActivityCreated,StatusCodes.Status201Created);
         }
+
+
+
 
         public async Task<ApiResponse<SysBusinessActivityDTO>> RecoverBusinessActivityAsync(
             int id,

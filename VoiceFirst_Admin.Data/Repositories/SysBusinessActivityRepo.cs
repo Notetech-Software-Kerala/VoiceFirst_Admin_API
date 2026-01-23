@@ -73,40 +73,40 @@ namespace VoiceFirst_Admin.Data.Repositories
             int id = await connection.ExecuteScalarAsync<int>(cmd);      
             return id;
         }
+       
+        public async Task<SysBusinessActivityDTO?> GetByIdAsync(
+             int ActivityId,
+             CancellationToken cancellationToken = default)
+                {
+                    const string sql = @"
+                SELECT 
+                    s.SysBusinessActivityId    As ActivityId    ,
+                    s.BusinessActivityName      As ActivityName   ,
+                    s.IsActive             As Active        ,
+                    s.IsDeleted            As Deleted      ,
+                    s.CreatedAt             As CreatedDate    ,
+                    s.UpdatedAt             As   ModifiedDate  ,
+                    s.DeletedAt              As   DeletedDate  ,
 
-        public async Task<SysBusinessActivity?> GetByIdAsync(
-     int id,
-     CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-    SELECT 
-        s.SysBusinessActivityId        ,
-        s.BusinessActivityName         ,
-        s.IsActive                     ,
-        s.IsDeleted                    ,
-        s.CreatedAt                  ,
-        s.UpdatedAt                  ,
-        s.DeletedAt                   ,
+                    -- Created User
+                    CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
 
-        -- Created User
-        CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUserName,
+                    -- Updated User
+                    CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS ModifiedUser,
 
-        -- Updated User
-        CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUserName,
+                    -- Deleted User
+                    CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
 
-        -- Deleted User
-        CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUserName
-
-    FROM dbo.SysBusinessActivity s
-    INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
-    LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
-    LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
-    WHERE s.SysBusinessActivityId = @ActivityId;
-    ";
+                FROM dbo.SysBusinessActivity s
+                INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
+                LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
+                LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
+                WHERE s.SysBusinessActivityId = @ActivityId;
+                ";
 
             using var connection = _context.CreateConnection();
-            var entity= await connection.QuerySingleOrDefaultAsync<SysBusinessActivity>(
-                new CommandDefinition(sql, new { ActivityId = id }, cancellationToken: cancellationToken)
+            var entity= await connection.QuerySingleOrDefaultAsync<SysBusinessActivityDTO>(
+                new CommandDefinition(sql, new { ActivityId = ActivityId }, cancellationToken: cancellationToken)
             );
             return entity;
         }

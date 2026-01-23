@@ -23,7 +23,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramLookUp>> GetProgramLookupAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<SysProgramLookUp>> 
+            GetProgramLookupAsync(CancellationToken cancellationToken = default)
         {
             //const string sql = @"
             //SELECT 
