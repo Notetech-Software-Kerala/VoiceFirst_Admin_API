@@ -57,8 +57,8 @@ jobs:
             Write-Host "Website already exists"
           }
           
-          # Assign app pool to website
-          & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /applicationPool:$appPoolName
+          # Assign app pool to the site's root application
+          & "C:\Windows\System32\inetsrv\appcmd.exe" set app "$websiteName/" /applicationPool:$appPoolName
           Write-Host "Application pool assigned to website"
 
       - name: Stop IIS Application Pool
