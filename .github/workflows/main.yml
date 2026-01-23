@@ -24,7 +24,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build VoiceFirst_Admin.API\VoiceFirst_Admin.API.csproj --configuration Release --no-restore
 
       - name: Run tests
         run: dotnet test --configuration Release --no-build --verbosity normal
@@ -37,7 +37,7 @@ jobs:
           Write-Host "Clean complete"
 
       - name: Publish
-        run: dotnet publish --configuration Release --output ./publish
+        run: dotnet publish VoiceFirst_Admin.API\VoiceFirst_Admin.API.csproj --configuration Release --output ./publish
 
       - name: Create/Configure IIS Application Pool
         shell: powershell
