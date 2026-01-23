@@ -29,6 +29,13 @@ jobs:
       - name: Run tests
         run: dotnet test --configuration Release --no-build --verbosity normal
 
+      - name: Clean publish directory
+        shell: powershell
+        run: |
+          Write-Host "Cleaning ./publish directory"
+          Remove-Item -Path ./publish -Recurse -Force -ErrorAction SilentlyContinue
+          Write-Host "Clean complete"
+
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish
 
@@ -83,6 +90,7 @@ jobs:
           Write-Host "Deploying to $deployPath"
           if (Test-Path $deployPath) {
             Remove-Item -Path $deployPath -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "Deploy folder cleaned; ready to copy new artifacts"
           }
           New-Item -ItemType Directory -Path $deployPath -Force | Out-Null
           Copy-Item -Path "./publish/*" -Destination $deployPath -Recurse -Force
