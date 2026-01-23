@@ -31,9 +31,9 @@ jobs:
       - name: Create/Configure IIS Application Pool
         shell: powershell
         run: |
-          $appPoolName = "VoiceFirstAdminAPI"
-          $websiteName = "VoiceFirstAdminAPI"
-          $sitePath = "C:\inetpub\wwwroot\VoiceFirstAdminAPI"
+          $appPoolName = "VoiceFirst_Admin_Web_API"
+          $websiteName = "VoiceFirst_Admin_Web_API"
+          $sitePath = "D:\\VoiceFirst_Admin_ApiPublish"
           
           # Check if app pool exists
           $appPoolExists = & "C:\Windows\System32\inetsrv\appcmd.exe" list apppool /name:$appPoolName 2>$null
@@ -50,22 +50,22 @@ jobs:
           if (-not $siteExists) {
             Write-Host "Creating website: $websiteName"
             New-Item -ItemType Directory -Path $sitePath -Force | Out-Null
-            & "C:\Windows\System32\inetsrv\appcmd.exe" add site /name:$websiteName /physicalPath:$sitePath /bindings:"http/*:80:$($env:COMPUTERNAME)"
-            & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /+bindings:"[protocol='http',bindingInformation='*:80:localhost']"
-            Write-Host "Website created and bound to port 80"
+            & "C:\Windows\System32\inetsrv\appcmd.exe" add site /name:$websiteName /physicalPath:$sitePath /bindings:"http/*:8010:"
+            & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /+bindings:"[protocol='http',bindingInformation='*:8010:']"
+            Write-Host "Website created and bound to port 8010"
           } else {
             Write-Host "Website already exists"
           }
           
-          # Assign app pool to website
-          & "C:\Windows\System32\inetsrv\appcmd.exe" set site /site.name:$websiteName /applicationPool:$appPoolName
+          # Assign app pool to the site's root application
+          & "C:\Windows\System32\inetsrv\appcmd.exe" set app "$websiteName/" /applicationPool:$appPoolName
           Write-Host "Application pool assigned to website"
 
       - name: Stop IIS Application Pool
         shell: powershell
         run: |
           try {
-            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:"VoiceFirstAdminAPI" -ErrorAction Stop
+            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:$appPoolName -ErrorAction Stop
             Write-Host "Application pool stopped successfully"
           } catch {
             Write-Host "Application pool not found or already stopped"
@@ -75,19 +75,19 @@ jobs:
       - name: Deploy to IIS
         shell: powershell
         run: |
-          $deployPath = "C:\inetpub\wwwroot\VoiceFirstAdminAPI"
+          $deployPath = "D:\\VoiceFirst_Admin_ApiPublish"
           Write-Host "Deploying to $deployPath"
           if (Test-Path $deployPath) {
             Remove-Item -Path $deployPath -Recurse -Force -ErrorAction SilentlyContinue
           }
           New-Item -ItemType Directory -Path $deployPath -Force | Out-Null
           Copy-Item -Path "./publish/*" -Destination $deployPath -Recurse -Force
-          Write-Host "Files deployed successfully to $deployPath"
+          Write-Host "Files copied successfully to $deployPath"
 
       - name: Start IIS Application Pool
         shell: powershell
         run: |
-          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:"VoiceFirstAdminAPI"
+          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:$appPoolName
           Start-Sleep -Seconds 3
           Write-Host "Application pool started"
 
