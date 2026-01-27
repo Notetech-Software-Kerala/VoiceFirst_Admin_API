@@ -92,10 +92,13 @@ public class PostOfficeRepo : IPostOfficeRepo
                 uC.UserId AS CreatedById,
                 CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
                 uU.UserId AS UpdatedById,
-                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName FROM PostOfficeZipCode po
-INNER JOIN Users uC ON uC.UserId = po.CreatedBy
-LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
-            WHERE po.PostOfficeZipCodeId = @Id;";
+                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
+                uD.UserId   AS DeletedById,
+                CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName FROM PostOfficeZipCode po
+                INNER JOIN Users uC ON uC.UserId = po.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
+                LEFT JOIN Users uD ON uD.UserId = po.DeletedBy
+                 WHERE po.PostOfficeZipCodeId = @Id;";
 
         var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -412,10 +415,13 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
                 uC.UserId AS CreatedById,
                 CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
                 uU.UserId AS UpdatedById,
-                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName FROM PostOfficeZipCode po
-INNER JOIN Users uC ON uC.UserId = po.CreatedBy
-LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
-            WHERE PostOfficeId = @PostOfficeId ";
+                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
+                uD.UserId   AS DeletedById,
+                CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName FROM PostOfficeZipCode po
+                INNER JOIN Users uC ON uC.UserId = po.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
+                LEFT JOIN Users uD ON uD.UserId = po.DeletedBy
+            WHERE po.PostOfficeId = @PostOfficeId ";
 
         var cmd = new CommandDefinition(sql, new { PostOfficeId = postOfficeId }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -435,10 +441,13 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
                 uC.UserId AS CreatedById,
                 CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
                 uU.UserId AS UpdatedById,
-                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName FROM PostOfficeZipCode po
+                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
+                uD.UserId   AS DeletedById,
+                CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName FROM PostOfficeZipCode po
                 INNER JOIN Users uC ON uC.UserId = po.CreatedBy
                 LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
-                            WHERE ZipCode lINK @ZipCode AND po.IsDeleted = 0;";
+                LEFT JOIN Users uD ON uD.UserId = po.DeletedBy
+                            WHERE po.ZipCode lINK @ZipCode AND po.IsDeleted = 0;";
         var param = new { ZipCode = $"%{SearchText}%" };
 
         var cmd = new CommandDefinition(sql, param, cancellationToken: cancellationToken);
