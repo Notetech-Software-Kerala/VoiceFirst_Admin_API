@@ -108,6 +108,8 @@ public class PostOfficeService : IPostOfficeService
 
     public async Task<ApiResponse<PostOfficeDto>> UpdateAsync(PostOfficeUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
     {
+        if (dto == null)
+            return ApiResponse<PostOfficeDto>.Fail(Messages.PayloadRequired, StatusCodes.Status400BadRequest);
         if (dto.PostOfficeName != null || dto.Active!=null || dto.CountryId!=null)
         {
 
@@ -132,7 +134,7 @@ public class PostOfficeService : IPostOfficeService
             if (!ok)
                 return ApiResponse<PostOfficeDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
         }
-        else if (dto.ZipCodes.Count() > 0)
+        if (dto.ZipCodes.Count() > 0)
         {
             var zipEntities = new List<PostOfficeZipCode>();
             foreach (var z in dto.ZipCodes)
@@ -164,7 +166,7 @@ public class PostOfficeService : IPostOfficeService
         
 
         var updatedDto = await MapWithZipCodesAsync(updatedEntity, cancellationToken);
-        return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status201Created);
+        return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status200OK);
     }
 
     public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
