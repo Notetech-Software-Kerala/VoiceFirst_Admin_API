@@ -208,6 +208,47 @@ public class PostOfficeService : IPostOfficeService
 
         return ApiResponse<object>.Ok(null!, Messages.PostOfficeRestoreSucessfully, StatusCodes.Status200OK);
     }
+    public async Task<ApiResponse<object>> DeleteZipCodeAsync(int id, int loginId, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repo.GetZipCodeByIdAsync(id, cancellationToken);
+        if (entity == null)
+            return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+        if (entity.IsDeleted == true)
+            return ApiResponse<object>.Fail(Messages.PostOfficeAlreadyDeleted, StatusCodes.Status400BadRequest);
+
+        var ok = await _repo.DeleteZipCodeAsync(new PostOfficeZipCode
+        {
+            PostOfficeZipCodeId = id,
+            DeletedBy = loginId
+        }, cancellationToken);
+
+        if (!ok)
+            return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+        return ApiResponse<object>.Ok(null!, Messages.PostOfficeZipCodeDeleteSucessfully, StatusCodes.Status200OK);
+    }
+
+    public async Task<ApiResponse<object>> RestoreZipCodeAsync(int id, int loginId, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repo.GetZipCodeByIdAsync(id, cancellationToken);
+        if (entity == null)
+            return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+        if (!entity.IsDeleted == true)
+            return ApiResponse<object>.Fail(Messages.PostOfficeAlreadyRestored, StatusCodes.Status400BadRequest);
+
+        var ok = await _repo.RestoreZipCodeAsync(new PostOfficeZipCode
+        {
+            PostOfficeZipCodeId = id,
+            UpdatedBy = loginId
+        }, cancellationToken);
+
+        if (!ok)
+            return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+        return ApiResponse<object>.Ok(null!, Messages.PostOfficeZipCodeRestoreSucessfully, StatusCodes.Status200OK);
+    }
 
     public async Task<PostOfficeDto?> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
