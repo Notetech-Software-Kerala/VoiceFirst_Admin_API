@@ -486,7 +486,7 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
                     var sql = new StringBuilder();
                     sql.Append("UPDATE PostOfficeZipCode SET UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME(), ");
                     sql.Append(string.Join(", ", sets));
-                    sql.Append(" WHERE PostOfficeId = @Id AND IsDeleted = 0;");
+                    sql.Append(" WHERE PostOfficeZipCodeId = @Id AND IsDeleted = 0;");
 
                     var cmd = new CommandDefinition(sql.ToString(), parameters, transaction, cancellationToken: cancellationToken);
                 
@@ -519,7 +519,7 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
             if(item==null)
                 return new BulkUpsertError
                 {
-                    Message = Messages.AlreadyExist,
+                    Message = Messages.NotFound,
                     StatuaCode = StatusCodes.Status404NotFound
                 };
             else if (item.IsDeleted == true)
