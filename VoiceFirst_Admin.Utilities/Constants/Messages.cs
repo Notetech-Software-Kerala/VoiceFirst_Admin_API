@@ -152,6 +152,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string PostOfficeRestoreSucessfully = "Post office restored sucessfully.";
         public const string PostOfficeDeleteSucessfully = "Post office deleted sucessfully.";
+        public const string PostOfficeZipCodeRestoreSucessfully = "Zip code restored sucessfully.";
+        public const string PostOfficeZipCodeDeleteSucessfully = "Zip code deleted sucessfully.";
         public const string PostOfficeAlreadyDeleted = "Post office already deleted.";
         public const string PostOfficeAlreadyRestored = "Post office already restored.";
         public const string PostOfficeCreated = "Post officen created sucessfully.";

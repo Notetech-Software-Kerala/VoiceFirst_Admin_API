@@ -27,6 +27,7 @@ public class PostOfficeMappingProfile : Profile
             .ForMember(d => d.ZipCodeId, opt => opt.MapFrom(s => s.PostOfficeZipCodeId))
             .ForMember(d => d.ZipCode, opt => opt.MapFrom(s => s.ZipCode))
             .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))
+            .ForMember(d => d.Deleted, opt => opt.MapFrom(s => s.IsDeleted))
                 .ForMember(d => d.CreatedUser, opt => opt.MapFrom(s => s.CreatedUserName))
                 .ForMember(d => d.ModifiedUser, opt => opt.MapFrom(s => s.UpdatedUserName))
                 .ForMember(d => d.CreatedDate, opt => opt.MapFrom(s => s.CreatedAt))

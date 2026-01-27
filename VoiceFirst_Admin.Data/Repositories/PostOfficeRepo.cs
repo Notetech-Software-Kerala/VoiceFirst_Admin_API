@@ -78,6 +78,29 @@ public class PostOfficeRepo : IPostOfficeRepo
         using var connection = _context.CreateConnection();
         return await connection.QuerySingleOrDefaultAsync<PostOffice>(cmd);
     }
+    public async Task<PostOfficeZipCode?> GetZipCodeByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"SELECT
+                po.PostOfficeZipCodeId,
+                po.PostOfficeId,
+                po.ZipCode,
+                po.CreatedAt,
+                po.IsActive,
+                po.UpdatedAt,
+                po.IsDeleted,
+                po.DeletedAt,
+                uC.UserId AS CreatedById,
+                CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+                uU.UserId AS UpdatedById,
+                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName FROM PostOfficeZipCode po
+INNER JOIN Users uC ON uC.UserId = po.CreatedBy
+LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
+            WHERE po.PostOfficeZipCodeId = @Id;";
+
+        var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        return await connection.QuerySingleOrDefaultAsync<PostOfficeZipCode>(cmd);
+    }
 
     public async Task<PagedResultDto<PostOffice>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default)
     {
@@ -351,6 +374,29 @@ LEFT JOIN Users uD ON uD.UserId = po.DeletedBy WHERE 1=1
         var affected = await connection.ExecuteAsync(cmd);
         return affected > 0;
     }
+    public async Task<bool> DeleteZipCodeAsync(PostOfficeZipCode entity, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"UPDATE PostOfficeZipCode SET IsDeleted = 1, DeletedAt = SYSDATETIME(), DeletedBy = @DeletedBy  WHERE PostOfficeZipCodeId = @Id AND IsDeleted = 0;";
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", entity.PostOfficeZipCodeId);
+        parameters.Add("DeletedBy", entity.DeletedBy);
+        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(cmd);
+        return affected > 0;
+    }
+
+    public async Task<bool> RestoreZipCodeAsync(PostOfficeZipCode entity, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"UPDATE PostOfficeZipCode SET IsDeleted = 0, DeletedAt = NULL, DeletedBy = NULL, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME()  WHERE PostOfficeZipCodeId = @Id AND IsDeleted = 1;";
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", entity.PostOfficeZipCodeId);
+        parameters.Add("UpdatedBy", entity.UpdatedBy);
+        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(cmd);
+        return affected > 0;
+    }
 
     public async Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdAsync(int postOfficeId, CancellationToken cancellationToken = default)
     {
@@ -440,7 +486,7 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
                     var sql = new StringBuilder();
                     sql.Append("UPDATE PostOfficeZipCode SET UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME(), ");
                     sql.Append(string.Join(", ", sets));
-                    sql.Append(" WHERE PostOfficeId = @Id AND IsDeleted = 0;");
+                    sql.Append(" WHERE PostOfficeZipCodeId = @Id AND IsDeleted = 0;");
 
                     var cmd = new CommandDefinition(sql.ToString(), parameters, transaction, cancellationToken: cancellationToken);
                 
@@ -473,7 +519,7 @@ LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
             if(item==null)
                 return new BulkUpsertError
                 {
-                    Message = Messages.AlreadyExist,
+                    Message = Messages.NotFound,
                     StatuaCode = StatusCodes.Status404NotFound
                 };
             else if (item.IsDeleted == true)
