@@ -320,7 +320,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 // link permissions/actions if provided
                 if (permissionIds != null && permissionIds.Count > 0)
                 {
-                    await BulkInsertActionLinksAsync(connection, tx, id, permissionIds, entity.CreatedBy ?? 0, cancellationToken);
+                    await BulkInsertActionLinksAsync(connection, tx, id, permissionIds, entity.CreatedBy, cancellationToken);
                 }
 
                 tx.Commit();

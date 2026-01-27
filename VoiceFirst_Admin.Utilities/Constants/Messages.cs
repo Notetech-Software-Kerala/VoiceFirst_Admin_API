@@ -16,6 +16,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string AlreadyUsing = "Already using.";
         public const string Created = "Created.";
         public const string UpdateFailed = "Update failed.";
+        public const string BadRequest = "Bad Request.";
         public const string Nil = "NIL.";
 
         // New generic messages
@@ -144,6 +145,17 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ProgramActionUpdatedSucessfully = "Program action updated sucessfully.";
         public const string ProgramActionNameAlreadyExists = "Program action name already exists.";
         public const string ProgramActionNameExistsInTrash = "This program action name exists in trash. Restore it to use again.";
+
+        // ===== SYS ROLES =====
+        public const string RoleCreated = "Role created sucessfully.";
+        public const string RoleRetrieveSucessfully = "Role retrieve sucessfully.";
+        public const string RoleUpdatedSucessfully = "Role updated sucessfully.";
+        public const string RoleDeleteSucessfully = "Role deleted sucessfully.";
+        public const string RoleRestoreSucessfully = "Role restored sucessfully.";
+        public const string RoleNameAlreadyExists = "Role name already exists.";
+        public const string RoleNameExistsInTrash = "This role name exists in trash. Restore it to use again.";
+        public const string RoleAlreadyDeleted = "Role already deleted.";
+        public const string RoleAlreadyRestored = "Role already restored.";
 
         public const string CountryRetrieveSucessfully = "Country retrieve sucessfully.";
         public const string DivisionOneRetrieveSucessfully = "Division one retrieve sucessfully.";

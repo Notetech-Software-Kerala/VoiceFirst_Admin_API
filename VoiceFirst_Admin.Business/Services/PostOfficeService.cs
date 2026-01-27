@@ -164,7 +164,7 @@ public class PostOfficeService : IPostOfficeService
         
 
         var updatedDto = await MapWithZipCodesAsync(updatedEntity, cancellationToken);
-        return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status201Created);
+        return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status200OK);
     }
 
     public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
