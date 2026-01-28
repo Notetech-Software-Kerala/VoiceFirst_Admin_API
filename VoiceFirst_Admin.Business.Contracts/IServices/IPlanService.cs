@@ -17,5 +17,6 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
         Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDetailDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanFilterDto filter, CancellationToken cancellationToken = default);
         Task<ApiResponse<bool>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
         Task<ApiResponse<int>> RecoverPlanAsync(int id, int loginId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<int>> LinkPlansRoleAsync(int roleId, System.Collections.Generic.List<int> planIds, int loginId, CancellationToken cancellationToken = default);
     }
 }

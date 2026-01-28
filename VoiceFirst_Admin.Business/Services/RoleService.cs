@@ -19,11 +19,13 @@ public class RoleService : IRoleService
 {
     private readonly IMapper _mapper;
     private readonly IRoleRepo _repo;
+    private readonly IPlanService _planService;
 
-    public RoleService(IMapper mapper, IRoleRepo repo)
+    public RoleService(IMapper mapper, IRoleRepo repo, IPlanService planService)
     {
         _mapper = mapper;
         _repo = repo;
+        _planService = planService;
     }
 
     public async Task<ApiResponse<RoleDto>> CreateAsync(RoleCreateDto dto, int loginId, CancellationToken cancellationToken = default)
@@ -64,8 +66,8 @@ public class RoleService : IRoleService
         var createdEntity = await _repo.GetByIdAsync(created.SysRoleId, cancellationToken);
         if (createdEntity == null)
             return ApiResponse<RoleDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
-
-        
+        if(dto.PlanIds.Count()>0)
+            await _planService.LinkPlansRoleAsync(created.SysRoleId, dto.PlanIds, loginId, cancellationToken);
 
         var dtoOut = _mapper.Map<RoleDto>(createdEntity);
         var createdLinks = await _repo.GetActionIdsByRoleIdAsync(createdEntity.SysRoleId, cancellationToken);
@@ -194,4 +196,6 @@ public class RoleService : IRoleService
         var dto = _mapper.Map<RoleDto>(entity);
         return dto;
     }
+
+    
 }

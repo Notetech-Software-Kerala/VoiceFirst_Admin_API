@@ -13,10 +13,12 @@ namespace VoiceFirst_Admin.Business.Services
     public class PlanService:IPlanService
     {
         private readonly IPlanRepo _planRepository;
+        private readonly VoiceFirst_Admin.Data.Contracts.IRepositories.IRoleRepo _roleRepository;
 
-        public PlanService(IPlanRepo planRepository)
+        public PlanService(IPlanRepo planRepository, VoiceFirst_Admin.Data.Contracts.IRepositories.IRoleRepo roleRepository)
         {
             _planRepository = planRepository;
+            _roleRepository = roleRepository;
         }
 
         public async Task<ApiResponse<IEnumerable<PlanActiveDto>>> 
@@ -133,6 +135,35 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<int>.Fail(Messages.NotFound, StatusCodes.Status404NotFound, ErrorCodes.NotFound);
             }
             return ApiResponse<int>.Ok(recovered, Messages.Success);
+        }
+        public async Task<ApiResponse<int>> LinkPlansRoleAsync(int roleId, List<int> planIds, int loginId, CancellationToken cancellationToken = default)
+        {
+            // Validate role exists
+            var role = await _roleRepository.GetByIdAsync(roleId, cancellationToken);
+            if (role == null || role.IsDeleted == true)
+                return ApiResponse<int>.Fail("Role not found.", StatusCodes.Status404NotFound);
+
+            if (role.IsActive == false)
+                return ApiResponse<int>.Fail("Role is inactive.", StatusCodes.Status400BadRequest);
+
+            if (planIds == null || planIds.Count == 0)
+                return ApiResponse<int>.Fail("PlanIds are required.", StatusCodes.Status400BadRequest);
+
+            // Validate plan ids exist
+            var existing = await _planRepository.GetExistingPlanIdsAsync(planIds, cancellationToken);
+            var existingSet = new HashSet<int>(existing);
+            var invalid = planIds.Where(p => !existingSet.Contains(p)).ToList();
+            if (invalid.Any())
+            {
+                return ApiResponse<int>.Fail($"Some PlanIds are invalid: {string.Join(',', invalid)}", StatusCodes.Status404NotFound);
+            }
+
+            var res = await _planRepository.LinkPlanRoleAsync(roleId, planIds, loginId, cancellationToken);
+            if (res <= 0)
+            {
+                return ApiResponse<int>.Fail(Messages.Failed, StatusCodes.Status400BadRequest);
+            }
+            return ApiResponse<int>.Ok(res, Messages.Success);
         }
 
     }

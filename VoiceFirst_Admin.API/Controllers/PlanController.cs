@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Role;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.API.Controllers
@@ -73,6 +75,17 @@ namespace VoiceFirst_Admin.API.Controllers
             var result = await _planService.RecoverPlanAsync(id, userId, cancellationToken);
             return StatusCode(result.StatusCode, result);
         }
+
+        //[HttpPost("link-role-plans")]
+        //public async Task<IActionResult> LinkPlansToRole([FromBody] RolePlanLinkCreateDto model, CancellationToken cancellationToken)
+        //{
+        //    if (model == null)
+        //        return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
+
+        //    const int userId = 1;
+        //    var result = await _planService.LinkPlansRoleAsync(model.RoleId, model.PlanIds, userId, cancellationToken);
+        //    return StatusCode(result.StatusCode, result);
+        //}
     }
 
 }

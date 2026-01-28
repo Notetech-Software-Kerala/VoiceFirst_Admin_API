@@ -6,4 +6,5 @@ public class RoleCreateDto
     public string? RolePurpose { get; set; }
     public int ApplicationId { get; set; }
     public List<int> ActionLinkIds { get; set; } = new List<int>();
+    public List<int> PlanIds { get; set; } = new List<int>();
 }
