@@ -6,7 +6,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice
 {
     public class ZipCodeUpdateDto
     {
-        public int? ZipCodeId { get; set; }
+        public int? ZipCodeLinkId { get; set; }
         public string ZipCode { get; set; } = string.Empty;
         public bool? Active { get; set; }
     }

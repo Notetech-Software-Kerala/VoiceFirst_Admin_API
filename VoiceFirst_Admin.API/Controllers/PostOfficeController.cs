@@ -80,19 +80,5 @@ public class PostOfficeController : ControllerBase
         var res = await _service.RestoreAsync(id, userId, cancellationToken);
         return StatusCode(res.StatusCode, res);
     }
-    [HttpDelete]
-    [Route("api/zipcode/{id:int}")]
-    public async Task<IActionResult> DeleteZipCode(int id, CancellationToken cancellationToken)
-    {
-        var res = await _service.DeleteZipCodeAsync(id, userId, cancellationToken);
-        return StatusCode(res.StatusCode, res);
-    }
-
-    [HttpPatch]
-    [Route("api/zipcode/recover/{id:int}")]
-    public async Task<IActionResult> RestoreZipCode(int id, CancellationToken cancellationToken)
-    {
-        var res = await _service.RestoreZipCodeAsync(id, userId, cancellationToken);
-        return StatusCode(res.StatusCode, res);
-    }
+   
 }

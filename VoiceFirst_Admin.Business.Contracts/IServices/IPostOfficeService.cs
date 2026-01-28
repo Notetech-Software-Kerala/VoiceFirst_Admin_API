@@ -16,7 +16,5 @@ public interface IPostOfficeService
     Task<ApiResponse<PostOfficeDto>> UpdateAsync(PostOfficeUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default);
     Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
     Task<ApiResponse<object>> RestoreAsync(int id, int loginId, CancellationToken cancellationToken = default);
-    Task<ApiResponse<object>> DeleteZipCodeAsync(int id, int loginId, CancellationToken cancellationToken = default);
-    Task<ApiResponse<object>> RestoreZipCodeAsync(int id, int loginId, CancellationToken cancellationToken = default);
     Task<PostOfficeDto?> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
 }

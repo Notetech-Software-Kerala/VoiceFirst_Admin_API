@@ -1,4 +1,4 @@
-﻿using System;
+﻿    using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -173,6 +173,15 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PostOfficeUpdatedSucessfully = "Post office updated sucessfully.";
         public const string PostOfficeNameAlreadyExists = "Post office name already exists.";
         public const string PostOfficeNameExistsInTrash = "This post office name exists in trash. Restore it to use again.";
+
+        // Country / Division messages
+        public const string CountryRequired = "Country is required.";
+        public const string CountryNotFound = "Selected country not found.";
+        public const string DivisionOneNotFound = "Selected division one not found for the country.";
+        public const string DivisionTwoNotFound = "Selected division two not found for the division one.";
+        public const string DivisionThreeNotFound = "Selected division three not found for the division two.";
+        public const string DivisionOneRequiredForDivisionTwo = "Division one is required when supplying division two.";
+        public const string DivisionTwoRequiredForDivisionThree = "Division two is required when supplying division three.";
 
     }
 }
