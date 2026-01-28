@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -31,10 +32,24 @@ public class RoleService : IRoleService
             return ApiResponse<RoleDto>.Fail(Messages.PayloadRequired, StatusCodes.Status400BadRequest);
 
         var existing = await _repo.ExistsByNameAsync(dto.RoleName, null, cancellationToken);
-        if (existing != null && existing.IsDeleted == true)
-            return ApiResponse<RoleDto>.Fail(Messages.RoleNameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
         if (existing != null)
-            return ApiResponse<RoleDto>.Fail(Messages.RoleNameAlreadyExists, StatusCodes.Status409Conflict);
+        {
+            // System roles (protected)
+            if (existing.SysRoleId is >= 1 and <= 5)
+                return ApiResponse<RoleDto>.Fail(
+                    Messages.RoleNameDefault,
+                    StatusCodes.Status403Forbidden);
+
+            if (existing.IsDeleted == true)
+                return ApiResponse<RoleDto>.Fail(
+                    Messages.RoleNameExistsInTrash,
+                    StatusCodes.Status422UnprocessableEntity);
+
+            return ApiResponse<RoleDto>.Fail(
+                Messages.RoleNameAlreadyExists,
+                StatusCodes.Status409Conflict);
+        }
+
 
         var entity = new SysRoles
         {
@@ -69,7 +84,7 @@ public class RoleService : IRoleService
         return dto;
     }
 
-    public async Task<PagedResultDto<RoleDto>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<RoleDto>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default)
     {
         var entities = await _repo.GetAllAsync(filter, cancellationToken);
         var list = _mapper.Map<IEnumerable<RoleDto>>(entities.Items);
@@ -82,6 +97,12 @@ public class RoleService : IRoleService
             PageSize = filter.Limit
         };
     }
+    public async Task<IEnumerable<RoleLookUpDto>> GetLookUpAllAsync( CancellationToken cancellationToken = default)
+    {
+        var entities = await _repo.GetLookUpAllAsync( cancellationToken);
+        var dto = _mapper.Map<IEnumerable<RoleLookUpDto>>(entities);
+        return dto;
+    }
 
     public async Task<ApiResponse<RoleDto>> UpdateAsync(RoleUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
     {
@@ -92,9 +113,20 @@ public class RoleService : IRoleService
                 var existing = await _repo.ExistsByNameAsync(dto.RoleName ?? string.Empty, id, cancellationToken);
                 if (existing != null)
                 {
+                    // System roles (protected)
+                    if (existing.SysRoleId is >= 1 and <= 5)
+                        return ApiResponse<RoleDto>.Fail(
+                            Messages.RoleNameDefault,
+                            StatusCodes.Status403Forbidden);
+
                     if (existing.IsDeleted == true)
-                        return ApiResponse<RoleDto>.Fail(Messages.RoleNameExistsInTrash, StatusCodes.Status422UnprocessableEntity);
-                    return ApiResponse<RoleDto>.Fail(Messages.RoleNameAlreadyExists, StatusCodes.Status409Conflict);
+                        return ApiResponse<RoleDto>.Fail(
+                            Messages.RoleNameExistsInTrash,
+                            StatusCodes.Status422UnprocessableEntity);
+
+                    return ApiResponse<RoleDto>.Fail(
+                        Messages.RoleNameAlreadyExists,
+                        StatusCodes.Status409Conflict);
                 }
             }
 

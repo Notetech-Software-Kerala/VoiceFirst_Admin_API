@@ -34,9 +34,13 @@ public class PostOfficeMappingProfile : Profile
             .ForMember(d => d.ZipCodeLinkId, opt => opt.MapFrom(s => s.PostOfficeZipCodeLinkId))
             .ForMember(d => d.ZipCode, opt => opt.MapFrom(s => s.ZipCode))
             .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))
-    .ForMember(d => d.CreatedUser, opt => opt.MapFrom(s => s.CreatedUserName))
-                .ForMember(d => d.ModifiedUser, opt => opt.MapFrom(s => s.UpdatedUserName))
-                .ForMember(d => d.CreatedDate, opt => opt.MapFrom(s => s.CreatedAt))
-                .ForMember(d => d.ModifiedDate, opt => opt.MapFrom(s => s.UpdatedAt));
+            .ForMember(d => d.CreatedUser, opt => opt.MapFrom(s => s.CreatedUserName))
+            .ForMember(d => d.ModifiedUser, opt => opt.MapFrom(s => s.UpdatedUserName))
+            .ForMember(d => d.CreatedDate, opt => opt.MapFrom(s => s.CreatedAt))
+            .ForMember(d => d.ModifiedDate, opt => opt.MapFrom(s => s.UpdatedAt));
+
+        CreateMap<PostOfficeZipCode, ZipCodeLookUp>()
+            .ForMember(d => d.ZipCodeLinkId, opt => opt.MapFrom(s => s.PostOfficeZipCodeLinkId))
+            .ForMember(d => d.ZipCode, opt => opt.MapFrom(s => s.ZipCode));
     }
 }

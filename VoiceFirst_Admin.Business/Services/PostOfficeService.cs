@@ -105,6 +105,13 @@ public class PostOfficeService : IPostOfficeService
         var dto = await MapWithZipCodesAsync(entity, cancellationToken);
         return dto;
     }
+    public async Task<IEnumerable<ZipCodeLookUp>?> GetZipCodesByPostOfficeIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repo.GetZipCodesByPostOfficeIdAsync(id, cancellationToken);
+        if (entity == null) return null;
+        var dto = _mapper.Map<IEnumerable<ZipCodeLookUp>>(entity);
+        return dto;
+    }
 
     public async Task<PagedResultDto<PostOfficeDto>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default)
     {
