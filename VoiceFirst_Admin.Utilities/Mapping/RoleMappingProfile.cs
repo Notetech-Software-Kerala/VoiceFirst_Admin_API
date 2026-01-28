@@ -38,6 +38,10 @@ public class RoleMappingProfile : Profile
             .ForMember(d => d.DeletedDate, opt => opt.MapFrom(s => s.DeletedAt))
             .ForMember(d => d.ModifiedDate, opt => opt.MapFrom(s => s.UpdatedAt));
 
+        CreateMap<SysRoles, RoleLookUpDto>()
+            .ForMember(d => d.RoleId, opt => opt.MapFrom(s => s.SysRoleId))
+            .ForMember(d => d.RoleName, opt => opt.MapFrom(s => s.RoleName));
+
         CreateMap<SysRolesProgramActionLink, RoleActionLinkDto>()
                 .ForMember(d => d.ActionLinkId, opt => opt.MapFrom(s => s.ProgramActionLinkId))
                 .ForMember(d => d.ActionName, opt => opt.MapFrom(s => s.ProgramActionName))

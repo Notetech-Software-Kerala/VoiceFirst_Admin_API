@@ -35,12 +35,17 @@ public class RoleController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] CommonFilterDto filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll([FromQuery] RoleFilterDto filter, CancellationToken cancellationToken)
     {
         var items = await _service.GetAllAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.RoleRetrieveSucessfully));
     }
-
+    [HttpGet("lookup")]
+    public async Task<IActionResult> GetLookupAsync(CancellationToken cancellationToken)
+    {
+        var items = await _service.GetLookUpAllAsync(cancellationToken);
+        return Ok(ApiResponse<object>.Ok(items, Messages.RoleRetrieveSucessfully));
+    }
     [HttpPatch("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] RoleUpdateDto model, CancellationToken cancellationToken)
     {

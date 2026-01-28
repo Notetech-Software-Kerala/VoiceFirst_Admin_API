@@ -154,6 +154,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string RoleRestoreSucessfully = "Role restored sucessfully.";
         public const string RoleNameAlreadyExists = "Role name already exists.";
         public const string RoleNameExistsInTrash = "This role name exists in trash. Restore it to use again.";
+        public const string RoleNameDefault = "This is a system default role and cannot be created..";
         public const string RoleAlreadyDeleted = "Role already deleted.";
         public const string RoleAlreadyRestored = "Role already restored.";
 
@@ -170,6 +171,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PostOfficeAlreadyRestored = "Post office already restored.";
         public const string PostOfficeCreated = "Post officen created sucessfully.";
         public const string PostOfficeRetrieveSucessfully = "Post office retrieve sucessfully.";
+        public const string ZipCodesRetrieveSucessfully = "Zip codes retrieve sucessfully.";
         public const string PostOfficeUpdatedSucessfully = "Post office updated sucessfully.";
         public const string PostOfficeNameAlreadyExists = "Post office name already exists.";
         public const string PostOfficeNameExistsInTrash = "This post office name exists in trash. Restore it to use again.";

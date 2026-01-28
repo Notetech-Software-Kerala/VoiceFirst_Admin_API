@@ -13,6 +13,7 @@ using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Role;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
@@ -90,8 +91,16 @@ public class RoleRepo : IRoleRepo
         var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
         return await connection.QuerySingleOrDefaultAsync<SysRoles>(cmd);
     }
-
-    public async Task<PagedResultDto<SysRoles>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SysRoles>> GetLookUpAllAsync(CancellationToken cancellationToken = default)
+    {
+        const string sql = @"SELECT r.SysRoleId, r.RoleName
+        FROM SysRoles r
+        WHERE r.IsActive = 1 And r.IsDeleted=0 AND r.SysRoleId > 5;;";
+        using var connection = _context.CreateConnection();
+        var cmd = new CommandDefinition(sql, cancellationToken: cancellationToken);
+        return await connection.QueryAsync<SysRoles>(cmd);
+    }
+    public async Task<PagedResultDto<SysRoles>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default)
     {
         var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
         var limit = filter.Limit <= 0 ? 10 : filter.Limit;
@@ -104,7 +113,7 @@ public class RoleRepo : IRoleRepo
         var baseSql = new StringBuilder(@"FROM SysRoles r
             INNER JOIN Users uC ON uC.UserId = r.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = r.UpdatedBy
-            LEFT JOIN Users uD ON uD.UserId = r.DeletedBy WHERE 1=1");
+            LEFT JOIN Users uD ON uD.UserId = r.DeletedBy WHERE r.SysRoleId > 5 ");
 
         if (filter.Deleted.HasValue)
         {
@@ -116,11 +125,53 @@ public class RoleRepo : IRoleRepo
             baseSql.Append(" AND r.IsActive = @IsActive");
             parameters.Add("IsActive", filter.Active.Value);
         }
+        // support optional SearchBy for role-specific fields
+        var searchByMap = new Dictionary<RoleSearchBy, string>
+        {
+            [RoleSearchBy.RoleName] = "r.RoleName",
+            [RoleSearchBy.RolePurpose] = "r.RolePurpose",
+            [RoleSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
+            [RoleSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+            [RoleSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
+        };
+
         if (!string.IsNullOrWhiteSpace(filter.SearchText))
         {
-            baseSql.Append(" AND (r.RoleName LIKE @Search OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search)");
+            if (filter is RoleFilterDto roleFilter && roleFilter.SearchBy.HasValue && searchByMap.TryGetValue(roleFilter.SearchBy.Value, out var col))
+            {
+                baseSql.Append($" AND {col} LIKE @Search");
+            }
+            else
+            {
+                // Default: search across role name, purpose and related users
+                baseSql.Append(@" AND (
+                       r.RoleName LIKE @Search
+                    OR r.RolePurpose LIKE @Search
+                    OR CONCAT(uC.FirstName,' ',uC.LastName) LIKE @Search
+                    OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
+                    OR CONCAT(uU.FirstName,' ',uU.LastName) LIKE @Search
+                    OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
+                    OR CONCAT(uD.FirstName,' ',uD.LastName) LIKE @Search
+                )");
+            }
+
             parameters.Add("Search", $"%{filter.SearchText}%");
         }
+        var sortMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["SysRoleId"] = "r.SysRoleId",
+            ["RoleName"] = "r.RoleName",
+            ["Active"] = "r.IsActive",
+            ["Deleted"] = "r.IsDeleted",
+            ["CreatedDate"] = "r.CreatedAt",
+            ["ModifiedDate"] = "r.UpdatedAt",
+            ["DeletedDate"] = "r.DeletedAt",
+        };
+        var sortOrder = filter.SortOrder == Utilities.DTOs.Shared.SortOrder.Desc ? "DESC" : "ASC";
+        var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "SysRoleId" : filter.SortBy;
+
+        if (!sortMap.TryGetValue(sortKey, out var sortColumn))
+            sortColumn = sortMap["SysRoleId"];
 
         var countSql = "SELECT COUNT(1) " + baseSql;
         var itemsSql = $@"SELECT r.SysRoleId, r.RoleName, r.IsMandatory, r.RolePurpose, r.ApplicationId, r.CreatedAt, r.IsActive, r.UpdatedAt, r.IsDeleted, r.DeletedAt,
@@ -128,7 +179,7 @@ public class RoleRepo : IRoleRepo
         uU.UserId AS UpdatedById, CONCAT(uU.FirstName,' ',uU.LastName) AS UpdatedUserName,
         uD.UserId AS DeletedById, CONCAT(uD.FirstName,' ',uD.LastName) AS DeletedUserName
         {baseSql}
-        ORDER BY r.SysRoleId ASC
+         ORDER BY {sortColumn} {sortOrder}
         OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
 
         using var connection = _context.CreateConnection();
@@ -313,4 +364,6 @@ public class RoleRepo : IRoleRepo
             await connection.ExecuteAsync(new CommandDefinition(insertLink, new { SysRoleId = roleId, ProgramActionLinkId = actionId, CreatedBy = createdBy }, transaction: tx, cancellationToken: cancellationToken));
         }
     }
+
+    
 }

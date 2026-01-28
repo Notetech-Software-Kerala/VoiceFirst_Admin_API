@@ -13,3 +13,9 @@ public class ZipCodeDto
     public string? ModifiedUser { get; set; }
 
 }
+public class ZipCodeLookUp
+{
+    public int? ZipCodeLinkId { get; set; }
+    public string ZipCode { get; set; }
+
+}

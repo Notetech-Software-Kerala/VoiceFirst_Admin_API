@@ -14,7 +14,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
     {
         Task<SysRoles> CreateAsync(SysRoles entity,List<int> ActionLinkId, CancellationToken cancellationToken = default);
         Task<SysRoles?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-        Task<PagedResultDto<SysRoles>> GetAllAsync(CommonFilterDto filter, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<SysRoles>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default);
+        Task<IEnumerable<SysRoles>> GetLookUpAllAsync( CancellationToken cancellationToken = default);
         Task<bool> UpdateAsync(SysRoles entity, CancellationToken cancellationToken = default); 
         Task<bool> DeleteAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<bool> RestoreAsync(SysRoles entity, CancellationToken cancellationToken = default);

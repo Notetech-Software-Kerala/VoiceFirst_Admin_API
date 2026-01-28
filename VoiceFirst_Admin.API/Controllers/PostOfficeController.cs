@@ -40,6 +40,13 @@ public class PostOfficeController : ControllerBase
         if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound));
         return Ok(ApiResponse<PostOfficeDto>.Ok(item, Messages.PostOfficeRetrieveSucessfully));
     }
+    [HttpGet]
+    [Route("api/zipcodes/lookup/{postOfficeId:int}")]
+    public async Task<IActionResult> GetZipCodesByPostOfficeIdAsync(int postOfficeId, CancellationToken cancellationToken)
+    {
+        var item = await _service.GetZipCodesByPostOfficeIdAsync(postOfficeId, cancellationToken);
+        return Ok(ApiResponse<object>.Ok(item, Messages.ZipCodesRetrieveSucessfully));
+    }
 
     [HttpGet]
     [Route("api/post-office")]
