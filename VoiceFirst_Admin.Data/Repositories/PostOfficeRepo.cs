@@ -212,13 +212,15 @@ public class PostOfficeRepo : IPostOfficeRepo
             // If SearchBy = ZipCode, use EXISTS on PostOfficeZipCode
             if (filter.SearchBy == PostOfficeSearchBy.ZipCode)
             {
+                // Zip code moved to master 'ZipCode' table and linked via 'PostOfficeZipCodeLink'
                 baseSql.Append(@"
             AND EXISTS (
                 SELECT 1
-                FROM PostOfficeZipCode pz
-                WHERE pz.PostOfficeId = po.PostOfficeId
-                  AND pz.IsDeleted = 0
-                  AND pz.ZipCode LIKE @Search
+                FROM PostOfficeZipCodeLink l
+                INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
+                WHERE l.PostOfficeId = po.PostOfficeId
+                  AND l.IsActive = 1
+                  AND z.ZipCode LIKE @Search
             )");
             }
             else if (filter.SearchBy.HasValue && searchByMap.TryGetValue(filter.SearchBy.Value, out var col))
@@ -240,10 +242,11 @@ public class PostOfficeRepo : IPostOfficeRepo
                 OR DivisionThree.DivisionThreeName LIKE @Search 
                 OR EXISTS (
                     SELECT 1
-                    FROM PostOfficeZipCode pz
-                    WHERE pz.PostOfficeId = po.PostOfficeId
-                      AND pz.IsDeleted = 0
-                      AND pz.ZipCode LIKE @Search
+                FROM PostOfficeZipCodeLink l
+                INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
+                WHERE l.PostOfficeId = po.PostOfficeId
+                  AND l.IsActive = 1
+                  AND z.ZipCode LIKE @Search
                 )
             )");
             }
