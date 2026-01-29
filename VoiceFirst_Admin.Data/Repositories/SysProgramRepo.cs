@@ -537,6 +537,7 @@ WHERE SysProgramId = @ProgramId
 
         public async Task<bool>
 CheckProgramActionLinksExistAsync(
+            int programId,
     IEnumerable<int> programActionLinkIds,
     IDbConnection connection,
     IDbTransaction transaction,
@@ -549,13 +550,13 @@ CheckProgramActionLinksExistAsync(
             const string sql = @"
         SELECT COUNT(1)
         FROM SysProgramActionsLink
-        WHERE ProgramActionLinkId IN @Ids
+        WHERE ProgramActionId IN @ProgramActionId And ProgramId = @programId
     ";
 
             var existingCount = await connection.ExecuteScalarAsync<int>(
                 new CommandDefinition(
                     sql,
-                    new { Ids = programActionLinkIds },
+                    new { ProgramActionId = programActionLinkIds , programId = programId },
                     transaction,
                     cancellationToken: cancellationToken
                 ));

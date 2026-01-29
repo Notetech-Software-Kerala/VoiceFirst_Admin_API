@@ -9,8 +9,10 @@ using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Application;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Plan;
 using VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories
@@ -57,9 +59,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
         public async Task<PlanDetailDto?> 
-            GetDetailByIdAsync(int planId, 
-            IDbConnection connection,
-            IDbTransaction transaction, 
+            GetByIdAsync(int planId,IDbConnection connection,IDbTransaction transaction,
             CancellationToken cancellationToken = default)
         {
             const string sql = @"
@@ -79,30 +79,55 @@ namespace VoiceFirst_Admin.Data.Repositories
             LEFT JOIN dbo.Users uU ON uU.UserId = p.UpdatedBy
             LEFT JOIN dbo.Users uD ON uD.UserId = p.DeletedBy
             WHERE p.PlanId = @PlanId;";
+        
 
-           
-            var dto = await connection.QueryFirstOrDefaultAsync<VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDetailDto>(
-                new CommandDefinition(sql, new { PlanId = planId }, transaction, cancellationToken: cancellationToken));
+            var dto = await connection.QueryFirstOrDefaultAsync<PlanDetailDto>(
+                new CommandDefinition(sql, new { PlanId = planId },transaction, cancellationToken: cancellationToken));
+            return dto;
+        }
+
+
+        public async Task<PlanDetailDto> IsIdExistAsync(
+         int planId,
+         CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT  s.PlanId    As PlanId ,
+                        s.IsDeleted            As Deleted      
+                FROM dbo.[Plan] s
+                WHERE PlanId = @PlanId
+                 ;
+                 ";
+
+            using var connection = _context.CreateConnection();
+
+            var dto = await connection.QuerySingleOrDefaultAsync<PlanDetailDto>(
+                new CommandDefinition(
+                    sql,
+                    new { PlanId = planId },
+                    cancellationToken: cancellationToken
+                )
+            );
             return dto;
         }
 
         public async Task<bool> DeleteAsync(int id, int deletedBy, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE dbo.[Plan] SET IsActive = 0, IsDeleted = 1, DeletedAt = SYSDATETIME(), DeletedBy = @DeletedBy WHERE PlanId = @PlanId";
+            const string sql = @"UPDATE dbo.[Plan] SET  IsDeleted = 1, DeletedAt = SYSDATETIME(), DeletedBy = @DeletedBy WHERE PlanId = @PlanId And IsDeleted = 0;";
             using var connection = _context.CreateConnection();
             var affected = await connection.ExecuteAsync(new CommandDefinition(sql, new { PlanId = id, DeletedBy = deletedBy }, cancellationToken: cancellationToken));
             return affected > 0;
         }
 
-        public async Task<int> RecoverPlanAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        public async Task<bool> RecoverAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE dbo.[Plan] SET IsDeleted = 0, DeletedBy = NULL, DeletedAt = NULL, UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME(), IsActive = 1 WHERE PlanId = @PlanId";
+            const string sql = @"UPDATE dbo.[Plan] SET IsDeleted = 0, DeletedBy = NULL, DeletedAt = NULL, UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME() WHERE PlanId = @PlanId And IsDeleted = 1;";
             using var connection = _context.CreateConnection();
             var affected = await connection.ExecuteAsync(new CommandDefinition(sql, new { PlanId = id, LoginId = loginId }, cancellationToken: cancellationToken));
-            return affected;
+            return affected > 0;
         }
 
-        public async Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<PlanDetailDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<PlanDetailDto>> GetAllAsync(PlanFilterDto filter, CancellationToken cancellationToken = default)
         {
             var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             var limit = filter.Limit <= 0 ? 10 : filter.Limit;
@@ -199,9 +224,17 @@ namespace VoiceFirst_Admin.Data.Repositories
                 ["DeletedDate"] = "p.DeletedAt",
             };
 
-            var sortOrder = filter.SortOrder == VoiceFirst_Admin.Utilities.DTOs.Shared.SortOrder.Desc ? "DESC" : "ASC";
-            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "PlanId" : filter.SortBy;
-            if (!sortMap.TryGetValue(sortKey, out var sortColumn)) sortColumn = sortMap["PlanId"];
+      
+
+
+            var sortOrder = filter.SortOrder == SortOrder.Desc ? "DESC" : "ASC";
+            // 🔹 CHANGED: Default sorting is now ProgramName (Alphabetical order)
+            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy)
+                ? "PlanName"
+                : filter.SortBy;
+
+            if (!sortMap.TryGetValue(sortKey, out var sortColumn))
+                sortColumn = sortMap["PlanId"];
 
             var countSql = "SELECT COUNT(1) " + baseSql.ToString();
 
@@ -225,7 +258,9 @@ namespace VoiceFirst_Admin.Data.Repositories
             var totalCount = await connection.ExecuteScalarAsync<int>(new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
             var items = await connection.QueryAsync<PlanDetailDto>(new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken));
 
-            return new VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<PlanDetailDto>
+            
+
+            return new PagedResultDto<PlanDetailDto>
             {
                 Items = items.ToList(),
                 TotalCount = totalCount,
@@ -251,7 +286,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             return affected > 0;
         }
 
-        public async Task UpsertPlanProgramActionLinksAsync(int planId, IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink.PlanProgramActionLinkUpdateDto> actions, int userId, CancellationToken cancellationToken = default)
+        public async Task UpsertPlanProgramActionLinksAsync(int planId, IEnumerable<PlanProgramActionLinkUpdateDto> actions, int userId, CancellationToken cancellationToken = default)
         {
             const string selectSql = @"SELECT TOP 1 * FROM dbo.[PlanProgramActionLink] WHERE PlanId = @PlanId AND ProgramActionLinkId = @ProgramActionLinkId";
             const string insertSql = @"INSERT INTO dbo.[PlanProgramActionLink] (PlanId, ProgramActionLinkId, IsActive, CreatedBy, CreatedAt) VALUES (@PlanId, @ProgramActionLinkId, @IsActive, @UserId, SYSDATETIME())";

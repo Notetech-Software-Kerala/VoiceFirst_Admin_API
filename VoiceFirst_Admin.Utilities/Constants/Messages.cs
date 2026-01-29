@@ -81,8 +81,16 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string BusinessActivityRecovered =
             "Activity recovered successfully.";
 
+        public const string PlanRecovered =
+          "Plan recovered successfully.";
+
         public const string BusinessActivityNotFoundById =
             "Activity  not found.";
+
+
+        public const string PlanNotFoundById =
+         "Plan  not found.";
+
         public const string PlaceNotFoundById =
             "Place  not found.";
 
@@ -91,6 +99,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string BusinessActivitiesNotFound =
              "Activities  not found.";
+
+        public const string PlansNotFound =
+            "Plans  not found.";
         public const string PlacesNotFound =
            "Places  not found.";
 
@@ -99,6 +110,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string BusinessActivityDeleted =
             "Activity  deleted sucessfully.";
+
+        public const string PlanDeleted =
+            "Plan  deleted sucessfully.";
+
         public const string PlaceDeleted =
             "Place  deleted sucessfully.";
 
@@ -130,7 +145,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string BusinessActivitiesRetrieved =
             "Activity activities retrieved successfully.";
 
-    
+        public const string PlansRetrieved =
+               "Plans retrieved successfully.";
+
 
         public const string PlacesRetrieved =
        "Places retrieved successfully.";
@@ -216,6 +233,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string BusinessActivityAlreadyRecovered =
        "Activity is already recovered.Please refresh again.";
 
+        public const string PlanAlreadyRecovered =
+     "Plan is already recovered.Please refresh again.";
+
         public const string PlaceAlreadyRecovered =
        "Place is already recovered.Please refresh again.";
 
@@ -224,6 +244,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string BusinessActivityAlreadyDeleted =
      "Activity is already deleted.Please refresh again.";
+
+        public const string PlanAlreadyDeleted =
+    "Plan is already deleted.Please refresh again.";
 
         public const string PlaceAlreadyDeleted =
    "Place is already deleted.Please refresh again.";

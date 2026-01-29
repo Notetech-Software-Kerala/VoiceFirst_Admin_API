@@ -32,11 +32,12 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             CancellationToken cancellationToken = default);
 
         Task<bool>
-CheckProgramActionLinksExistAsync(
-    IEnumerable<int> programActionLinkIds,
-    IDbConnection connection,
-    IDbTransaction transaction,
-    CancellationToken cancellationToken = default);
+            CheckProgramActionLinksExistAsync(
+                         int programId,
+                IEnumerable<int> programActionLinkIds,
+                IDbConnection connection,
+                IDbTransaction transaction,
+                CancellationToken cancellationToken = default);
 
 
         Task<SysProgram?> GetActiveByIdAsync(
