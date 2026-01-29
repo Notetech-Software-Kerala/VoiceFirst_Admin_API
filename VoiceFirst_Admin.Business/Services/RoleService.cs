@@ -57,7 +57,7 @@ public class RoleService : IRoleService
         if(dto.ActionLinkIds != null && dto.ActionLinkIds.Count()>0)
         {
             var list = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
-                dto.ApplicationId,
+                dto.PlatformId,
                 dto.ActionLinkIds,
                 cancellationToken);
             if (list.Any())
@@ -72,7 +72,7 @@ public class RoleService : IRoleService
             RoleName = dto.RoleName,
             IsMandatory =false,
             RolePurpose = dto.RolePurpose,
-            ApplicationId = dto.ApplicationId,
+            ApplicationId = dto.PlatformId,
             CreatedBy = loginId
         };
 
@@ -122,7 +122,7 @@ public class RoleService : IRoleService
 
     public async Task<ApiResponse<RoleDetailDto>> UpdateAsync(RoleUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
     {
-        if(dto.RoleName!=null || dto.RolePurpose!=null || dto.ApplicationId != null)
+        if(dto.RoleName!=null || dto.RolePurpose!=null || dto.PlatformId != null)
         {
             if (dto.RoleName != null)
             {
@@ -152,7 +152,7 @@ public class RoleService : IRoleService
                 RoleName = dto.RoleName ?? string.Empty,
                 IsMandatory = false,
                 RolePurpose = dto.RolePurpose,
-                ApplicationId = dto.ApplicationId ?? default,
+                ApplicationId = dto.PlatformId ?? default,
                 UpdatedBy = loginId
             };
 
@@ -165,7 +165,7 @@ public class RoleService : IRoleService
         if (dto.AddActionLinkIds != null)
         {
             var list=await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
-                dto.ApplicationId ?? 0,
+                dto.PlatformId ?? 0,
                 dto.AddActionLinkIds,
                 cancellationToken);
 
@@ -177,7 +177,7 @@ public class RoleService : IRoleService
             }
             var addError = await _repo.AddRoleActionLinksAsync(
                 id,
-                dto.ApplicationId ?? 0,
+                dto.PlatformId ?? 0,
                 dto.AddActionLinkIds,
                 loginId,
                 cancellationToken);
@@ -189,7 +189,7 @@ public class RoleService : IRoleService
         {
             var actionLinksIds = dto.UpdateActionLinks.Select(x => x.ActionLinkId).ToList();
             var list = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
-                dto.ApplicationId ?? 0,
+                dto.PlatformId ?? 0,
                 actionLinksIds,
                 cancellationToken);
 
@@ -201,7 +201,7 @@ public class RoleService : IRoleService
             }
             var updateError = await _repo.UpdateRoleActionLinksAsync(
                id,
-               dto.ApplicationId ?? 0,
+               dto.PlatformId ?? 0,
                dto.UpdateActionLinks,
                loginId,
                cancellationToken);

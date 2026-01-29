@@ -9,7 +9,7 @@ public class RoleDto : CommonDto
     public string RoleName { get; set; } = string.Empty;
     public bool IsMandatory { get; set; }
     public string? RolePurpose { get; set; }
-    public int ApplicationId { get; set; }
+    public int PlatformId { get; set; }
 }
 public class RoleDetailDto : RoleDto
 {
