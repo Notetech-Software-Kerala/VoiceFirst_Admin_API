@@ -56,12 +56,7 @@ namespace VoiceFirst_Admin.Business.Services
             int loginId,
             CancellationToken cancellationToken = default)
         {
-
-
-           
-
-
-
+          
             // Platform check (Application)
             var app = await _applicationRepo.
                 IsIdExistAsync(dto.PlatformId,
@@ -73,6 +68,15 @@ namespace VoiceFirst_Admin.Business.Services
                     StatusCodes.Status404NotFound,
                     ErrorCodes.NotFound
                     );
+
+            if(dto.PlatformId == 1)
+            {
+                return ApiResponse<SysProgramDto>.Fail(
+                        Messages.PlatformNotFound,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.PlatFormNotActive
+                        );
+            }
 
             if(app.IsActive == false)
                 return ApiResponse<SysProgramDto>.Fail(
@@ -153,10 +157,10 @@ namespace VoiceFirst_Admin.Business.Services
                 if (exist["idNotFound"] == true)
                 {
                     return ApiResponse<SysProgramDto>.Fail(
-                   Messages.NotFound,
-                   StatusCodes.Status404NotFound,
-                   ErrorCodes.NotFound
-                   );
+                      Messages.ActionsNotFound,
+                      StatusCodes.Status404NotFound,
+                      ErrorCodes.ActionNotFound
+                      );
                 }
                 if (exist["deletedOrInactive"] == true)
                 {
@@ -561,17 +565,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
 
 
-            //var entity = new SysProgram
-            //{
-            //    SysProgramId = programId,
-            //    ProgramName = dto.ProgramName ?? string.Empty,
-            //    LabelName = dto.Label ?? string.Empty,
-            //    ProgramRoute = dto.Route ?? string.Empty,
-            //    ApplicationId = dto.PlatformId ?? 0,
-            //    CompanyId = dto.CompanyId ?? 0,
-            //    IsActive = dto.Active,
-            //    UpdatedBy = loginId
-            //};
+           
             using var connection = _context.CreateConnection();
             connection.Open();
             using var transaction = connection.BeginTransaction();
@@ -585,97 +579,71 @@ namespace VoiceFirst_Admin.Business.Services
                  transaction,
                  cancellationToken);
 
-               
 
-               
-                if (dto.Action != null )
+
+
+                if (dto.UpdationActions != null)
                 {
-                    var programActionChanges = 
-                        await GetProgramActionChangesAsync(
-                        programId,
-                        dto.Action,
-                        connection,
-                        transaction,
-                        cancellationToken);
-
-                    if(programActionChanges["NotFoundActions"]== true)
+                    var updationActionsFound =
+                     await _repo.CheckProgramActionLinksExistAsync(
+                         dto.UpdationActions
+                             .Select(x => x.ActionId)
+                             .ToList(),
+                         connection,
+                         transaction,
+                         cancellationToken);
+                    if (!updationActionsFound)
                     {
                         transaction.Rollback();
                         return ApiResponse<SysProgramDto>.Fail(
-                      Messages.NotFound,
-                      StatusCodes.Status404NotFound,
-                      ErrorCodes.NotFound
-                      );
-                    }
-                    if (programActionChanges["NotActiveOrDeleteActions"] == true)
-                    {
-                        transaction.Rollback();
-                        return ApiResponse<SysProgramDto>.Fail
- 
-                            (Messages.ProgramActionNotFound,
-                            StatusCodes.Status409Conflict,
-                            ErrorCodes.ProgramActionNotFound);
-                    }
-                   
-                    if (programActionChanges["UpdateActions"].Count() <= 0 &&
-                        programActionChanges["InsertActions"].Count() <= 0
-                        )
-                    {
-                        transaction.Rollback();
-                        return ApiResponse<SysProgramDto>.Fail(
-                       Messages.ProgramUpdated,
-                       StatusCodes.Status204NoContent,
-                       ErrorCodes.NoRowAffected);
-                    }
-                    if (programActionChanges["UpdateActions"].Any())
-                    {
-                            actionUpdation = await _repo.BulkUpdateActionLinksAsync(
-                                programId,
-                                programActionChanges["UpdateActions"],
-                                loginId,
-                                connection,
-                                transaction,
-                                cancellationToken);
-                        if (!actionUpdation)
-                        {
-                            transaction.Rollback();
-                            return ApiResponse<SysProgramDto>.Fail(
-                   Messages.ProgramUpdated,
-                   StatusCodes.Status204NoContent,
-                   ErrorCodes.NoRowAffected);
-                        }
-                    }
-                    if (programActionChanges["InsertActions"].Any())
-                    {
-                            actionUpdation = await _repo.BulkInsertActionLinksAsync(
-                                programId,
-                                programActionChanges["InsertActions"],
-                                loginId,
-                                connection,
-                                transaction,
-                                cancellationToken);
-                        if (!actionUpdation)
-                        {
-                            transaction.Rollback();
-                           return ApiResponse<SysProgramDto>.Fail(
-                           Messages.ProgramUpdated,
-                           StatusCodes.Status204NoContent,
-                           ErrorCodes.NoRowAffected);
-                        }
+                          Messages.NotFound,
+                          StatusCodes.Status404NotFound,
+                          ErrorCodes.NotFound
+                          );
                     }
 
-
-                    
-                    //actionUpdation = await _repo.
-                    //   UpsertProgramActionLinksAsync
-                    //   (programId,
-                    //   dto.Action,
-                    //   loginId,
-                    //   connection,
-                    //   transaction,
-                    //   cancellationToken);
+                    actionUpdation = await _repo.BulkUpdateActionLinksAsync(
+                             programId,
+                             dto.UpdationActions,
+                             loginId,
+                             connection,
+                             transaction,
+                             cancellationToken);
                 }
 
+
+
+                if (dto.InsertActions != null)
+                {
+                    var exist = await _programActionRepo.
+                     IsBulkIdsExistAsync(dto.InsertActions,
+                      cancellationToken);
+                    if (exist["idNotFound"] == true)
+                    {
+                        return ApiResponse<SysProgramDto>.Fail(
+                       Messages.ActionsNotFound,
+                       StatusCodes.Status404NotFound,
+                       ErrorCodes.ActionNotFound
+                       );
+                    }
+                    if (exist["deletedOrInactive"] == true)
+                    {
+                        return ApiResponse<SysProgramDto>.Fail
+                           (Messages.ProgramActionNotFound,
+                           StatusCodes.Status409Conflict,
+                           ErrorCodes.ProgramActionNotFound);
+                    }
+
+                    actionUpdation = await _repo.BulkInsertActionLinksAsync(
+                               programId,
+                               dto.InsertActions,
+                               loginId,
+                               connection,
+                               transaction,
+                               cancellationToken);
+                }
+
+                                                                                                
                 if (!actionUpdation && !programUpdation)
                 {
                     return ApiResponse<SysProgramDto>.Fail(
@@ -702,60 +670,6 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<Dictionary<string, dynamic>>
-        GetProgramActionChangesAsync(
-        int programId,
-        List<SysProgramActionLinkUpdateDTO> inputActions,
-        IDbConnection connection,
-        IDbTransaction transaction,
-        CancellationToken cancellationToken = default)
-        {
-            // 1️⃣ Get existing links from DB
-            var existingActions =
-                await _repo.GetExistingProgramActionsAsync(
-                    programId,
-                    connection,
-                    transaction,
-                    cancellationToken
-                );
-
-            var result = new Dictionary<string, dynamic>
-            {
-                ["UpdateActions"] = new List<SysProgramActionLinkUpdateDTO>(),
-                ["InsertActions"] = new List<int>()
-               
-            };
-
-            // 2️⃣ Compare input vs DB
-            foreach (var action in inputActions)
-            {
-                if (existingActions.TryGetValue(action.ActionId, out var dbIsActive))
-                {
-                    // NULL handling rule: treat NULL as false
-                    var currentStatus = dbIsActive ?? false;
-
-                    // only when status is NOT SAME
-                    if (currentStatus != action.Active)
-                    {
-                        result["UpdateActions"].Add(action.ActionId);
-                    }
-                }
-                else
-                {
-                    // not linked → insert
-                    result["InsertActions"].Add(action);
-                }
-            }
-            if (result["InsertActions"].Count() != 0)
-            {
-                var exist = await _programActionRepo.
-                    IsBulkIdsExistAsync(result["InsertActions"],
-               cancellationToken);
-                result.Add("idNotFound", exist["idNotFound"]);
-                result.Add("deletedOrInactive", exist["deletedOrInactive"]);
-            }
-            
-            return result;
-        }
+      
     }
 }

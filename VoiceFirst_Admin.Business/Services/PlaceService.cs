@@ -38,7 +38,7 @@ namespace VoiceFirst_Admin.Business.Services
                 null,
                 cancellationToken);
 
-            if (existingEntity.PlaceId <= 0)
+            if (existingEntity != null)
             {
                 if (!existingEntity.Deleted)
                 {
@@ -254,7 +254,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             var rowAffect = await _repo.RecoverAsync
                 (id, loginId, cancellationToken);
-            if (rowAffect)
+            if (!rowAffect)
             {
 
                 return ApiResponse<PlaceDTO>.Fail(
@@ -303,7 +303,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             var rowAffect = await _repo.DeleteAsync
                 (id, loginId, cancellationToken);
-            if (rowAffect)
+            if (!rowAffect)
             {
 
                 return ApiResponse<int>.Fail(

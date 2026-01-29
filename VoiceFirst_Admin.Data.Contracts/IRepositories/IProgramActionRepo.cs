@@ -10,7 +10,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
     public interface IProgramActionRepo
     {
         Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
-        List<dynamic> sysProgramActionIds,
+        List<int> sysProgramActionIds,
         CancellationToken cancellationToken = default);
 
         Task<SysProgramActions> GetActiveByIdAsync

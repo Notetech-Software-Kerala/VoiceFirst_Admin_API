@@ -13,6 +13,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram
         public int? PlatformId { get; set; }
         public int? CompanyId { get; set; }
         public bool? Active { get; set; }
-        public List<SysProgramActionLinkUpdateDTO>? Action { get; set; }
+        public List<SysProgramActionLinkUpdateDTO>? UpdationActions { get; set; }
+        public List<int>? InsertActions { get; set; }
     }
 }

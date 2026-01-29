@@ -23,7 +23,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PayloadRequired = "Payload is required.";
         public const string NotFound = "Not found.";
         public const string Updated = "Updated.";
-
+        public const string ActionsNotFound = "Actions Not found.";
         // Auth
         public const string InvalidCredentials = "Invalid credentials.";
         public const string UserNotFound = "User not found.";
@@ -55,7 +55,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string UserUpdated = "User updated successfully.";
         public const string UserDeletedSuccess = "User deleted successfully.";
 
-       
+        
+
         // ===== SYS BUSINESS ACTIVITY =====
         public const string BusinessActivityAlreadyExists =
             "Activity name already exists.Please add another name";
@@ -193,6 +194,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         // ===== SYS Program ACTIVITY =====
         public const string PlatformNotFound =
          "Selected platform is not available." + BaseRefreshMessage;
+
+        public const string NoApplicationPermission =
+        "Selected platform is not available." + BaseRefreshMessage;
 
         public const string BusinessActivityNotFound =
          "Selected activity is not available." + BaseRefreshMessage;

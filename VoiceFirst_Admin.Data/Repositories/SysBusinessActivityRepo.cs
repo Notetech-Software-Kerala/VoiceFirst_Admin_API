@@ -241,11 +241,16 @@ namespace VoiceFirst_Admin.Data.Repositories
             };
 
             var sortOrder = filter.SortOrder == SortOrder.Desc ? "DESC" : "ASC";
-            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "ActivityId" : filter.SortBy;
+            // 🔹 CHANGED: Default sorting is now ProgramName (Alphabetical order)
+            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy)
+                ? "ActivityName"
+                : filter.SortBy;
 
             if (!sortMap.TryGetValue(sortKey, out var sortColumn))
                 sortColumn = sortMap["ActivityId"];
 
+
+            
 
             var countSql = "SELECT COUNT(1) " + baseSql;
 

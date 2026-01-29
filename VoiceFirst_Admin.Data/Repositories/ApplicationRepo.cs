@@ -32,7 +32,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<IEnumerable<ApplicationActiveDTO>> GetActiveAsync(CancellationToken cancellationToken = default)
         {
-            var sql = "SELECT ApplicationId As PlatformId, ApplicationName As PlatformName FROM Application WHERE IsActive = 1 ORDER BY ApplicationName ASC;";
+            var sql = "SELECT ApplicationId As PlatformId, ApplicationName As PlatformName FROM Application WHERE IsActive = 1 And ApplicationId != 1  ORDER BY ApplicationName ASC;";
             using var connection = _context.CreateConnection();
             var entities = await connection.QueryAsync<ApplicationActiveDTO>(new CommandDefinition(sql, cancellationToken: cancellationToken));
             return entities;

@@ -84,7 +84,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<bool> BulkInsertActionLinksAsync(
        int programId,
-       IEnumerable<dynamic> actionIds,
+       IEnumerable<int> actionIds,
        int createdBy,
        IDbConnection connection,
        IDbTransaction tx,
@@ -96,18 +96,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             // -------------------------
             // CONVERT dynamic → int
             // -------------------------
-            var ids = actionIds
-                .Select(x => x switch
-                {
-                    JsonElement je when je.ValueKind == JsonValueKind.Number => je.GetInt32(),
-                    int i => i,
-                    long l => (int)l,
-                    _ => throw new InvalidOperationException("Invalid ProgramActionId type")
-                })
-                .Distinct()
-                .ToList();
-
-            if (ids.Count == 0)
+           
+            if (actionIds.Count() == 0)
                 return false;
 
             // -------------------------
@@ -122,7 +112,7 @@ VALUES
             // -------------------------
             // PARAMETER OBJECTS
             // -------------------------
-            var parameters = ids.Select(id => new
+            var parameters = actionIds.Select(id => new
             {
                 ProgramId = programId,
                 ProgramActionId = id,
@@ -545,6 +535,36 @@ WHERE SysProgramId = @ProgramId
         }
 
 
+        public async Task<bool>
+CheckProgramActionLinksExistAsync(
+    IEnumerable<int> programActionLinkIds,
+    IDbConnection connection,
+    IDbTransaction transaction,
+    CancellationToken cancellationToken = default)
+        {
+            // If no IDs are sent, treat as invalid
+            if (programActionLinkIds == null || !programActionLinkIds.Any())
+                return false;
+
+            const string sql = @"
+        SELECT COUNT(1)
+        FROM SysProgramActionsLink
+        WHERE ProgramActionLinkId IN @Ids
+    ";
+
+            var existingCount = await connection.ExecuteScalarAsync<int>(
+                new CommandDefinition(
+                    sql,
+                    new { Ids = programActionLinkIds },
+                    transaction,
+                    cancellationToken: cancellationToken
+                ));
+
+            // 🔹 If counts mismatch, at least one ID does not exist
+            return existingCount == programActionLinkIds.Count();
+        }
+
+
 
 
 
@@ -600,7 +620,7 @@ WHERE SysProgramId = @ProgramId
 
 
 
-      
+
 
         public async Task<SysProgram?>
             GetActiveByIdAsync(
@@ -841,9 +861,16 @@ WHERE SysProgramId = @ProgramId
             };
 
             var sortOrder = filter.SortOrder == SortOrder.Desc ? "DESC" : "ASC";
-            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "ProgramId" : filter.SortBy;
+
+            // 🔹 CHANGED: Default sorting is now ProgramName (Alphabetical order)
+            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy)
+                ? "ProgramName"
+                : filter.SortBy;
+
             if (!sortMap.TryGetValue(sortKey, out var sortColumn))
                 sortColumn = sortMap["ProgramId"];
+
+          
 
             var countSql = "SELECT COUNT(1) " + baseSql.ToString();
 

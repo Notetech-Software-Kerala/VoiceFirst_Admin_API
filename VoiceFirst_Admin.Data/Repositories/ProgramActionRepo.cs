@@ -48,7 +48,7 @@ public class ProgramActionRepo : IProgramActionRepo
     }
 
     public async Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
-    List<dynamic> sysProgramActionIds,
+    List<int> sysProgramActionIds,
     CancellationToken cancellationToken = default)
     {
         var result = new Dictionary<string, bool>
@@ -56,17 +56,10 @@ public class ProgramActionRepo : IProgramActionRepo
         { "idNotFound", false },
         { "deletedOrInactive", false }
     };
-        var Ids = sysProgramActionIds
-       .Select(x => x switch
-       {
-           JsonElement je when je.ValueKind == JsonValueKind.Number => je.GetInt32(),
-           int i => i,
-           _ => throw new InvalidOperationException("Invalid ID type")
-       })
-       .ToList();
+       
 
 
-        if (Ids == null || Ids.Count == 0)
+        if (sysProgramActionIds == null || sysProgramActionIds.Count == 0)
             return result;
 
         const string sql = @"
@@ -83,12 +76,12 @@ public class ProgramActionRepo : IProgramActionRepo
         var entities = (await connection.QueryAsync<SysProgramActions>(
             new CommandDefinition(
                 sql,
-                new { Ids = Ids },
+                new { Ids = sysProgramActionIds },
                 cancellationToken: cancellationToken)))
             .ToList();
 
         // 1️⃣ Check NOT FOUND
-        if (entities.Count != Ids.Distinct().Count())
+        if (entities.Count != sysProgramActionIds.Distinct().Count())
         {
             result["idNotFound"] = true;
         }
