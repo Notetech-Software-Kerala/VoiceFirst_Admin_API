@@ -164,15 +164,15 @@ public class RoleService : IRoleService
         // update action links
         if (dto.AddActionLinkIds != null)
         {
-            var list=await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
+            var invalidIds = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
                 dto.PlatformId ?? 0,
                 dto.AddActionLinkIds,
                 cancellationToken);
 
-            if (list.Any())
+            if (invalidIds.Any())
             {
                 return ApiResponse<RoleDetailDto>.Fail(
-                    string.Format(Messages.InvalidActionLinksForApplication, string.Join(", ", list)),
+                    string.Format(Messages.InvalidActionLinksForApplication, string.Join(", ", invalidIds)),
                     StatusCodes.Status400BadRequest);
             }
             var addError = await _repo.AddRoleActionLinksAsync(

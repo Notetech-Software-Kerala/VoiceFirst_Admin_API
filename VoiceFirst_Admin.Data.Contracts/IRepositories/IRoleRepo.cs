@@ -22,11 +22,11 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<SysRoles> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysRolesProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default);
         Task<BulkUpsertError?> AddRoleActionLinksAsync(
-    int roleId,
-    int applicationId,
-    IEnumerable<int> addActionLinkIds,
-    int loginId,
-    CancellationToken cancellationToken = default);
+            int roleId,
+            int applicationId,
+            IEnumerable<int> addActionLinkIds,
+            int loginId,
+            CancellationToken cancellationToken = default);
 
         Task<BulkUpsertError?> UpdateRoleActionLinksAsync(
             int roleId,

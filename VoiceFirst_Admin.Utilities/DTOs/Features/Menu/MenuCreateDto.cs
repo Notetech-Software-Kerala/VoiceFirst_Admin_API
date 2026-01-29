@@ -6,7 +6,12 @@ public class MenuCreateDto
     public string Icon { get; set; } = string.Empty;
     public string Route { get; set; } = string.Empty;
     public int PlateFormId { get; set; }
-    public List<int>? ProgramId { get; set; }
-    public MenuWebDto? Web { get; set; }
-    public MenuAppDto? App { get; set; }
+    public List<MenuProgramCreaDto>? ProgramIds { get; set; }
+    public bool Web { get; set; }
+    public bool App { get; set; }
+}
+public class MenuProgramCreaDto
+{
+    public int? ProgramId { get; set; }
+    public bool Primary { get; set; }
 }

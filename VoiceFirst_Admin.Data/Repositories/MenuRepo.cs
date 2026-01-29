@@ -18,7 +18,7 @@ public class MenuRepo : IMenuRepo
         _context = context;
     }
 
-    public async Task<int> CreateMenuAsync(MenuMaster menu, IEnumerable<int> programIds, MenuWebDto? web, MenuAppDto? app, int loginId, CancellationToken cancellationToken = default)
+    public async Task<int> CreateMenuAsync(MenuMaster menu, List<MenuProgramLink> programIds, bool web, bool app, int loginId, CancellationToken cancellationToken = default)
     {
         const string insertMenuSql = @"INSERT INTO dbo.MenuMaster (MenuName, MenuIcon, MenuRoute, ApplicationId, CreatedBy) VALUES (@MenuName, @MenuIcon, @MenuRoute, @ApplicationId, @CreatedBy); SELECT CAST(SCOPE_IDENTITY() AS INT);";
         using var connection = _context.CreateConnection();
@@ -29,24 +29,45 @@ public class MenuRepo : IMenuRepo
         {
             var menuId = await connection.ExecuteScalarAsync<int>(new CommandDefinition(insertMenuSql, new { menu.MenuName, menu.MenuIcon, menu.MenuRoute, menu.ApplicationId, menu.CreatedBy }, transaction: tx, cancellationToken: cancellationToken));
 
-            if (web != null)
+            if (web)
             {
-                const string insertWeb = @"INSERT INTO dbo.WebMenus (ParentWebMenuId, MenuMasterId, SortOrder, CreatedBy) VALUES (@ParentWebMenuId, @MenuMasterId, @SortOrder, @CreatedBy);";
-                await connection.ExecuteAsync(new CommandDefinition(insertWeb, new { ParentWebMenuId = web.ParentId == 0 ? (int?)null : web.ParentId, MenuMasterId = menuId, SortOrder = web.SortOrder, CreatedBy = loginId }, transaction: tx, cancellationToken: cancellationToken));
+                const string insertWeb = @"
+                    INSERT INTO dbo.WebMenus (ParentWebMenuId, MenuMasterId, SortOrder, CreatedBy)
+                    SELECT
+                        0,
+                        @MenuMasterId,
+                        ISNULL(MAX(w.SortOrder), 0) + 1,
+                        @CreatedBy
+                    FROM dbo.WebMenus w WITH (UPDLOCK, HOLDLOCK)
+                    WHERE w.MenuMasterId = 0;
+                    ";
+
+                await connection.ExecuteAsync(new CommandDefinition(insertWeb, new { MenuMasterId = menuId, CreatedBy = loginId }, transaction: tx, cancellationToken: cancellationToken));
             }
 
             if (app != null)
             {
-                const string insertApp = @"INSERT INTO dbo.AppMenus (ParentAppMenuId, MenuMasterId, SortOrder, CreatedBy) VALUES (@ParentAppMenuId, @MenuMasterId, @SortOrder, @CreatedBy);";
-                await connection.ExecuteAsync(new CommandDefinition(insertApp, new { ParentAppMenuId = app.ParentId == 0 ? (int?)null : app.ParentId, MenuMasterId = menuId, SortOrder = app.SortOrder, CreatedBy = loginId }, transaction: tx, cancellationToken: cancellationToken));
+                const string insertWeb = @"
+                    INSERT INTO dbo.AppMenus (ParentWebMenuId, MenuMasterId, SortOrder, CreatedBy)
+                    SELECT
+                        0,
+                        @MenuMasterId,
+                        ISNULL(MAX(w.SortOrder), 0) + 1,
+                        @CreatedBy
+                    FROM dbo.AppMenus w WITH (UPDLOCK, HOLDLOCK)
+                    WHERE w.MenuMasterId = 0;
+                    ";
+
+                await connection.ExecuteAsync(new CommandDefinition(insertWeb, new { PMenuMasterId = menuId, CreatedBy = loginId }, transaction: tx, cancellationToken: cancellationToken));
+            
             }
 
             if (programIds != null)
             {
-                const string insertLink = @"INSERT INTO dbo.MenuProgramLink (MenuMasterId, ProgramId, IsPrimaryProgram, CreatedBy) VALUES (@MenuMasterId, @ProgramId, 0, @CreatedBy);";
+                const string insertLink = @"INSERT INTO dbo.MenuProgramLink (MenuMasterId, ProgramId, IsPrimaryProgram, CreatedBy) VALUES (@MenuMasterId, @ProgramId, @IsPrimaryProgram, @CreatedBy);";
                 foreach (var pid in programIds)
                 {
-                    await connection.ExecuteAsync(new CommandDefinition(insertLink, new { MenuMasterId = menuId, ProgramId = pid, CreatedBy = loginId }, transaction: tx, cancellationToken: cancellationToken));
+                    await connection.ExecuteAsync(new CommandDefinition(insertLink, new { MenuMasterId = menuId, ProgramId = pid.ProgramId, CreatedBy = loginId , IsPrimaryProgram =pid.IsPrimaryProgram}, transaction: tx, cancellationToken: cancellationToken));
                 }
             }
 
