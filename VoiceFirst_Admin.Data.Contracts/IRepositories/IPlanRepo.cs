@@ -32,6 +32,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<bool> UpdatePlanAsync(int planId, string? planName, bool? active, int updatedBy, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id, int deletedBy, CancellationToken cancellationToken = default);
         Task<int> RecoverPlanAsync(int id, int loginId, CancellationToken cancellationToken = default);
+        Task<int> LinkPlanRoleAsync(int roleId, List<int> planId, int createdBy, CancellationToken cancellationToken = default);
+        Task<IEnumerable<int>> GetExistingPlanIdsAsync(IEnumerable<int> planIds, CancellationToken cancellationToken = default);
         Task<VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDetailDto?> GetDetailByIdAsync(int planId, IDbConnection connection,
             IDbTransaction transaction, CancellationToken cancellationToken = default);
         Task UpsertPlanProgramActionLinksAsync(int planId, System.Collections.Generic.IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink.PlanProgramActionLinkUpdateDto> actions, int userId, CancellationToken cancellationToken = default);

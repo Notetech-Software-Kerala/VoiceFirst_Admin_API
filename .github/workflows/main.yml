@@ -6,6 +6,10 @@ on:
 jobs:
   build-and-deploy:
     runs-on: [self-hosted, windows]
+    env:
+      APP_POOL_NAME: "VoiceFirst_Admin_Web_API"
+      WEBSITE_NAME: "VoiceFirst_Admin_Web_API"
+      DEPLOY_PATH: "D:\\VoiceFirst_Admin_ApiPublish"
     
     steps:
       - name: Checkout code
@@ -20,20 +24,27 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build VoiceFirst_Admin.sln --configuration Release --no-restore
 
       - name: Run tests
         run: dotnet test --configuration Release --no-build --verbosity normal
 
+      - name: Clean publish directory
+        shell: powershell
+        run: |
+          Write-Host "Cleaning ./publish directory"
+          Remove-Item -Path ./publish -Recurse -Force -ErrorAction SilentlyContinue
+          Write-Host "Clean complete"
+
       - name: Publish
-        run: dotnet publish --configuration Release --output ./publish
+        run: dotnet publish VoiceFirst_Admin.API\VoiceFirst_Admin.API.csproj --configuration Release --output ./publish
 
       - name: Create/Configure IIS Application Pool
         shell: powershell
         run: |
-          $appPoolName = "VoiceFirst_Admin_Web_API"
-          $websiteName = "VoiceFirst_Admin_Web_API"
-          $sitePath = "D:\\VoiceFirst_Admin_ApiPublish"
+          $appPoolName = $env:APP_POOL_NAME
+          $websiteName = $env:WEBSITE_NAME
+          $sitePath = $env:DEPLOY_PATH
           
           # Check if app pool exists
           $appPoolExists = & "C:\Windows\System32\inetsrv\appcmd.exe" list apppool /name:$appPoolName 2>$null
@@ -65,7 +76,7 @@ jobs:
         shell: powershell
         run: |
           try {
-            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:$appPoolName -ErrorAction Stop
+            & "C:\Windows\System32\inetsrv\appcmd.exe" stop apppool /apppool.name:$env:APP_POOL_NAME -ErrorAction Stop
             Write-Host "Application pool stopped successfully"
           } catch {
             Write-Host "Application pool not found or already stopped"
@@ -75,10 +86,11 @@ jobs:
       - name: Deploy to IIS
         shell: powershell
         run: |
-          $deployPath = "D:\\VoiceFirst_Admin_ApiPublish"
+          $deployPath = $env:DEPLOY_PATH
           Write-Host "Deploying to $deployPath"
           if (Test-Path $deployPath) {
             Remove-Item -Path $deployPath -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "Deploy folder cleaned; ready to copy new artifacts"
           }
           New-Item -ItemType Directory -Path $deployPath -Force | Out-Null
           Copy-Item -Path "./publish/*" -Destination $deployPath -Recurse -Force
@@ -87,7 +99,7 @@ jobs:
       - name: Start IIS Application Pool
         shell: powershell
         run: |
-          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:$appPoolName
+          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:$env:APP_POOL_NAME
           Start-Sleep -Seconds 3
           Write-Host "Application pool started"
 

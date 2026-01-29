@@ -15,6 +15,9 @@ public enum PostOfficeSearchBy
 {
     PostOfficeName,
     CountryName,
+    DivOneName,
+    DivTwoName,
+    DivThreeName,
     ZipCode,
     CreatedUser,
     UpdatedUser,

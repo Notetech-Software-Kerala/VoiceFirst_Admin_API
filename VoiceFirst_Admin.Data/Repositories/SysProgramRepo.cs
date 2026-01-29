@@ -607,6 +607,11 @@ WHERE ProgramId = @ProgramId
                 var links = await GetLinksByProgramIdForApplicationIdAsync(item.ProgramId, cancellationToken);
                 item.Action = links.ToList();
             }
+                // link permissions/actions if provided
+                if (permissionIds != null && permissionIds.Count > 0)
+                {
+                    await BulkInsertActionLinksAsync(connection, tx, id, permissionIds, entity.CreatedBy, cancellationToken);
+                }
 
             return items;
         }

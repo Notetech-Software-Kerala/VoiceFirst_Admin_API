@@ -23,5 +23,6 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
         Task<PagedResultDto<PlanDetailDto>> GetAllAsync(PlanFilterDto filter, CancellationToken cancellationToken = default);
         Task<ApiResponse<bool>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
         Task<ApiResponse<int>> RecoverPlanAsync(int id, int loginId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<int>> LinkPlansRoleAsync(int roleId, System.Collections.Generic.List<int> planIds, int loginId, CancellationToken cancellationToken = default);
     }
 }

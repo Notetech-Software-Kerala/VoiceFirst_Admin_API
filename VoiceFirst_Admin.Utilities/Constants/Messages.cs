@@ -1,4 +1,4 @@
-﻿using System;
+﻿    using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -16,6 +16,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string AlreadyUsing = "Already using.";
         public const string Created = "Created.";
         public const string UpdateFailed = "Update failed.";
+        public const string BadRequest = "Bad Request.";
         public const string Nil = "NIL.";
 
         // New generic messages
@@ -234,6 +235,18 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ProgramActionNameAlreadyExists = "Program action name already exists.";
         public const string ProgramActionNameExistsInTrash = "This program action name exists in trash. Restore it to use again.";
 
+        // ===== SYS ROLES =====
+        public const string RoleCreated = "Role created sucessfully.";
+        public const string RoleRetrieveSucessfully = "Role retrieve sucessfully.";
+        public const string RoleUpdatedSucessfully = "Role updated sucessfully.";
+        public const string RoleDeleteSucessfully = "Role deleted sucessfully.";
+        public const string RoleRestoreSucessfully = "Role restored sucessfully.";
+        public const string RoleNameAlreadyExists = "Role name already exists.";
+        public const string RoleNameExistsInTrash = "This role name exists in trash. Restore it to use again.";
+        public const string RoleNameDefault = "This is a system default role and cannot be created..";
+        public const string RoleAlreadyDeleted = "Role already deleted.";
+        public const string RoleAlreadyRestored = "Role already restored.";
+
         public const string CountryRetrieveSucessfully = "Country retrieve sucessfully.";
         public const string DivisionOneRetrieveSucessfully = "Division one retrieve sucessfully.";
         public const string DivisionTwoRetrieveSucessfully = "Division two retrieve sucessfully.";
@@ -241,13 +254,25 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string PostOfficeRestoreSucessfully = "Post office restored sucessfully.";
         public const string PostOfficeDeleteSucessfully = "Post office deleted sucessfully.";
+        public const string PostOfficeZipCodeRestoreSucessfully = "Zip code restored sucessfully.";
+        public const string PostOfficeZipCodeDeleteSucessfully = "Zip code deleted sucessfully.";
         public const string PostOfficeAlreadyDeleted = "Post office already deleted.";
         public const string PostOfficeAlreadyRestored = "Post office already restored.";
-        public const string PostOfficeCreated = "Post officen created sucessfully.";
+        public const string PostOfficeCreated = "Post office created sucessfully.";
         public const string PostOfficeRetrieveSucessfully = "Post office retrieve sucessfully.";
+        public const string ZipCodesRetrieveSucessfully = "Zip codes retrieve sucessfully.";
         public const string PostOfficeUpdatedSucessfully = "Post office updated sucessfully.";
         public const string PostOfficeNameAlreadyExists = "Post office name already exists.";
         public const string PostOfficeNameExistsInTrash = "This post office name exists in trash. Restore it to use again.";
+
+        // Country / Division messages
+        public const string CountryRequired = "Country is required.";
+        public const string CountryNotFound = "Selected country not found.";
+        public const string DivisionOneNotFound = "Selected division one not found for the country.";
+        public const string DivisionTwoNotFound = "Selected division two not found for the division one.";
+        public const string DivisionThreeNotFound = "Selected division three not found for the division two.";
+        public const string DivisionOneRequiredForDivisionTwo = "Division one is required when supplying division two.";
+        public const string DivisionTwoRequiredForDivisionThree = "Division two is required when supplying division three.";
 
     }
 }

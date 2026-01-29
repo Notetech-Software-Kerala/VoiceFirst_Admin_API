@@ -18,17 +18,39 @@ public class PostOfficeService : IPostOfficeService
 {
     private readonly IMapper _mapper;
     private readonly IPostOfficeRepo _repo;
+    private readonly ICountryRepo _countryRepo;
 
-    public PostOfficeService(IMapper mapper, IPostOfficeRepo repo)
+    public PostOfficeService(IMapper mapper, IPostOfficeRepo repo, ICountryRepo countryRepo)
     {
         _mapper = mapper;
         _repo = repo;
+        _countryRepo = countryRepo;
     }
 
     public async Task<ApiResponse<PostOfficeDto>> CreateAsync(PostOfficeCreateDto dto, int loginId, CancellationToken cancellationToken = default)
     {
         if (dto == null)
             return ApiResponse<PostOfficeDto>.Fail(Messages.PayloadRequired, StatusCodes.Status400BadRequest);
+        // validate divisions and country
+        if (!dto.CountryId.HasValue)
+            return ApiResponse<PostOfficeDto>.Fail(Messages.CountryRequired, StatusCodes.Status400BadRequest);
+
+        // Division hierarchy checks
+        if (dto.DivTwoId.HasValue && !dto.DivOneId.HasValue)
+            return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionOneRequiredForDivisionTwo, StatusCodes.Status400BadRequest);
+        if (dto.DivThreeId.HasValue && !dto.DivTwoId.HasValue)
+            return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionTwoRequiredForDivisionThree, StatusCodes.Status400BadRequest);
+
+        // check existence using country repo
+        var countryDivs = await _countryRepo.ExistsCountryAndDivisionsAsync(dto.CountryId.Value, dto.DivOneId, dto.DivTwoId, dto.DivThreeId, cancellationToken);
+        if (!countryDivs.CountryExists)
+            return ApiResponse<PostOfficeDto>.Fail(Messages.CountryNotFound, StatusCodes.Status404NotFound);
+        if (dto.DivOneId.HasValue && !countryDivs.DivOneExists)
+            return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionOneNotFound, StatusCodes.Status404NotFound);
+        if (dto.DivTwoId.HasValue && !countryDivs.DivTwoExists)
+            return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionTwoNotFound, StatusCodes.Status404NotFound);
+        if (dto.DivThreeId.HasValue && !countryDivs.DivThreeExists)
+            return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionThreeNotFound, StatusCodes.Status404NotFound);
 
         var existingEntity = await _repo.ExistsByNameAsync(dto.PostOfficeName, null, cancellationToken);
 
@@ -42,6 +64,9 @@ public class PostOfficeService : IPostOfficeService
         {
             PostOfficeName = dto.PostOfficeName,
             CountryId = dto.CountryId,
+            DivisionOneId = dto.DivOneId,
+            DivisionTwoId = dto.DivTwoId,
+            DivisionThreeId = dto.DivThreeId,
             CreatedBy = loginId
         };
 
@@ -80,6 +105,13 @@ public class PostOfficeService : IPostOfficeService
         var dto = await MapWithZipCodesAsync(entity, cancellationToken);
         return dto;
     }
+    public async Task<IEnumerable<ZipCodeLookUp>?> GetZipCodesByPostOfficeIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repo.GetZipCodesByPostOfficeIdAsync(id, cancellationToken);
+        if (entity == null) return null;
+        var dto = _mapper.Map<IEnumerable<ZipCodeLookUp>>(entity);
+        return dto;
+    }
 
     public async Task<PagedResultDto<PostOfficeDto>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default)
     {
@@ -108,8 +140,33 @@ public class PostOfficeService : IPostOfficeService
 
     public async Task<ApiResponse<PostOfficeDto>> UpdateAsync(PostOfficeUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
     {
-        if (dto.PostOfficeName != null || dto.Active!=null || dto.CountryId!=null)
+        if (dto == null)
+            return ApiResponse<PostOfficeDto>.Fail(Messages.PayloadRequired, StatusCodes.Status400BadRequest);
+        // validate divisions and country when any of those fields are present
+        if (dto.PostOfficeName != null || dto.Active!=null || dto.CountryId!=null || dto.DivOneId.HasValue || dto.DivTwoId.HasValue || dto.DivThreeId.HasValue)
         {
+
+            // when updating divisions, ensure hierarchy rules
+            if (dto.DivTwoId.HasValue && !dto.DivOneId.HasValue)
+                return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionOneRequiredForDivisionTwo, StatusCodes.Status400BadRequest);
+            if (dto.DivThreeId.HasValue && !dto.DivTwoId.HasValue)
+                return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionTwoRequiredForDivisionThree, StatusCodes.Status400BadRequest);
+
+            if (dto.CountryId.HasValue || dto.DivOneId.HasValue || dto.DivTwoId.HasValue || dto.DivThreeId.HasValue)
+            {
+                if (!dto.CountryId.HasValue)
+                    return ApiResponse<PostOfficeDto>.Fail(Messages.CountryRequired, StatusCodes.Status400BadRequest);
+
+                var countryDivs = await _countryRepo.ExistsCountryAndDivisionsAsync(dto.CountryId, dto.DivOneId, dto.DivTwoId, dto.DivThreeId, cancellationToken);
+                if (!countryDivs.CountryExists)
+                    return ApiResponse<PostOfficeDto>.Fail(Messages.CountryNotFound, StatusCodes.Status404NotFound);
+                if (dto.DivOneId.HasValue && !countryDivs.DivOneExists)
+                    return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionOneNotFound, StatusCodes.Status404NotFound);
+                if (dto.DivTwoId.HasValue && !countryDivs.DivTwoExists)
+                    return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionTwoNotFound, StatusCodes.Status404NotFound);
+                if (dto.DivThreeId.HasValue && !countryDivs.DivThreeExists)
+                    return ApiResponse<PostOfficeDto>.Fail(Messages.DivisionThreeNotFound, StatusCodes.Status404NotFound);
+            }
 
             var existing = await _repo.ExistsByNameAsync(dto.PostOfficeName ?? string.Empty, id, cancellationToken);
             if (existing != null)
@@ -123,7 +180,10 @@ public class PostOfficeService : IPostOfficeService
             {
                 PostOfficeId = id,
                 PostOfficeName = dto.PostOfficeName ?? string.Empty,
-                CountryId = dto.CountryId,
+            CountryId = dto.CountryId,
+            DivisionOneId = dto.DivOneId,
+            DivisionTwoId = dto.DivTwoId,
+            DivisionThreeId = dto.DivThreeId,
                 IsActive = dto.Active,
                 UpdatedBy = loginId
             };
@@ -132,7 +192,7 @@ public class PostOfficeService : IPostOfficeService
             if (!ok)
                 return ApiResponse<PostOfficeDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
         }
-        else if (dto.ZipCodes.Count() > 0)
+        if (dto.ZipCodes.Count() > 0)
         {
             var zipEntities = new List<PostOfficeZipCode>();
             foreach (var z in dto.ZipCodes)
@@ -140,7 +200,7 @@ public class PostOfficeService : IPostOfficeService
                 
                 zipEntities.Add(new PostOfficeZipCode
                 {
-                    PostOfficeZipCodeId = z.ZipCodeId ?? 0,
+                    PostOfficeZipCodeLinkId = z.ZipCodeLinkId ?? 0,
                     PostOfficeId = id,
                     IsActive = z.Active,
                     ZipCode = z.ZipCode.Trim()?? "",
@@ -164,7 +224,7 @@ public class PostOfficeService : IPostOfficeService
         
 
         var updatedDto = await MapWithZipCodesAsync(updatedEntity, cancellationToken);
-        return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status201Created);
+        return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status200OK);
     }
 
     public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
@@ -208,6 +268,7 @@ public class PostOfficeService : IPostOfficeService
 
         return ApiResponse<object>.Ok(null!, Messages.PostOfficeRestoreSucessfully, StatusCodes.Status200OK);
     }
+    
 
     public async Task<PostOfficeDto?> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {

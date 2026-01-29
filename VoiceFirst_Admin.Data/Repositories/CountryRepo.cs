@@ -23,7 +23,40 @@ public class CountryRepo : ICountryRepo
     {
         _context = context;
     }
+    public async Task<(bool CountryExists, bool DivOneExists, bool DivTwoExists, bool DivThreeExists)> ExistsCountryAndDivisionsAsync(int? countryId, int? divOneId, int? divTwoId, int? divThreeId, CancellationToken cancellationToken = default)
+    {
+        if (!countryId.HasValue) return (false, false, false, false);
 
+        using var connection = _context.CreateConnection();
+
+        // check country
+        var country = await connection.QueryFirstOrDefaultAsync<int?>(new CommandDefinition("SELECT CountryId FROM Country WHERE CountryId = @Id AND IsDeleted = 0", new { Id = countryId.Value }, cancellationToken: cancellationToken));
+        var countryExists = country.HasValue;
+
+        bool divOneExists = false;
+        bool divTwoExists = false;
+        bool divThreeExists = false;
+
+        if (divOneId.HasValue)
+        {
+            var d1 = await connection.QueryFirstOrDefaultAsync<int?>(new CommandDefinition("SELECT DivisionOneId FROM DivisionOne WHERE DivisionOneId = @Id AND CountryId = @CountryId AND IsDeleted = 0", new { Id = divOneId.Value, CountryId = countryId.Value }, cancellationToken: cancellationToken));
+            divOneExists = d1.HasValue;
+        }
+
+        if (divTwoId.HasValue)
+        {
+            var d2 = await connection.QueryFirstOrDefaultAsync<int?>(new CommandDefinition("SELECT DivisionTwoId FROM DivisionTwo WHERE DivisionTwoId = @Id AND DivisionOneId = @DivOneId AND IsDeleted = 0", new { Id = divTwoId.Value, DivOneId = divOneId }, cancellationToken: cancellationToken));
+            divTwoExists = d2.HasValue;
+        }
+
+        if (divThreeId.HasValue)
+        {
+            var d3 = await connection.QueryFirstOrDefaultAsync<int?>(new CommandDefinition("SELECT DivisionThreeId FROM DivisionThree WHERE DivisionThreeId = @Id AND DivisionTwoId = @DivTwoId AND IsDeleted = 0", new { Id = divThreeId.Value, DivTwoId = divTwoId }, cancellationToken: cancellationToken));
+            divThreeExists = d3.HasValue;
+        }
+
+        return (countryExists, divOneExists, divTwoExists, divThreeExists);
+    }
     public async Task<PagedResultDto<Country>> GetAllAsync(CountryFilterDto filter, CancellationToken cancellationToken = default)
     {
         var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;

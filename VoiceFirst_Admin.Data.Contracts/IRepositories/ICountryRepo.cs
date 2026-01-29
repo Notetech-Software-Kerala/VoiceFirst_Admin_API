@@ -21,4 +21,5 @@ public interface ICountryRepo
 
     Task<PagedResultDto<DivisionThree>> GetAllDivisionThreeAsync(DivisionThreeFilterDto filter, CancellationToken cancellationToken = default);
     Task<IEnumerable<DivisionThree>> GetDivisionThreeActiveByDivisionTwoIdAsync(int divisionTwoId, CancellationToken cancellationToken = default);
+    Task<(bool CountryExists, bool DivOneExists, bool DivTwoExists, bool DivThreeExists)> ExistsCountryAndDivisionsAsync(int? countryId, int? divOneId, int? divTwoId, int? divThreeId, CancellationToken cancellationToken = default);
 }

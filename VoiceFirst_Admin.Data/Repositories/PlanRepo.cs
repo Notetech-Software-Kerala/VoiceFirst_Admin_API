@@ -25,6 +25,37 @@ namespace VoiceFirst_Admin.Data.Repositories
             _context = context;
         }
 
+        public async Task<int> LinkPlanRoleAsync(int roleId, List<int> planId, int createdBy, CancellationToken cancellationToken = default)
+        {
+            const string insertSql = @"INSERT INTO PlanRoleLink (PlanId, RoleId, CreatedBy) VALUES (@PlanId, @RoleId, @CreatedBy);";
+            using var connection = _context.CreateConnection();
+            if (connection.State != System.Data.ConnectionState.Open) connection.Open();
+            using var tx = connection.BeginTransaction();
+            try
+            {
+                var affected = 0;
+                foreach (var pid in planId)
+                {
+                    affected += await connection.ExecuteAsync(new CommandDefinition(insertSql, new { PlanId = pid, RoleId = roleId, CreatedBy = createdBy }, transaction: tx, cancellationToken: cancellationToken));
+                }
+                tx.Commit();
+                return affected;
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<int>> GetExistingPlanIdsAsync(IEnumerable<int> planIds, CancellationToken cancellationToken = default)
+        {
+            var sql = "SELECT PlanId FROM dbo.[Plan] WHERE PlanId IN @PlanIds AND IsDeleted = 0";
+            using var connection = _context.CreateConnection();
+            var rows = await connection.QueryAsync<int>(new CommandDefinition(sql, new { PlanIds = planIds }, cancellationToken: cancellationToken));
+            return rows;
+        }
+
         public async Task<PlanDetailDto?> 
             GetDetailByIdAsync(int planId, 
             IDbConnection connection,
@@ -133,12 +164,12 @@ namespace VoiceFirst_Admin.Data.Repositories
                 parameters.Add("DeletedTo", deletedTo.Date);
             }
 
-            var searchByMap = new Dictionary<VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanSearchBy, string>
+            var searchByMap = new Dictionary<PlanSearchBy, string>
             {
-                [VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanSearchBy.PlanName] = "p.PlanName",
-                [VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
-                [VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
-                [VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
+                [PlanSearchBy.PlanName] = "p.PlanName",
+                [PlanSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
+                [PlanSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+                [PlanSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
             };
 
             if (!string.IsNullOrWhiteSpace(filter.SearchText))
@@ -214,7 +245,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             if (sets.Count == 0) return false;
             sets.Add("UpdatedBy = @UpdatedBy");
             sets.Add("UpdatedAt = SYSDATETIME()");
-            var sql = $"UPDATE [Plan] SET {string.Join(", ", sets)} WHERE PlanId = @PlanId AND IsDeleted = 0";
+            var sql = $"UPDATE dbo.[Plan] SET {string.Join(", ", sets)} WHERE PlanId = @PlanId AND IsDeleted = 0";
             using var connection = _context.CreateConnection();
             var affected = await connection.ExecuteAsync(new CommandDefinition(sql, p, cancellationToken: cancellationToken));
             return affected > 0;
@@ -222,9 +253,9 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task UpsertPlanProgramActionLinksAsync(int planId, IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink.PlanProgramActionLinkUpdateDto> actions, int userId, CancellationToken cancellationToken = default)
         {
-            const string selectSql = @"SELECT TOP 1 * FROM dbo.PlanProgramActionLink WHERE PlanId = @PlanId AND ProgramActionLinkId = @ProgramActionLinkId";
-            const string insertSql = @"INSERT INTO dbo.PlanProgramActionLink (PlanId, ProgramActionLinkId, IsActive, CreatedBy, CreatedAt) VALUES (@PlanId, @ProgramActionLinkId, @IsActive, @UserId, SYSDATETIME())";
-            const string updateSql = @"UPDATE dbo.PlanProgramActionLink SET IsActive = @IsActive, UpdatedBy = @UserId, UpdatedAt = SYSDATETIME() WHERE PlanId = @PlanId AND ProgramActionLinkId = @ProgramActionLinkId";
+            const string selectSql = @"SELECT TOP 1 * FROM dbo.[PlanProgramActionLink] WHERE PlanId = @PlanId AND ProgramActionLinkId = @ProgramActionLinkId";
+            const string insertSql = @"INSERT INTO dbo.[PlanProgramActionLink] (PlanId, ProgramActionLinkId, IsActive, CreatedBy, CreatedAt) VALUES (@PlanId, @ProgramActionLinkId, @IsActive, @UserId, SYSDATETIME())";
+            const string updateSql = @"UPDATE PlanProgramActionLink SET IsActive = @IsActive, UpdatedBy = @UserId, UpdatedAt = SYSDATETIME() WHERE PlanId = @PlanId AND ProgramActionLinkId = @ProgramActionLinkId";
 
             using var connection = _context.CreateConnection();
             if (connection.State != System.Data.ConnectionState.Open) connection.Open();
@@ -268,7 +299,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 ppl.UpdatedAt AS ModifiedDate,
                 ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
                 ppl.DeletedAt AS DeletedDate
-            FROM PlanProgramActionLink ppl
+            FROM dbo.[PlanProgramActionLink] ppl
             INNER JOIN SysProgramActionsLink al ON al.SysProgramActionLinkId = ppl.ProgramActionLinkId
             INNER JOIN SysProgram sp ON sp.SysProgramId = al.ProgramId
             INNER JOIN SysProgramActions pa ON pa.SysProgramActionId = al.ProgramActionId
@@ -313,7 +344,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<Plan?> GetByNameAsync(string planName, CancellationToken cancellationToken = default)
         {
-            const string sql = "SELECT TOP 1 * FROM [Plan] WHERE PlanName = @PlanName";
+            const string sql = "SELECT TOP 1 * FROM dbo.[Plan] WHERE PlanName = @PlanName";
             using var connection = _context.CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<VoiceFirst_Admin.Utilities.Models.Entities.Plan>(new CommandDefinition(sql, new { PlanName = planName }, cancellationToken: cancellationToken));
         }
@@ -366,6 +397,10 @@ namespace VoiceFirst_Admin.Data.Repositories
                         new { plan.PlanName, plan.CreatedBy },
                         transaction,
                         cancellationToken: cancellationToken));
+            const string sql = @"INSERT INTO dbo.[Plan] (PlanName, CreatedBy) VALUES (@PlanName, @CreatedBy); SELECT CAST(SCOPE_IDENTITY() AS int);";
+            using var connection = _context.CreateConnection();
+            var id = await connection.ExecuteScalarAsync<int>(new CommandDefinition(sql, new { PlanName = plan.PlanName, CreatedBy = plan.CreatedBy }, cancellationToken: cancellationToken));
+            return id;
         }
 
         public async Task LinkProgramActionLinksAsync(
@@ -399,7 +434,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         {
             var sql = @"
         SELECT PlanId, PlanName
-        FROM [Plan]
+        FROM dbo.[Plan]
         WHERE IsActive = 1
           AND IsDeleted = 0
         ORDER BY PlanName ASC;
