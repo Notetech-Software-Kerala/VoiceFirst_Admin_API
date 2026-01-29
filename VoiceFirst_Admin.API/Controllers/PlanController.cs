@@ -55,7 +55,7 @@ namespace VoiceFirst_Admin.API.Controllers
             return StatusCode(result.StatusCode,result);
         }
 
-        [HttpGet("{planId:int}/program-details")]
+        [HttpGet("program-details/{planId:int}")]
         public async Task<IActionResult> GetProgramDetailsByPlanIdAsync(int planId, CancellationToken cancellationToken)
         {
             var result = await _planService.GetProgramDetailsByPlanIdAsync(planId, cancellationToken);

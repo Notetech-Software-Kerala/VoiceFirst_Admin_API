@@ -212,7 +212,7 @@ namespace VoiceFirst_Admin.API.Controllers
 
 
 
-        [HttpGet("{programId:int}/action-lookup")]
+        [HttpGet("action-lookup/{programId:int}")]
         [ProducesResponseType(typeof(ApiResponse<List<SysProgramActionLinkLookUp>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]

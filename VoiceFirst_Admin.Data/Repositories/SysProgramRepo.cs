@@ -398,82 +398,83 @@ WHERE ProgramId = @ProgramId
 
 
         public async Task<bool> UpdateAsync(
-            SysProgram entity,
-            IDbConnection connection,
-            IDbTransaction transaction,         
-            CancellationToken cancellationToken = default)
+     SysProgram entity,
+     IDbConnection connection,
+     IDbTransaction transaction,
+     CancellationToken cancellationToken = default)
         {
             var sets = new List<string>();
             var parameters = new DynamicParameters();
 
+            // -------------------------
+            // REQUIRED PARAMETERS
+            // -------------------------
+            parameters.Add("ProgramId", entity.SysProgramId);
+            parameters.Add("UpdatedBy", entity.UpdatedBy);
+
+            // -------------------------
+            // OPTIONAL PARAMETERS (ONLY WHEN VALID)
+            // -------------------------
             if (!string.IsNullOrWhiteSpace(entity.ProgramName))
             {
-                sets.Add("ProgramName = @ProgramName");
                 parameters.Add("ProgramName", entity.ProgramName);
+                sets.Add("ProgramName = @ProgramName");
             }
 
             if (!string.IsNullOrWhiteSpace(entity.LabelName))
             {
-                sets.Add("LabelName = @LabelName");
                 parameters.Add("LabelName", entity.LabelName);
+                sets.Add("LabelName = @LabelName");
             }
 
             if (!string.IsNullOrWhiteSpace(entity.ProgramRoute))
             {
-                sets.Add("ProgramRoute = @ProgramRoute");
                 parameters.Add("ProgramRoute", entity.ProgramRoute);
+                sets.Add("ProgramRoute = @ProgramRoute");
             }
 
             if (entity.ApplicationId > 0)
             {
-                sets.Add("ApplicationId = @ApplicationId");
                 parameters.Add("ApplicationId", entity.ApplicationId);
+                sets.Add("ApplicationId = @ApplicationId");
             }
 
             if (entity.CompanyId > 0)
             {
-                sets.Add("CompanyId = @CompanyId");
                 parameters.Add("CompanyId", entity.CompanyId);
+                sets.Add("CompanyId = @CompanyId");
             }
 
             if (entity.IsActive.HasValue)
             {
-                sets.Add("IsActive = @IsActive");
                 parameters.Add("IsActive", entity.IsActive.Value);
+                sets.Add("IsActive = @IsActive");
             }
 
-            // nothing to update
+            // Nothing to update
             if (sets.Count == 0)
                 return false;
 
-            // audit fields (ONLY updated if WHERE condition matches)
+            // -------------------------
+            // AUDIT FIELDS
+            // -------------------------
+            parameters.Add("UpdatedBy", entity.UpdatedBy);
             sets.Add("UpdatedBy = @UpdatedBy");
             sets.Add("UpdatedAt = SYSDATETIME()");
 
-            parameters.Add("UpdatedBy", entity.UpdatedBy);
-            parameters.Add("ProgramId", entity.SysProgramId);
-
-            var sql = new StringBuilder();
-            sql.Append(@"
-            UPDATE SysProgram
-            SET ");
-                        sql.Append(string.Join(", ", sets));
-                        sql.Append(@"
-            WHERE SysProgramId = @ProgramId
-              AND IsDeleted = 0
-              AND (
-                    (@ProgramName IS NOT NULL AND ISNULL(ProgramName,'') <> ISNULL(@ProgramName,''))
-                 OR (@LabelName IS NOT NULL AND ISNULL(LabelName,'') <> ISNULL(@LabelName,''))
-                 OR (@ProgramRoute IS NOT NULL AND ISNULL(ProgramRoute,'') <> ISNULL(@ProgramRoute,''))
-                 OR (@ApplicationId IS NOT NULL AND ApplicationId <> @ApplicationId)
-                 OR (@CompanyId IS NOT NULL AND CompanyId <> @CompanyId)
-                 OR (@IsActive IS NOT NULL AND IsActive <> @IsActive)
-              );
-            ");
+            // -------------------------
+            // SQL
+            // -------------------------
+            var sql = $@"
+UPDATE SysProgram
+SET {string.Join(", ", sets)}
+WHERE SysProgramId = @ProgramId
+  AND IsDeleted = 0;
+";
 
             var affected = await connection.ExecuteAsync(
                 new CommandDefinition(
-                    sql.ToString(),
+                    sql,
                     parameters,
                     transaction,
                     cancellationToken: cancellationToken
@@ -481,6 +482,7 @@ WHERE ProgramId = @ProgramId
 
             return affected > 0;
         }
+
 
 
 
@@ -607,13 +609,8 @@ WHERE ProgramId = @ProgramId
                 var links = await GetLinksByProgramIdForApplicationIdAsync(item.ProgramId, cancellationToken);
                 item.Action = links.ToList();
             }
-                // link permissions/actions if provided
-                if (permissionIds != null && permissionIds.Count > 0)
-                {
-                    await BulkInsertActionLinksAsync(connection, tx, id, permissionIds, entity.CreatedBy, cancellationToken);
-                }
-
-            return items;
+              
+           return items;
         }
 
 
@@ -778,10 +775,19 @@ WHERE ProgramId = @ProgramId
                 }
                 else
                 {
+            //        baseSql.Append(@"
+            //AND (
+            //    p.ProgramName LIKE @Search OR p.LabelName LIKE @Search OR p.ProgramRoute LIKE @Search
+            // OR a.ApplicationName LIKE @Search OR c.CompanyName LIKE @Search
+            // OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
+            // OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
+            // OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
+            //)");
+
                     baseSql.Append(@"
             AND (
                 p.ProgramName LIKE @Search OR p.LabelName LIKE @Search OR p.ProgramRoute LIKE @Search
-             OR a.ApplicationName LIKE @Search OR c.CompanyName LIKE @Search
+             OR a.ApplicationName LIKE @Search 
              OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
              OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
              OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
@@ -836,7 +842,7 @@ WHERE ProgramId = @ProgramId
             var totalCount = await connection.ExecuteScalarAsync<int>(
                 new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
 
-            var items = (await connection.QueryAsync<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>(
+            var items = (await connection.QueryAsync<SysProgramDto>(
                 new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken))).ToList();
 
             foreach (var item in items)

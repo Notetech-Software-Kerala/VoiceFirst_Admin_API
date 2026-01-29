@@ -22,8 +22,7 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IProgramActionRepo _programActionRepo;
         private readonly VoiceFirst_Admin.Data.Contracts.IRepositories.IRoleRepo _roleRepository;
 
-        public PlanService(IPlanRepo planRepository, VoiceFirst_Admin.Data.Contracts.IRepositories.IRoleRepo roleRepository)
-        public PlanService(IPlanRepo planRepository,IDapperContext _context, IProgramActionRepo programActionRepo)
+        public PlanService(IPlanRepo planRepository,IDapperContext _context, IProgramActionRepo programActionRepo, IRoleRepo roleRepository)
         {
             _planRepository = planRepository;
             this._context = _context;

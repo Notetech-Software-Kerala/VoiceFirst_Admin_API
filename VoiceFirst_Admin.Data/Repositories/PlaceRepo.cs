@@ -187,7 +187,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 else
                     baseSql.Append(@"
             AND (
-                spa.BusinessActivityName LIKE @Search
+                spa.PlaceName LIKE @Search
              OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
              OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
              OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
@@ -236,8 +236,8 @@ namespace VoiceFirst_Admin.Data.Repositories
                 uD.UserId AS DeletedById,
                 CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName,
                 -- Additional aliases to directly map as requested (non-breaking)
-                spa.SysBusinessActivityId AS ActivityId,
-                spa.BusinessActivityName AS ActivityName,
+                spa.PlaceId AS PlaceId,
+                spa.PlaceName AS PlaceName,
                 spa.IsActive AS Active,
                 spa.IsDeleted AS Deleted,
                 spa.CreatedAt AS CreatedDate,

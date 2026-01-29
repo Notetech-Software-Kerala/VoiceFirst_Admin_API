@@ -459,7 +459,7 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.ProgramNotFoundById
                     );
 
-            if (program.Active == false || program.Deleted == true)
+            if (program.Deleted == true)
                 return ApiResponse<SysProgramDto>.Fail(
                         Messages.ProgramNotFound,
                         StatusCodes.Status409Conflict,
@@ -582,7 +582,7 @@ namespace VoiceFirst_Admin.Business.Services
                
 
                
-                if (dto.Action != null || dto.Action.Count> 0)
+                if (dto.Action != null )
                 {
                     var programActionChanges = 
                         await GetProgramActionChangesAsync(

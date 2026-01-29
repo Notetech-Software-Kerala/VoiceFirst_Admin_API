@@ -35,7 +35,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.ProgramRoute, opt => opt.MapFrom(s => s.Item1.Route ?? string.Empty))
                 .ForMember(d => d.CompanyId, opt => opt.MapFrom(s => s.Item1.CompanyId ?? 0))
                 .ForMember(d => d.UpdatedBy, opt => opt.MapFrom(s => s.updatingUserId))
-                .ForMember(d => d.UpdatedBy, opt => opt.MapFrom(s => s.Item1.Active))
+                .ForMember(d => d.IsActive, opt => opt.MapFrom(s => s.Item1.Active))
                 .ForMember(d => d.ApplicationId, opt => opt.MapFrom(s => s.Item1.PlatformId ?? 0));
 
             CreateMap<SysProgramCreateDTO, SysProgram>()

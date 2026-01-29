@@ -6,7 +6,7 @@ using VoiceFirst_Admin.Business.Contracts.IServices;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
-    [Route("api/application")]
+    [Route("api/platform")]
     [ApiController]
     public class ApplicationController : ControllerBase
     {

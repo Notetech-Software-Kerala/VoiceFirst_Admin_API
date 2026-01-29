@@ -397,10 +397,8 @@ namespace VoiceFirst_Admin.Data.Repositories
                         new { plan.PlanName, plan.CreatedBy },
                         transaction,
                         cancellationToken: cancellationToken));
-            const string sql = @"INSERT INTO dbo.[Plan] (PlanName, CreatedBy) VALUES (@PlanName, @CreatedBy); SELECT CAST(SCOPE_IDENTITY() AS int);";
-            using var connection = _context.CreateConnection();
-            var id = await connection.ExecuteScalarAsync<int>(new CommandDefinition(sql, new { PlanName = plan.PlanName, CreatedBy = plan.CreatedBy }, cancellationToken: cancellationToken));
-            return id;
+          
+           
         }
 
         public async Task LinkProgramActionLinksAsync(
