@@ -210,6 +210,18 @@ namespace VoiceFirst_Admin.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("for-plan")]
+        [ProducesResponseType(typeof(ApiResponse<SysProgramByApplicationIdDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllActiveForPlanAsync(CancellationToken cancellationToken)
+        {
+            var result = await _service.GetAllActiveForPlanAsync(cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
 
 
         [HttpGet("action-lookup/{programId:int}")]

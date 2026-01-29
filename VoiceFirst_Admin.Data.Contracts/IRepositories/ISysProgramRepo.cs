@@ -92,10 +92,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             CancellationToken cancellationToken = default);
         
 
-        Task<List<SysProgramByApplicationIdDTO>>
-            GetAllActiveByApplicationIdAsync(
-            int applicationId, 
-            CancellationToken cancellationToken = default);
+        
        
         Task<PagedResultDto<SysProgramDto>> GetAllAsync(
             SysProgramFilterDTO filter,
@@ -108,7 +105,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 
 
         Task<List<SysProgramLookUp>> 
-            GetProgramLookupAsync(
+            GetProgramLookupAsync(int? applicationId = null,
             CancellationToken cancellationToken = default);
 
 

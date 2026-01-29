@@ -12,6 +12,10 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
 {
     public interface ISysProgramService
     {
+        Task<ApiResponse<List<SysProgramLookUp>>>
+          GetAllActiveForPlanAsync(
+          CancellationToken cancellationToken = default);
+
         Task<ApiResponse<int>> DeleteAsync(int id,
             int loginId,
             CancellationToken cancellationToken = default);
@@ -40,7 +44,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
             CancellationToken cancellationToken = default);
 
 
-        Task<ApiResponse<List<SysProgramByApplicationIdDTO>>> 
+        Task<ApiResponse<List<SysProgramLookUp>>> 
             GetAllActiveByApplicationIdAsync(
             int applicationId,
             CancellationToken cancellationToken = default);
