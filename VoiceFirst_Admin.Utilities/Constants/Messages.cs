@@ -143,6 +143,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
            "Plan retrieve sucessfully.";
 
         // ===== SYS Program  =====
+        public const string InvalidActionLinksForApplication =
+            "Invalid ActionLinks For selected Application.";
         public const string ProgramNameAlreadyExists =
             "Program name already exists in this application.";
 
