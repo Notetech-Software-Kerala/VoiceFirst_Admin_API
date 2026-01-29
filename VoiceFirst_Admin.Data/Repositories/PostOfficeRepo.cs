@@ -480,7 +480,7 @@ public class PostOfficeRepo : IPostOfficeRepo
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<PostOfficeZipCode>(cmd);
     }
-    public async Task<BulkUpsertError?> BulkUpsertZipCodesAsync(int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default)
+    public async Task<BulkUpsertError?> BulkUpdateZipCodesAsync(int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default)
     {
         using var connection = _context.CreateConnection();
         connection.Open();
@@ -539,7 +539,7 @@ public class PostOfficeRepo : IPostOfficeRepo
                         var sql = new StringBuilder();
                         sql.Append("UPDATE PostOfficeZipCodeLink SET UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME(), ");
                         sql.Append(string.Join(", ", sets));
-                        sql.Append(" WHERE PostOfficeZipCodeLinkId = @Id AND IsDeleted = 0;");
+                        sql.Append(" WHERE PostOfficeZipCodeLinkId = @Id");
 
                         var cmd = new CommandDefinition(sql.ToString(), parameters, transaction, cancellationToken: cancellationToken);
                         var affected = await connection.ExecuteAsync(cmd);
@@ -547,22 +547,11 @@ public class PostOfficeRepo : IPostOfficeRepo
                 }
                 else
                 {
-                    // ensure master ZipCode exists
-                    var zip = await connection.QueryFirstOrDefaultAsync<PostOfficeZipCode>(new CommandDefinition("SELECT ZipCodeId, ZipCode FROM ZipCode WHERE ZipCode = @Zip", new { Zip = currentZip }, transaction, cancellationToken: cancellationToken));
-                    int zipId;
-                    if (zip == null)
+                    return new BulkUpsertError
                     {
-                        var insertZipSql = "INSERT INTO ZipCode (ZipCode, CreatedBy) VALUES (@ZipCode, @CreatedBy); SELECT CAST(SCOPE_IDENTITY() AS int);";
-                        zipId = await connection.ExecuteScalarAsync<int>(new CommandDefinition(insertZipSql, new { ZipCode = currentZip, CreatedBy = z.CreatedBy }, transaction, cancellationToken: cancellationToken));
-                    }
-                    else
-                    {
-                        
-                        zipId = zip.PostOfficeZipCodeLinkId;
-                    }
-
-                    const string insertSql = @"INSERT INTO PostOfficeZipCodeLink (PostOfficeId, ZipCodeId, CreatedBy) VALUES (@PostOfficeId, @ZipCodeId, @CreatedBy);";
-                    await connection.ExecuteAsync(new CommandDefinition(insertSql, new { PostOfficeId = postOfficeId, ZipCodeId = zipId, CreatedBy = z.CreatedBy }, transaction, cancellationToken: cancellationToken));
+                        Message = Messages.BadRequest,
+                        StatuaCode = StatusCodes.Status400BadRequest
+                    };
                 }
             }
 
@@ -610,4 +599,89 @@ public class PostOfficeRepo : IPostOfficeRepo
             throw new InvalidOperationException("Bulk upsert failed: " + ex.Message, ex);
         }
     }
+    public async Task<BulkUpsertError?> BulkInsertZipCodesAsync(int postOfficeId, List<string> zipCodes, int loginId, CancellationToken cancellationToken = default)
+    {
+        using var connection = _context.CreateConnection();
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
+        string? currentZip = null;
+        try
+        {
+            // load existing post-office -> zip links
+
+
+            var incomingList = zipCodes.ToList();
+
+            // update or insert
+            foreach (var z in incomingList)
+            {
+               
+                currentZip = (z ?? "").Trim();
+
+                if (currentZip.Length > 0)
+                { 
+                    // ensure master ZipCode exists
+                    var zip = await connection.QueryFirstOrDefaultAsync<PostOfficeZipCode>(new CommandDefinition("SELECT ZipCodeId, ZipCode FROM ZipCode WHERE ZipCode = @Zip", new { Zip = currentZip }, transaction, cancellationToken: cancellationToken));
+                    int zipId;
+                    if (zip == null)
+                    {
+                        var insertZipSql = "INSERT INTO ZipCode (ZipCode, CreatedBy) VALUES (@ZipCode, @CreatedBy); SELECT CAST(SCOPE_IDENTITY() AS int);";
+                        zipId = await connection.ExecuteScalarAsync<int>(new CommandDefinition(insertZipSql, new { ZipCode = currentZip, CreatedBy = loginId }, transaction, cancellationToken: cancellationToken));
+                    }
+                    else
+                    {
+
+                        zipId = zip.PostOfficeZipCodeLinkId;
+                    }
+
+                    const string insertSql = @"INSERT INTO PostOfficeZipCodeLink (PostOfficeId, ZipCodeId, CreatedBy) VALUES (@PostOfficeId, @ZipCodeId, @CreatedBy);";
+                    await connection.ExecuteAsync(new CommandDefinition(insertSql, new { PostOfficeId = postOfficeId, ZipCodeId = zipId, CreatedBy = loginId }, transaction, cancellationToken: cancellationToken));
+                }
+            }
+
+
+
+            transaction.Commit();
+            return null;
+        }
+        catch (SqlException ex) when (ex.Number == 2601 || ex.Number == 2627)
+        {
+            // ? SQL unique constraint error
+            transaction.Rollback();
+            var sql = "SELECT * FROM PostOfficeZipCode WHERE ZipCode = @ZipCode";
+
+
+            var cmd = new CommandDefinition(sql, new { ZipCode = currentZip }, cancellationToken: cancellationToken);
+            var item = await connection.QueryFirstOrDefaultAsync<SysProgramActions>(cmd);
+            if (item == null)
+                return new BulkUpsertError
+                {
+                    Message = Messages.NotFound,
+                    StatuaCode = StatusCodes.Status404NotFound
+                };
+            else if (item.IsDeleted == true)
+            {
+                return new BulkUpsertError
+                {
+                    Message = $"ZipCode '{currentZip ?? "(unknown)"}' exists in trash. Restore it to use again. ",
+                    StatuaCode = StatusCodes.Status422UnprocessableEntity
+                };
+            }
+            else
+            {
+                return new BulkUpsertError
+                {
+                    Message = $"ZipCode '{currentZip ?? "(unknown)"}' already exists.",
+                    StatuaCode = StatusCodes.Status409Conflict
+                };
+            }
+
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            throw new InvalidOperationException("Bulk upsert failed: " + ex.Message, ex);
+        }
+    }
 }
+

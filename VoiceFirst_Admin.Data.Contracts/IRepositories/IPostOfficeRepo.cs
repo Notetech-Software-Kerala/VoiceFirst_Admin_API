@@ -20,6 +20,7 @@ public interface IPostOfficeRepo
     Task<bool> DeleteAsync(PostOffice entity, CancellationToken cancellationToken = default);
     Task<bool> RestoreAsync(PostOffice entity, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdAsync(int postOfficeId, CancellationToken cancellationToken = default);
-    Task<BulkUpsertError?> BulkUpsertZipCodesAsync(int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default);
+    Task<BulkUpsertError?> BulkUpdateZipCodesAsync(int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default);
+    Task<BulkUpsertError?> BulkInsertZipCodesAsync(int postOfficeId, List<string> zipCodes,int loginId, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOfficeZipCode>> GetAllZipCodesAsync(string SearchText, CancellationToken cancellationToken = default);
 }
