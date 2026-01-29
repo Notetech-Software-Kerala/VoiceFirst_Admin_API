@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using VoiceFirst_Admin.Data.Contracts.IContext;
@@ -10,6 +11,7 @@ using VoiceFirst_Admin.Utilities.DTOs.Features.Plan;
 using VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
+using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories
 {
@@ -21,6 +23,36 @@ namespace VoiceFirst_Admin.Data.Repositories
         public PlanRepo(IDapperContext context)
         {
             _context = context;
+        }
+
+        public async Task<PlanDetailDto?> 
+            GetDetailByIdAsync(int planId, 
+            IDbConnection connection,
+            IDbTransaction transaction, 
+            CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+            SELECT
+                p.PlanId,
+                p.PlanName,
+                p.IsActive AS Active,
+                p.IsDeleted AS Deleted,
+                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                p.CreatedAt AS CreatedDate,
+                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
+                p.UpdatedAt AS ModifiedDate,
+                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
+                p.DeletedAt AS DeletedDate
+            FROM dbo.[Plan] p
+            INNER JOIN dbo.Users uC ON uC.UserId = p.CreatedBy
+            LEFT JOIN dbo.Users uU ON uU.UserId = p.UpdatedBy
+            LEFT JOIN dbo.Users uD ON uD.UserId = p.DeletedBy
+            WHERE p.PlanId = @PlanId;";
+
+           
+            var dto = await connection.QueryFirstOrDefaultAsync<VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDetailDto>(
+                new CommandDefinition(sql, new { PlanId = planId }, transaction, cancellationToken: cancellationToken));
+            return dto;
         }
 
         public async Task<bool> DeleteAsync(int id, int deletedBy, CancellationToken cancellationToken = default)
@@ -279,41 +311,87 @@ namespace VoiceFirst_Admin.Data.Repositories
             return programs.Values.ToList();
         }
 
-        public async Task<VoiceFirst_Admin.Utilities.Models.Entities.Plan?> GetByNameAsync(string planName, CancellationToken cancellationToken = default)
+        public async Task<Plan?> GetByNameAsync(string planName, CancellationToken cancellationToken = default)
         {
             const string sql = "SELECT TOP 1 * FROM [Plan] WHERE PlanName = @PlanName";
             using var connection = _context.CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<VoiceFirst_Admin.Utilities.Models.Entities.Plan>(new CommandDefinition(sql, new { PlanName = planName }, cancellationToken: cancellationToken));
         }
 
-        public async Task<int> CreatePlanAsync(VoiceFirst_Admin.Utilities.Models.Entities.Plan plan, CancellationToken cancellationToken = default)
+        //public async Task<int> CreatePlanAsync(VoiceFirst_Admin.Utilities.Models.Entities.Plan plan, CancellationToken cancellationToken = default)
+        //{
+        //    const string sql = @"INSERT INTO [Plan] (PlanName, CreatedBy) VALUES (@PlanName, @CreatedBy); SELECT CAST(SCOPE_IDENTITY() AS int);";
+        //    using var connection = _context.CreateConnection();
+        //    var id = await connection.ExecuteScalarAsync<int>(new CommandDefinition(sql, new { PlanName = plan.PlanName, CreatedBy = plan.CreatedBy }, cancellationToken: cancellationToken));
+        //    return id;
+        //}
+
+
+
+
+        //public async Task LinkProgramActionLinksAsync(int planId, IEnumerable<int> programActionLinkIds, int createdBy, CancellationToken cancellationToken = default)
+        //{
+        //    const string insertSql = @"INSERT INTO dbo.PlanProgramActionLink (PlanId, ProgramActionLinkId, CreatedBy) VALUES (@PlanId, @ProgramActionLinkId, @CreatedBy);";
+        //    using var connection = _context.CreateConnection();
+        //    if (connection.State != System.Data.ConnectionState.Open) connection.Open();
+        //    using var tx = connection.BeginTransaction();
+        //    try
+        //    {
+        //        foreach (var id in programActionLinkIds)
+        //        {
+        //            await connection.ExecuteAsync(new CommandDefinition(insertSql, new { PlanId = planId, ProgramActionLinkId = id, CreatedBy = createdBy }, transaction: tx, cancellationToken: cancellationToken));
+        //        }
+        //        tx.Commit();
+        //    }
+        //    catch
+        //    {
+        //        tx.Rollback();
+        //        throw;
+        //    }
+        //}
+        public async Task<int> CreatePlanAsync(
+            Plan plan,
+            IDbConnection connection,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default)
         {
-            const string sql = @"INSERT INTO [Plan] (PlanName, CreatedBy) VALUES (@PlanName, @CreatedBy); SELECT CAST(SCOPE_IDENTITY() AS int);";
-            using var connection = _context.CreateConnection();
-            var id = await connection.ExecuteScalarAsync<int>(new CommandDefinition(sql, new { PlanName = plan.PlanName, CreatedBy = plan.CreatedBy }, cancellationToken: cancellationToken));
-            return id;
+                const string sql = @"
+            INSERT INTO [Plan] (PlanName, CreatedBy)
+            VALUES (@PlanName, @CreatedBy);
+            SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+                return await connection.ExecuteScalarAsync<int>(
+                    new CommandDefinition(
+                        sql,
+                        new { plan.PlanName, plan.CreatedBy },
+                        transaction,
+                        cancellationToken: cancellationToken));
         }
 
-        public async Task LinkProgramActionLinksAsync(int planId, IEnumerable<int> programActionLinkIds, int createdBy, CancellationToken cancellationToken = default)
-        {
-            const string insertSql = @"INSERT INTO dbo.PlanProgramActionLink (PlanId, ProgramActionLinkId, CreatedBy) VALUES (@PlanId, @ProgramActionLinkId, @CreatedBy);";
-            using var connection = _context.CreateConnection();
-            if (connection.State != System.Data.ConnectionState.Open) connection.Open();
-            using var tx = connection.BeginTransaction();
-            try
+        public async Task LinkProgramActionLinksAsync(
+        int planId,
+        IEnumerable<int> programActionLinkIds,
+        int createdBy,
+        IDbConnection connection,
+        IDbTransaction transaction,
+        CancellationToken cancellationToken = default)
             {
+                const string insertSql = @"
+            INSERT INTO dbo.PlanProgramActionLink
+            (PlanId, ProgramActionLinkId, CreatedBy)
+            VALUES (@PlanId, @ProgramActionLinkId, @CreatedBy);";
+
                 foreach (var id in programActionLinkIds)
                 {
-                    await connection.ExecuteAsync(new CommandDefinition(insertSql, new { PlanId = planId, ProgramActionLinkId = id, CreatedBy = createdBy }, transaction: tx, cancellationToken: cancellationToken));
+                    await connection.ExecuteAsync(
+                        new CommandDefinition(
+                            insertSql,
+                            new { PlanId = planId, ProgramActionLinkId = id, CreatedBy = createdBy },
+                            transaction,
+                            cancellationToken: cancellationToken));
                 }
-                tx.Commit();
             }
-            catch
-            {
-                tx.Rollback();
-                throw;
-            }
-        }
+
 
 
         public async Task<IEnumerable<PlanActiveDto>>

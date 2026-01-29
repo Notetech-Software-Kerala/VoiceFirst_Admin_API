@@ -37,8 +37,4 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="DTOs\Features\Place\" />
-  </ItemGroup>
-
 </Project>

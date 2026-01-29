@@ -12,5 +12,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
              (int ApplicationId, CancellationToken cancellationToken = default);
         Task<IEnumerable<ApplicationActiveDTO>> GetActiveAsync(
             CancellationToken cancellationToken = default);
+        Task<Application> IsIdExistAsync
+         (int ApplicationId, CancellationToken cancellationToken = default);
     }
 }

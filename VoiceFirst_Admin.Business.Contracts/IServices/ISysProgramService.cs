@@ -4,13 +4,15 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.Business.Contracts.IServices
 {
     public interface ISysProgramService
     {
-        Task<ApiResponse<bool>> DeleteAsync(int id,
+        Task<ApiResponse<int>> DeleteAsync(int id,
             int loginId,
             CancellationToken cancellationToken = default);
 
@@ -28,21 +30,30 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
         int loginId,
         CancellationToken cancellationToken = default);
 
-        Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> GetAllAsync(
-            VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramFilterDTO filter,
+
+        Task<ApiResponse<PagedResultDto<SysProgramDto>>> GetAllAsync(
+            SysProgramFilterDTO filter,
             CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<SysProgramByApplicationIdDTO>>> GetAllActiveByApplicationIdAsync(
+
+        Task<ApiResponse<List<SysProgramLookUp>>> GetProgramLookupAsync(
+            CancellationToken cancellationToken = default);
+
+
+        Task<ApiResponse<List<SysProgramByApplicationIdDTO>>> 
+            GetAllActiveByApplicationIdAsync(
             int applicationId,
             CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> UpdateAsync(
+        Task<ApiResponse<SysProgramDto>> UpdateAsync(
             int programId,
-            VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramUpdateDTO dto,
+            SysProgramUpdateDTO dto,
             int loginId,
             CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramLookUp>>> GetProgramLookupAsync(CancellationToken cancellationToken = default);
-        Task<ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>>> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<List<SysProgramActionLinkLookUp>>> 
+            GetActionLookupByProgramIdAsync(
+            int programId,
+            CancellationToken cancellationToken = default);
     }
 }

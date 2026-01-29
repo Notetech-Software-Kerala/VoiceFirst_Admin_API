@@ -1,21 +1,28 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Exceptions;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace VoiceFirst_Admin.Business.Services
 {
@@ -25,18 +32,23 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IApplicationRepo _applicationRepo;
         private readonly IProgramActionRepo _programActionRepo;
         private readonly IMapper _mapper;
+        private readonly IDapperContext _context;
+
 
         public SysProgramService(
             ISysProgramRepo repo,
             IApplicationRepo applicationRepo,
             IProgramActionRepo programActionRepo,
-            IMapper mapper)
+            IMapper mapper, IDapperContext _context)
         {
             _repo = repo;
             _applicationRepo = applicationRepo;
             _programActionRepo = programActionRepo;
             _mapper = mapper;
+            this._context = _context;
         }
+
+
 
         public async Task<ApiResponse<SysProgramDto>>
             CreateAsync(SysProgramCreateDTO dto,
@@ -46,35 +58,25 @@ namespace VoiceFirst_Admin.Business.Services
 
             // Platform check (Application)
             var app = await _applicationRepo.
-                GetActiveByIdAsync(dto.PlatformId,
+                IsIdExistAsync(dto.PlatformId,
                 cancellationToken);
 
             if (app == null)
                 return ApiResponse<SysProgramDto>.Fail(
-                    Messages.PlatformNotFound,
+                    Messages.NotFound,
                     StatusCodes.Status404NotFound,
-                    ErrorCodes.PlatFormNotFound
+                    ErrorCodes.NotFound
                     );
 
+            if(app.IsActive == false)
+                return ApiResponse<SysProgramDto>.Fail(
+                        Messages.PlatformNotFound,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.PlatFormNotActive
+                        );
 
-            // Permission checks (multiple)
-            if (dto.ActionIds != null && dto.ActionIds.Count > 0)
-            {
-                foreach (var pid in dto.ActionIds)
-                {
-                    var perm = await _programActionRepo.
-                        GetActiveByIdAsync(pid, cancellationToken);
 
-                    if (perm == null)
-
-                        return ApiResponse<SysProgramDto>.Fail(
-                       Messages.ProgramActionNotFound,
-                       StatusCodes.Status404NotFound,
-                       ErrorCodes.ProgramActionNotFound
-                       );
-                }
-            }
-
+          
 
 
             // Uniqueness checks scoped to Application
@@ -89,8 +91,8 @@ namespace VoiceFirst_Admin.Business.Services
                     return ApiResponse<SysProgramDto>.Fail
                         (Messages.ProgramNameAlreadyExistsRecoverable,
                         StatusCodes.Status422UnprocessableEntity,
-                        ErrorCodes.ProgramNameAlreadyExistsRecoverable
-                        );
+                        ErrorCodes.ProgramNameAlreadyExistsRecoverable,
+                        _mapper.Map<SysProgramDto>(existingByName));
 
                 return ApiResponse<SysProgramDto>.Fail
                     (Messages.ProgramNameAlreadyExists,
@@ -108,7 +110,8 @@ namespace VoiceFirst_Admin.Business.Services
                     return ApiResponse<SysProgramDto>.
                         Fail(Messages.ProgramLabelAlreadyExistsRecoverable,
                         StatusCodes.Status422UnprocessableEntity,
-                        ErrorCodes.ProgramLabelAlreadyExistsRecoverable);
+                        ErrorCodes.ProgramLabelAlreadyExistsRecoverable,
+                        _mapper.Map<SysProgramDto>(existingByLabel));
 
                 return ApiResponse<SysProgramDto>.Fail(
                     Messages.ProgramLabelAlreadyExists,
@@ -126,7 +129,9 @@ namespace VoiceFirst_Admin.Business.Services
                     return ApiResponse<SysProgramDto>.Fail
                         (Messages.ProgramRouteAlreadyExistsRecoverable,
                         StatusCodes.Status422UnprocessableEntity,
-                        ErrorCodes.ProgramRouteAlreadyExistsRecoverable);
+                        ErrorCodes.ProgramRouteAlreadyExistsRecoverable,
+                        _mapper.Map<SysProgramDto>(existingByRoute)
+                        );
 
                 return ApiResponse<SysProgramDto>.Fail
                     (Messages.ProgramRouteAlreadyExists,
@@ -134,108 +139,303 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.ProgramRouteAlreadyExists);
             }
 
+            if (dto.ActionIds != null && dto.ActionIds.Any())
+            {
+                var exist = await _programActionRepo.
+                    IsBulkIdsExistAsync(dto.ActionIds,
+               cancellationToken);
+                if (exist["idNotFound"] == true)
+                {
+                    return ApiResponse<SysProgramDto>.Fail(
+                   Messages.NotFound,
+                   StatusCodes.Status404NotFound,
+                   ErrorCodes.NotFound
+                   );
+                }
+                if (exist["deletedOrInactive"] == true)
+                {
+                    return ApiResponse<SysProgramDto>.Fail
+                       (Messages.ProgramActionNotFound,
+                       StatusCodes.Status409Conflict,
+                       ErrorCodes.ProgramActionNotFound);
+                }
+
+            }
+
             var entity = _mapper.Map<SysProgram>(dto);
             entity.CreatedBy = loginId;
 
-            var created = await _repo.CreateAsync
-                (entity, dto.ActionIds ?? new List<int>(), cancellationToken);
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
 
-            var dtoOut = await _repo.GetByIdAsync(created.SysProgramId, cancellationToken);
-            return ApiResponse<SysProgramDto>.Ok(dtoOut!, Messages.ProgramCreated,
-                Microsoft.AspNetCore.Http.StatusCodes.Status201Created);
+            try
+            {
+                var createdId = await _repo.CreateAsync
+                   (entity,                   
+                   connection,
+                   transaction, 
+                   cancellationToken);
+
+               
+
+                await _repo.BulkInsertActionLinksAsync
+                    (
+                    createdId,
+                    dto.ActionIds,
+                    loginId,
+                    connection,
+                    transaction,
+                    cancellationToken);
+
+                var dtoOut = await _repo.GetByIdAsync
+                    (createdId,
+                     connection,
+                    transaction,
+                    cancellationToken);
+
+                transaction.Commit();
+                return ApiResponse<SysProgramDto>.Ok(
+                    dtoOut!,
+                    Messages.ProgramCreated,
+                   StatusCodes.Status201Created);
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
-        public async Task<ApiResponse<SysProgramDto>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+
+        public async Task<ApiResponse<SysProgramDto>> 
+            GetByIdAsync(int id,
+            CancellationToken cancellationToken = default)
         {
-            var dto = await _repo.GetByIdAsync(id, cancellationToken);
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            var dto = await _repo.GetByIdAsync
+                (id, 
+                connection, 
+                transaction, 
+                cancellationToken);
+
             if (dto == null)
             {
-                return ApiResponse<SysProgramDto>.Fail(
-                    Messages.ProgramNotFound,
-                    StatusCodes.Status404NotFound,
-                    ErrorCodes.NotFound);
-            }
 
-            return ApiResponse<SysProgramDto>.Ok(dto, Messages.ProgramRetrieved);
+                return ApiResponse<SysProgramDto>.Fail(
+                   Messages.BusinessActivityNotFoundById,
+                   StatusCodes.Status404NotFound,
+                    ErrorCodes.BusinessActivityNotFoundById);
+            }
+            return ApiResponse<SysProgramDto>.Ok(
+                dto,
+                Messages.ProgramRetrieved,
+                StatusCodes.Status200OK);
         }
 
 
-        public async Task<ApiResponse<bool>> DeleteAsync(int id,
+        public async Task<ApiResponse<int>> DeleteAsync(int id,
             int loginId,
             CancellationToken cancellationToken = default)
         {
-            var deleted = await _repo.DeleteAsync(id,loginId, cancellationToken);
+            
+          var existDto =
+          await _repo.IsIdExistAsync(id,
+          cancellationToken);
 
-            if (!deleted)
+            if (existDto == null)
             {
-                return ApiResponse<bool>.Fail(
-                   Messages.ProgramNotFound,
-                   StatusCodes.Status404NotFound,
-                   ErrorCodes.NotFound);
+                return ApiResponse<int>.Fail(
+                    Messages.ProgramNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.ProgramNotFoundById);
             }
-            return ApiResponse<bool>.Ok(true, Messages.ProgramDeleted);
+
+            if (existDto.Deleted)
+            {
+                return ApiResponse<int>.Fail(
+                    Messages.ProgramAlreadyDeleted,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.ProgramAlreadyDeleted);
+            }
+
+            var rowAffect = await _repo.DeleteAsync
+                (id, loginId, cancellationToken);
+
+            if (rowAffect)
+            {
+
+                return ApiResponse<int>.Fail(
+                     Messages.ProgramAlreadyDeleted,
+                     StatusCodes.Status409Conflict,
+                     ErrorCodes.ProgramAlreadyDeleted);
+            }
+
+
+            return ApiResponse<int>.
+               Ok(
+               id, 
+               Messages.ProgramDeleted,
+               statusCode: StatusCodes.Status200OK);
         }
+
 
         public async Task<ApiResponse<SysProgramDto>> RecoverProgramAsync(
         int id,
         int loginId,
         CancellationToken cancellationToken = default)
         {
-            var rowAffected = await _repo.RecoverProgramAsync(id, loginId, cancellationToken);
-            if (rowAffected <= 0)
+           
+            var existDto =
+            await _repo.IsIdExistAsync(id,
+            cancellationToken);
+
+            if (existDto == null)
             {
                 return ApiResponse<SysProgramDto>.Fail(
-                   Messages.ProgramNotFound,
-                   StatusCodes.Status404NotFound,
-                   ErrorCodes.NotFound);
+                    Messages.ProgramNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.ProgramNotFoundById);
             }
-            var dto = await GetByIdAsync(id, cancellationToken);
-            return ApiResponse<SysProgramDto>.Ok(dto.Data
-                , Messages.ProgramRecovered);
 
+            if (!existDto.Deleted)
+            {
+                return ApiResponse<SysProgramDto>.Fail(
+                    Messages.ProgramAlreadyRecovered,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.ProgramAlreadyRecovered);
+            }
+
+            var rowAffected = await _repo.RecoverProgramAsync
+                (id, loginId, cancellationToken);
+
+            if (rowAffected)
+            {
+
+                return ApiResponse<SysProgramDto>.Fail(
+                     Messages.ProgramAlreadyRecovered,
+                     StatusCodes.Status409Conflict,
+                     ErrorCodes.ProgramAlreadyRecovered);
+            }
+
+
+            var dto =
+               await GetByIdAsync
+               (id,
+               cancellationToken);
+
+            return ApiResponse<SysProgramDto>.
+               Ok(dto.Data, 
+               Messages.ProgramRecovered, 
+               statusCode: StatusCodes.Status200OK);
         }
 
 
-    //    public async Task<List<SysBusinessActivityActiveDTO>> GetActiveAsync(
-    //CancellationToken cancellationToken)
-    //    {
-    //        var entities = await _repo.GetActiveAsync(cancellationToken);
 
-    //        return _mapper.Map<IEnumerable<SysBusinessActivityActiveDTO>>(entities).ToList();
-    //    }
-
-        public async Task<PagedResultDto<SysProgramDto>> GetAllAsync(
-            VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramFilterDTO filter,
+        public async Task<ApiResponse<PagedResultDto<SysProgramDto>>> GetAllAsync(
+            SysProgramFilterDTO filter,
             CancellationToken cancellationToken = default)
         {
-            var entities = await _repo.GetAllAsync(filter, cancellationToken);
-            return new PagedResultDto<SysProgramDto>
-            {
-                Items = entities.Items,
-                TotalCount = entities.TotalCount,
-                PageNumber = filter.PageNumber,
-                PageSize = filter.Limit
-            };
+            
+            var result = await _repo.GetAllAsync(filter, cancellationToken);
+
+            return ApiResponse<PagedResultDto<SysProgramDto>>.Ok(
+                result,
+                result.TotalCount == 0
+                    ? Messages.ProgramsNotFound
+                    : Messages.ProgramRetrieved,
+                 statusCode: StatusCodes.Status200OK
+            );
         }
 
-        public async Task<ApiResponse<IEnumerable<SysProgramByApplicationIdDTO>>> GetAllActiveByApplicationIdAsync(
+
+        public async Task<ApiResponse<List<SysProgramByApplicationIdDTO>>>
+            GetAllActiveByApplicationIdAsync(
             int applicationId,
             CancellationToken cancellationToken = default)
         {
-            var items = await _repo.GetAllActiveByApplicationIdAsync(applicationId, cancellationToken);
-            return ApiResponse<IEnumerable<SysProgramByApplicationIdDTO>>.Ok(items, Messages.ProgramRetrieved);
+
+
+            // Platform check (Application)
+            var app = await _applicationRepo.
+                IsIdExistAsync(applicationId,
+                cancellationToken);
+
+            if (app == null)
+                return ApiResponse<List<SysProgramByApplicationIdDTO>>.Fail(
+                    Messages.ApplicationNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.PlatFormNotFound
+                    );
+
+            if (app.IsActive == false)
+                return ApiResponse<List<SysProgramByApplicationIdDTO>>.Fail(
+                        Messages.PlatformNotFound,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.PlatFormNotActive
+                        );
+
+            var items = await _repo.GetAllActiveByApplicationIdAsync(
+                applicationId, cancellationToken);
+
+            return ApiResponse<List<SysProgramByApplicationIdDTO>>.Ok(
+                items,
+                Messages.ProgramRetrieved,
+                StatusCodes.Status200OK);                    
         }
 
-        public async Task<ApiResponse<IEnumerable<SysProgramLookUp>>> GetProgramLookupAsync(CancellationToken cancellationToken = default)
+
+        public async Task<ApiResponse<List<SysProgramLookUp>>>
+            GetProgramLookupAsync(CancellationToken cancellationToken = default)
         {
-            var items = await _repo.GetProgramLookupAsync(cancellationToken);
-            return ApiResponse<IEnumerable<SysProgramLookUp>>.Ok(items, Messages.ProgramRetrieved);
+            var result = await _repo.GetProgramLookupAsync(cancellationToken)
+                        ?? new List<SysProgramLookUp>();
+
+            return ApiResponse<List<SysProgramLookUp>>.Ok(
+                result,
+                result.Count == 0
+                    ? Messages.NoActivePrograms
+                    : Messages.ProgramRetrieved,
+                statusCode: StatusCodes.Status200OK
+            );
         }
 
-        public async Task<ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>>> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken = default)
+
+   
+
+
+        public async Task<ApiResponse<List<SysProgramActionLinkLookUp>>>
+            GetActionLookupByProgramIdAsync(int programId, 
+            CancellationToken cancellationToken = default)
         {
-            var items = await _repo.GetActionLookupByProgramIdAsync(programId, cancellationToken);
-            return ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink.SysProgramActionLinkLookUp>>.Ok(items, Messages.ProgramRetrieved);
+           
+            // Platform check (program)
+            var program = await _repo.
+                IsIdExistAsync(programId,
+                cancellationToken);
+
+            if (program == null)
+                return ApiResponse<List<SysProgramActionLinkLookUp>>.Fail(
+                    Messages.ProgramNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.ProgramNotFoundById
+                    );
+
+            if (program.Active == false || program.Deleted == true)
+                return ApiResponse<List<SysProgramActionLinkLookUp>>.Fail(
+                        Messages.ProgramNotFound,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.ProgramNotFoundById
+                        );
+            var items = await _repo.
+                GetActionLookupByProgramIdAsync
+                (programId, cancellationToken);
+
+            return ApiResponse<List<SysProgramActionLinkLookUp>>.
+                Ok(items, Messages.ProgramRetrieved);
         }
 
 
@@ -246,91 +446,310 @@ namespace VoiceFirst_Admin.Business.Services
             int loginId,
             CancellationToken cancellationToken = default)
         {
+            var actionUpdation = false;
+            // Platform check (program)
+            var program = await _repo.
+                IsIdExistAsync(programId,
+                cancellationToken);
 
-            var existing = await _repo.GetActiveByIdAsync
-                (programId, cancellationToken);
-
-            if (existing == null)
-            {
+            if (program == null)
                 return ApiResponse<SysProgramDto>.Fail(
-                    Messages.ProgramNotFound,
+                    Messages.ProgramNotFoundById,
                     StatusCodes.Status404NotFound,
-                    ErrorCodes.NotFound);
+                    ErrorCodes.ProgramNotFoundById
+                    );
+
+            if (program.Active == false || program.Deleted == true)
+                return ApiResponse<SysProgramDto>.Fail(
+                        Messages.ProgramNotFound,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.ProgramNotFoundById
+                        );
+
+            if (program.PlatformId != dto.PlatformId 
+                && (dto.PlatformId != null || dto.PlatformId >=0))
+            {
+
+                var app = await _applicationRepo.IsIdExistAsync(
+                          dto.PlatformId.Value,
+                          cancellationToken);
+
+                if (app == null)
+                    return ApiResponse<SysProgramDto>.Fail(
+                        Messages.ApplicationNotFoundById,
+                        StatusCodes.Status404NotFound,
+                        ErrorCodes.PlatFormNotFound
+                        );
+
+                if (app.IsActive == false)
+                    return ApiResponse<SysProgramDto>.Fail(
+                            Messages.PlatformNotFound,
+                            StatusCodes.Status409Conflict,
+                            ErrorCodes.PlatFormNotActive
+                            );
             }
 
-            if(existing.ApplicationId != dto.PlatformId && (dto.PlatformId != null || dto.PlatformId >=0))
-            {
-                var app = await _applicationRepo.GetActiveByIdAsync(dto.PlatformId.Value, cancellationToken);
-                if (app == null)
-                {
-                    return ApiResponse<SysProgramDto>.Fail(
-                        Messages.PlatformNotFound,
-                        StatusCodes.Status404NotFound,
-                        ErrorCodes.PlatFormNotFound);
-                }
-            }
-            var applicationId = dto.PlatformId ?? existing.ApplicationId;
+            var applicationId = dto.PlatformId ?? program.PlatformId;
 
 
             if (!string.IsNullOrWhiteSpace(dto.ProgramName))
             {
-                var dup = await _repo.ExistsByNameAsync(applicationId, dto.ProgramName, programId, cancellationToken);
-                if (dup != null)
+                var existingByName = await _repo.ExistsByNameAsync
+                    (applicationId, dto.ProgramName, programId, cancellationToken);
+
+                if (existingByName != null)
                 {
-                    if (dup.IsDeleted == true)
-                        return ApiResponse<SysProgramDto>.Fail(Messages.ProgramNameAlreadyExistsRecoverable, StatusCodes.Status422UnprocessableEntity, ErrorCodes.ProgramNameAlreadyExistsRecoverable);
-                    return ApiResponse<SysProgramDto>.Fail(Messages.ProgramNameAlreadyExists, StatusCodes.Status409Conflict, ErrorCodes.ProgramNameAlreadyExists);
-                }
+
+                    if (existingByName.IsDeleted == true)
+
+                        return ApiResponse<SysProgramDto>.Fail
+                            (Messages.ProgramNameAlreadyExistsRecoverable,
+                            StatusCodes.Status422UnprocessableEntity,
+                            ErrorCodes.ProgramNameAlreadyExistsRecoverable,
+                            _mapper.Map<SysProgramDto>(existingByName));
+
+                    return ApiResponse<SysProgramDto>.Fail
+                        (Messages.ProgramNameAlreadyExists,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.ProgramNameAlreadyExists);
+                   
+                }               
             }
 
             if (!string.IsNullOrWhiteSpace(dto.Label))
             {
-                var dup = await _repo.ExistsByLabelAsync(applicationId, dto.Label, programId, cancellationToken);
-                if (dup != null)
-                {
-                    if (dup.IsDeleted == true)
-                        return ApiResponse<SysProgramDto>.Fail(Messages.ProgramLabelAlreadyExistsRecoverable, StatusCodes.Status422UnprocessableEntity, ErrorCodes.ProgramLabelAlreadyExistsRecoverable);
-                    return ApiResponse<SysProgramDto>.Fail(Messages.ProgramLabelAlreadyExists, StatusCodes.Status409Conflict, ErrorCodes.ProgramLabelAlreadyExists);
-                }
+                var existingByLabel = await _repo.ExistsByLabelAsync
+                    (applicationId, dto.Label, programId, cancellationToken);
+
+                if (existingByLabel.IsDeleted == true)
+
+                    return ApiResponse<SysProgramDto>.
+                        Fail(Messages.ProgramLabelAlreadyExistsRecoverable,
+                        StatusCodes.Status422UnprocessableEntity,
+                        ErrorCodes.ProgramLabelAlreadyExistsRecoverable,
+                        _mapper.Map<SysProgramDto>(existingByLabel));
+
+                return ApiResponse<SysProgramDto>.Fail(
+                    Messages.ProgramLabelAlreadyExists,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.ProgramLabelAlreadyExists);
             }
 
             if (!string.IsNullOrWhiteSpace(dto.Route))
             {
-                var dup = await _repo.ExistsByRouteAsync(applicationId, dto.Route, programId, cancellationToken);
-                if (dup != null)
+                var existingByRoute = await _repo.ExistsByRouteAsync
+                    (applicationId, dto.Route, programId, cancellationToken);
+
+                if (existingByRoute.IsDeleted == true)
+                    return ApiResponse<SysProgramDto>.Fail
+                        (Messages.ProgramRouteAlreadyExistsRecoverable,
+                        StatusCodes.Status422UnprocessableEntity,
+                        ErrorCodes.ProgramRouteAlreadyExistsRecoverable,
+                        _mapper.Map<SysProgramDto>(existingByRoute)
+                        );
+
+                return ApiResponse<SysProgramDto>.Fail
+                    (Messages.ProgramRouteAlreadyExists,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.ProgramRouteAlreadyExists);
+            }
+
+
+            //var entity = new SysProgram
+            //{
+            //    SysProgramId = programId,
+            //    ProgramName = dto.ProgramName ?? string.Empty,
+            //    LabelName = dto.Label ?? string.Empty,
+            //    ProgramRoute = dto.Route ?? string.Empty,
+            //    ApplicationId = dto.PlatformId ?? 0,
+            //    CompanyId = dto.CompanyId ?? 0,
+            //    IsActive = dto.Active,
+            //    UpdatedBy = loginId
+            //};
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+
+            try
+            {
+                 var programUpdation = await _repo.UpdateAsync
+               (_mapper.Map<SysProgram>((dto, programId, loginId)),
+                 connection,
+                 transaction,
+                 cancellationToken);
+
+               
+
+               
+                if (dto.Action != null || dto.Action.Count> 0)
                 {
-                    if (dup.IsDeleted == true)
-                        return ApiResponse<SysProgramDto>.Fail(Messages.ProgramRouteAlreadyExistsRecoverable, StatusCodes.Status422UnprocessableEntity, ErrorCodes.ProgramRouteAlreadyExistsRecoverable);
-                    return ApiResponse<SysProgramDto>.Fail(Messages.ProgramRouteAlreadyExists, StatusCodes.Status409Conflict, ErrorCodes.ProgramRouteAlreadyExists);
+                    var programActionChanges = 
+                        await GetProgramActionChangesAsync(
+                        programId,
+                        dto.Action,
+                        connection,
+                        transaction,
+                        cancellationToken);
+
+                    if(programActionChanges["NotFoundActions"]== true)
+                    {
+                        transaction.Rollback();
+                        return ApiResponse<SysProgramDto>.Fail(
+                      Messages.NotFound,
+                      StatusCodes.Status404NotFound,
+                      ErrorCodes.NotFound
+                      );
+                    }
+                    if (programActionChanges["NotActiveOrDeleteActions"] == true)
+                    {
+                        transaction.Rollback();
+                        return ApiResponse<SysProgramDto>.Fail
+ 
+                            (Messages.ProgramActionNotFound,
+                            StatusCodes.Status409Conflict,
+                            ErrorCodes.ProgramActionNotFound);
+                    }
+                   
+                    if (programActionChanges["UpdateActions"].Count() <= 0 &&
+                        programActionChanges["InsertActions"].Count() <= 0
+                        )
+                    {
+                        transaction.Rollback();
+                        return ApiResponse<SysProgramDto>.Fail(
+                       Messages.ProgramUpdated,
+                       StatusCodes.Status204NoContent,
+                       ErrorCodes.NoRowAffected);
+                    }
+                    if (programActionChanges["UpdateActions"].Any())
+                    {
+                            actionUpdation = await _repo.BulkUpdateActionLinksAsync(
+                                programId,
+                                programActionChanges["UpdateActions"],
+                                loginId,
+                                connection,
+                                transaction,
+                                cancellationToken);
+                        if (!actionUpdation)
+                        {
+                            transaction.Rollback();
+                            return ApiResponse<SysProgramDto>.Fail(
+                   Messages.ProgramUpdated,
+                   StatusCodes.Status204NoContent,
+                   ErrorCodes.NoRowAffected);
+                        }
+                    }
+                    if (programActionChanges["InsertActions"].Any())
+                    {
+                            actionUpdation = await _repo.BulkInsertActionLinksAsync(
+                                programId,
+                                programActionChanges["InsertActions"],
+                                loginId,
+                                connection,
+                                transaction,
+                                cancellationToken);
+                        if (!actionUpdation)
+                        {
+                            transaction.Rollback();
+                           return ApiResponse<SysProgramDto>.Fail(
+                           Messages.ProgramUpdated,
+                           StatusCodes.Status204NoContent,
+                           ErrorCodes.NoRowAffected);
+                        }
+                    }
+
+
+                    
+                    //actionUpdation = await _repo.
+                    //   UpsertProgramActionLinksAsync
+                    //   (programId,
+                    //   dto.Action,
+                    //   loginId,
+                    //   connection,
+                    //   transaction,
+                    //   cancellationToken);
                 }
+
+                if (!actionUpdation && !programUpdation)
+                {
+                    return ApiResponse<SysProgramDto>.Fail(
+                    Messages.ProgramUpdated,
+                    StatusCodes.Status204NoContent,
+                    ErrorCodes.NoRowAffected);
+                }
+                
+                var dtoOut = await _repo.GetByIdAsync(programId,
+                    connection,transaction, cancellationToken);
+
+                transaction.Commit();
+
+                return ApiResponse<SysProgramDto>.Ok(
+                    dtoOut!,
+                    Messages.ProgramUpdated,
+                    statusCode: StatusCodes.Status200OK);
             }
-
-            var entity = new SysProgram
+            catch
             {
-                SysProgramId = programId,
-                ProgramName = dto.ProgramName ?? string.Empty,
-                LabelName = dto.Label ?? string.Empty,
-                ProgramRoute = dto.Route ?? string.Empty,
-                ApplicationId = dto.PlatformId ?? 0,
-                CompanyId = dto.CompanyId ?? 0,
-                IsActive = dto.Active,
-                UpdatedBy = loginId
-            };
-
-            var updated = await _repo.UpdateAsync(entity, cancellationToken);
-            if (!updated)
-            {
-                return ApiResponse<SysProgramDto>.Fail(Messages.UpdateFailed, StatusCodes.Status400BadRequest, ErrorCodes.ValidationFailed);
+                transaction.Rollback();
+                throw;  
             }
-
-            if (dto.Action != null && dto.Action.Count > 0)
-            {
-                await _repo.UpsertProgramActionLinksAsync(programId, dto.Action, loginId, cancellationToken);
-            }
-
-            var dtoOut = await _repo.GetByIdAsync(programId, cancellationToken);
-            return ApiResponse<SysProgramDto>.Ok(dtoOut!, Messages.ProgramUpdated);
         }
 
+
+        public async Task<Dictionary<string, dynamic>>
+        GetProgramActionChangesAsync(
+        int programId,
+        List<SysProgramActionLinkUpdateDTO> inputActions,
+        IDbConnection connection,
+        IDbTransaction transaction,
+        CancellationToken cancellationToken = default)
+        {
+            // 1️⃣ Get existing links from DB
+            var existingActions =
+                await _repo.GetExistingProgramActionsAsync(
+                    programId,
+                    connection,
+                    transaction,
+                    cancellationToken
+                );
+
+            var result = new Dictionary<string, dynamic>
+            {
+                ["UpdateActions"] = new List<SysProgramActionLinkUpdateDTO>(),
+                ["InsertActions"] = new List<int>()
+               
+            };
+
+            // 2️⃣ Compare input vs DB
+            foreach (var action in inputActions)
+            {
+                if (existingActions.TryGetValue(action.ActionId, out var dbIsActive))
+                {
+                    // NULL handling rule: treat NULL as false
+                    var currentStatus = dbIsActive ?? false;
+
+                    // only when status is NOT SAME
+                    if (currentStatus != action.Active)
+                    {
+                        result["UpdateActions"].Add(action.ActionId);
+                    }
+                }
+                else
+                {
+                    // not linked → insert
+                    result["InsertActions"].Add(action);
+                }
+            }
+            if (result["InsertActions"].Count() != 0)
+            {
+                var exist = await _programActionRepo.
+                    IsBulkIdsExistAsync(result["InsertActions"],
+               cancellationToken);
+                result.Add("idNotFound", exist["idNotFound"]);
+                result.Add("deletedOrInactive", exist["deletedOrInactive"]);
+            }
+            
+            return result;
+        }
     }
 }

@@ -38,5 +38,16 @@ namespace VoiceFirst_Admin.Data.Repositories
             return entities;
         }
 
+
+        public async Task<Application> IsIdExistAsync
+         (int ApplicationId, CancellationToken cancellationToken = default)
+        {
+            var sql = "SELECT IsActive  FROM Application WHERE ApplicationId = @ApplicationId ;";
+
+            var cmd = new CommandDefinition(sql, new { ApplicationId = ApplicationId }, cancellationToken: cancellationToken);
+            using var connection = _context.CreateConnection();
+            var entity = await connection.QueryFirstOrDefaultAsync<Application>(cmd);
+            return entity;
+        }
     }
 }

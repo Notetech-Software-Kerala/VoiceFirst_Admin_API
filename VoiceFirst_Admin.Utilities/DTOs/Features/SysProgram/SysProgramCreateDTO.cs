@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram
 {
@@ -11,6 +11,16 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram
         public string Route { get; set; } = string.Empty;
         public int PlatformId { get; set; }
         public int? CompanyId { get; set; }
-        public List<int> ActionIds { get; set; } = new();
+
+        private List<dynamic> _actionIds = new();
+
+        public List<dynamic> ActionIds
+        {
+            get => _actionIds;
+            set => _actionIds = value?
+                .Distinct()
+                .ToList()
+                ?? new List<dynamic>();
+        }
     }
 }

@@ -1,60 +1,58 @@
 ﻿using Dapper;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
-using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Place;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
-using static Dapper.SqlMapper;
 
 namespace VoiceFirst_Admin.Data.Repositories
 {
-    public class SysBusinessActivityRepo : ISysBusinessActivityRepo
+    public class PlaceRepo: IPlaceRepo
     {
         private readonly IDapperContext _context;
 
-    
 
 
 
 
-        public SysBusinessActivityRepo(IDapperContext context)
+
+        public PlaceRepo(IDapperContext context)
         {
             _context = context;
         }
 
 
-        public async Task<SysBusinessActivityDTO> BusinessActivityExistsAsync
+        public async Task<PlaceDTO> PlaceExistsAsync
             (string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
-            var sql = "SELECT IsDeleted As Deleted,SysBusinessActivityId As ActivityId  FROM SysBusinessActivity WHERE BusinessActivityName = @ActivityName";
+            var sql = "SELECT IsDeleted As Deleted,PlaceId As PlaceId  FROM Place WHERE PlaceName = @PlaceName";
             if (excludeId.HasValue)
-                sql += " AND SysBusinessActivityId <> @ExcludeId";
+                sql += " AND PlaceId <> @ExcludeId";
 
-            var cmd = new CommandDefinition(sql, new { ActivityName = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
+            var cmd = new CommandDefinition(sql, new { PlaceName = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
-            var entity = await connection.QueryFirstOrDefaultAsync<SysBusinessActivityDTO>(cmd);
+            var entity = await connection.QueryFirstOrDefaultAsync<PlaceDTO>(cmd);
             return entity;
         }
 
 
         public async Task<int> CreateAsync
-            (SysBusinessActivity entity,
-            CancellationToken cancellationToken = default)
+           (Place entity,
+           CancellationToken cancellationToken = default)
         {
             const string sql = @"
-                INSERT INTO SysBusinessActivity (BusinessActivityName,CreatedBy)
-                VALUES (@BusinessActivityName,@CreatedBy);
+                INSERT INTO Place (PlaceName,CreatedBy)
+                VALUES (@PlaceName,@CreatedBy);
                 SELECT CAST(SCOPE_IDENTITY() AS int);";
 
             var cmd = new CommandDefinition(sql, new
             {
-                entity.BusinessActivityName,
+                entity.PlaceName,
                 entity.CreatedBy,
             }, cancellationToken: cancellationToken);
             using var connection = _context.CreateConnection();
@@ -63,14 +61,14 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
-        public async Task<SysBusinessActivityDTO?> GetByIdAsync(
-          int ActivityId,
+        public async Task<PlaceDTO?> GetByIdAsync(
+          int PlaceId,
           CancellationToken cancellationToken = default)
         {
             const string sql = @"
                 SELECT 
-                    s.SysBusinessActivityId    As ActivityId    ,
-                    s.BusinessActivityName      As ActivityName   ,
+                    s.PlaceId   ,
+                    s.PlaceName     ,
                     s.IsActive             As Active        ,
                     s.IsDeleted            As Deleted      ,
                     s.CreatedAt             As CreatedDate    ,
@@ -86,51 +84,23 @@ namespace VoiceFirst_Admin.Data.Repositories
                     -- Deleted User
                     CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
 
-                FROM dbo.SysBusinessActivity s
+                FROM dbo.Place s
                 INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
                 LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
                 LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
-                WHERE s.SysBusinessActivityId = @ActivityId;
+                WHERE s.PlaceId = @PlaceId;
                 ";
 
             using var connection = _context.CreateConnection();
-            var entity = await connection.QuerySingleOrDefaultAsync<SysBusinessActivityDTO>(
-                new CommandDefinition(sql, new { ActivityId = ActivityId }, cancellationToken: cancellationToken)
+            var entity = await connection.QuerySingleOrDefaultAsync<PlaceDTO>(
+                new CommandDefinition(sql, new { PlaceId = PlaceId }, cancellationToken: cancellationToken)
             );
             return entity;
         }
 
 
-
-
-        public async Task<SysBusinessActivityDTO> IsIdExistAsync(
-          int activityId,
-          CancellationToken cancellationToken = default)
-            {
-                const string sql = @"
-                SELECT  s.SysBusinessActivityId    As ActivityId ,
-                        s.IsDeleted            As Deleted      
-                FROM dbo.SysBusinessActivity
-                WHERE SysBusinessActivityId = @ActivityId
-                 ;
-                 ";
-
-                using var connection = _context.CreateConnection();
-
-                var dto = await connection.QuerySingleOrDefaultAsync<SysBusinessActivityDTO>(
-                    new CommandDefinition(
-                        sql,
-                        new { ActivityId = activityId },
-                        cancellationToken: cancellationToken
-                    )
-                );
-                return dto;
-            }
-
-
-
-        public async Task<PagedResultDto<SysBusinessActivityDTO>>
-         GetAllAsync(BusinessActivityFilterDTO filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<PlaceDTO>>
+        GetAllAsync(PlaceFilterDTO filter, CancellationToken cancellationToken = default)
         {
             var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             var limit = filter.Limit <= 0 ? 10 : filter.Limit;
@@ -142,7 +112,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
             var baseSql = new StringBuilder(@"
-            FROM SysBusinessActivity spa
+            FROM Place spa
             INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
             LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
@@ -202,12 +172,12 @@ namespace VoiceFirst_Admin.Data.Repositories
             }
 
 
-            var searchByMap = new Dictionary<BusinessActivitySearchBy, string>
+            var searchByMap = new Dictionary<PlaceSearchBy, string>
             {
-                [BusinessActivitySearchBy.ActivityName] = "spa.BusinessActivityName",
-                [BusinessActivitySearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
-                [BusinessActivitySearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
-                [BusinessActivitySearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
+                [PlaceSearchBy.PlaceName] = "spa.PlaceName",
+                [PlaceSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
+                [PlaceSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+                [PlaceSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
             };
 
             if (!string.IsNullOrWhiteSpace(filter.SearchText))
@@ -231,8 +201,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             var sortMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
 
-                ["ActivityId"] = "spa.SysBusinessActivityId",
-                ["ActivityName"] = "spa.BusinessActivityName",
+                ["PlaceId"] = "spa.PlaceId",
+                ["PlaceName"] = "spa.PlaceName",
                 ["Active"] = "spa.IsActive",
                 ["Deleted"] = "spa.IsDeleted",
                 ["CreatedDate"] = "spa.CreatedAt",
@@ -241,10 +211,10 @@ namespace VoiceFirst_Admin.Data.Repositories
             };
 
             var sortOrder = filter.SortOrder == SortOrder.Desc ? "DESC" : "ASC";
-            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "ActivityId" : filter.SortBy;
+            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "PlaceId" : filter.SortBy;
 
             if (!sortMap.TryGetValue(sortKey, out var sortColumn))
-                sortColumn = sortMap["ActivityId"];
+                sortColumn = sortMap["PlaceId"];
 
 
             var countSql = "SELECT COUNT(1) " + baseSql;
@@ -252,8 +222,8 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             var itemsSql = $@"
             SELECT
-                spa.SysBusinessActivityId,
-                spa.BusinessActivityName,
+                spa.PlaceId,
+                spa.PlaceName,
                 spa.CreatedAt,
                 spa.IsActive,
                 spa.UpdatedAt,
@@ -286,10 +256,10 @@ namespace VoiceFirst_Admin.Data.Repositories
             var totalCount = await connection.ExecuteScalarAsync<int>(
                 new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
 
-            var items = await connection.QueryAsync<SysBusinessActivityDTO>(
+            var items = await connection.QueryAsync<PlaceDTO>(
                 new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken));
 
-            return new PagedResultDto<SysBusinessActivityDTO>
+            return new PagedResultDto<PlaceDTO>
             {
                 Items = items.ToList(),
                 TotalCount = totalCount,
@@ -300,81 +270,110 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
 
-        public async Task<List<SysBusinessActivityActiveDTO?>> GetActiveAsync(
+        public async Task<PlaceDTO> IsIdExistAsync(
+         int activityId,
+         CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT  s.PlaceId    As PlaceId ,
+                        s.IsDeleted            As Deleted      
+                FROM dbo.Place
+                WHERE PlaceId = @PlaceId
+                 ;
+                 ";
+
+            using var connection = _context.CreateConnection();
+
+            var dto = await connection.QuerySingleOrDefaultAsync<PlaceDTO>(
+                new CommandDefinition(
+                    sql,
+                    new { ActivityId = activityId },
+                    cancellationToken: cancellationToken
+                )
+            );
+            return dto;
+        }
+
+
+
+    
+
+
+        public async Task<List<PlaceLookUpDTO?>> GetActiveAsync(
          CancellationToken cancellationToken = default)
         {
             const string sql = @"
                 SELECT 
-                SysBusinessActivityId As ActivityId,
-                BusinessActivityName  As ActivityName     
-                FROM dbo.SysBusinessActivity 
-                WHERE  isDeleted = 0 And isActive = 1 ORDER BY BusinessActivityName ASC;
+                PlaceId As PlaceId,
+                PlaceName  As PlaceName     
+                FROM dbo.Place 
+                WHERE  isDeleted = 0 And isActive = 1 ORDER BY PlaceName ASC;
                 ";
 
             using var connection = _context.CreateConnection();
-            var entity = await connection.QueryAsync<SysBusinessActivityActiveDTO?>(
+            var entity = await connection.QueryAsync<PlaceLookUpDTO?>(
                 new CommandDefinition(sql, cancellationToken: cancellationToken)
             );
             return entity.ToList();
         }
 
 
-      
+
         public async Task<bool> UpdateAsync(
-           SysBusinessActivity entity,
+           Place entity,
            CancellationToken cancellationToken = default)
-            {
-                var sets = new List<string>();
-                var parameters = new DynamicParameters();
+        {
+            var sets = new List<string>();
+            var parameters = new DynamicParameters();
 
-                // Always add parameters (nullable-safe)
-                parameters.Add("BusinessActivityName", entity.BusinessActivityName);
-                parameters.Add("Active", entity.IsActive.HasValue
-                    ? (entity.IsActive.Value ? 1 : 0)
-                    : (int?)null);
+            // Always add parameters (nullable-safe)
+            parameters.Add("PlaceName", entity.PlaceName);
+            parameters.Add("Active", entity.IsActive.HasValue
+                ? (entity.IsActive.Value ? 1 : 0)
+                : (int?)null);
 
-                if (!string.IsNullOrWhiteSpace(entity.BusinessActivityName))
-                    sets.Add("BusinessActivityName = @BusinessActivityName");
+            if (!string.IsNullOrWhiteSpace(entity.PlaceName))
+                sets.Add("PlaceName = @PlaceName");
 
-                if (entity.IsActive.HasValue)
-                    sets.Add("IsActive = @Active");
+            if (entity.IsActive.HasValue)
+                sets.Add("IsActive = @Active");
 
-                if (sets.Count == 0)
-                    return false;
+            if (sets.Count == 0)
+                return false;
 
-                // Audit fields (only when real change occurs)
-                sets.Add("UpdatedBy = @UpdatedBy");
-                sets.Add("UpdatedAt = SYSDATETIME()");
+            // Audit fields (only when real change occurs)
+            sets.Add("UpdatedBy = @UpdatedBy");
+            sets.Add("UpdatedAt = SYSDATETIME()");
 
-                parameters.Add("UpdatedBy", entity.UpdatedBy);
-                parameters.Add("ActivityId", entity.SysBusinessActivityId);
+            parameters.Add("UpdatedBy", entity.UpdatedBy);
+            parameters.Add("PlaceId", entity.PlaceId);
 
-                var sql = $@"
-                UPDATE SysBusinessActivity
+            var sql = $@"
+                UPDATE Place
                 SET {string.Join(", ", sets)}
-                WHERE SysBusinessActivityId = @ActivityId
+                WHERE PlaceId = @PlaceId
                   AND IsDeleted = 0
                   AND (
-                        (@BusinessActivityName IS NOT NULL 
-                            AND BusinessActivityName <> @BusinessActivityName)
+                        (@PlaceName IS NOT NULL 
+                            AND PlaceName <> @PlaceName)
                      OR (@Active IS NOT NULL 
                             AND IsActive <> @Active)
                   );";
 
-                using var connection = _context.CreateConnection();
-                var affected = await connection.ExecuteAsync(
-                    new CommandDefinition(sql, parameters, cancellationToken: cancellationToken));
+            using var connection = _context.CreateConnection();
+            var affected = await connection.ExecuteAsync(
+                new CommandDefinition(sql, parameters, cancellationToken: cancellationToken));
 
-                return affected > 0;
-            }
+            return affected > 0;
+        }
 
 
 
         public async Task<bool> DeleteAsync
-            (int id, int deletedBy, 
+            (int id, int deletedBy,
             CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysBusinessActivityId = @ActivityId And IsDeleted = 0;";
+            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE PlaceId = @PlaceId And IsDeleted = 0;";
 
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
@@ -383,25 +382,31 @@ namespace VoiceFirst_Admin.Data.Repositories
             }
 
             var affectedRows = await connection.ExecuteAsync(
-                new CommandDefinition(sql, new { ActivityId = id, deletedBy }, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, new { PlaceId = id, deletedBy }, cancellationToken: cancellationToken));
             return affectedRows > 0;
         }
 
 
 
 
-        public async Task<bool>RecoverBusinessActivityAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        public async Task<bool> RecoverAsync
+            (int id, int loginId, 
+            CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME() WHERE SysBusinessActivityId = @ActivityId And IsDeleted = 1";
+            const string sql = @"UPDATE Place SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME() WHERE PlaceId = @PlaceId And IsDeleted = 1";
             using var connection = _context.CreateConnection();
             if (connection.State != ConnectionState.Open)
             {
                 connection.Open();
             }
             var affectedRows = await connection.ExecuteAsync(
-                new CommandDefinition(sql, new { ActivityId = id, LoginId = loginId }, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, new { PlaceId = id, LoginId = loginId }, cancellationToken: cancellationToken));
             return affectedRows > 0;
         }
+
+
+
+
 
     }
 }

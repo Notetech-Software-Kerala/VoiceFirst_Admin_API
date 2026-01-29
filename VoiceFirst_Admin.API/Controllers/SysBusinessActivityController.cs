@@ -1,4 +1,6 @@
+﻿using Azure;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
@@ -17,95 +19,250 @@ public class SysBusinessActivityController : ControllerBase
         _service = service;
     }
 
-
+    /// <summary>
+    /// Creates a new business activity.
+    /// </summary>
+    /// <remarks>
+    /// Business rules:
+    /// - Activity name must be unique .
+    /// - Soft-deleted activities can be recovered instead of creating a new one.
+    /// </remarks>
+    ///
+    /// <response code="201">
+    /// Business activity created successfully.
+    /// </response>
+    ///
+    /// <response code="400">
+    /// Invalid request. Payload is null or validation failed.
+    /// </response>
+    ///
+    /// <response code="401">
+    /// Unauthorized. User is not authenticated.
+    /// </response>
+    ///
+    /// <response code="409">
+    /// Conflict. An activity with the same name already exists and is active.
+    /// </response>
+    ///
+    /// <response code="422">
+    /// Unprocessable entity. Activity already exists but was deleted.
+    /// Returns the existing BusinessActivityId so it can be recovered.
+    /// </response>
+    ///
+    /// <response code="500">
+    /// Internal server error. An unexpected error occurred while processing the request.
+    /// </response>
     [HttpPost]
+    [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateAsync(
         [FromBody] SysBusinessActivityCreateDTO model,
         CancellationToken cancellationToken)
     {
+        // 1️⃣ Null payload check
         if (model == null)
-            return BadRequest(ApiResponse<SysBusinessActivityDTO?>.
-                Fail(Messages.PayloadRequired,
-               StatusCodes.Status400BadRequest,
-               ErrorCodes.Payload));
-            
-        var apiResponse = await _service.
-            CreateAsync(model, userId, cancellationToken);
-      
-        return StatusCode(apiResponse.StatusCode,
-            apiResponse);
+        {
+            return BadRequest(ApiResponse<object>.Fail(
+                message: Messages.PayloadRequired,
+                statusCode: StatusCodes.Status400BadRequest,
+                error: ErrorCodes.Payload
+            ));
+        }
+     
+        // 3️⃣ Delegate business logic to service
+        var response = await _service.CreateAsync(
+            model,
+            userId,
+            cancellationToken);
 
+        // 4️⃣ Return standardized response
+        return StatusCode(response.StatusCode, response);
     }
 
 
+
+
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    
     public async Task<IActionResult> 
         GetByIdAsync(int id, CancellationToken cancellationToken)
     {
-        var item = await _service.GetByIdAsync(id, cancellationToken);
+        if ( id <= 0)
+        {
+            return BadRequest(ApiResponse<object>.Fail(
+                Messages.PayloadRequired,
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.Payload
+            ));
+        }
+        var response = await _service.GetByIdAsync(id, cancellationToken);
+       
+        return StatusCode(response.StatusCode, response);
+    }
 
-        return Ok(ApiResponse<SysBusinessActivityDTO?>.Ok(
-            item,
-            Messages.BusinessActivityRetrieved));
+
+
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<PagedResultDto<SysBusinessActivityDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [HttpGet]
+    public async Task<IActionResult> GetAllAsync(
+      [FromQuery] BusinessActivityFilterDTO filter,
+      CancellationToken cancellationToken)
+    {
+
+        var response = await _service.GetAllAsync(filter, cancellationToken);
+
+        return StatusCode(response.StatusCode, response);
     }
 
 
 
     [HttpGet("lookup")]
+    [ProducesResponseType(typeof(ApiResponse<List<SysBusinessActivityActiveDTO?>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetActiveAsync(
      
       CancellationToken cancellationToken)
     {
-        var items = await _service.GetActiveAsync(cancellationToken);
-        return Ok(ApiResponse<object>.Ok(items,
-            Messages.BusinessActivityRetrieved));
+        var response = await _service.GetActiveAsync(cancellationToken);
+        return StatusCode(response.StatusCode, response);
     }
 
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllAsync(
-        [FromQuery] BusinessActivityFilterDTO filter,
-        CancellationToken cancellationToken)
-    {
-        
-        var items = await _service.GetAllAsync(filter, cancellationToken);
-        return Ok(ApiResponse<object>.Ok(items, 
-            Messages.BusinessActivityRetrieved));
-    }
 
-  
+
+    /// <summary>
+    /// Updates a business activity.
+    /// </summary>
+    /// <remarks>
+    /// Business rules:
+    /// - The activity name must be unique.
+    /// - If the activity is soft-deleted, it may be restored instead of updated.
+    /// </remarks>
+    ///
+    /// <response code="200">
+    /// Business activity updated successfully and the updated data is returned.
+    /// </response>
+    ///
+    /// <response code="204">
+    /// No changes were detected. The business activity already contains the provided values.
+    /// </response>
+    /// 
+    /// <response code="400">
+    /// Invalid request. Payload is null or validation failed.
+    /// </response>
+    /// 
+    /// <response code="404">
+    /// Id nof found.
+    /// </response>
+    ///
+    /// <response code="401">
+    /// Unauthorized. User is not authenticated.
+    /// </response>
+    ///
+    /// <response code="409">
+    /// Conflict. An activity with the same name already exists and is active.
+    /// </response>
+    ///
+    /// <response code="422">
+    /// Unprocessable entity. Activity already exists but was deleted.
+    /// Returns the existing BusinessActivityId so it can be recovered.
+    /// </response>
+    ///
+    /// <response code="500">
+    /// Internal server error. An unexpected error occurred while processing the request.
+    /// </response>
     [HttpPatch("{id:int}")]
+    [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>),StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> UpdateAsync(
-        int id,
-        [FromBody] SysBusinessActivityUpdateDTO model,
-        CancellationToken cancellationToken)
+    int id,
+    [FromBody] SysBusinessActivityUpdateDTO model,
+    CancellationToken cancellationToken)
     {
-        if (model == null || id == 0)
-            return Ok(ApiResponse<object>.Fail(
+        if (model == null || id <= 0)
+        {
+            return BadRequest(ApiResponse<object>.Fail(
                 Messages.PayloadRequired,
-                Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest));
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.Payload
+            ));
+        }
 
-        var updatedDto = await _service.UpdateAsync(model, id, userId, cancellationToken);
-
-        return Ok(ApiResponse<object>.Ok(updatedDto, 
-            Messages.BusinessActivityUpdated));
+        var response = await _service.UpdateAsync(
+            model, id, userId, cancellationToken);
+        return StatusCode(response.StatusCode,response);
     }
+
+
+
 
     [HttpPatch("recover/{id:int}")]
+    [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+
     public async Task<IActionResult> RecoverAsync(
         int id,
         CancellationToken cancellationToken)
     {
-        var recoveredDto = await _service.RecoverBusinessActivityAsync(id, userId, cancellationToken);
+        if ( id <= 0)
+        {
+            return BadRequest(ApiResponse<object>.Fail(
+                Messages.PayloadRequired,
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.Payload
+            ));
+        }
+        var recoveredDto = await _service.RecoverBusinessActivityAsync
+            (id, userId, cancellationToken);
         return StatusCode(recoveredDto.StatusCode, recoveredDto);
     }
 
+
+
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult>
         DeleteAsync(int id, CancellationToken cancellationToken)
     {
-        await _service.DeleteAsync(id, userId, cancellationToken);
-        return Ok(ApiResponse<bool>.Ok(true,
-            Messages.BusinessActivityDeleted));
+        if ( id <= 0)
+        {
+            return BadRequest(ApiResponse<object>.Fail(
+                Messages.PayloadRequired,
+                StatusCodes.Status400BadRequest,
+                error: ErrorCodes.Payload
+            ));
+        }
+        var recoveredDto =  await _service.DeleteAsync(id, userId, cancellationToken);
+        return StatusCode(recoveredDto.StatusCode, recoveredDto);
     }
+
+
 }

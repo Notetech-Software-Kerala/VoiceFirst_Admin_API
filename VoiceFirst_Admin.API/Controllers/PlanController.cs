@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Plan;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.API.Controllers
@@ -10,21 +13,38 @@ namespace VoiceFirst_Admin.API.Controllers
     public class PlanController : ControllerBase
     {
         private readonly IPlanService _planService;
+        const int userId = 1;
         public PlanController(IPlanService planService)
         {
             _planService = planService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAsync([FromBody] VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanCreateDto model, CancellationToken cancellationToken)
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(ApiResponse<PlanDetailDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<PlanDetailDto>), StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [HttpPost]
+        public async Task<IActionResult> 
+            CreateAsync([FromBody] PlanCreateDto model,
+            CancellationToken cancellationToken)
         {
             if (model == null)
-                return BadRequest(VoiceFirst_Admin.Utilities.Models.Common.ApiResponse<object>.Fail(VoiceFirst_Admin.Utilities.Constants.Messages.PayloadRequired));
+                return BadRequest
+                    (ApiResponse<object>.Fail(Messages.PayloadRequired));
 
-            const int userId = 1;
-            var result = await _planService.CreateAsync(model, userId, cancellationToken);
+            
+            var result = await _planService.CreatePlanAsync(
+                model,userId, 
+                cancellationToken);
+
             return StatusCode(result.StatusCode, result);
         }
+
 
         [HttpGet("lookup")]
         public async Task<IActionResult> GetActivePlans(CancellationToken cancellationToken)

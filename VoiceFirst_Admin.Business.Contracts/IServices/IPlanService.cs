@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+
 using VoiceFirst_Admin.Utilities.DTOs.Features.Plan;
+using VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.Business.Contracts.IServices
@@ -10,11 +10,17 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
     {
         Task<ApiResponse<IEnumerable<PlanActiveDto>>> 
             GetActiveAsync(CancellationToken cancellationToken = default);
-        Task<ApiResponse<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink.ProgramPlanDetailDto>>>
+
+        Task<ApiResponse<IEnumerable<ProgramPlanDetailDto>>>
             GetProgramDetailsByPlanIdAsync(int planId, CancellationToken cancellationToken = default);
-        Task<ApiResponse<VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDto>> CreateAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanCreateDto dto, int loginId, CancellationToken cancellationToken = default);
-        Task<ApiResponse<bool>> UpdateAsync(int planId, VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
-        Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDetailDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanFilterDto filter, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<PlanDetailDto>> CreatePlanAsync(
+        PlanCreateDto dto,
+        int loginId,
+        CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<bool>> UpdateAsync(int planId,PlanUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<PlanDetailDto>> GetAllAsync(PlanFilterDto filter, CancellationToken cancellationToken = default);
         Task<ApiResponse<bool>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
         Task<ApiResponse<int>> RecoverPlanAsync(int id, int loginId, CancellationToken cancellationToken = default);
     }

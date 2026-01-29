@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,19 +30,21 @@ namespace VoiceFirst_Admin.Business.Services
             _mapper = mapper;
         }
 
+
         public async Task<ApiResponse<SysBusinessActivityDTO>> CreateAsync(
           SysBusinessActivityCreateDTO dto,
           int loginId,
           CancellationToken cancellationToken)
             {
+
             var existingEntity = await _repo.BusinessActivityExistsAsync(
                 dto.ActivityName,
                 null,
                 cancellationToken);
 
-            if (existingEntity is not null)
+            if (existingEntity.ActivityId <= 0)
             {
-                if (existingEntity.IsDeleted== false)
+                if (!existingEntity.Deleted)
                 {
                     // ❌ Active duplicate
                     
@@ -54,10 +57,10 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<SysBusinessActivityDTO>.Fail(                    
                      Messages.BusinessActivityAlreadyExistsRecoverable,
                      StatusCodes.Status422UnprocessableEntity,
-                      ErrorCodes.BusinessActivityAlreadyExists,
+                      ErrorCodes.BusinessActivityAlreadyExistsRecoverable,
                       new SysBusinessActivityDTO
                       {
-                          ActivityId = existingEntity.SysBusinessActivityId
+                          ActivityId = existingEntity.ActivityId
                       }
                  );
             }
@@ -78,153 +81,244 @@ namespace VoiceFirst_Admin.Business.Services
             }
 
             var createdDto =
-                await _repo.GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);
+                await _repo.GetByIdAsync
+                (entity.SysBusinessActivityId, 
+                cancellationToken);
 
-            return ApiResponse<SysBusinessActivityDTO>.Ok(createdDto, Messages.BusinessActivityCreated,StatusCodes.Status201Created);
+            return ApiResponse<SysBusinessActivityDTO>.Ok(
+                createdDto,
+                Messages.BusinessActivityCreated,
+                StatusCodes.Status201Created);
         }
 
 
-
-
-        public async Task<ApiResponse<SysBusinessActivityDTO>> RecoverBusinessActivityAsync(
-            int id,
-            int loginId,
-            CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<SysBusinessActivityDTO>?> GetByIdAsync(
+          int id,
+          CancellationToken cancellationToken = default)
         {
-            var rowAffect = await _repo.RecoverBusinessActivityAsync(id, loginId, cancellationToken);
-            if (rowAffect <= 0)
+            var dto = await _repo.GetByIdAsync(id, cancellationToken);
+
+            if (dto == null)
             {
-                throw new BusinessNotFoundException(
-                    Messages.NotFound,
-                    ErrorCodes.BusinessActivityNotFound);
+               
+                return ApiResponse<SysBusinessActivityDTO>.Fail(                   
+                   Messages.BusinessActivityNotFoundById,
+                   StatusCodes.Status404NotFound,
+                    ErrorCodes.BusinessActivityNotFoundById);
             }
-            var dto = await GetByIdAsync(id, cancellationToken);
-            return ApiResponse<SysBusinessActivityDTO>.
-                Ok(dto, Messages.ProgramRecovered);
-
+            return ApiResponse <SysBusinessActivityDTO>.Ok(
+                dto,
+                Messages.BusinessActivityRetrieved,
+                StatusCodes.Status200OK);
         }
 
-        public async Task<SysBusinessActivityDTO?> GetByIdAsync(
-            int id,
+     
+        public async Task<ApiResponse<PagedResultDto<SysBusinessActivityDTO>>>
+        GetAllAsync(BusinessActivityFilterDTO filter, 
             CancellationToken cancellationToken = default)
         {
-            var entity = await _repo.GetByIdAsync(id, cancellationToken);
+            var result = await _repo.GetAllAsync(filter, cancellationToken);
 
-            if (entity == null)
+            return ApiResponse<PagedResultDto<SysBusinessActivityDTO>>.Ok(
+                result,              
+                result.TotalCount == 0
+                    ? Messages.BusinessActivitiesNotFound
+                    : Messages.BusinessActivitiesRetrieved,
+                 statusCode: StatusCodes.Status200OK
+            );
+        }
+
+ 
+
+        public async Task<ApiResponse<List<SysBusinessActivityActiveDTO>>>
+        GetActiveAsync(CancellationToken cancellationToken)
+        {
+            var result = await _repo.GetActiveAsync(cancellationToken)
+                         ?? new List<SysBusinessActivityActiveDTO>();
+
+            return ApiResponse<List<SysBusinessActivityActiveDTO>>.Ok(
+                result,
+                result.Count == 0
+                    ? Messages.NoActiveBusinessActivities
+                    : Messages.BusinessActivitiesRetrieved,
+                statusCode: StatusCodes.Status200OK
+            );
+        }
+
+
+        public async Task<ApiResponse<SysBusinessActivityDTO>> UpdateAsync(
+          SysBusinessActivityUpdateDTO dto,
+          int sysBusinessActivityId,
+          int loginId,
+          CancellationToken cancellationToken = default)
+        {
+            var existDto =
+                await _repo.IsIdExistAsync(sysBusinessActivityId,
+                cancellationToken);
+
+
+            if (existDto == null )
             {
-                throw new BusinessNotFoundException(
-                    Messages.NotFound,
-                    ErrorCodes.BusinessActivityNotFound);
+
+                return ApiResponse<SysBusinessActivityDTO>.Fail(
+                   Messages.BusinessActivityNotFoundById,
+                   StatusCodes.Status404NotFound,
+                    ErrorCodes.BusinessActivityNotFoundById);              
             }
-            return _mapper.Map<SysBusinessActivityDTO>(entity);
-        }
+            else if (existDto.Deleted)
+            {
 
+               
+                 return ApiResponse<SysBusinessActivityDTO>.Fail(
+                  Messages.BusinessActivityNotFound,
+                  StatusCodes.Status409Conflict,
+                   ErrorCodes.BusinessActivityNotFound);
+                
+            }
 
-        
-
-                public async Task<SysBusinessActivityDTO> UpdateAsync(
-            SysBusinessActivityUpdateDTO dto,
-            int sysBusinessActivityId,
-            int loginId,
-            CancellationToken cancellationToken = default)
-        {
             // uniqueness check ONLY if name is patched
             if (!string.IsNullOrWhiteSpace(dto.ActivityName))
             {
                 var existingEntity = await _repo.BusinessActivityExistsAsync(
                dto.ActivityName,
-               null,
+               sysBusinessActivityId,
                cancellationToken);
 
                 if (existingEntity is not null)
                 {
-                    if (existingEntity.IsDeleted == false)
+                    if (!existingEntity.Deleted)
                     {
                         // ❌ Active duplicate
-                        throw new BusinessConflictException(
-                            Messages.BusinessActivityAlreadyExists,
-                            ErrorCodes.BusinessActivityAlreadyExists);
+
+                        return ApiResponse<SysBusinessActivityDTO>.Fail
+                           (Messages.BusinessActivityAlreadyExists,
+                           StatusCodes.Status409Conflict,
+                           ErrorCodes.BusinessActivityAlreadyExists
+                           );
                     }
-
-
-                    // ♻ RECOVERABLE (Soft Deleted)
-                    throw new BusinessRecoverableException(
-                        Messages.BusinessActivityAlreadyExistsRecoverable,
-                        ErrorCodes.BusinessActivityAlreadyExistsRecoverable);
+                    return ApiResponse<SysBusinessActivityDTO>.Fail(
+                         Messages.BusinessActivityAlreadyExistsRecoverable,
+                         StatusCodes.Status422UnprocessableEntity,
+                          ErrorCodes.BusinessActivityAlreadyExistsRecoverable,
+                          new SysBusinessActivityDTO
+                          {
+                              ActivityId = existingEntity.ActivityId
+                          }
+                     );
                 }
             }
 
-
-
-            var entity = new SysBusinessActivity
-            {
-                SysBusinessActivityId = sysBusinessActivityId,
-                BusinessActivityName = dto.ActivityName,
-                IsActive = dto.Active,
-                UpdatedBy = loginId
-            };
-
+            var entity = _mapper.Map<SysBusinessActivity>(dto);
             var updated = await _repo.UpdateAsync(entity, cancellationToken);
 
             if (!updated)
-                throw new BusinessNotFoundException(
-                    Messages.BusinessActivityNotFound,
-                    ErrorCodes.BusinessActivityNotFound);
+                return ApiResponse<SysBusinessActivityDTO>.Fail(
+                    Messages.BusinessActivityUpdated,
+                    StatusCodes.Status204NoContent,
+                    ErrorCodes.NoRowAffected);
+       
 
-            var updatedEntity = await _repo.GetByIdAsync(sysBusinessActivityId, cancellationToken);
+            var updatedEntity = await _repo.GetByIdAsync
+                (sysBusinessActivityId, cancellationToken);
 
-            return _mapper.Map<SysBusinessActivityDTO>(updatedEntity);
+            return ApiResponse <SysBusinessActivityDTO>.Ok
+                ( updatedEntity,
+                Messages.BusinessActivityUpdated,
+                statusCode: StatusCodes.Status200OK);
         }
 
 
-     //   public async Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(
-     //BusinessActivityFilterDTO filter,
-     //CancellationToken cancellationToken)
-     //   {
-     //       var pagedEntities = await _repo.GetAllAsync(filter, cancellationToken);
 
-     //       return new PagedResultDto<SysBusinessActivityDTO>
-     //       {
-     //           Items = _mapper.Map<IEnumerable<SysBusinessActivityDTO>>(pagedEntities.Items),
-     //           TotalCount = pagedEntities.TotalCount,
-     //           PageNumber = pagedEntities.PageNumber,
-     //           PageSize = pagedEntities.PageSize
-     //       };
-     //   }
-
-        public async Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(BusinessActivityFilterDTO filter, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<SysBusinessActivityDTO>>
+            RecoverBusinessActivityAsync(
+            int id,
+            int loginId,
+            CancellationToken cancellationToken = default)
         {
-            var entities = await _repo.GetAllAsync(filter, cancellationToken);
-            var list = _mapper.Map<IEnumerable<SysBusinessActivityDTO>>(entities.Items);
-            return new PagedResultDto<SysBusinessActivityDTO>
+
+            var existDto =
+              await _repo.IsIdExistAsync(id,
+              cancellationToken);
+
+            if (existDto == null)
             {
-                Items = list,
-                TotalCount = entities.TotalCount,
-                PageNumber = filter.PageNumber,
-                PageSize = filter.Limit
-            };
-        }
-
-        public async Task<List<SysBusinessActivityActiveDTO>> GetActiveAsync(
-    CancellationToken cancellationToken)
-        {
-            var entities = await _repo.GetActiveAsync(cancellationToken);
-
-            return _mapper.Map<IEnumerable<SysBusinessActivityActiveDTO>>(entities).ToList();
-        }
-
-
-        public async Task<bool> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
-        {
-            var deleted = await _repo.DeleteAsync(id,loginId,  cancellationToken);
-
-            if (!deleted)
-            {
-                throw new BusinessNotFoundException(
-                    Messages.NotFound,
-                    ErrorCodes.BusinessActivityNotFound);
+                return ApiResponse<SysBusinessActivityDTO>.Fail(
+                    Messages.BusinessActivityNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.BusinessActivityNotFoundById);
             }
-            return true;
+
+            if (!existDto.Deleted)
+            {
+                return ApiResponse<SysBusinessActivityDTO>.Fail(
+                    Messages.BusinessActivityAlreadyRecovered,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.BusinessActivityAlreadyRecovered);
+            }
+
+            var rowAffect = await _repo.RecoverBusinessActivityAsync
+                (id, loginId, cancellationToken);
+            if (rowAffect)
+            {
+
+                return ApiResponse<SysBusinessActivityDTO>.Fail(
+                     Messages.BusinessActivityAlreadyRecovered,
+                     StatusCodes.Status409Conflict,
+                     ErrorCodes.BusinessActivityAlreadyRecovered);
+            }
+                     
+            var dto =
+               await _repo.GetByIdAsync
+               (id,
+               cancellationToken);
+            return ApiResponse<SysBusinessActivityDTO>.
+               Ok(dto, Messages.BusinessActivityRecovered, statusCode: StatusCodes.Status200OK);
+        }
+
+            
+        
+         public async Task<ApiResponse<int>> 
+            DeleteAsync(
+             int id, 
+             int loginId, 
+             CancellationToken cancellationToken = default)
+        {
+           
+
+            var existDto =
+            await _repo.IsIdExistAsync(id,
+            cancellationToken);
+
+            if (existDto == null)
+            {
+                return ApiResponse<int>.Fail(
+                    Messages.BusinessActivityNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.BusinessActivityNotFoundById);
+            }
+
+            if (existDto.Deleted)
+            {
+                return ApiResponse<int>.Fail(
+                    Messages.BusinessActivityAlreadyDeleted,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.BusinessActivityAlreadyDeleted);
+            }
+
+            var rowAffect = await _repo.DeleteAsync
+                (id, loginId, cancellationToken);
+            if (rowAffect)
+            {
+
+                return ApiResponse<int>.Fail(
+                     Messages.BusinessActivityAlreadyDeleted,
+                     StatusCodes.Status409Conflict,
+                     ErrorCodes.BusinessActivityAlreadyDeleted);
+            }
+
+          
+            return ApiResponse<int>.
+               Ok(id, Messages.BusinessActivityDeleted,statusCode:StatusCodes.Status200OK);
         }
     }
 }

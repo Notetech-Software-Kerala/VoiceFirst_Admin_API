@@ -16,10 +16,11 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.BusinessActivityName, o => o.MapFrom(s => s.ActivityName))
                 .ForMember(d => d.IsActive, o => o.MapFrom(s => true));
 
-            CreateMap<(SysBusinessActivityUpdateDTO,int Id), SysBusinessActivity>()
+            CreateMap<(SysBusinessActivityUpdateDTO,int Id,int UserId), SysBusinessActivity>()
                 .ForMember(d => d.BusinessActivityName, o => o.MapFrom(s => s.Item1.ActivityName))
                 .ForMember(d=>d.SysBusinessActivityId,o=>o.MapFrom(s => s.Id))
-                .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Item1.Active));
+                .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Item1.Active))
+                .ForMember(d => d.UpdatedBy, o => o.MapFrom(s => s.UserId));
 
         
 

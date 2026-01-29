@@ -34,6 +34,63 @@ public class ProgramActionRepo : IProgramActionRepo
         var entity = await connection.QueryFirstOrDefaultAsync<SysProgramActions>(cmd);
         return entity;
     }
+    
+    public async Task<ProgramActionDto> IsIdExistAsync
+          (int SysProgramActionId, CancellationToken cancellationToken = default)
+    {
+        var sql = "SELECT IsActive AS Active , IsDeleted AS Deleted FROM SysProgramActions WHERE SysProgramActionId = @SysProgramActionId ;";
+
+        var cmd = new CommandDefinition(sql, new { SysProgramActionId = SysProgramActionId }, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var entity = await connection.QueryFirstOrDefaultAsync<ProgramActionDto>(cmd);
+        return entity;
+    }
+
+    public async Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
+    List<dynamic> sysProgramActionIds,
+    CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<string, bool>
+    {
+        { "idNotFound", false },
+        { "deletedOrInactive", false }
+    };
+
+        if (sysProgramActionIds == null || sysProgramActionIds.Count == 0)
+            return result;
+
+        const string sql = @"
+        SELECT 
+            SysProgramActionId,
+            IsActive,
+            IsDeleted
+        FROM SysProgramActions
+        WHERE SysProgramActionId IN @Ids;
+        ";
+
+        using var connection = _context.CreateConnection();
+
+        var entities = (await connection.QueryAsync<SysProgramActions>(
+            new CommandDefinition(
+                sql,
+                new { Ids = sysProgramActionIds },
+                cancellationToken: cancellationToken)))
+            .ToList();
+
+        // 1️⃣ Check NOT FOUND
+        if (entities.Count != sysProgramActionIds.Distinct().Count())
+        {
+            result["idNotFound"] = true;
+        }
+
+        // 2️⃣ Check Deleted or Inactive
+        if (entities.Any(x => x.IsDeleted == true || x.IsActive == false))
+        {
+            result["deletedOrInactive"] = true;
+        }
+
+        return result;
+    }
 
     public async Task<SysProgramActions> CreateAsync(SysProgramActions entity, CancellationToken cancellationToken = default)
     {
@@ -52,6 +109,8 @@ public class ProgramActionRepo : IProgramActionRepo
         entity.SysProgramActionId = id;
         return entity;
     }
+
+
     public async Task<IEnumerable<SysProgramActions>> GetLookupAsync( CancellationToken cancellationToken = default)
     {
         var sql = new StringBuilder(@"

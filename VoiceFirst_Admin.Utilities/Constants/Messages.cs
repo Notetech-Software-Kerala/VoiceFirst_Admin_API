@@ -42,6 +42,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         // OTP
         public const string InvalidOtp = "Invalid OTP.";
         public const string OtpExpired = "OTP expired.";
+ 
 
 
         // Existing from your newer list (keep if you use them)
@@ -58,28 +59,79 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string BusinessActivityAlreadyExists =
             "Activity name already exists.Please add another name";
 
+
+
+        public const string PlaceAlreadyExists =
+           "Place  already exists.Please add another name";
+
         public const string BusinessActivityAlreadyExistsRecoverable =
             "Activity already exists but was deleted. You can recover it.";
+
+        public const string PlaceAlreadyExistsRecoverable =
+          "Place already exists but was deleted. You can recover it.";
 
         public const string BusinessActivityCreated =
             "Activity  created successfully.";
 
+        public const string PlaceCreated =
+           "Place  created successfully.";
+
         public const string BusinessActivityRecovered =
             "Activity recovered successfully.";
 
-        public const string BusinessActivityNotFound =
+        public const string BusinessActivityNotFoundById =
             "Activity  not found.";
+        public const string PlaceNotFoundById =
+            "Place  not found.";
+
+        public const string ApplicationNotFoundById =
+            "Platform  not found.";
+
+        public const string BusinessActivitiesNotFound =
+             "Activities  not found.";
+        public const string PlacesNotFound =
+           "Places  not found.";
+
+        public const string ProgramsNotFound =
+             "Programs  not found.";
+
         public const string BusinessActivityDeleted =
             "Activity  deleted sucessfully.";
+        public const string PlaceDeleted =
+            "Place  deleted sucessfully.";
 
         public const string BusinessActivityRetrieved =
             "Activity retrieve sucessfully.";
 
+        public const string PlaceRetrieved =
+            "Place retrieve sucessfully.";
+
         public const string BusinessActivityUpdated =
             "Activity updated sucessfully.";
 
+        public const string PlaceUpdated =
+           "Place updated sucessfully.";
+
+
         public const string BusinessActivityCreationFailed =
             "Activity Createion failed";
+
+        public const string NoActiveBusinessActivities =
+         "No active  activities available.";
+
+        public const string NoActivePlaces =
+        "No active  places available.";
+
+        public const string NoActivePrograms =
+       "No active  programs available.";
+
+        public const string BusinessActivitiesRetrieved =
+            "Activity activities retrieved successfully.";
+
+    
+
+        public const string PlacesRetrieved =
+       "Places retrieved successfully.";
 
 
         public const string ApplicationRetrieved =
@@ -116,24 +168,61 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ProgramRecovered =
             "Program recovered successfully.";
 
-        public const string ProgramNotFound =
+        public const string PlaceRecovered =
+           "Place recovered successfully.";
+
+
+        public const string ProgramNotFoundById =
             "Program not found.";
         public const string ProgramDeleted =
             "Program deleted sucessfully.";
+
+        
+
 
         public const string ProgramRetrieved =
             "Program retrieve sucessfully.";
 
         public const string ProgramUpdated =
             "Program updated sucessfully.";
+
         public const string BaseRefreshMessage =
             "Please refresh and try again.";
+
         // ===== SYS Program ACTIVITY =====
         public const string PlatformNotFound =
          "Selected platform is not available." + BaseRefreshMessage;
 
+        public const string BusinessActivityNotFound =
+         "Selected activity is not available." + BaseRefreshMessage;
+
+
+        public const string PlaceNotFound =
+         "Selected activity is not available." + BaseRefreshMessage;
+
         public const string ProgramActionNotFound =
          "Some selected actions are no longer available."+ BaseRefreshMessage;
+
+        public const string ProgramNotFound =
+         "Some selected program are no longer available." + BaseRefreshMessage;
+
+        public const string BusinessActivityAlreadyRecovered =
+       "Activity is already recovered.Please refresh again.";
+
+        public const string PlaceAlreadyRecovered =
+       "Place is already recovered.Please refresh again.";
+
+        public const string ProgramAlreadyRecovered =
+       "Program is already recovered.Please refresh again.";
+
+        public const string BusinessActivityAlreadyDeleted =
+     "Activity is already deleted.Please refresh again.";
+
+        public const string PlaceAlreadyDeleted =
+   "Place is already deleted.Please refresh again.";
+
+        public const string ProgramAlreadyDeleted =
+    "Program is already deleted.Please refresh again.";
 
         public const string ProgramActionRestoreSucessfully = "Program action restored sucessfully.";
         public const string ProgramActionDeleteSucessfully = "Program action deleted sucessfully.";
