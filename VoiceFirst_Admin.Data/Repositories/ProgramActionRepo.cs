@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.Text.Json;
 using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
@@ -55,8 +56,17 @@ public class ProgramActionRepo : IProgramActionRepo
         { "idNotFound", false },
         { "deletedOrInactive", false }
     };
+        var Ids = sysProgramActionIds
+       .Select(x => x switch
+       {
+           JsonElement je when je.ValueKind == JsonValueKind.Number => je.GetInt32(),
+           int i => i,
+           _ => throw new InvalidOperationException("Invalid ID type")
+       })
+       .ToList();
 
-        if (sysProgramActionIds == null || sysProgramActionIds.Count == 0)
+
+        if (Ids == null || Ids.Count == 0)
             return result;
 
         const string sql = @"
@@ -73,12 +83,12 @@ public class ProgramActionRepo : IProgramActionRepo
         var entities = (await connection.QueryAsync<SysProgramActions>(
             new CommandDefinition(
                 sql,
-                new { Ids = sysProgramActionIds },
+                new { Ids = Ids },
                 cancellationToken: cancellationToken)))
             .ToList();
 
         // 1️⃣ Check NOT FOUND
-        if (entities.Count != sysProgramActionIds.Distinct().Count())
+        if (entities.Count != Ids.Distinct().Count())
         {
             result["idNotFound"] = true;
         }

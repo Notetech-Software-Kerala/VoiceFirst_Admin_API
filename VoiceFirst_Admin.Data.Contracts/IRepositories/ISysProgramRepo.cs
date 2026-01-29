@@ -73,7 +73,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
            CancellationToken cancellationToken = default);
 
         Task<IEnumerable<SysProgramActionLinkDTO>>
-            GetLinksByProgramIdAsync(int programId, 
+            GetLinksByProgramIdAsync(int programId,
+            IDbConnection connection,
+           IDbTransaction transaction,
             CancellationToken cancellationToken = default);
 
         Task<bool> RecoverProgramAsync(

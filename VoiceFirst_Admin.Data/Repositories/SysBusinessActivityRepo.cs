@@ -110,7 +110,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 const string sql = @"
                 SELECT  s.SysBusinessActivityId    As ActivityId ,
                         s.IsDeleted            As Deleted      
-                FROM dbo.SysBusinessActivity
+                FROM dbo.SysBusinessActivity s
                 WHERE SysBusinessActivityId = @ActivityId
                  ;
                  ";

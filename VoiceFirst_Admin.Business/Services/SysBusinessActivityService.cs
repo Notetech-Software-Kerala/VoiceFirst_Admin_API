@@ -42,7 +42,7 @@ namespace VoiceFirst_Admin.Business.Services
                 null,
                 cancellationToken);
 
-            if (existingEntity.ActivityId <= 0)
+            if (existingEntity != null)
             {
                 if (!existingEntity.Deleted)
                 {
@@ -208,7 +208,7 @@ namespace VoiceFirst_Admin.Business.Services
                 }
             }
 
-            var entity = _mapper.Map<SysBusinessActivity>(dto);
+            var entity = _mapper.Map<SysBusinessActivity>((dto,sysBusinessActivityId,loginId));
             var updated = await _repo.UpdateAsync(entity, cancellationToken);
 
             if (!updated)
@@ -258,7 +258,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             var rowAffect = await _repo.RecoverBusinessActivityAsync
                 (id, loginId, cancellationToken);
-            if (rowAffect)
+            if (!rowAffect)
             {
 
                 return ApiResponse<SysBusinessActivityDTO>.Fail(
@@ -307,7 +307,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             var rowAffect = await _repo.DeleteAsync
                 (id, loginId, cancellationToken);
-            if (rowAffect)
+            if (!rowAffect)
             {
 
                 return ApiResponse<int>.Fail(
