@@ -12,5 +12,6 @@ public class PostOfficeUpdateDto
     public int? DivThreeId { get; set; }
 
     public bool? Active { get; set; }
-    public IEnumerable<ZipCodeUpdateDto> ZipCodes { get; set; } = new List<ZipCodeUpdateDto>();
+    public List<string> AddZipCodes { get; set; } = new List<string>();
+    public IEnumerable<ZipCodeUpdateDto> UpdateZipCodes { get; set; } = new List<ZipCodeUpdateDto>();
 }
