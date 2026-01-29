@@ -30,7 +30,15 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             string route, 
             int? excludeId = null, 
             CancellationToken cancellationToken = default);
-      
+
+        Task<bool>
+CheckProgramActionLinksExistAsync(
+    IEnumerable<int> programActionLinkIds,
+    IDbConnection connection,
+    IDbTransaction transaction,
+    CancellationToken cancellationToken = default);
+
+
         Task<SysProgram?> GetActiveByIdAsync(
             int id, 
             CancellationToken cancellationToken = default);
@@ -48,7 +56,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 
         Task<bool> BulkInsertActionLinksAsync(        
            int programId,
-           IEnumerable<dynamic> actionIds,
+           IEnumerable<int> actionIds,
            int createdBy,
            IDbConnection connection,
            IDbTransaction transaction,

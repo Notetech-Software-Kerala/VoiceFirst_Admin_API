@@ -12,15 +12,15 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram
         public int PlatformId { get; set; }
         public int? CompanyId { get; set; }
 
-        private List<dynamic> _actionIds = new();
+        private List<int> _actionIds = new();
 
-        public List<dynamic> ActionIds
+        public List<int> ActionIds
         {
             get => _actionIds;
             set => _actionIds = value?
                 .Distinct()
                 .ToList()
-                ?? new List<dynamic>();
+                ?? new List<int>();
         }
     }
 }
