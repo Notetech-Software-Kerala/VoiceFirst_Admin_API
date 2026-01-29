@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.Text.Json;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
@@ -82,21 +83,49 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
         public async Task<bool> BulkInsertActionLinksAsync(
-          int programId,
-          IEnumerable<dynamic> actionIds,
-          int createdBy,
-          IDbConnection connection,
-          IDbTransaction tx,
-          CancellationToken cancellationToken)
+       int programId,
+       IEnumerable<dynamic> actionIds,
+       int createdBy,
+       IDbConnection connection,
+       IDbTransaction tx,
+       CancellationToken cancellationToken)
         {
-            const string sql = @"
-            INSERT INTO SysProgramActionsLink (ProgramId, ProgramActionId, CreatedBy)
-            VALUES (@ProgramId, @ProgramActionId, @CreatedBy);";
+            if (actionIds == null || !actionIds.Any())
+                return false;
 
-            var parameters = actionIds.Select(actionId => new
+            // -------------------------
+            // CONVERT dynamic → int
+            // -------------------------
+            var ids = actionIds
+                .Select(x => x switch
+                {
+                    JsonElement je when je.ValueKind == JsonValueKind.Number => je.GetInt32(),
+                    int i => i,
+                    long l => (int)l,
+                    _ => throw new InvalidOperationException("Invalid ProgramActionId type")
+                })
+                .Distinct()
+                .ToList();
+
+            if (ids.Count == 0)
+                return false;
+
+            // -------------------------
+            // SQL
+            // -------------------------
+            const string sql = @"
+INSERT INTO SysProgramActionsLink
+    (ProgramId, ProgramActionId, CreatedBy)
+VALUES
+    (@ProgramId, @ProgramActionId, @CreatedBy);";
+
+            // -------------------------
+            // PARAMETER OBJECTS
+            // -------------------------
+            var parameters = ids.Select(id => new
             {
                 ProgramId = programId,
-                ProgramActionId = actionId,
+                ProgramActionId = id,
                 CreatedBy = createdBy
             });
 
@@ -106,6 +135,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                     parameters,
                     transaction: tx,
                     cancellationToken: cancellationToken));
+
             return rowsAffected > 0;
         }
 
@@ -205,7 +235,7 @@ WHERE ProgramId = @ProgramId
                 new CommandDefinition(sql, new { ProgramId = id }, transaction, cancellationToken: cancellationToken));
             if (dto == null) return null;
 
-            var links = await GetLinksByProgramIdAsync(id, cancellationToken);
+            var links = await GetLinksByProgramIdAsync(id, connection,transaction, cancellationToken);
             dto.Action = links.ToList();
             return dto;
         }
@@ -282,7 +312,7 @@ WHERE ProgramId = @ProgramId
         }
 
 
-        public async Task<IEnumerable<SysProgramActionLinkDTO>> GetLinksByProgramIdAsync(int programId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<SysProgramActionLinkDTO>> GetLinksByProgramIdAsync(int programId,IDbConnection   connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
         {
             const string sql = @"
             SELECT 
@@ -299,9 +329,9 @@ WHERE ProgramId = @ProgramId
             LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
             WHERE l.ProgramId = @ProgramId ;
             ";
-            using var connection = _context.CreateConnection();
+      
             return await connection.QueryAsync<SysProgramActionLinkDTO>(
-                new CommandDefinition(sql, new { ProgramId = programId }, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, new { ProgramId = programId },transaction, cancellationToken: cancellationToken));
         }
 
        
@@ -838,26 +868,37 @@ WHERE SysProgramId = @ProgramId
             ORDER BY {sortColumn} {sortOrder}
             OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
 
+            
             using var connection = _context.CreateConnection();
-            var totalCount = await connection.ExecuteScalarAsync<int>(
-                new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
-
-            var items = (await connection.QueryAsync<SysProgramDto>(
-                new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken))).ToList();
-
-            foreach (var item in items)
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
             {
-                var links = await GetLinksByProgramIdAsync(item.ProgramId, cancellationToken);
-                item.Action = links.ToList();
+                var totalCount = await connection.ExecuteScalarAsync<int>(
+               new CommandDefinition(countSql, parameters, transaction, cancellationToken: cancellationToken));
+
+                var items = (await connection.QueryAsync<SysProgramDto>(
+                    new CommandDefinition(itemsSql, parameters, transaction, cancellationToken: cancellationToken))).ToList();
+
+                foreach (var item in items)
+                {
+                    var links = await GetLinksByProgramIdAsync(item.ProgramId, connection, transaction, cancellationToken);
+                    item.Action = links.ToList();
+                }
+                transaction.Commit();
+                return new PagedResultDto<SysProgramDto>
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    PageNumber = page,
+                    PageSize = limit
+                };
             }
-
-            return new PagedResultDto<SysProgramDto>
+            catch
             {
-                Items = items,
-                TotalCount = totalCount,
-                PageNumber = page,
-                PageSize = limit
-            };
+                transaction.Rollback();
+                throw;
+            }
         }
         public async Task<List<int>> GetInvalidProgramActionLinkIdsForApplicationAsync(
     int applicationId,

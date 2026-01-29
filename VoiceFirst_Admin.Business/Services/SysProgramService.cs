@@ -9,6 +9,7 @@ using System.Data;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
@@ -55,6 +56,11 @@ namespace VoiceFirst_Admin.Business.Services
             int loginId,
             CancellationToken cancellationToken = default)
         {
+
+
+           
+
+
 
             // Platform check (Application)
             var app = await _applicationRepo.
@@ -268,18 +274,18 @@ namespace VoiceFirst_Admin.Business.Services
             if (rowAffect)
             {
 
-                return ApiResponse<int>.Fail(
+                return ApiResponse<int>.
+                   Ok(
+                   id,
+                   Messages.ProgramDeleted,
+                   statusCode: StatusCodes.Status200OK);
+
+            }
+            return ApiResponse<int>.Fail(
                      Messages.ProgramAlreadyDeleted,
                      StatusCodes.Status409Conflict,
                      ErrorCodes.ProgramAlreadyDeleted);
-            }
 
-
-            return ApiResponse<int>.
-               Ok(
-               id, 
-               Messages.ProgramDeleted,
-               statusCode: StatusCodes.Status200OK);
         }
 
 
@@ -312,7 +318,7 @@ namespace VoiceFirst_Admin.Business.Services
             var rowAffected = await _repo.RecoverProgramAsync
                 (id, loginId, cancellationToken);
 
-            if (rowAffected)
+            if (!rowAffected)
             {
 
                 return ApiResponse<SysProgramDto>.Fail(

@@ -204,7 +204,7 @@ namespace VoiceFirst_Admin.Business.Services
                 }
             }
 
-            var entity = _mapper.Map<Place>(dto);
+            var entity = _mapper.Map<Place>((dto,placeId,loginId));
             var updated = await _repo.UpdateAsync(entity, cancellationToken);
 
             if (!updated)
