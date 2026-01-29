@@ -106,7 +106,7 @@ public class RoleService : IRoleService
         return dto;
     }
 
-    public async Task<ApiResponse<RoleDto>> UpdateAsync(RoleUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<RoleDetailDto>> UpdateAsync(RoleUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
     {
         if(dto.RoleName!=null || dto.RolePurpose!=null || dto.ApplicationId != null)
         {
@@ -117,16 +117,16 @@ public class RoleService : IRoleService
                 {
                     // System roles (protected)
                     if (existing.SysRoleId is >= 1 and <= 5)
-                        return ApiResponse<RoleDto>.Fail(
+                        return ApiResponse<RoleDetailDto>.Fail(
                             Messages.RoleNameDefault,
                             StatusCodes.Status403Forbidden);
 
                     if (existing.IsDeleted == true)
-                        return ApiResponse<RoleDto>.Fail(
+                        return ApiResponse<RoleDetailDto>.Fail(
                             Messages.RoleNameExistsInTrash,
                             StatusCodes.Status422UnprocessableEntity);
 
-                    return ApiResponse<RoleDto>.Fail(
+                    return ApiResponse<RoleDetailDto>.Fail(
                         Messages.RoleNameAlreadyExists,
                         StatusCodes.Status409Conflict);
                 }
@@ -144,23 +144,47 @@ public class RoleService : IRoleService
 
             var ok = await _repo.UpdateAsync(entity, cancellationToken);
             if (!ok)
-                return ApiResponse<RoleDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+                return ApiResponse<RoleDetailDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
         }
        
         // update action links
-        else if (dto.ActionLinkId != null)
+        if (dto.AddActionLinkIds != null)
         {
-            await _repo.BulkUpsertRoleActionLinksAsync(id, dto.ApplicationId??0, dto.ActionLinkId, loginId, cancellationToken);
+            var addError = await _repo.AddRoleActionLinksAsync(
+            id,
+            dto.ApplicationId ?? 0,
+            dto.AddActionLinkIds,
+            loginId,
+            cancellationToken);
+
+                if (addError != null)
+                    return ApiResponse<RoleDetailDto>.Fail(addError.Message, addError.StatuaCode);
+        }
+        if (dto.UpdateActionLinks != null)
+        {
+
+            var updateError = await _repo.UpdateRoleActionLinksAsync(
+               id,
+               dto.ApplicationId ?? 0,
+               dto.UpdateActionLinks,
+               loginId,
+               cancellationToken);
+
+            if (updateError != null)
+                return ApiResponse<RoleDetailDto>.Fail(updateError.Message, updateError.StatuaCode);
         }
         else
         {
-            return ApiResponse<RoleDto>.Fail(Messages.BadRequest, StatusCodes.Status400BadRequest);
+            return ApiResponse<RoleDetailDto>.Fail(Messages.BadRequest, StatusCodes.Status400BadRequest);
         }
+       
         var updated = await _repo.GetByIdAsync(id, cancellationToken);
-        if (updated == null)
-            return ApiResponse<RoleDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
-        var outDto = _mapper.Map<RoleDto>(updated);
-        return ApiResponse<RoleDto>.Ok(outDto, Messages.RoleUpdatedSucessfully, StatusCodes.Status200OK);
+        if (updated == null) return null;
+        var updatedData = _mapper.Map<RoleDetailDto>(updated);
+        var links = await _repo.GetActionIdsByRoleIdAsync(id, cancellationToken);
+        var actionLinksMap = _mapper.Map<IEnumerable<RoleActionLinkDto>>(links);
+        updatedData.ActionLinks = actionLinksMap.ToList();
+        return ApiResponse<RoleDetailDto>.Ok(updatedData,Messages.Success, StatusCodes.Status200OK); ;
     }
 
     public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
