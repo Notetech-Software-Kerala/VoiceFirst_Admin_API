@@ -859,6 +859,46 @@ WHERE SysProgramId = @ProgramId
                 PageSize = limit
             };
         }
+        public async Task<List<int>> GetInvalidProgramActionLinkIdsForApplicationAsync(
+    int applicationId,
+    IEnumerable<int> programActionLinkIds,
+    CancellationToken cancellationToken = default)
+        {
+            var ids = (programActionLinkIds ?? Enumerable.Empty<int>())
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+
+            var invalidIds = new List<int>();
+            if (ids.Count == 0) return invalidIds;
+
+            const string sql = @"
+        SELECT COUNT(1)
+        FROM dbo.SysProgramActionsLink pal
+        INNER JOIN dbo.SysProgram sp
+            ON sp.SysProgramId = pal.ProgramId
+        WHERE pal.SysProgramActionLinkId = @ProgramActionLinkId
+          AND sp.ApplicationId = @ApplicationId
+          AND pal.IsActive = 1
+          AND sp.IsDeleted = 0 AND sp.IsActive = 1;
+    ";
+
+             using var conn = _context.CreateConnection();
+
+            foreach (var id in ids)
+            {
+                var count = await conn.ExecuteScalarAsync<int>(new CommandDefinition(
+                    sql,
+                    new { ApplicationId = applicationId, ProgramActionLinkId = id },
+                    cancellationToken: cancellationToken));
+
+                if (count == 0)
+                    invalidIds.Add(id);
+            }
+
+            return invalidIds;
+        }
+
 
 
         //public async Task<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> GetAllActiveByApplicationIdAsync(int applicationId, CancellationToken cancellationToken = default)

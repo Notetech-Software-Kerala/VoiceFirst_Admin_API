@@ -115,7 +115,10 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
           IDbTransaction transaction,
           CancellationToken cancellationToken = default);
 
-
+        Task<List<int>> GetInvalidProgramActionLinkIdsForApplicationAsync(
+            int applicationId,
+            IEnumerable<int> programActionLinkIds,
+            CancellationToken cancellationToken = default);
 
         //Task<bool> UpsertProgramActionLinksAsync(
         //    int programId, 

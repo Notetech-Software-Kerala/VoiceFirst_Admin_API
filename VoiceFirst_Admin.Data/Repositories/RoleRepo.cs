@@ -55,6 +55,7 @@ public class RoleRepo : IRoleRepo
 
             if (id > 0 && actionLinkIds != null && actionLinkIds.Any())
             {
+
                 await BulkInsertActionLinksAsync(connection,tx, id, actionLinkIds, entity.CreatedBy,cancellationToken);
             }
 
@@ -359,7 +360,9 @@ public class RoleRepo : IRoleRepo
         try
         {
             // load existing role->action links
-            var existingLinks = (await connection.QueryAsync<SysRolesProgramActionLink>(new CommandDefinition("SELECT * FROM SysRolesProgramActionLink WHERE SysRoleId = @RoleId;", new { RoleId = roleId }, transaction: tx, cancellationToken: cancellationToken))).ToList();
+            var existingLinks = (await connection.QueryAsync<SysRolesProgramActionLink>(
+                new CommandDefinition("SELECT * FROM SysRolesProgramActionLink WHERE SysRoleId = @RoleId;",
+                new { RoleId = roleId }, transaction: tx, cancellationToken: cancellationToken))).ToList();
 
             var existingMap = existingLinks.ToDictionary(x => x.ProgramActionLinkId, x => x);
 
