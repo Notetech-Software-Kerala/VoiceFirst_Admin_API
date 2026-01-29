@@ -14,11 +14,19 @@
         public const string NoRowAffected = "NO_ROW_AFFECTED";
         public const string BusinessActivityAlreadyRecovered =
     "BUSINESS_ACTIVITY_ALREADY_RECOVERED";
+
+        public const string PlanAlreadyRecovered =
+"PLAN_ALREADY_RECOVERED";
+
         public const string PlaceAlreadyRecovered =
    "PLACE_ALREADY_RECOVERED";
 
         public const string BusinessActivityAlreadyDeleted =
     "BUSINESS_ACTIVITY_ALREADY_DELETED";
+
+
+        public const string PlanAlreadyDeleted =
+    "PLAN_ALREADY_DELETED";
 
         public const string PlaceAlreadyDeleted =
   "PLACE_ALREADY_DELETED";
@@ -56,7 +64,7 @@
         public const string BusinessActivityNotFoundById = "BUSINESS_ACTIVITY_NOT_FOUND";
         public const string PlaceNotFoundById = "PLACE_NOT_FOUND";
         public const string PlaceNotFound = "PLACE_NOT_FOUND_DELETED_TRUE";
-
+        public const string PlanNotFoundById = "PLAN_NOT_FOUND";
 
         // ===== USER =====
         public const string UserNotFound = "USER_NOT_FOUND";

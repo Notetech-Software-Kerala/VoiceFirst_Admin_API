@@ -32,11 +32,12 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             CancellationToken cancellationToken = default);
 
         Task<bool>
-CheckProgramActionLinksExistAsync(
-    IEnumerable<int> programActionLinkIds,
-    IDbConnection connection,
-    IDbTransaction transaction,
-    CancellationToken cancellationToken = default);
+            CheckProgramActionLinksExistAsync(
+                         int programId,
+                IEnumerable<int> programActionLinkIds,
+                IDbConnection connection,
+                IDbTransaction transaction,
+                CancellationToken cancellationToken = default);
 
 
         Task<SysProgram?> GetActiveByIdAsync(
@@ -91,10 +92,7 @@ CheckProgramActionLinksExistAsync(
             CancellationToken cancellationToken = default);
         
 
-        Task<List<SysProgramByApplicationIdDTO>>
-            GetAllActiveByApplicationIdAsync(
-            int applicationId, 
-            CancellationToken cancellationToken = default);
+        
        
         Task<PagedResultDto<SysProgramDto>> GetAllAsync(
             SysProgramFilterDTO filter,
@@ -107,7 +105,7 @@ CheckProgramActionLinksExistAsync(
 
 
         Task<List<SysProgramLookUp>> 
-            GetProgramLookupAsync(
+            GetProgramLookupAsync(int? applicationId = null,
             CancellationToken cancellationToken = default);
 
 

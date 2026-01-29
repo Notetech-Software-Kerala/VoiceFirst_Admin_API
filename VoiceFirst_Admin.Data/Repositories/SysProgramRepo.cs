@@ -259,50 +259,58 @@ WHERE ProgramId = @ProgramId
 
 
 
+
+
         public async Task<List<SysProgramLookUp>>
-           GetProgramLookupAsync(CancellationToken cancellationToken = default)
-        {
-            //const string sql = @"
-            //SELECT 
-            //    p.SysProgramId AS ProgramId,
-            //    p.ProgramName,
-            //    p.LabelName AS Label,
-            //    p.ProgramRoute AS Route,
-            //    ISNULL(a.ApplicationName,'') AS PlatformName,
-            //    ISNULL(c.CompanyName,'') AS CompanyName
-            //FROM SysProgram p
-            //LEFT JOIN Application a ON a.ApplicationId = p.ApplicationId
-            //LEFT JOIN Company c ON c.CompanyId = p.CompanyId
-            //WHERE p.IsDeleted = 0 AND p.IsActive = 1
-            //ORDER BY p.ProgramName ASC;";
+            GetProgramLookupAsync(
+                int? applicationId = null,
+                CancellationToken cancellationToken = default)
+                    {
+                        var sql = new StringBuilder(@"
+                    SELECT
+                        p.SysProgramId AS ProgramId,
+                        p.ProgramName
+                    FROM SysProgram p
+                    WHERE p.IsDeleted = 0
+                      AND p.IsActive = 1
+                ");
 
-            const string sql = @"
-            SELECT 
-                p.SysProgramId AS ProgramId,
-                p.ProgramName,
-                p.LabelName AS Label,
-                p.ProgramRoute AS Route,
-                ISNULL(a.ApplicationName,'') AS PlatformName                
-            FROM SysProgram p
-            LEFT JOIN Application a ON a.ApplicationId = p.ApplicationId          
-            WHERE p.IsDeleted = 0 AND p.IsActive = 1 And p.CompanyId = 0
-            ORDER BY p.ProgramName ASC;";
+                        // 🔹 Filter by ApplicationId if provided, else fallback to CompanyId = 0
+                        if (applicationId.HasValue)
+                        {
+                            sql.Append(" AND p.ApplicationId = @ApplicationId ");
+                        }
+                        else
+                        {
+                            sql.Append(" AND p.CompanyId = 0 ");
+                        }
 
-            using var connection = _context.CreateConnection();
-            var items = (await connection.QueryAsync<SysProgramLookUp>(
-                new CommandDefinition(sql, cancellationToken: cancellationToken))).ToList();
+                        sql.Append(" ORDER BY p.ProgramName ASC;");
 
-            foreach (var item in items)
-            {
-                var actions = await GetActionLookupByProgramIdAsync(item.ProgramId, cancellationToken);
-                item.Action = actions.ToList();
-            }
+                        using var connection = _context.CreateConnection();
 
-            return items.ToList();
+                        var items = (await connection.QueryAsync<SysProgramLookUp>(
+                            new CommandDefinition(
+                                sql.ToString(),
+                                new { ApplicationId = applicationId },
+                                cancellationToken: cancellationToken
+                            ))).ToList();
+
+                        foreach (var item in items)
+                        {
+               
+                            var actions =  await GetActionLookupByProgramIdAsync(item.ProgramId, cancellationToken);
+                 
+                            item.Action = actions;
+                        }
+
+                        return items;
         }
 
 
-        public async Task<IEnumerable<SysProgramActionLinkDTO>> GetLinksByProgramIdAsync(int programId,IDbConnection   connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<SysProgramActionLinkDTO>> 
+            GetLinksByProgramIdAsync(int programId,IDbConnection   connection, 
+            IDbTransaction transaction, CancellationToken cancellationToken = default)
         {
             const string sql = @"
             SELECT 
@@ -325,96 +333,29 @@ WHERE ProgramId = @ProgramId
         }
 
        
-        public async Task<List<SysProgramActionLinkLookUp>> 
-            GetActionLookupByProgramIdAsync(int programId,
-            CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-            SELECT 
-                l.SysProgramActionLinkId AS ActionLinkId,
-                a.ProgramActionName AS ActionName
-            FROM SysProgramActionsLink l
-            INNER JOIN SysProgramActions a ON a.SysProgramActionId = l.ProgramActionId
-            WHERE l.ProgramId = @ProgramId AND l.IsActive = 1;";
-
-            using var connection = _context.CreateConnection();
-
-            var dto = await connection.QueryAsync<SysProgramActionLinkLookUp>(
-                new CommandDefinition(sql, new { ProgramId = programId },
-                cancellationToken: cancellationToken));
-
-            return dto.ToList();
-        }
-
-
-
-
-        //public async Task<bool> UpdateAsync
-        //    (SysProgram entity,
-        //    IDbConnection connection,
-        //   IDbTransaction transaction, 
-        //   CancellationToken cancellationToken = default)
+        //public async Task<List<SysProgramActionLinkLookUp>> 
+        //    GetActionLookupByProgramIdAsync(int programId,
+        //    CancellationToken cancellationToken = default)
         //{
-        //    var sets = new List<string>();
-        //    var parameters = new DynamicParameters();
+        //    const string sql = @"
+        //    SELECT 
+        //        l.SysProgramActionLinkId AS ActionLinkId,
+        //        a.ProgramActionName AS ActionName
+        //    FROM SysProgramActionsLink l
+        //    INNER JOIN SysProgramActions a ON a.SysProgramActionId = l.ProgramActionId
+        //    WHERE l.ProgramId = @ProgramId AND l.IsActive = 1;";
 
-        //    if (!string.IsNullOrWhiteSpace(entity.ProgramName))
-        //    {
-        //        sets.Add("ProgramName = @ProgramName");
-        //        parameters.Add("ProgramName", entity.ProgramName);
-        //    }
+        //    using var connection = _context.CreateConnection();
 
-        //    if (!string.IsNullOrWhiteSpace(entity.LabelName))
-        //    {
-        //        sets.Add("LabelName = @LabelName");
-        //        parameters.Add("LabelName", entity.LabelName);
-        //    }
-
-        //    if (!string.IsNullOrWhiteSpace(entity.ProgramRoute))
-        //    {
-        //        sets.Add("ProgramRoute = @ProgramRoute");
-        //        parameters.Add("ProgramRoute", entity.ProgramRoute);
-        //    }
-
-        //    if (entity.ApplicationId > 0)
-        //    {
-        //        sets.Add("ApplicationId = @ApplicationId");
-        //        parameters.Add("ApplicationId", entity.ApplicationId);
-        //    }
-
-        //    if (entity.CompanyId > 0)
-        //    {
-        //        sets.Add("CompanyId = @CompanyId");
-        //        parameters.Add("CompanyId", entity.CompanyId);
-        //    }
-
-        //    if (entity.IsActive.HasValue)
-        //    {
-        //        sets.Add("IsActive = @IsActive");
-        //        parameters.Add("IsActive", entity.IsActive.Value);
-        //    }
-
-        //    if (sets.Count == 0)
-        //        return false;
-
-        //    sets.Add("UpdatedBy = @UpdatedBy");
-        //    sets.Add("UpdatedAt = SYSDATETIME()");
-        //    parameters.Add("UpdatedBy", entity.UpdatedBy);
-        //    parameters.Add("ProgramId", entity.SysProgramId);
-
-        //    var sql = new StringBuilder();
-        //    sql.Append("UPDATE SysProgram SET ");
-        //    sql.Append(string.Join(", ", sets));
-        //    sql.Append(" WHERE SysProgramId = @ProgramId AND IsDeleted = 0;");
-
-
-        //    var affected = await connection.ExecuteAsync
-        //        (new CommandDefinition(sql.ToString(),
-        //        parameters,transaction,
+        //    var dto = await connection.QueryAsync<SysProgramActionLinkLookUp>(
+        //        new CommandDefinition(sql, new { ProgramId = programId },
         //        cancellationToken: cancellationToken));
 
-        //    return affected > 0;
+        //    return dto.ToList();
         //}
+
+
+
 
 
         public async Task<bool> UpdateAsync(
@@ -536,87 +477,40 @@ WHERE SysProgramId = @ProgramId
 
 
         public async Task<bool>
-CheckProgramActionLinksExistAsync(
-    IEnumerable<int> programActionLinkIds,
-    IDbConnection connection,
-    IDbTransaction transaction,
-    CancellationToken cancellationToken = default)
-        {
-            // If no IDs are sent, treat as invalid
-            if (programActionLinkIds == null || !programActionLinkIds.Any())
-                return false;
+            CheckProgramActionLinksExistAsync(
+                        int programId,
+                IEnumerable<int> programActionLinkIds,
+                IDbConnection connection,
+                IDbTransaction transaction,
+                CancellationToken cancellationToken = default)
+                    {
+                        // If no IDs are sent, treat as invalid
+                        if (programActionLinkIds == null || !programActionLinkIds.Any())
+                            return false;
 
-            const string sql = @"
-        SELECT COUNT(1)
-        FROM SysProgramActionsLink
-        WHERE ProgramActionLinkId IN @Ids
-    ";
+                        const string sql = @"
+                    SELECT COUNT(1)
+                    FROM SysProgramActionsLink
+                    WHERE ProgramActionId IN @ProgramActionId And ProgramId = @programId
+                ";
 
-            var existingCount = await connection.ExecuteScalarAsync<int>(
-                new CommandDefinition(
-                    sql,
-                    new { Ids = programActionLinkIds },
-                    transaction,
-                    cancellationToken: cancellationToken
-                ));
+                        var existingCount = await connection.ExecuteScalarAsync<int>(
+                            new CommandDefinition(
+                                sql,
+                                new { ProgramActionId = programActionLinkIds , programId = programId },
+                                transaction,
+                                cancellationToken: cancellationToken
+                            ));
 
-            // 🔹 If counts mismatch, at least one ID does not exist
-            return existingCount == programActionLinkIds.Count();
-        }
-
-
-
+                        // 🔹 If counts mismatch, at least one ID does not exist
+                        return existingCount == programActionLinkIds.Count();
+                    }
 
 
 
-        //public async Task<bool> 
-        //    UpsertProgramActionLinksAsync(
-        //    int programId, 
-        //    IDbConnection connection,
-        //    IDbTransaction transaction,
-        //    IEnumerable<SysProgramActionLinkUpdateDTO> actions,
-        //    int userId, CancellationToken cancellationToken = default)
-        //{
-        //    const string selectSql = @"SELECT TOP 1 * FROM SysProgramActionsLink WHERE ProgramId = @ProgramId AND ProgramActionId = @ActionId";
-        //    const string insertSql = @"INSERT INTO SysProgramActionsLink (ProgramId, ProgramActionId, IsActive, CreatedBy, CreatedAt) VALUES (@ProgramId, @ActionId, @IsActive, @CreatedBy, SYSDATETIME())";
-        //    const string updateSql = @"UPDATE SysProgramActionsLink SET IsActive = @IsActive, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE ProgramId = @ProgramId AND ProgramActionId = @ActionId";
 
 
 
-        //    foreach (var action in actions)
-        //    {
-        //        var existing = await connection.QueryFirstOrDefaultAsync
-        //            <SysProgramActionsLink>(
-        //            new CommandDefinition(selectSql,
-        //            new { ProgramId = programId, 
-        //             ActionId = action.ActionId },
-        //            transaction: transaction, 
-        //            cancellationToken: cancellationToken));
-
-        //        if (existing == null)
-        //        {
-        //            await connection.ExecuteAsync(
-        //                new CommandDefinition(insertSql,
-        //                new { ProgramId = programId,
-        //                ActionId = action.ActionId, 
-        //                IsActive = action.Active, 
-        //                CreatedBy = userId }, 
-        //                transaction: transaction, 
-        //                cancellationToken: cancellationToken));
-        //        }
-        //        else
-        //        {
-        //            await connection.ExecuteAsync(
-        //                new CommandDefinition(updateSql,
-        //                new { ProgramId = programId,
-        //                ActionId = action.ActionId, 
-        //                IsActive = action.Active, 
-        //                UpdatedBy = userId }, 
-        //                transaction: transaction, 
-        //                cancellationToken: cancellationToken));
-        //        }
-        //    }             
-        //}
 
 
 
@@ -635,37 +529,12 @@ CheckProgramActionLinksExistAsync(
 
 
 
+
+
         
 
-        public async Task<List<SysProgramByApplicationIdDTO>>
-            GetAllActiveByApplicationIdAsync(
-            int applicationId,
-            CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-            SELECT
-                p.SysProgramId AS ProgramId,
-                p.ProgramName                
-            FROM SysProgram p         
-            WHERE p.ApplicationId = @ApplicationId AND p.IsActive = 1 AND p.IsDeleted = 0
-            ORDER BY p.ProgramName ASC;";
-
-            using var connection = _context.CreateConnection();
-            var items = (await connection.QueryAsync<SysProgramByApplicationIdDTO>(
-                new CommandDefinition(sql, new { ApplicationId = applicationId }, cancellationToken: cancellationToken))).ToList();
-
-            foreach (var item in items)
-            {
-                var links = await GetLinksByProgramIdForApplicationIdAsync(item.ProgramId, cancellationToken);
-                item.Action = links.ToList();
-            }
-              
-           return items;
-        }
-
-
-        public async Task<IEnumerable<SysProgramActionLinkByApplicationIdDTO>>
-          GetLinksByProgramIdForApplicationIdAsync(
+        public async Task<List<SysProgramActionLinkLookUp>>
+          GetActionLookupByProgramIdAsync(
           int programId,
           CancellationToken cancellationToken = default)
         {
@@ -679,8 +548,9 @@ CheckProgramActionLinksExistAsync(
             WHERE l.ProgramId = @ProgramId AND l.IsActive = 1;
             ";
             using var connection = _context.CreateConnection();
-            return await connection.QueryAsync<SysProgramActionLinkByApplicationIdDTO>(
+            var actions = await connection.QueryAsync<SysProgramActionLinkLookUp>(
                 new CommandDefinition(sql, new { ProgramId = programId }, cancellationToken: cancellationToken));
+            return actions.ToList();
         }
 
 
@@ -927,42 +797,44 @@ CheckProgramActionLinksExistAsync(
                 throw;
             }
         }
+
+
         public async Task<List<int>> GetInvalidProgramActionLinkIdsForApplicationAsync(
-    int applicationId,
-    IEnumerable<int> programActionLinkIds,
-    CancellationToken cancellationToken = default)
-        {
-            var ids = (programActionLinkIds ?? Enumerable.Empty<int>())
-                .Where(x => x > 0)
-                .Distinct()
-                .ToList();
-
-            var invalidIds = new List<int>();
-            if (ids.Count == 0) return invalidIds;
-
-            const string sql = @"
-        SELECT COUNT(1)
-        FROM dbo.SysProgramActionsLink pal
-        INNER JOIN dbo.SysProgram sp
-            ON sp.SysProgramId = pal.ProgramId
-        WHERE pal.SysProgramActionLinkId = @ProgramActionLinkId
-          AND sp.ApplicationId = @ApplicationId
-          AND pal.IsActive = 1
-          AND sp.IsDeleted = 0 AND sp.IsActive = 1;
-    ";
-
-             using var conn = _context.CreateConnection();
-
-            foreach (var id in ids)
+        int applicationId,
+        IEnumerable<int> programActionLinkIds,
+        CancellationToken cancellationToken = default)
             {
-                var count = await conn.ExecuteScalarAsync<int>(new CommandDefinition(
-                    sql,
-                    new { ApplicationId = applicationId, ProgramActionLinkId = id },
-                    cancellationToken: cancellationToken));
+                var ids = (programActionLinkIds ?? Enumerable.Empty<int>())
+                    .Where(x => x > 0)
+                    .Distinct()
+                    .ToList();
 
-                if (count == 0)
-                    invalidIds.Add(id);
-            }
+                var invalidIds = new List<int>();
+                if (ids.Count == 0) return invalidIds;
+
+                const string sql = @"
+            SELECT COUNT(1)
+            FROM dbo.SysProgramActionsLink pal
+            INNER JOIN dbo.SysProgram sp
+                ON sp.SysProgramId = pal.ProgramId
+            WHERE pal.SysProgramActionLinkId = @ProgramActionLinkId
+              AND sp.ApplicationId = @ApplicationId
+              AND pal.IsActive = 1
+              AND sp.IsDeleted = 0 AND sp.IsActive = 1;
+        ";
+
+                 using var conn = _context.CreateConnection();
+
+                foreach (var id in ids)
+                {
+                    var count = await conn.ExecuteScalarAsync<int>(new CommandDefinition(
+                        sql,
+                        new { ApplicationId = applicationId, ProgramActionLinkId = id },
+                        cancellationToken: cancellationToken));
+
+                    if (count == 0)
+                        invalidIds.Add(id);
+                }
 
             return invalidIds;
         }

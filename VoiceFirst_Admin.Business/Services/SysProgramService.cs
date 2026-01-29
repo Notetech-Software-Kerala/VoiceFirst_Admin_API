@@ -16,7 +16,6 @@ using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
-using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
@@ -236,9 +235,9 @@ namespace VoiceFirst_Admin.Business.Services
             {
 
                 return ApiResponse<SysProgramDto>.Fail(
-                   Messages.BusinessActivityNotFoundById,
+                   Messages.ProgramNotFoundById,
                    StatusCodes.Status404NotFound,
-                    ErrorCodes.BusinessActivityNotFoundById);
+                    ErrorCodes.NotFound);
             }
             return ApiResponse<SysProgramDto>.Ok(
                 dto,
@@ -362,7 +361,7 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<ApiResponse<List<SysProgramByApplicationIdDTO>>>
+        public async Task<ApiResponse<List<SysProgramLookUp>>>
             GetAllActiveByApplicationIdAsync(
             int applicationId,
             CancellationToken cancellationToken = default)
@@ -375,23 +374,23 @@ namespace VoiceFirst_Admin.Business.Services
                 cancellationToken);
 
             if (app == null)
-                return ApiResponse<List<SysProgramByApplicationIdDTO>>.Fail(
+                return ApiResponse<List<SysProgramLookUp>>.Fail(
                     Messages.ApplicationNotFoundById,
                     StatusCodes.Status404NotFound,
                     ErrorCodes.PlatFormNotFound
                     );
 
             if (app.IsActive == false)
-                return ApiResponse<List<SysProgramByApplicationIdDTO>>.Fail(
+                return ApiResponse<List<SysProgramLookUp>>.Fail(
                         Messages.PlatformNotFound,
                         StatusCodes.Status409Conflict,
                         ErrorCodes.PlatFormNotActive
                         );
 
-            var items = await _repo.GetAllActiveByApplicationIdAsync(
+            var items = await _repo.GetProgramLookupAsync(
                 applicationId, cancellationToken);
 
-            return ApiResponse<List<SysProgramByApplicationIdDTO>>.Ok(
+            return ApiResponse<List<SysProgramLookUp>>.Ok(
                 items,
                 Messages.ProgramRetrieved,
                 StatusCodes.Status200OK);                    
@@ -399,9 +398,38 @@ namespace VoiceFirst_Admin.Business.Services
 
 
         public async Task<ApiResponse<List<SysProgramLookUp>>>
+          GetAllActiveForPlanAsync(
+          CancellationToken cancellationToken = default)
+        {
+
+
+            // Platform check (Application)
+            var app = await _applicationRepo.
+                IsIdExistAsync(2,
+                cancellationToken);
+
+            if (app == null || app.IsActive == false)
+                return ApiResponse<List<SysProgramLookUp>>.Fail(
+                    Messages.ApplicationNotFoundById,
+                    StatusCodes.Status204NoContent,
+                    ErrorCodes.PlatFormNotFound
+                    );
+
+          
+            var items = await _repo.GetProgramLookupAsync(
+                2, cancellationToken);
+
+            return ApiResponse<List<SysProgramLookUp>>.Ok(
+                items,
+                Messages.ProgramRetrieved,
+                StatusCodes.Status200OK);
+        }
+
+
+        public async Task<ApiResponse<List<SysProgramLookUp>>>
             GetProgramLookupAsync(CancellationToken cancellationToken = default)
         {
-            var result = await _repo.GetProgramLookupAsync(cancellationToken)
+            var result = await _repo.GetProgramLookupAsync(null,cancellationToken)
                         ?? new List<SysProgramLookUp>();
 
             return ApiResponse<List<SysProgramLookUp>>.Ok(
@@ -530,38 +558,42 @@ namespace VoiceFirst_Admin.Business.Services
             {
                 var existingByLabel = await _repo.ExistsByLabelAsync
                     (applicationId, dto.Label, programId, cancellationToken);
+                if (existingByLabel != null)
+                {
+                    if (existingByLabel.IsDeleted == true)
 
-                if (existingByLabel.IsDeleted == true)
+                        return ApiResponse<SysProgramDto>.
+                            Fail(Messages.ProgramLabelAlreadyExistsRecoverable,
+                            StatusCodes.Status422UnprocessableEntity,
+                            ErrorCodes.ProgramLabelAlreadyExistsRecoverable,
+                            _mapper.Map<SysProgramDto>(existingByLabel));
 
-                    return ApiResponse<SysProgramDto>.
-                        Fail(Messages.ProgramLabelAlreadyExistsRecoverable,
-                        StatusCodes.Status422UnprocessableEntity,
-                        ErrorCodes.ProgramLabelAlreadyExistsRecoverable,
-                        _mapper.Map<SysProgramDto>(existingByLabel));
-
-                return ApiResponse<SysProgramDto>.Fail(
-                    Messages.ProgramLabelAlreadyExists,
-                    StatusCodes.Status409Conflict,
-                    ErrorCodes.ProgramLabelAlreadyExists);
+                    return ApiResponse<SysProgramDto>.Fail(
+                        Messages.ProgramLabelAlreadyExists,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.ProgramLabelAlreadyExists);
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(dto.Route))
             {
                 var existingByRoute = await _repo.ExistsByRouteAsync
                     (applicationId, dto.Route, programId, cancellationToken);
+                if (existingByRoute != null)
+                {
+                    if (existingByRoute.IsDeleted == true)
+                        return ApiResponse<SysProgramDto>.Fail
+                            (Messages.ProgramRouteAlreadyExistsRecoverable,
+                            StatusCodes.Status422UnprocessableEntity,
+                            ErrorCodes.ProgramRouteAlreadyExistsRecoverable,
+                            _mapper.Map<SysProgramDto>(existingByRoute)
+                            );
 
-                if (existingByRoute.IsDeleted == true)
                     return ApiResponse<SysProgramDto>.Fail
-                        (Messages.ProgramRouteAlreadyExistsRecoverable,
-                        StatusCodes.Status422UnprocessableEntity,
-                        ErrorCodes.ProgramRouteAlreadyExistsRecoverable,
-                        _mapper.Map<SysProgramDto>(existingByRoute)
-                        );
-
-                return ApiResponse<SysProgramDto>.Fail
-                    (Messages.ProgramRouteAlreadyExists,
-                    StatusCodes.Status409Conflict,
-                    ErrorCodes.ProgramRouteAlreadyExists);
+                        (Messages.ProgramRouteAlreadyExists,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.ProgramRouteAlreadyExists);
+                }
             }
 
 
@@ -582,11 +614,12 @@ namespace VoiceFirst_Admin.Business.Services
 
 
 
-                if (dto.UpdationActions != null)
+                if (dto.UpdateActions != null)
                 {
                     var updationActionsFound =
                      await _repo.CheckProgramActionLinksExistAsync(
-                         dto.UpdationActions
+                         programId,
+                         dto.UpdateActions
                              .Select(x => x.ActionId)
                              .ToList(),
                          connection,
@@ -604,7 +637,7 @@ namespace VoiceFirst_Admin.Business.Services
 
                     actionUpdation = await _repo.BulkUpdateActionLinksAsync(
                              programId,
-                             dto.UpdationActions,
+                             dto.UpdateActions,
                              loginId,
                              connection,
                              transaction,

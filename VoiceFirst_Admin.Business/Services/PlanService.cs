@@ -10,6 +10,7 @@ using VoiceFirst_Admin.Utilities.DTOs.Features.Plan;
 using VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -167,9 +168,8 @@ namespace VoiceFirst_Admin.Business.Services
                 }
 
                 
-                var outdto = await _planRepository.GetDetailByIdAsync
-                    (planId, connection,
-                        transaction, cancellationToken);
+                var outdto = await _planRepository.GetByIdAsync
+                    (planId, connection,transaction, cancellationToken);
                 transaction.Commit();
                 return ApiResponse<PlanDetailDto>.Ok(
                     outdto!,
@@ -213,9 +213,40 @@ namespace VoiceFirst_Admin.Business.Services
             return ApiResponse<bool>.Ok(true, Messages.Updated);
         }
 
-        public async Task<VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDetailDto>> GetAllAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanFilterDto filter, CancellationToken cancellationToken = default)
+
+        public async Task<ApiResponse<PlanDetailDto>>
+           GetByIdAsync(int id,
+           CancellationToken cancellationToken = default)
         {
-            var paged = await _planRepository.GetAllAsync(filter, cancellationToken);
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            var dto = await _planRepository.GetByIdAsync
+                (id,
+                connection,
+                transaction,
+                cancellationToken);
+
+            if (dto == null)
+            {
+
+                return ApiResponse<PlanDetailDto>.Fail(
+                   Messages.PlanNotFoundById,
+                   StatusCodes.Status404NotFound,
+                    ErrorCodes.NotFound);
+            }
+            return ApiResponse<PlanDetailDto>.Ok(
+                dto,
+                Messages.PlanRetrieved,
+                StatusCodes.Status200OK);
+        }
+
+        public async Task<ApiResponse<PagedResultDto<PlanDetailDto>>> 
+            GetAllAsync(PlanFilterDto filter, 
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _planRepository.GetAllAsync(filter, cancellationToken);
             //var items = paged.Items.Select(p => new VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDetailDto
             //{
             //    PlanId = p.PlanId,
@@ -230,34 +261,114 @@ namespace VoiceFirst_Admin.Business.Services
             //    DeletedDate = p.DeletedAt
             //}).ToList();
 
-            return new VoiceFirst_Admin.Utilities.DTOs.Shared.PagedResultDto<VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDetailDto>
-            {
-                Items = paged.Items,
-                TotalCount = paged.TotalCount,
-                PageNumber = filter.PageNumber,
-                PageSize = filter.Limit
-            };
+           
+            return ApiResponse<PagedResultDto<PlanDetailDto>>.Ok(
+               result,
+               result.TotalCount == 0
+                   ? Messages.PlansNotFound
+                   : Messages.PlansRetrieved,
+                statusCode: StatusCodes.Status200OK
+           );
         }
 
-        public async Task<ApiResponse<bool>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
+
+        public async Task<ApiResponse<int>>
+           DeleteAsync(
+            int id,
+            int loginId,
+            CancellationToken cancellationToken = default)
         {
-            var deleted = await _planRepository.DeleteAsync(id, loginId, cancellationToken);
-            if (!deleted)
+
+
+            var existDto =
+            await _planRepository.IsIdExistAsync(id,
+            cancellationToken);
+
+            if (existDto == null)
             {
-                return ApiResponse<bool>.Fail(Messages.NotFound, StatusCodes.Status404NotFound, ErrorCodes.NotFound);
+                return ApiResponse<int>.Fail(
+                    Messages.PlanNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.PlanNotFoundById);
             }
-            return ApiResponse<bool>.Ok(true, Messages.Success);
+
+            if (existDto.Deleted)
+            {
+                return ApiResponse<int>.Fail(
+                    Messages.PlanAlreadyDeleted,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.PlanAlreadyDeleted);
+            }
+
+            var rowAffect = await _planRepository.DeleteAsync
+                (id, loginId, cancellationToken);
+            if (!rowAffect)
+            {
+
+                return ApiResponse<int>.Fail(
+                     Messages.PlanAlreadyDeleted,
+                     StatusCodes.Status409Conflict,
+                     ErrorCodes.PlanAlreadyDeleted);
+            }
+
+
+            return ApiResponse<int>.
+               Ok(id, Messages.PlanDeleted, statusCode: StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<int>> RecoverPlanAsync(int id, int loginId, CancellationToken cancellationToken = default)
+
+
+
+        public async Task<ApiResponse<PlanDetailDto>>
+            RecoverAsync(
+            int id,
+            int loginId,
+            CancellationToken cancellationToken = default)
         {
-            var recovered = await _planRepository.RecoverPlanAsync(id, loginId, cancellationToken);
-            if (recovered <= 0)
+
+            var existDto =
+              await _planRepository.IsIdExistAsync(id,
+              cancellationToken);
+
+            if (existDto == null)
             {
-                return ApiResponse<int>.Fail(Messages.NotFound, StatusCodes.Status404NotFound, ErrorCodes.NotFound);
+                return ApiResponse<PlanDetailDto>.Fail(
+                    Messages.PlanNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.PlanNotFoundById);
             }
-            return ApiResponse<int>.Ok(recovered, Messages.Success);
+
+            if (!existDto.Deleted)
+            {
+                return ApiResponse<PlanDetailDto>.Fail(
+                    Messages.PlanAlreadyRecovered,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.PlanAlreadyRecovered);
+            }
+
+            var rowAffect = await _planRepository.RecoverAsync
+                (id, loginId, cancellationToken);
+            if (!rowAffect)
+            {
+
+                return ApiResponse<PlanDetailDto>.Fail(
+                     Messages.PlanAlreadyRecovered,
+                     StatusCodes.Status409Conflict,
+                     ErrorCodes.PlanAlreadyRecovered);
+            }
+
+            var dto =
+               await GetByIdAsync
+               (id,
+               cancellationToken);
+            return ApiResponse<PlanDetailDto>.
+               Ok(dto.Data, Messages.PlanRecovered, statusCode: StatusCodes.Status200OK);
         }
+
+
+        
+        
+        
         public async Task<ApiResponse<int>> LinkPlansRoleAsync(int roleId, List<int> planIds, int loginId, CancellationToken cancellationToken = default)
         {
             // Validate role exists

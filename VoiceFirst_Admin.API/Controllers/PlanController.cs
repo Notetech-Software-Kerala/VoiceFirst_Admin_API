@@ -63,17 +63,17 @@ namespace VoiceFirst_Admin.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAsync([FromQuery] VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanFilterDto filter, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAllAsync([FromQuery] PlanFilterDto filter, CancellationToken cancellationToken)
         {
-            var result = await _planService.GetAllAsync(filter, cancellationToken);
-            return Ok(ApiResponse<object>.Ok(result, VoiceFirst_Admin.Utilities.Constants.Messages.PlanRetrieved));
+            var response = await _planService.GetAllAsync(filter, cancellationToken);
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpPatch("{planId:int}")]
-        public async Task<IActionResult> UpdateAsync(int planId, [FromBody] VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanUpdateDto model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateAsync(int planId, [FromBody] PlanUpdateDto model, CancellationToken cancellationToken)
         {
             if (model == null)
-                return BadRequest(VoiceFirst_Admin.Utilities.Models.Common.ApiResponse<object>.Fail(VoiceFirst_Admin.Utilities.Constants.Messages.PayloadRequired));
+                return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
 
             const int userId = 1;
             var res = await _planService.UpdateAsync(planId, model, userId, cancellationToken);
@@ -92,7 +92,7 @@ namespace VoiceFirst_Admin.API.Controllers
         public async Task<IActionResult> RecoverAsync(int id, CancellationToken cancellationToken)
         {
             const int userId = 1;
-            var result = await _planService.RecoverPlanAsync(id, userId, cancellationToken);
+            var result = await _planService.RecoverAsync(id, userId, cancellationToken);
             return StatusCode(result.StatusCode, result);
         }
 
