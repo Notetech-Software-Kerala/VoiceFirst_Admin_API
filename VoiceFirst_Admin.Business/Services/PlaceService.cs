@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Text;
+using System.Transactions;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
@@ -207,12 +209,14 @@ namespace VoiceFirst_Admin.Business.Services
 
 
 
-        public async Task<ApiResponse<PlaceDTO>> UpdateAsync(
+        public async Task<ApiResponse<PlaceDetailDTO>> UpdateAsync(
           PlaceUpdateDTO dto,
           int placeId,
           int loginId,
           CancellationToken cancellationToken = default)
         {
+            var postOfficeLink = false;
+
             var existDto =
                 await _repo.IsIdExistAsync(placeId,
                 cancellationToken);
@@ -221,7 +225,7 @@ namespace VoiceFirst_Admin.Business.Services
             if (existDto == null)
             {
 
-                return ApiResponse<PlaceDTO>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                    Messages.PlaceNotFoundById,
                    StatusCodes.Status404NotFound,
                     ErrorCodes.PlaceNotFoundById);
@@ -229,13 +233,15 @@ namespace VoiceFirst_Admin.Business.Services
             else if (existDto.Deleted)
             {
 
-
-                return ApiResponse<PlaceDTO>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                  Messages.PlaceNotFound,
                  StatusCodes.Status409Conflict,
                   ErrorCodes.PlaceNotFound);
 
             }
+
+
+
 
             // uniqueness check ONLY if name is patched
             if (!string.IsNullOrWhiteSpace(dto.PlaceName))
@@ -251,42 +257,151 @@ namespace VoiceFirst_Admin.Business.Services
                     {
                         // ❌ Active duplicate
 
-                        return ApiResponse<PlaceDTO>.Fail
+                        return ApiResponse<PlaceDetailDTO>.Fail
                            (Messages.PlaceAlreadyExists,
                            StatusCodes.Status409Conflict,
                            ErrorCodes.PlaceAlreadyExists
                            );
                     }
-                    return ApiResponse<PlaceDTO>.Fail(
+                    return ApiResponse<PlaceDetailDTO>.Fail(
                          Messages.PlaceAlreadyExistsRecoverable,
                          StatusCodes.Status422UnprocessableEntity,
                           ErrorCodes.PlaceAlreadyExistsRecoverable,
-                          new PlaceDTO
+                          new PlaceDetailDTO
                           {
                               PlaceId = existingEntity.PlaceId
                           }
                      );
                 }
             }
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
 
-            var entity = _mapper.Map<Place>((dto,placeId,loginId));
-            var updated = await _repo.UpdateAsync(entity, cancellationToken);
+            var entity = _mapper.Map<Place>((dto, placeId, loginId));
+            try
+            {
+              
+               
+                var placeUpdation = await _repo.UpdateAsync(entity, connection,
+                transaction, cancellationToken);
 
-            if (!updated)
-                return ApiResponse<PlaceDTO>.Fail(
+
+
+
+                if (dto.UpdatePostOffices != null)
+                {
+                    var isPostOfficeLinked =
+                     await _repo.CheckPlacePostOfficeLinksExistAsync(
+                         placeId,
+                         dto.UpdatePostOffices
+                             .Select(x => x.PostOfficeId)
+                             .ToList(),
+                         true,
+                         connection,
+                         transaction,
+                         cancellationToken);
+                    if (!isPostOfficeLinked)
+                    {
+                        transaction.Rollback();
+                        return ApiResponse<PlaceDetailDTO>.Fail(
+                          Messages.PostOfficesNotFound,
+                          StatusCodes.Status404NotFound,
+                          ErrorCodes.PostOfficeNotFound
+                          );
+                    }
+
+                    postOfficeLink = await _repo.BulkUpdatePlacePostOfficeLinksAsync(
+                             placeId,
+                             dto.UpdatePostOffices,
+                             loginId,
+                             connection,
+                             transaction,
+                             cancellationToken);
+                }
+
+
+
+                if (dto.InsertPostOffices != null)
+                {
+                    var linkedPostOfficeFound =
+                    await _repo.CheckPlacePostOfficeLinksExistAsync(
+                        placeId,
+                        dto.InsertPostOffices,
+                        false,
+                        connection,
+                        transaction,
+                        cancellationToken);
+                    if (linkedPostOfficeFound)
+                    {
+                        transaction.Rollback();
+                        return ApiResponse<PlaceDetailDTO>.Fail(
+                          Messages.PostOfficesAreAlreadyLinked,
+                          StatusCodes.Status409Conflict,
+                          ErrorCodes.PostOfficeAreAlreadyLinked
+                          );
+                    }
+
+                    var exist = await _postOfficeRepo.
+                     IsBulkIdsExistAsync(dto.InsertPostOffices,
+                      cancellationToken);
+                    if (exist["idNotFound"] == true)
+                    {
+                        return ApiResponse<PlaceDetailDTO>.Fail(
+                       Messages.PostOfficesNotFound,
+                       StatusCodes.Status404NotFound,
+                       ErrorCodes.PostOfficeNotFound
+                       );
+                    }
+                    if (exist["deletedOrInactive"] == true)
+                    {
+                        return ApiResponse<PlaceDetailDTO>.Fail
+                           (Messages.PostOfficeNotFound,
+                           StatusCodes.Status409Conflict,
+                           ErrorCodes.PostOfficeNotFound);
+                    }
+
+                    postOfficeLink = await _repo.BulkInsertPlacePostOfficeLinksAsync(
+                               placeId,
+                               dto.InsertPostOffices,
+                               loginId,
+                               connection,
+                               transaction,
+                               cancellationToken);
+                }
+
+
+                if (!postOfficeLink && !placeUpdation)
+                {
+                    return ApiResponse<PlaceDetailDTO>.Fail(
                     Messages.PlaceUpdated,
                     StatusCodes.Status204NoContent,
                     ErrorCodes.NoRowAffected);
+                }
 
+                var dtoOut = await _repo.GetByIdAsync(placeId,
+                    connection, transaction, cancellationToken);
 
-            var updatedEntity = await GetByIdAsync
-                (placeId, cancellationToken);
+                transaction.Commit();
 
-            return ApiResponse<PlaceDTO>.Ok
-                (updatedEntity.Data,
-                Messages.PlaceUpdated,
-                statusCode: StatusCodes.Status200OK);
+                return ApiResponse<PlaceDetailDTO>.Ok(
+                    dtoOut!,
+                    Messages.PlaceUpdated,
+                    statusCode: StatusCodes.Status200OK);
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+
+           
         }
+
+
+
+
+        
 
 
 

@@ -23,7 +23,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
             CancellationToken cancellationToken = default);
 
 
-        Task<ApiResponse<PlaceDTO>>
+        Task<ApiResponse<PlaceDetailDTO>>
             UpdateAsync(
             PlaceUpdateDTO dto,
             int sysBusinessActivityId, int loginId,

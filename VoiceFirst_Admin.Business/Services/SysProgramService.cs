@@ -629,6 +629,7 @@ namespace VoiceFirst_Admin.Business.Services
                          dto.UpdateActions
                              .Select(x => x.ActionId)
                              .ToList(),
+                         true,
                          connection,
                          transaction,
                          cancellationToken);
@@ -658,7 +659,8 @@ namespace VoiceFirst_Admin.Business.Services
                     var linkedActionsFound =
                     await _repo.CheckProgramActionLinksExistAsync(
                         programId,
-                        dto.InsertActions,                            
+                        dto.InsertActions,
+                        false,
                         connection,
                         transaction,
                         cancellationToken);

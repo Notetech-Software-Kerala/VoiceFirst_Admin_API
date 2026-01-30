@@ -21,6 +21,7 @@
 
 
         public const string ActionsAreAlreadyLinked = "ACTIONS_ARE_ALREADY_LINKED";
+        public const string PostOfficeAreAlreadyLinked = "POST_OFFICE_ARE_ALREADY_LINKED";
 
         public const string PlaceAlreadyRecovered =
    "PLACE_ALREADY_RECOVERED";

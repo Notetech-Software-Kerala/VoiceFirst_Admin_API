@@ -11,6 +11,32 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface IPlaceRepo
     {
+        Task<bool>
+            CheckPlacePostOfficeLinksExistAsync(
+                        int placeId,
+                IEnumerable<int> postOfficeIds,
+                bool update,
+                IDbConnection connection,
+                IDbTransaction transaction,
+                CancellationToken cancellationToken = default);
+
+         //Task<bool>
+         //   CheckPlacePostOfficeLinksExistAsync(
+         //               int placeId,
+         //       IEnumerable<int> postOfficeIds,
+         //       IDbConnection connection,
+         //       IDbTransaction transaction,
+         //       CancellationToken cancellationToken = default);
+
+
+        Task<bool> BulkUpdatePlacePostOfficeLinksAsync(
+         int placeId,
+         IEnumerable<PlacePostOfficeLinksUpdateDTO> dtos,
+         int updatedBy,
+         IDbConnection connection,
+         IDbTransaction tx,
+         CancellationToken cancellationToken);
+
         Task<PlaceDTO> PlaceExistsAsync
             (string name,
             int? excludeId = null,
@@ -60,7 +86,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
           CancellationToken cancellationToken = default);
 
         Task<bool> 
-            UpdateAsync(Place entity, 
+            UpdateAsync(Place entity, IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default);
 
 

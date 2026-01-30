@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
@@ -88,6 +89,53 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             return rowsAffected > 0;
         }
+
+
+
+        public async Task<bool> BulkUpdatePlacePostOfficeLinksAsync(
+ int placeId,
+ IEnumerable<PlacePostOfficeLinksUpdateDTO> dtos,
+ int updatedBy,
+ IDbConnection connection,
+ IDbTransaction tx,
+ CancellationToken cancellationToken)
+        {
+            const string sql = @"
+UPDATE PlacePostOfficeLink
+SET IsActive   = @IsActive,
+    UpdatedBy = @UpdatedBy,
+    UpdatedAt = SYSDATETIME()
+WHERE PlaceId = @PlaceId
+  AND PostOfficeId = @PostOfficeId
+  AND IsActive <> @IsActive;
+";
+
+            var parameters = dtos.Select(dto => new
+            {
+                PlaceId = placeId,
+                PostOfficeId = dto.PostOfficeId,
+                IsActive = dto.Active,
+                UpdatedBy = updatedBy
+            });
+
+            var rowsAffected = await connection.ExecuteAsync(
+                new CommandDefinition(
+                    sql,
+                    parameters,
+                    transaction: tx,
+                    cancellationToken: cancellationToken
+                ));
+
+            return rowsAffected > 0;
+        }
+
+
+
+
+
+
+
+
 
 
 
@@ -415,7 +463,8 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<bool> UpdateAsync(
-           Place entity,
+           Place entity, IDbConnection connection,
+            IDbTransaction transaction,
            CancellationToken cancellationToken = default)
         {
             var sets = new List<string>();
@@ -455,11 +504,91 @@ namespace VoiceFirst_Admin.Data.Repositories
                             AND IsActive <> @Active)
                   );";
 
-            using var connection = _context.CreateConnection();
+
             var affected = await connection.ExecuteAsync(
-                new CommandDefinition(sql, parameters, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, parameters,transaction, cancellationToken: cancellationToken));
 
             return affected > 0;
+        }
+
+
+
+
+
+
+        public async Task<bool>
+            CheckPlacePostOfficeLinksExistAsync(
+                        int placeId,
+                IEnumerable<int> postOfficeIds,
+                bool update,
+                IDbConnection connection,
+                IDbTransaction transaction,
+                CancellationToken cancellationToken = default)
+        {
+            // If no IDs are sent, treat as invalid
+            if (postOfficeIds == null || !postOfficeIds.Any())
+                return false;
+
+            const string sql = @"
+                    SELECT COUNT(1)
+                    FROM PlacePostOfficeLink
+                    WHERE PostOfficeId IN @postOfficeIds And PlaceId = @placeId
+                ";
+            var exists = await connection.ExecuteScalarAsync<int>(
+               new CommandDefinition(
+                   sql,
+                   new { placeId, postOfficeIds },
+                   transaction,
+                   cancellationToken: cancellationToken
+               ));
+
+            if (!update)
+            {
+                // INSERT case
+                // true  → already exists (block insert)
+                // false → safe to insert
+                return exists > 0;
+            }
+
+            // UPDATE case
+            // true  → all records exist
+            // false → some records missing
+            return exists == postOfficeIds.Count();
+
+
+
+        }
+
+
+
+        public async Task<bool> CheckAlreadyPlacePostOfficeLinkedAsync(
+    int placeId,
+    IEnumerable<int> postOfficeIds,
+    IDbConnection connection,
+    IDbTransaction transaction,
+    CancellationToken cancellationToken = default)
+        {
+            if (postOfficeIds == null || !postOfficeIds.Any())
+                return false;
+
+            const string sql = @"
+        SELECT 1
+        FROM PlacePostOfficeLink
+        WHERE PlaceId = @placeId
+          AND PostOfficeId IN @postOfficeIds
+    ";
+
+            var exists = await connection.ExecuteScalarAsync<int?>(
+                new CommandDefinition(
+                    sql,
+                    new { placeId, postOfficeIds },
+                    transaction,
+                    cancellationToken: cancellationToken
+                ));
+
+            // true  → at least one already exists
+            // false → safe to insert
+            return exists.HasValue;
         }
 
 
