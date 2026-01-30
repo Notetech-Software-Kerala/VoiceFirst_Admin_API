@@ -247,21 +247,7 @@ namespace VoiceFirst_Admin.Business.Services
             CancellationToken cancellationToken = default)
         {
             var result = await _planRepository.GetAllAsync(filter, cancellationToken);
-            //var items = paged.Items.Select(p => new VoiceFirst_Admin.Utilities.DTOs.Features.Plan.PlanDetailDto
-            //{
-            //    PlanId = p.PlanId,
-            //    PlanName = p.PlanName,
-            //    Active = p.IsActive ,
-            //    Deleted = p.IsDeleted ?? false,
-            //    CreatedUser = p.CreatedUserName ?? string.Empty,
-            //    CreatedDate = p.CreatedAt ?? System.DateTime.MinValue,
-            //    ModifiedUser = p.UpdatedUserName ?? string.Empty,
-            //    ModifiedDate = p.UpdatedAt,
-            //    DeletedUser = p.DeletedUserName ?? string.Empty,
-            //    DeletedDate = p.DeletedAt
-            //}).ToList();
-
-           
+                     
             return ApiResponse<PagedResultDto<PlanDetailDto>>.Ok(
                result,
                result.TotalCount == 0
@@ -272,7 +258,7 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<ApiResponse<int>>
+        public async Task<ApiResponse<PlanDetailDto>>
            DeleteAsync(
             int id,
             int loginId,
@@ -286,7 +272,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (existDto == null)
             {
-                return ApiResponse<int>.Fail(
+                return ApiResponse<PlanDetailDto>.Fail(
                     Messages.PlanNotFoundById,
                     StatusCodes.Status404NotFound,
                     ErrorCodes.PlanNotFoundById);
@@ -294,7 +280,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (existDto.Deleted)
             {
-                return ApiResponse<int>.Fail(
+                return ApiResponse<PlanDetailDto>.Fail(
                     Messages.PlanAlreadyDeleted,
                     StatusCodes.Status409Conflict,
                     ErrorCodes.PlanAlreadyDeleted);
@@ -305,15 +291,19 @@ namespace VoiceFirst_Admin.Business.Services
             if (!rowAffect)
             {
 
-                return ApiResponse<int>.Fail(
+                return ApiResponse<PlanDetailDto>.Fail(
                      Messages.PlanAlreadyDeleted,
                      StatusCodes.Status409Conflict,
                      ErrorCodes.PlanAlreadyDeleted);
             }
+            var dto =
+               await GetByIdAsync
+               (id,
+               cancellationToken);
+            return ApiResponse<PlanDetailDto>.
+               Ok(dto.Data, Messages.PlanDeleted, statusCode: StatusCodes.Status200OK);
 
-
-            return ApiResponse<int>.
-               Ok(id, Messages.PlanDeleted, statusCode: StatusCodes.Status200OK);
+         
         }
 
 

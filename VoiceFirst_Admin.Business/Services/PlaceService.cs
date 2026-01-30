@@ -1,13 +1,17 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Place;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
@@ -17,17 +21,24 @@ namespace VoiceFirst_Admin.Business.Services
     public class PlaceService: IPlaceService
     {
         private readonly IPlaceRepo _repo;
+        private readonly IPostOfficeRepo _postOfficeRepo;
         private readonly IMapper _mapper;
+        private readonly IDapperContext _context;
         public PlaceService(
             IPlaceRepo repository,
-            IMapper mapper)
+            IMapper mapper,
+            IPostOfficeRepo postOfficeRepo,
+            IDapperContext dapperContext)
         {
             _repo = repository;
             _mapper = mapper;
+            _postOfficeRepo = postOfficeRepo;
+            _context = dapperContext;
         }
 
 
-        public async Task<ApiResponse<PlaceDTO>> CreateAsync(
+
+        public async Task<ApiResponse<PlaceDetailDTO>> CreateAsync(
           PlaceCreateDTO dto,
           int loginId,
           CancellationToken cancellationToken)
@@ -44,65 +55,116 @@ namespace VoiceFirst_Admin.Business.Services
                 {
                     // ❌ Active duplicate
 
-                    return ApiResponse<PlaceDTO>.Fail
+                    return ApiResponse<PlaceDetailDTO>.Fail
                        (Messages.PlaceAlreadyExists,
                        StatusCodes.Status409Conflict,
                        ErrorCodes.PlaceAlreadyExists
                        );
                 }
-                return ApiResponse<PlaceDTO>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                      Messages.PlaceAlreadyExistsRecoverable,
                      StatusCodes.Status422UnprocessableEntity,
                       ErrorCodes.PlaceAlreadyExistsRecoverable,
-                      new PlaceDTO
+                      new PlaceDetailDTO
                       {
                           PlaceId = existingEntity.PlaceId
                       }
                  );
             }
 
+            if (dto.PostOfficeIds != null && dto.PostOfficeIds.Any())
+            {
+                var exist = await _postOfficeRepo.
+                    IsBulkIdsExistAsync(dto.PostOfficeIds,
+               cancellationToken);
+                if (exist["idNotFound"] == true)
+                {
+                    return ApiResponse<PlaceDetailDTO>.Fail(
+                      Messages.PostOfficesNotFound,
+                      StatusCodes.Status404NotFound,
+                      ErrorCodes.PostOfficeNotFound
+                      );
+                }
+                if (exist["deletedOrInactive"] == true)
+                {
+                    return ApiResponse<PlaceDetailDTO>.Fail
+                       (Messages.PostOfficeNotFound,
+                       StatusCodes.Status409Conflict,
+                       ErrorCodes.PostOfficeNotFound);
+                }
+
+            }
+
 
             var entity = _mapper.Map<Place>(dto);
             entity.CreatedBy = loginId;
 
-            entity.PlaceId =
-                await _repo.CreateAsync(entity, cancellationToken);
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
 
-            if (entity.PlaceId <= 0)
+            try
             {
-                return ApiResponse<PlaceDTO>.Fail(
-                    Messages.SomethingWentWrong,
-                    StatusCodes.Status500InternalServerError,
-                    ErrorCodes.InternalServerError);
+
+                entity.PlaceId =
+                await _repo.CreateAsync
+                (entity, connection,transaction, cancellationToken);
+
+
+
+
+                await _repo.BulkInsertPlacePostOfficeLinksAsync
+                    (
+                    entity.PlaceId,
+                    dto.PostOfficeIds,
+                    loginId,
+                    connection,
+                    transaction,
+                    cancellationToken);
+
+                var dtoOut = await _repo.GetByIdAsync
+                    (entity.PlaceId,
+                     connection,
+                    transaction,
+                    cancellationToken);
+
+               
+
+                transaction.Commit();
+                return ApiResponse<PlaceDetailDTO>.Ok(
+                    dtoOut!,
+                    Messages.PlaceCreated,
+                   StatusCodes.Status201Created);
+
             }
-
-            var createdDto =
-                await _repo.GetByIdAsync
-                (entity.PlaceId,
-                cancellationToken);
-
-            return ApiResponse<PlaceDTO>.Ok(
-                createdDto,
-                Messages.PlaceCreated,
-                StatusCodes.Status201Created);
+            catch
+            {
+               transaction.Rollback();
+                throw;
+            }
         }
 
 
-        public async Task<ApiResponse<PlaceDTO>?> GetByIdAsync(
+        public async Task<ApiResponse<PlaceDetailDTO>?> GetByIdAsync(
           int id,
           CancellationToken cancellationToken = default)
         {
-            var dto = await _repo.GetByIdAsync(id, cancellationToken);
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            var dto = await _repo.GetByIdAsync
+                (id, connection,transaction, cancellationToken);
 
             if (dto == null)
             {
 
-                return ApiResponse<PlaceDTO>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                    Messages.PlaceNotFoundById,
                    StatusCodes.Status404NotFound,
                     ErrorCodes.PlaceNotFoundById);
             }
-            return ApiResponse<PlaceDTO>.Ok(
+            return ApiResponse<PlaceDetailDTO>.Ok(
                 dto,
                 Messages.PlaceRetrieved,
                 StatusCodes.Status200OK);
@@ -140,6 +202,9 @@ namespace VoiceFirst_Admin.Business.Services
                 statusCode: StatusCodes.Status200OK
             );
         }
+
+
+
 
 
         public async Task<ApiResponse<PlaceDTO>> UpdateAsync(
@@ -214,18 +279,18 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.NoRowAffected);
 
 
-            var updatedEntity = await _repo.GetByIdAsync
+            var updatedEntity = await GetByIdAsync
                 (placeId, cancellationToken);
 
             return ApiResponse<PlaceDTO>.Ok
-                (updatedEntity,
+                (updatedEntity.Data,
                 Messages.PlaceUpdated,
                 statusCode: StatusCodes.Status200OK);
         }
 
 
 
-        public async Task<ApiResponse<PlaceDTO>>
+        public async Task<ApiResponse<PlaceDetailDTO>>
             RecoverAsync(
             int id,
             int loginId,
@@ -238,7 +303,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (existDto == null)
             {
-                return ApiResponse<PlaceDTO>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                     Messages.PlaceNotFoundById,
                     StatusCodes.Status404NotFound,
                     ErrorCodes.PlaceNotFoundById);
@@ -246,7 +311,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (!existDto.Deleted)
             {
-                return ApiResponse<PlaceDTO>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                     Messages.PlaceAlreadyRecovered,
                     StatusCodes.Status409Conflict,
                     ErrorCodes.PlaceAlreadyRecovered);
@@ -257,23 +322,23 @@ namespace VoiceFirst_Admin.Business.Services
             if (!rowAffect)
             {
 
-                return ApiResponse<PlaceDTO>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                      Messages.PlaceAlreadyRecovered,
                      StatusCodes.Status409Conflict,
                      ErrorCodes.PlaceAlreadyRecovered);
             }
 
             var dto =
-               await _repo.GetByIdAsync
+               await GetByIdAsync
                (id,
                cancellationToken);
-            return ApiResponse<PlaceDTO>.
-               Ok(dto, Messages.PlaceRecovered, statusCode: StatusCodes.Status200OK);
+            return ApiResponse<PlaceDetailDTO>.
+               Ok(dto.Data, Messages.PlaceRecovered, statusCode: StatusCodes.Status200OK);
         }
 
 
 
-        public async Task<ApiResponse<int>>
+        public async Task<ApiResponse<PlaceDetailDTO>>
            DeleteAsync(
             int id,
             int loginId,
@@ -287,7 +352,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (existDto == null)
             {
-                return ApiResponse<int>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                     Messages.PlaceNotFoundById,
                     StatusCodes.Status404NotFound,
                     ErrorCodes.PlaceNotFoundById);
@@ -295,7 +360,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (existDto.Deleted)
             {
-                return ApiResponse<int>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                     Messages.PlaceAlreadyDeleted,
                     StatusCodes.Status409Conflict,
                     ErrorCodes.PlaceAlreadyDeleted);
@@ -306,15 +371,20 @@ namespace VoiceFirst_Admin.Business.Services
             if (!rowAffect)
             {
 
-                return ApiResponse<int>.Fail(
+                return ApiResponse<PlaceDetailDTO>.Fail(
                      Messages.PlaceAlreadyDeleted,
                      StatusCodes.Status409Conflict,
                      ErrorCodes.PlaceAlreadyDeleted);
             }
 
+            var dto =
+             await GetByIdAsync
+             (id,
+             cancellationToken);
+            return ApiResponse<PlaceDetailDTO>.
+               Ok(dto.Data, Messages.PlaceDeleted, statusCode: StatusCodes.Status200OK);
 
-            return ApiResponse<int>.
-               Ok(id, Messages.PlaceDeleted, statusCode: StatusCodes.Status200OK);
+          
         }
     }
 }

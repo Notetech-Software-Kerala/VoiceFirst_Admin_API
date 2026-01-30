@@ -7,6 +7,8 @@ using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Place;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -40,29 +42,88 @@ namespace VoiceFirst_Admin.Data.Repositories
             return entity;
         }
 
+        public async Task<bool> BulkInsertPlacePostOfficeLinksAsync(
+           int placeId,
+           IEnumerable<int> postOfficeIds,
+           int createdBy,
+           IDbConnection connection,
+           IDbTransaction tx,
+           CancellationToken cancellationToken)
+        {
+            if (postOfficeIds == null || !postOfficeIds.Any())
+                return false;
 
-        public async Task<int> CreateAsync
-           (Place entity,
-           CancellationToken cancellationToken = default)
+            // -------------------------
+            // CONVERT dynamic → int
+            // -------------------------
+
+            if (postOfficeIds.Count() == 0)
+                return false;
+
+            // -------------------------
+            // SQL
+            // -------------------------
+            const string sql = @"
+        INSERT INTO PlacePostOfficeLink
+            (PlaceId, PostOfficeId, CreatedBy)
+        VALUES
+            (@PlaceId, @PostOfficeId, @CreatedBy);";
+
+            // -------------------------
+            // PARAMETER OBJECTS
+            // -------------------------
+            var parameters = postOfficeIds.Select(id => new
+            {
+                PlaceId = placeId,
+                PostOfficeId = id,
+                CreatedBy = createdBy
+            });
+
+            var rowsAffected = await connection.ExecuteAsync(
+                new CommandDefinition(
+                    sql,
+                    parameters,
+                    transaction: tx,
+                    cancellationToken: cancellationToken));
+
+            return rowsAffected > 0;
+        }
+
+
+
+
+        public async Task<int> CreateAsync(
+    Place entity,
+    IDbConnection connection,
+    IDbTransaction transaction,
+    CancellationToken cancellationToken = default)
         {
             const string sql = @"
-                INSERT INTO Place (PlaceName,CreatedBy)
-                VALUES (@PlaceName,@CreatedBy);
-                SELECT CAST(SCOPE_IDENTITY() AS int);";
+        INSERT INTO Place (PlaceName, CreatedBy)
+        VALUES (@PlaceName, @CreatedBy);
+        SELECT CAST(SCOPE_IDENTITY() AS int);";
 
-            var cmd = new CommandDefinition(sql, new
-            {
-                entity.PlaceName,
-                entity.CreatedBy,
-            }, cancellationToken: cancellationToken);
-            using var connection = _context.CreateConnection();
+            var cmd = new CommandDefinition(
+                sql,
+                new
+                {
+                    entity.PlaceName,
+                    entity.CreatedBy
+                },
+                transaction: transaction, // ✅ THIS is the key
+                cancellationToken: cancellationToken
+            );
+
             int id = await connection.ExecuteScalarAsync<int>(cmd);
             return id;
         }
 
 
-        public async Task<PlaceDTO?> GetByIdAsync(
-          int PlaceId,
+
+        public async Task<PlaceDetailDTO?> GetByIdAsync(
+          int PlaceId,         
+          IDbConnection connection,
+          IDbTransaction transaction,
           CancellationToken cancellationToken = default)
         {
             const string sql = @"
@@ -91,12 +152,49 @@ namespace VoiceFirst_Admin.Data.Repositories
                 WHERE s.PlaceId = @PlaceId;
                 ";
 
-            using var connection = _context.CreateConnection();
-            var entity = await connection.QuerySingleOrDefaultAsync<PlaceDTO>(
-                new CommandDefinition(sql, new { PlaceId = PlaceId }, cancellationToken: cancellationToken)
+            var entity = await connection.QuerySingleOrDefaultAsync<PlaceDetailDTO>(
+                new CommandDefinition(sql, 
+                new { PlaceId = PlaceId },
+                transaction, 
+                cancellationToken: cancellationToken)
             );
+            entity.postOffices = (await GetPlacePostOfficeLinksByPlaceIdAsync(PlaceId, connection, transaction, cancellationToken)).ToList();
             return entity;
         }
+
+
+
+        public async Task<IEnumerable<PlacePostOfficeLinksDTO>>
+            GetPlacePostOfficeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
+            IDbTransaction transaction, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+            SELECT 
+                l.PostOfficeId AS PostOfficeId,
+                a.PostOfficeName AS PostOfficeName,
+                l.IsActive AS Active,
+                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                l.CreatedAt AS CreatedDate,
+                CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
+                l.UpdatedAt AS ModifiedDate               
+            FROM PlacePostOfficeLink l
+            INNER JOIN PostOffice a ON a.PostOfficeId = l.PostOfficeId
+            INNER JOIN Users uC ON uC.UserId = l.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy            
+            WHERE l.PlaceId = @PlaceId ;
+            ";
+
+            return await connection.QueryAsync<PlacePostOfficeLinksDTO>(
+                new CommandDefinition(
+                sql,
+                new { placeId = placeId }, 
+                transaction,
+                cancellationToken: cancellationToken)
+                );
+        }
+
+
+
 
         public async Task<PagedResultDto<PlaceDTO>>
         GetAllAsync(PlaceFilterDTO filter, CancellationToken cancellationToken = default)

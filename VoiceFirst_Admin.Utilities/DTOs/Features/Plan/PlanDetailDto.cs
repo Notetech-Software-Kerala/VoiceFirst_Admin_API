@@ -14,5 +14,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Plan
         public DateTime? ModifiedDate { get; set; }
         public string DeletedUser { get; set; } = string.Empty;
         public DateTime? DeletedDate { get; set; }
+
+         
     }
 }

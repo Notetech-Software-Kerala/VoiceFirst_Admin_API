@@ -16,7 +16,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
           GetAllActiveForPlanAsync(
           CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<int>> DeleteAsync(int id,
+        Task<ApiResponse<SysProgramDto>> DeleteAsync(int id,
             int loginId,
             CancellationToken cancellationToken = default);
 

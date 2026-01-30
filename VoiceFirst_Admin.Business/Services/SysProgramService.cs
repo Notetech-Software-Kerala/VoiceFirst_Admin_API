@@ -246,7 +246,7 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<ApiResponse<int>> DeleteAsync(int id,
+        public async Task<ApiResponse<SysProgramDto>> DeleteAsync(int id,
             int loginId,
             CancellationToken cancellationToken = default)
         {
@@ -257,7 +257,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (existDto == null)
             {
-                return ApiResponse<int>.Fail(
+                return ApiResponse<SysProgramDto>.Fail(
                     Messages.ProgramNotFoundById,
                     StatusCodes.Status404NotFound,
                     ErrorCodes.ProgramNotFoundById);
@@ -265,7 +265,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (existDto.Deleted)
             {
-                return ApiResponse<int>.Fail(
+                return ApiResponse<SysProgramDto>.Fail(
                     Messages.ProgramAlreadyDeleted,
                     StatusCodes.Status409Conflict,
                     ErrorCodes.ProgramAlreadyDeleted);
@@ -277,14 +277,21 @@ namespace VoiceFirst_Admin.Business.Services
             if (rowAffect)
             {
 
-                return ApiResponse<int>.
-                   Ok(
-                   id,
+
+                var dto =
+               await GetByIdAsync
+               (id,
+               cancellationToken);
+
+                return ApiResponse<SysProgramDto>.
+                   Ok(dto.Data,
                    Messages.ProgramDeleted,
                    statusCode: StatusCodes.Status200OK);
 
+               
+
             }
-            return ApiResponse<int>.Fail(
+            return ApiResponse<SysProgramDto>.Fail(
                      Messages.ProgramAlreadyDeleted,
                      StatusCodes.Status409Conflict,
                      ErrorCodes.ProgramAlreadyDeleted);
@@ -648,6 +655,23 @@ namespace VoiceFirst_Admin.Business.Services
 
                 if (dto.InsertActions != null)
                 {
+                    var linkedActionsFound =
+                    await _repo.CheckProgramActionLinksExistAsync(
+                        programId,
+                        dto.InsertActions,                            
+                        connection,
+                        transaction,
+                        cancellationToken);
+                    if (linkedActionsFound)
+                    {
+                        transaction.Rollback();
+                        return ApiResponse<SysProgramDto>.Fail(
+                          Messages.ActionsAreAlreadyLinked,
+                          StatusCodes.Status409Conflict,
+                          ErrorCodes.ActionsAreAlreadyLinked
+                          );
+                    }
+
                     var exist = await _programActionRepo.
                      IsBulkIdsExistAsync(dto.InsertActions,
                       cancellationToken);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Place;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
@@ -15,13 +16,29 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             int? excludeId = null,
             CancellationToken cancellationToken = default);
 
+        Task<bool> BulkInsertPlacePostOfficeLinksAsync(
+         int programId,
+         IEnumerable<int> actionIds,
+         int createdBy,
+         IDbConnection connection,
+         IDbTransaction transaction,
+         CancellationToken cancellationToken);
+
         Task<int> CreateAsync
             (Place entity,
+            IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default);
 
-        Task<PlaceDTO?> GetByIdAsync(
+        Task<PlaceDetailDTO?> GetByIdAsync(
             int PlaceId, 
+            IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<PlacePostOfficeLinksDTO>>
+            GetPlacePostOfficeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
+            IDbTransaction transaction, CancellationToken cancellationToken = default);
 
         Task<PagedResultDto<PlaceDTO>>
         GetAllAsync(PlaceFilterDTO filter,

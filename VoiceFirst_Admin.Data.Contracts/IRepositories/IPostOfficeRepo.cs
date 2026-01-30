@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice;
@@ -10,6 +11,12 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories;
 
 public interface IPostOfficeRepo
 {
+    Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
+    List<int> postOfficeIds,
+    CancellationToken cancellationToken = default);
+
+    
+
     Task<PostOffice> CreateAsync(PostOffice entity, CancellationToken cancellationToken = default);
     Task<PostOffice?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<PostOfficeZipCode?> GetZipCodeByIdAsync(int id, CancellationToken cancellationToken = default);
