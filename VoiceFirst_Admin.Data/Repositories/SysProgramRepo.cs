@@ -836,11 +836,45 @@ WHERE SysProgramId = @ProgramId
                         invalidIds.Add(id);
                 }
 
-                return invalidIds;
+            return invalidIds;
+        }
+        public async Task<List<int>> GetInvalidProgramIdsForApplicationAsync(
+    int applicationId,
+    IEnumerable<int> programIds,
+    CancellationToken cancellationToken = default)
+        {
+            var ids = (programIds ?? Enumerable.Empty<int>())
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+
+            var invalidIds = new List<int>();
+            if (ids.Count == 0) return invalidIds;
+
+            const string sql = @"
+        SELECT COUNT(1)
+        FROM dbo.SysProgram pal
+        WHERE pal.SysProgramId = @ProgramId
+          AND pal.ApplicationId = @ApplicationId
+          AND pal.IsDeleted = 0 AND pal.IsActive = 1;
+    ";
+
+             using var conn = _context.CreateConnection();
+
+            foreach (var id in ids)
+            {
+                var count = await conn.ExecuteScalarAsync<int>(new CommandDefinition(
+                    sql,
+                    new { ApplicationId = applicationId, ProgramId = id },
+                    cancellationToken: cancellationToken));
+
+                if (count == 0)
+                    invalidIds.Add(id);
             }
 
-       
-    
+            return invalidIds;
+        }
+
 
 
         //public async Task<IEnumerable<VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramDto>> GetAllActiveByApplicationIdAsync(int applicationId, CancellationToken cancellationToken = default)

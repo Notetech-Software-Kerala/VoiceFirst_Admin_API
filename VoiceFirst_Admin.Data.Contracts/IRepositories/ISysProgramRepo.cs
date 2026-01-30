@@ -127,6 +127,10 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             int applicationId,
             IEnumerable<int> programActionLinkIds,
             CancellationToken cancellationToken = default);
+        Task<List<int>> GetInvalidProgramIdsForApplicationAsync(
+            int applicationId,
+            IEnumerable<int> programIds,
+            CancellationToken cancellationToken = default);
 
         //Task<bool> UpsertProgramActionLinksAsync(
         //    int programId, 

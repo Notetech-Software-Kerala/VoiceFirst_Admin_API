@@ -1,9 +1,14 @@
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Menu;
+using VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Role;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -12,28 +17,52 @@ namespace VoiceFirst_Admin.Business.Services;
 public class MenuService : IMenuService
 {
     private readonly IMenuRepo _repo;
-
-    public MenuService(IMenuRepo repo)
+    private readonly IMapper _mapper;
+    private readonly ISysProgramRepo _sysProgramRepo;
+    public MenuService(IMenuRepo repo, IMapper mapper, ISysProgramRepo sysProgramRepo)
     {
         _repo = repo;
+        _mapper = mapper;
+        _sysProgramRepo = sysProgramRepo;
     }
 
     public async Task<ApiResponse<object>> CreateAsync(MenuCreateDto dto, int loginId, CancellationToken cancellationToken = default)
     {
         if (dto == null) return ApiResponse<object>.Fail(Messages.PayloadRequired);
 
-        // basic entity mapping
-        var entity = new MenuMaster
+        if (dto.ProgramIds != null && dto.ProgramIds.Any())
         {
-            MenuName = dto.MenuName,
-            MenuIcon = dto.Icon,
-            MenuRoute = dto.Route,
-            ApplicationId = dto.PlateFormId,
-            CreatedBy = loginId
-        };
+            var programIds = dto.ProgramIds
+                     .Select(x => x.ProgramId)
+                     .Where(id => id.HasValue && id.Value > 0)
+                     .Select(id => id!.Value)
+                     .Distinct()
+                     .ToList();
 
-        var createdId = await _repo.CreateMenuAsync(entity, dto.ProgramId ?? new List<int>(), dto.Web, dto.App, loginId, cancellationToken);
-        return ApiResponse<object>.Ok(new { MenuMasterId = createdId }, Messages.Created, Microsoft.AspNetCore.Http.StatusCodes.Status201Created);
+            if (programIds.Count == 0)
+            {
+                return ApiResponse<object>.Fail(
+                    Messages.BadRequest,
+                    StatusCodes.Status400BadRequest);
+            }
+            var invalidIds = await _sysProgramRepo.GetInvalidProgramIdsForApplicationAsync(dto.PlateFormId, programIds, cancellationToken);
+            if (invalidIds.Any())
+            {
+                return ApiResponse<object>.Fail(
+                    string.Format(Messages.InvalidActionLinksForApplication, string.Join(", ", invalidIds)),
+                    StatusCodes.Status400BadRequest);
+            }
+        }
+            
+
+        // basic entity mapping
+        var entity = _mapper.Map<MenuMaster>(dto);
+        entity.CreatedBy = loginId;
+
+        var programIdsModel = _mapper.Map<List<MenuProgramLink>>(dto.ProgramIds);
+
+        var createdId = await _repo.CreateMenuAsync(entity, programIdsModel, dto.Web, dto.App, loginId, cancellationToken);
+        return ApiResponse<object>.Ok(new { MenuMasterId = createdId }, Messages.Created, StatusCodes.Status201Created);
     }
 
     public async Task<ApiResponse<object>> UpdateAsync(int id, MenuUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
