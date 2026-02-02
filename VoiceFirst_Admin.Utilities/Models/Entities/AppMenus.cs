@@ -7,7 +7,10 @@ namespace VoiceFirst_Admin.Utilities.Models.Entities;
 public class AppMenus : BaseModel
 {
     public int AppMenuId { get; set; }
-    public int? ParentAppMenuId { get; set; }
+    public int ParentAppMenuId { get; set; } = 0;
     public int MenuMasterId { get; set; }
+    public string MenuName { get; set; } = string.Empty;
+    public string MenuIcon { get; set; } = string.Empty;
+    public string MenuRoute { get; set; } = string.Empty;
     public int SortOrder { get; set; }
 }

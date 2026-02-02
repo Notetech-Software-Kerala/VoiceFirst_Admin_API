@@ -9,6 +9,7 @@ using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Menu;
 using VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Role;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -65,70 +66,53 @@ public class MenuService : IMenuService
         return ApiResponse<object>.Ok(new { MenuMasterId = createdId }, Messages.Created, StatusCodes.Status201Created);
     }
 
-    public async Task<ApiResponse<object>> UpdateAsync(int id, MenuUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<MenuMasterDto>> GetAllMenuMastersAsync(MenuFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var data = await _repo.GetAllMenuMastersAsync(filter, cancellationToken);
+        var list = _mapper.Map<List<MenuMasterDto>>(data.Items);
+        return new PagedResultDto<MenuMasterDto>
+        {
+            Items = list,
+            TotalCount = data.TotalCount,
+            PageNumber = filter.PageNumber,
+            PageSize = filter.Limit
+        };
+    }
+
+    public async Task<List<WebMenuDto>> GetAllWebMenusAsync(CancellationToken cancellationToken = default)
+    {
+        var data = await _repo.GetAllWebMenusAsync(cancellationToken);
+        var list = _mapper.Map<List<WebMenuDto>>(data);
+        return list;
+    }
+
+    public async Task<List<AppMenuDto>> GetAllAppMenusAsync(CancellationToken cancellationToken = default)
+    {
+        var data = await _repo.GetAllAppMenusAsync(cancellationToken);
+        var list = _mapper.Map<List<AppMenuDto>>(data);
+        return list;
+    }
+
+    public async Task<ApiResponse<object>> UpdateMenuMasterAsync(int id, VoiceFirst_Admin.Utilities.DTOs.Features.Menu.MenuMasterUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
     {
         if (dto == null) return ApiResponse<object>.Fail(Messages.PayloadRequired);
 
-        var entity = new MenuMaster
+        var entity = new Utilities.Models.Entities.MenuMaster
         {
             MenuMasterId = id,
             MenuName = dto.MenuName ?? string.Empty,
             MenuIcon = dto.Icon ?? string.Empty,
             MenuRoute = dto.Route ?? string.Empty,
             ApplicationId = dto.PlateFormId ?? default,
-            UpdatedBy = loginId
+            UpdatedBy = loginId,
+            IsActive = dto.Active ?? true
         };
 
-        var ok = await _repo.UpdateMenuAsync(entity, dto.AddProgramId ?? new List<int>(), dto.UpdateProgramId ?? new List<ProgramStatusDto>(), dto.Web, dto.App, loginId, cancellationToken);
+        var ok = await _repo.UpdateMenuMasterAsync(entity, cancellationToken);
         if (!ok) return ApiResponse<object>.Fail(Messages.NotFound, Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound);
         return ApiResponse<object>.Ok(null!, Messages.Updated);
     }
 
-    public async Task<MenuMasterDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var m = await _repo.GetByIdAsync(id, cancellationToken);
-        if (m == null) return null;
-        return new MenuMasterDto
-        {
-            MenuMasterId = m.MenuMasterId,
-            MenuName = m.MenuName,
-            MenuIcon = m.MenuIcon,
-            MenuRoute = m.MenuRoute,
-            ApplicationId = m.ApplicationId,
-            Active = m.IsActive ?? false,
-            Deleted = m.IsDeleted ?? false,
-            CreatedUser = m.CreatedUserName ?? string.Empty,
-            CreatedDate = m.CreatedAt ?? System.DateTime.MinValue,
-            ModifiedUser = m.UpdatedUserName ?? string.Empty,
-            ModifiedDate = m.UpdatedAt,
-            DeletedUser = m.DeletedUserName ?? string.Empty,
-            DeletedDate = m.DeletedAt
-        };
-    }
 
-    public async Task<IEnumerable<MenuMasterDto>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        var rows = await _repo.GetAllAsync(cancellationToken);
-        return rows.Select(m => new MenuMasterDto
-        {
-            MenuMasterId = m.MenuMasterId,
-            MenuName = m.MenuName,
-            MenuIcon = m.MenuIcon,
-            MenuRoute = m.MenuRoute,
-            ApplicationId = m.ApplicationId,
-            Active = m.IsActive ?? false,
-            Deleted = m.IsDeleted ?? false,
-            CreatedUser = m.CreatedUserName ?? string.Empty,
-            CreatedDate = m.CreatedAt ?? System.DateTime.MinValue,
-            ModifiedUser = m.UpdatedUserName ?? string.Empty,
-            ModifiedDate = m.UpdatedAt,
-            DeletedUser = m.DeletedUserName ?? string.Empty,
-            DeletedDate = m.DeletedAt
-        }).ToList();
-    }
 
-    public async Task<MenuDetailDto?> GetDetailByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _repo.GetDetailByIdAsync(id, cancellationToken);
-    }
 }

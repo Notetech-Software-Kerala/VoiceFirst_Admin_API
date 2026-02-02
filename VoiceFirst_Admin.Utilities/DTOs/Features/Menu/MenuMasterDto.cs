@@ -4,11 +4,11 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Menu;
 
 public class MenuMasterDto
 {
-    public int MenuMasterId { get; set; }
+    public int MenuId { get; set; }
     public string MenuName { get; set; } = string.Empty;
-    public string MenuIcon { get; set; } = string.Empty;
-    public string MenuRoute { get; set; } = string.Empty;
-    public int ApplicationId { get; set; }
+    public string Icon { get; set; } = string.Empty;
+    public string Route { get; set; } = string.Empty;
+    public int PlateFormId { get; set; }
     public bool Active { get; set; }
     public bool Deleted { get; set; }
     public string CreatedUser { get; set; } = string.Empty;
