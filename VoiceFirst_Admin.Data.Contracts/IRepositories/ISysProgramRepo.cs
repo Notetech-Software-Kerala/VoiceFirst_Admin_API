@@ -12,7 +12,11 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface ISysProgramRepo
     {
-        
+        Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
+                     List<int> sysProgramActionsLinkIds,
+                     CancellationToken cancellationToken = default);
+
+
         Task<SysProgram?> ExistsByNameAsync(
             int applicationId, 
             string name, 

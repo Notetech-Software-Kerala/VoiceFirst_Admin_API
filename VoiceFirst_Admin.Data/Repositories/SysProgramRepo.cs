@@ -25,6 +25,55 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
+        public async Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
+                     List<int> sysProgramActionsLinkIds,
+                     CancellationToken cancellationToken = default)
+        {
+            var result = new Dictionary<string, bool>
+            {
+                { "idNotFound", false },
+                { "inActive", false }
+            };
+
+
+
+            if (sysProgramActionsLinkIds == null || sysProgramActionsLinkIds.Count == 0)
+                return result;
+
+            const string sql = @"
+            SELECT 
+                ProgramActionId ,
+                IsActive,
+                SysProgramActionLinkId
+            FROM    SysProgramActionsLink
+            WHERE SysProgramActionLinkId IN @Ids;
+            ";
+
+            using var connection = _context.CreateConnection();
+
+            var entities = (await connection.QueryAsync<SysProgramActionsLink>(
+                new CommandDefinition(
+                    sql,
+                    new { Ids = sysProgramActionsLinkIds },
+                    cancellationToken: cancellationToken)))
+                .ToList();
+
+            // 1️⃣ Check NOT FOUND
+            if (entities.Count != sysProgramActionsLinkIds.Distinct().Count())
+            {
+                result["idNotFound"] = true;
+            }
+
+            // 2️⃣ Check Deleted or Inactive
+            if (entities.Any(x =>  x.IsActive == false))
+            {
+                result["inActive"] = true;
+            }
+
+            return result;
+        }
+
+
         public async Task<SysProgram?> ExistsByNameAsync(int applicationId, string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
             var sql = new StringBuilder("SELECT TOP 1 * FROM SysProgram WHERE ApplicationId = @ApplicationId AND ProgramName = @ProgramName");
@@ -104,10 +153,10 @@ namespace VoiceFirst_Admin.Data.Repositories
             // SQL
             // -------------------------
             const string sql = @"
-INSERT INTO SysProgramActionsLink
-    (ProgramId, ProgramActionId, CreatedBy)
-VALUES
-    (@ProgramId, @ProgramActionId, @CreatedBy);";
+            INSERT INTO SysProgramActionsLink
+                (ProgramId, ProgramActionId, CreatedBy)
+            VALUES
+                (@ProgramId, @ProgramActionId, @CreatedBy);";
 
             // -------------------------
             // PARAMETER OBJECTS
