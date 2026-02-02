@@ -52,5 +52,13 @@ public class MenuController : ControllerBase
         return StatusCode(res.StatusCode, res);
     }
 
+    [HttpPatch("web/bulk")]
+    public async Task<IActionResult> BulkUpdateWeb([FromBody] VoiceFirst_Admin.Utilities.DTOs.Features.Menu.WebMenuBulkUpdateDto model, CancellationToken cancellationToken)
+    {
+        if (model == null) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
+        var res = await _service.BulkUpdateWebMenusAsync(model, userId, cancellationToken);
+        return StatusCode(res.StatusCode, res);
+    }
+
     
 }

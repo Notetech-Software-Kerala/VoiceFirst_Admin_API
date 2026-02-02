@@ -27,11 +27,21 @@ public class MenuService : IMenuService
         _sysProgramRepo = sysProgramRepo;
     }
 
-    public async Task<ApiResponse<object>> CreateAsync(MenuCreateDto dto, int loginId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<object>> BulkUpdateWebMenusAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Menu.WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
     {
         if (dto == null) return ApiResponse<object>.Fail(Messages.PayloadRequired);
 
-        if (dto.ProgramIds != null && dto.ProgramIds.Any())
+        var ok = await _repo.BulkUpdateWebMenusAsync(dto, loginId, cancellationToken);
+        if (!ok) return ApiResponse<object>.Fail(Messages.Failed);
+        return ApiResponse<object>.Ok(null!, Messages.Updated);
+    }
+
+    public async Task<ApiResponse<object>> CreateAsync(MenuCreateDto dto, int loginId, CancellationToken cancellationToken = default)
+    {
+        if (dto == null) return ApiResponse<object>.Fail(Messages.PayloadRequired);
+        // If Route is empty => this is a main menu. Main menus don't have program links.
+        var isMainMenu = string.IsNullOrWhiteSpace(dto.Route);
+        if (!isMainMenu && dto.ProgramIds != null && dto.ProgramIds.Any())
         {
             var programIds = dto.ProgramIds
                      .Select(x => x.ProgramId)
@@ -60,7 +70,9 @@ public class MenuService : IMenuService
         var entity = _mapper.Map<MenuMaster>(dto);
         entity.CreatedBy = loginId;
 
-        var programIdsModel = _mapper.Map<List<MenuProgramLink>>(dto.ProgramIds);
+        // If this is a main menu (no route) there should be no program links and no application id
+        var programIdsModel = isMainMenu ? null : _mapper.Map<List<MenuProgramLink>>(dto.ProgramIds);
+        
 
         var createdId = await _repo.CreateMenuAsync(entity, programIdsModel, dto.Web, dto.App, loginId, cancellationToken);
         return ApiResponse<object>.Ok(new { MenuMasterId = createdId }, Messages.Created, StatusCodes.Status201Created);
@@ -97,19 +109,28 @@ public class MenuService : IMenuService
     {
         if (dto == null) return ApiResponse<object>.Fail(Messages.PayloadRequired);
 
+        var isMainMenu = string.IsNullOrWhiteSpace(dto.Route);
+
         var entity = new Utilities.Models.Entities.MenuMaster
         {
             MenuMasterId = id,
             MenuName = dto.MenuName ?? string.Empty,
             MenuIcon = dto.Icon ?? string.Empty,
             MenuRoute = dto.Route ?? string.Empty,
-            ApplicationId = dto.PlateFormId ?? default,
+            ApplicationId = dto.PlateFormId?? 0,
             UpdatedBy = loginId,
             IsActive = dto.Active ?? true
         };
 
         var ok = await _repo.UpdateMenuMasterAsync(entity, cancellationToken);
         if (!ok) return ApiResponse<object>.Fail(Messages.NotFound, Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound);
+
+        // If this was changed/cleared to be a main menu, remove any program links
+        //if (isMainMenu)
+        //{
+        //    await _repo.DeleteMenuProgramLinksAsync(id, cancellationToken);
+        //}
+
         return ApiResponse<object>.Ok(null!, Messages.Updated);
     }
 

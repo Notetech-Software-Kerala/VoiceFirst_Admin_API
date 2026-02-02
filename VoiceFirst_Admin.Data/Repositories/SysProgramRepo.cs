@@ -830,7 +830,7 @@ WHERE SysProgramId = @ProgramId
             WHERE pal.SysProgramActionLinkId = @ProgramActionLinkId
               AND sp.ApplicationId = @ApplicationId
               AND pal.IsActive = 1
-              AND sp.IsDeleted = 0 AND sp.IsActive = 1;
+              AND sp.IsActive = 1;
         ";
 
                  using var conn = _context.CreateConnection();

@@ -53,20 +53,23 @@ public class RoleService : IRoleService
                 Messages.RoleNameAlreadyExists,
                 StatusCodes.Status409Conflict);
         }
-
-        if(dto.ActionLinkIds != null && dto.ActionLinkIds.Count()>0)
+        foreach(var plan in dto.PlanActionLinkCreateDto)
         {
-            var list = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
-                dto.PlatformId,
-                dto.ActionLinkIds,
-                cancellationToken);
-            if (list.Any())
+            if (plan.ActionLinkIds != null && plan.ActionLinkIds.Count() > 0)
             {
-                return ApiResponse<RoleDto>.Fail(
-                    string.Format(Messages.InvalidActionLinksForApplication, string.Join(", ", list)),
-                    StatusCodes.Status400BadRequest);
+                var list = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
+                    dto.PlatformId,
+                    plan.ActionLinkIds,
+                    cancellationToken);
+                if (list.Any())
+                {
+                    return ApiResponse<RoleDto>.Fail(
+                        string.Format(Messages.InvalidActionLinksForApplication, string.Join(", ", list)),
+                        StatusCodes.Status400BadRequest);
+                }
             }
         }
+        
         var entity = new SysRoles
         {
             RoleName = dto.RoleName,
@@ -76,27 +79,41 @@ public class RoleService : IRoleService
             CreatedBy = loginId
         };
 
-        var created = await _repo.CreateAsync(entity, dto.ActionLinkIds, cancellationToken);
+        var created = await _repo.CreateAsync(entity, dto.PlanActionLinkCreateDto, cancellationToken);
         var createdEntity = await _repo.GetByIdAsync(created.SysRoleId, cancellationToken);
         if (createdEntity == null)
             return ApiResponse<RoleDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
-        if(dto.PlanIds.Count()>0)
-            await _planService.LinkPlansRoleAsync(created.SysRoleId, dto.PlanIds, loginId, cancellationToken);
+        
 
         var dtoOut = _mapper.Map<RoleDto>(createdEntity);
-        var createdLinks = await _repo.GetActionIdsByRoleIdAsync(createdEntity.SysRoleId, cancellationToken);
+      
    
         return ApiResponse<RoleDto>.Ok(dtoOut, Messages.RoleCreated, StatusCodes.Status201Created);
     }
+    public async Task<PlanRoleActionLinkDetailsDto?> GetByPlanIdAsync(PlanRoleDto planRoleDto, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repo.GetByIdAsync(planRoleDto.RoleId, cancellationToken);
+        if (entity == null) return null;
+        var links = await _repo.GetActionIdsByRoleIdAsync(planRoleDto.RoleId, planRoleDto.PlanId, cancellationToken);
+        
+        PlanRoleActionLinkDetailsDto planRoleActionLinkDetails = new PlanRoleActionLinkDetailsDto();
+        if (links.Count() > 0)
+        {
+            var actionLinksMap = _mapper.Map<IEnumerable<PlanRoleActionLinkDto>>(links);
+            planRoleActionLinkDetails.PlanRoleLinkId = links.FirstOrDefault().PlanRoleLinkId;
+            planRoleActionLinkDetails.PlanActionLink = actionLinksMap.ToList();
+        }
 
-    public async Task<RoleDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        return planRoleActionLinkDetails;
+    }
+    public async Task<RoleDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await _repo.GetByIdAsync(id, cancellationToken);
         if (entity == null) return null;
-        var dto = _mapper.Map<RoleDetailDto>(entity);
-        var links = await _repo.GetActionIdsByRoleIdAsync(id, cancellationToken);
-        var actionLinksMap = _mapper.Map<IEnumerable<RoleActionLinkDto>>(links);
-        dto.ActionLinks = actionLinksMap.ToList();
+        var dto = _mapper.Map<RoleDto>(entity);
+        //var links = await _repo.GetActionIdsByRoleIdAsync(id, cancellationToken);
+        //var actionLinksMap = _mapper.Map<IEnumerable<PlanRoleActionLinkDto>>(links);
+        //dto.ActionLinks = actionLinksMap.ToList();
         return dto;
     }
 
@@ -120,9 +137,10 @@ public class RoleService : IRoleService
         return dto;
     }
 
-    public async Task<ApiResponse<RoleDetailDto>> UpdateAsync(RoleUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<RoleDto>> UpdateAsync(RoleUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
     {
-        if(dto.RoleName!=null || dto.RolePurpose!=null || dto.PlatformId != null)
+        var roleDetails = await _repo.GetByIdAsync(id, cancellationToken);
+        if (dto.RoleName!=null || dto.RolePurpose!=null || dto.PlatformId != null)
         {
             if (dto.RoleName != null)
             {
@@ -131,16 +149,16 @@ public class RoleService : IRoleService
                 {
                     // System roles (protected)
                     if (existing.SysRoleId is >= 1 and <= 5)
-                        return ApiResponse<RoleDetailDto>.Fail(
+                        return ApiResponse<RoleDto>.Fail(
                             Messages.RoleNameDefault,
                             StatusCodes.Status403Forbidden);
 
                     if (existing.IsDeleted == true)
-                        return ApiResponse<RoleDetailDto>.Fail(
+                        return ApiResponse<RoleDto>.Fail(
                             Messages.RoleNameExistsInTrash,
                             StatusCodes.Status422UnprocessableEntity);
 
-                    return ApiResponse<RoleDetailDto>.Fail(
+                    return ApiResponse<RoleDto>.Fail(
                         Messages.RoleNameAlreadyExists,
                         StatusCodes.Status409Conflict);
                 }
@@ -158,47 +176,51 @@ public class RoleService : IRoleService
 
             var ok = await _repo.UpdateAsync(entity, cancellationToken);
             if (!ok)
-                return ApiResponse<RoleDetailDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+                return ApiResponse<RoleDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
         }
        
         // update action links
-        if (dto.AddActionLinkIds != null)
+        if (dto.PlanActionLinkCreateDto != null && dto.PlanActionLinkCreateDto.Count()>0)
         {
-            var invalidIds = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
-                dto.PlatformId ?? 0,
-                dto.AddActionLinkIds,
-                cancellationToken);
-
-            if (invalidIds.Any())
+            foreach (var item in dto.PlanActionLinkCreateDto)
             {
-                return ApiResponse<RoleDetailDto>.Fail(
-                    string.Format(Messages.InvalidActionLinksForApplication, string.Join(", ", invalidIds)),
-                    StatusCodes.Status400BadRequest);
-            }
-            var addError = await _repo.AddRoleActionLinksAsync(
-                id,
-                dto.PlatformId ?? 0,
-                dto.AddActionLinkIds,
-                loginId,
+                var invalidIds = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
+                roleDetails.ApplicationId ,
+                item.ActionLinkIds,
                 cancellationToken);
 
-            if (addError != null)
-                return ApiResponse<RoleDetailDto>.Fail(addError.Message, addError.StatuaCode);
+                if (invalidIds.Any())
+                {
+                    return ApiResponse<RoleDto>.Fail(
+                        string.Format(Messages.InvalidActionLinksForApplication, string.Join(", ", invalidIds)),
+                        StatusCodes.Status400BadRequest);
+                }
+                var addError = await _repo.AddRoleActionLinksAsync(
+                    id,
+                    roleDetails.ApplicationId,
+                    dto.PlanActionLinkCreateDto,
+                    loginId,
+                    cancellationToken);
+
+                if (addError != null)
+                    return ApiResponse<RoleDto>.Fail(addError.Message, addError.StatuaCode);
+            }
+            
         }
         if (dto.UpdateActionLinks != null)
         {
-            var actionLinksIds = dto.UpdateActionLinks.Select(x => x.ActionLinkId).ToList();
-            var list = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
-                dto.PlatformId ?? 0,
-                actionLinksIds,
-                cancellationToken);
+            //var actionLinksIds = dto.UpdateActionLinks.Select(x => x.ActionLinkId).ToList();
+            //var list = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
+            //    dto.PlatformId ?? 0,
+            //    actionLinksIds,
+            //    cancellationToken);
 
-            if (list.Any())
-            {
-                return ApiResponse<RoleDetailDto>.Fail(
-                    string.Format(Messages.InvalidActionLinksForApplication, string.Join(", ", list)),
-                    StatusCodes.Status400BadRequest);
-            }
+            //if (list.Any())
+            //{
+            //    return ApiResponse<RoleDetailDto>.Fail(
+            //        string.Format(Messages.InvalidActionLinksForApplication, string.Join(", ", list)),
+            //        StatusCodes.Status400BadRequest);
+            //}
             var updateError = await _repo.UpdateRoleActionLinksAsync(
                id,
                dto.PlatformId ?? 0,
@@ -207,20 +229,16 @@ public class RoleService : IRoleService
                cancellationToken);
 
             if (updateError != null)
-                return ApiResponse<RoleDetailDto>.Fail(updateError.Message, updateError.StatuaCode);
-        }
-        else
-        {
-            return ApiResponse<RoleDetailDto>.Fail(Messages.BadRequest, StatusCodes.Status400BadRequest);
+                return ApiResponse<RoleDto>.Fail(updateError.Message, updateError.StatuaCode);
         }
        
         var updated = await _repo.GetByIdAsync(id, cancellationToken);
         if (updated == null) return null;
-        var updatedData = _mapper.Map<RoleDetailDto>(updated);
-        var links = await _repo.GetActionIdsByRoleIdAsync(id, cancellationToken);
-        var actionLinksMap = _mapper.Map<IEnumerable<RoleActionLinkDto>>(links);
-        updatedData.ActionLinks = actionLinksMap.ToList();
-        return ApiResponse<RoleDetailDto>.Ok(updatedData,Messages.Success, StatusCodes.Status200OK); ;
+        var updatedData = _mapper.Map<RoleDto>(updated);
+       
+        //var actionLinksMap = _mapper.Map<IEnumerable<PlanRoleActionLinkDto>>(links);
+        //updatedData.ActionLinks = actionLinksMap.ToList();
+        return ApiResponse<RoleDto>.Ok(updatedData,Messages.Success, StatusCodes.Status200OK); ;
     }
 
     public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)

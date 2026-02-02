@@ -11,4 +11,5 @@ public interface IMenuService
     Task<List<WebMenuDto>> GetAllWebMenusAsync( CancellationToken cancellationToken = default); 
     Task<ApiResponse<object>> UpdateMenuMasterAsync(int id, MenuMasterUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
     Task<List<AppMenuDto>> GetAllAppMenusAsync( CancellationToken cancellationToken = default);
+    Task<ApiResponse<object>> BulkUpdateWebMenusAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Menu.WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
 }

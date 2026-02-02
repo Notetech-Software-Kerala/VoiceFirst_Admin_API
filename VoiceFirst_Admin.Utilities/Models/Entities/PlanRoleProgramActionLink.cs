@@ -8,4 +8,5 @@ public class PlanRoleProgramActionLink : BaseModel
     public int PlanRoleProgramActionLinkId { get; set; }
     public int PlanRoleLinkId { get; set; }
     public int ProgramActionLinkId { get; set; }
+    public string ProgramActionName { get; set; }
 }

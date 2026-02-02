@@ -7,14 +7,20 @@ public class RoleUpdateDto
     public int? PlatformId { get; set; }
 
     // Add these links (insert if not exists)
-    public IEnumerable<int> AddActionLinkIds { get; set; } = new List<int>();
+    public List<PlanActionLinkCreateDto>? PlanActionLinkCreateDto { get; set; }
 
     // Update existing links to the desired state
-    public IEnumerable<ActionLinkStatusDto> UpdateActionLinks { get; set; } = new List<ActionLinkStatusDto>();
+    public List<PlanRoleActionLinkUpdateDto>? UpdateActionLinks { get; set; }
 }
-public class ActionLinkStatusDto
+public class ActionLinkDto
 {
+    
     public int ActionLinkId { get; set; }
     public bool Active { get; set; }
 }
 
+public class PlanRoleActionLinkUpdateDto
+{
+    public int RolePlanLinkId { get; set; }
+    public List<ActionLinkDto>? UpdateActionLinks { get; set; }
+}

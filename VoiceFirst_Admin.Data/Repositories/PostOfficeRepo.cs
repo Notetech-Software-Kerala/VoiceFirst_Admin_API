@@ -680,7 +680,7 @@ public class PostOfficeRepo : IPostOfficeRepo
                 if (currentZip.Length > 0)
                 { 
                     // ensure master ZipCode exists
-                    var zip = await connection.QueryFirstOrDefaultAsync<PostOfficeZipCode>(new CommandDefinition("SELECT ZipCodeId, ZipCode FROM ZipCode WHERE ZipCode = @Zip", new { Zip = currentZip }, transaction, cancellationToken: cancellationToken));
+                    var zip = await connection.QueryFirstOrDefaultAsync<ZipCodes>(new CommandDefinition("SELECT ZipCodeId, ZipCode FROM ZipCode WHERE ZipCode = @Zip", new { Zip = currentZip }, transaction, cancellationToken: cancellationToken));
                     int zipId;
                     if (zip == null)
                     {
@@ -690,7 +690,7 @@ public class PostOfficeRepo : IPostOfficeRepo
                     else
                     {
 
-                        zipId = zip.PostOfficeZipCodeLinkId;
+                        zipId = zip.ZipCodeId;
                     }
 
                     const string insertSql = @"INSERT INTO PostOfficeZipCodeLink (PostOfficeId, ZipCodeId, CreatedBy) VALUES (@PostOfficeId, @ZipCodeId, @CreatedBy);";

@@ -31,7 +31,14 @@ public class RoleController : ControllerBase
     {
         var item = await _service.GetByIdAsync(id, cancellationToken);
         if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound));
-        return Ok(ApiResponse<RoleDetailDto>.Ok(item, Messages.RoleRetrieveSucessfully));
+        return Ok(ApiResponse<RoleDto>.Ok(item, Messages.RoleRetrieveSucessfully));
+    }
+    [HttpGet("plan-role-link")]
+    public async Task<IActionResult> GetByPlanIdAsync([FromQuery] PlanRoleDto planRoleDto, CancellationToken cancellationToken)
+    {
+        var item = await _service.GetByPlanIdAsync(planRoleDto, cancellationToken);
+        if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound));
+        return Ok(ApiResponse<PlanRoleActionLinkDetailsDto>.Ok(item, Messages.RoleRetrieveSucessfully));
     }
 
     [HttpGet]

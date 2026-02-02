@@ -1,5 +1,6 @@
 using Dapper;
 using System.Collections.Generic;
+using System.Threading;
 using System.Data;
 using System.Diagnostics.Metrics;
 using System.Linq;
@@ -19,6 +20,14 @@ public class MenuRepo : IMenuRepo
     public MenuRepo(IDapperContext context)
     {
         _context = context;
+    }
+
+    public async Task<bool> DeleteMenuProgramLinksAsync(int menuMasterId, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"DELETE FROM dbo.MenuProgramLink WHERE MenuMasterId = @MenuMasterId";
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(new CommandDefinition(sql, new { MenuMasterId = menuMasterId }, cancellationToken: cancellationToken));
+        return affected >= 0;
     }
 
     public async Task<int> CreateMenuAsync(
@@ -487,15 +496,15 @@ public class MenuRepo : IMenuRepo
                 foreach (var m in dto.MoveAndReorder)
                 {
                     // update parent
-                    const string updateParentSql = @"UPDATE dbo.WebMenus SET ParentWebMenuId = @ParentWebMenuId, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
+                    const string updateParentSql = @"UPDATE dbo.WebMenus SET ParentWebMenuId = @ParentWebMenuId, UpdatedBy = @UpdatedBy, UPDATEDAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
                     await connection.ExecuteAsync(new CommandDefinition(updateParentSql, new { ParentWebMenuId = m.ParentWebMenuId, UpdatedBy = loginId, WebMenuId = m.WebMenuId }, transaction: tx, cancellationToken: cancellationToken));
 
-                    // reorder children based on provided ordered list
+                    // reorder children based on provided ordered list (use spacing inferred from existing siblings)
                     if (m.NewOrderUnderToParent != null && m.NewOrderUnderToParent.Count > 0)
                     {
                         var parentId = m.ParentWebMenuId ?? 0;
 
-                        // get sibling sort orders to infer spacing
+                        // fetch existing sort orders for siblings under this parent to infer spacing
                         const string selectSiblingsSql = @"SELECT SortOrder FROM dbo.WebMenus WHERE ParentWebMenuId = @ParentWebMenuId AND IsDeleted = 0 ORDER BY SortOrder";
                         var siblingOrders = (await connection.QueryAsync<int>(new CommandDefinition(selectSiblingsSql, new { ParentWebMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken))).ToList();
 
@@ -509,9 +518,9 @@ public class MenuRepo : IMenuRepo
                             if (avg > 0) step = avg;
                         }
 
-                        int baseOffset = step / 2; // yields 50 when step == 100
+                        int baseOffset = step / 2; // e.g. 50 when step == 100
 
-                        const string updateOrderSql = @"UPDATE dbo.WebMenus SET SortOrder = @SortOrder, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
+                        const string updateOrderSql = @"UPDATE dbo.WebMenus SET SortOrder = @SortOrder, UpdatedBy = @UpdatedBy, UPDATEDAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
                         for (int idx = 0; idx < m.NewOrderUnderToParent.Count; idx++)
                         {
                             var id = m.NewOrderUnderToParent[idx];
@@ -522,16 +531,37 @@ public class MenuRepo : IMenuRepo
                 }
             }
 
-            // Reorders: just reorder children under parent
+            // Reorders: just reorder children under parent (use spacing inferred from existing siblings)
             if (dto.Reorders != null)
             {
                 foreach (var r in dto.Reorders)
                 {
-                    int order = 1;
-                    const string updateOrderSql = @"UPDATE dbo.WebMenus SET SortOrder = @SortOrder, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
-                    foreach (var id in r.OrderedIds)
+                    if (r.OrderedIds == null || r.OrderedIds.Count == 0) continue;
+
+                    var parentId = r.ParentWebMenuId;
+
+                    // fetch existing sort orders for siblings under this parent to infer spacing
+                    const string selectSiblingsSql = @"SELECT SortOrder FROM dbo.WebMenus WHERE ParentWebMenuId = @ParentWebMenuId AND IsDeleted = 0 ORDER BY SortOrder";
+                    var siblingOrders = (await connection.QueryAsync<int>(new CommandDefinition(selectSiblingsSql, new { ParentWebMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken))).ToList();
+
+                    int step = 100; // default spacing
+                    if (siblingOrders.Count >= 2)
                     {
-                        await connection.ExecuteAsync(new CommandDefinition(updateOrderSql, new { SortOrder = order++, UpdatedBy = loginId, WebMenuId = id }, transaction: tx, cancellationToken: cancellationToken));
+                        var diffs = new List<int>();
+                        for (int i = 1; i < siblingOrders.Count; i++)
+                            diffs.Add(siblingOrders[i] - siblingOrders[i - 1]);
+                        var avg = (int)System.Math.Round(diffs.Average());
+                        if (avg > 0) step = avg;
+                    }
+
+                    int baseOffset = step / 2; // e.g. 50 when step == 100
+
+                    const string updateOrderSql = @"UPDATE dbo.WebMenus SET SortOrder = @SortOrder, UpdatedBy = @UpdatedBy, UPDATEDAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
+                    for (int idx = 0; idx < r.OrderedIds.Count; idx++)
+                    {
+                        var id = r.OrderedIds[idx];
+                        var sort = baseOffset + (idx * step);
+                        await connection.ExecuteAsync(new CommandDefinition(updateOrderSql, new { SortOrder = sort, UpdatedBy = loginId, WebMenuId = id }, transaction: tx, cancellationToken: cancellationToken));
                     }
                 }
             }
@@ -539,7 +569,7 @@ public class MenuRepo : IMenuRepo
             // Status updates
             if (dto.StatusUpdate != null)
             {
-                const string statusSql = @"UPDATE dbo.WebMenus SET IsActive = @IsActive, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
+                const string statusSql = @"UPDATE dbo.WebMenus SET IsActive = @IsActive, UpdatedBy = @UpdatedBy, UPDATEDAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
                 foreach (var s in dto.StatusUpdate)
                 {
                     await connection.ExecuteAsync(new CommandDefinition(statusSql, new { IsActive = s.Active, UpdatedBy = loginId, WebMenuId = s.WebMenuId }, transaction: tx, cancellationToken: cancellationToken));

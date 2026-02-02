@@ -42,7 +42,7 @@ public class RoleMappingProfile : Profile
             .ForMember(d => d.RoleId, opt => opt.MapFrom(s => s.SysRoleId))
             .ForMember(d => d.RoleName, opt => opt.MapFrom(s => s.RoleName));
 
-        CreateMap<SysRolesProgramActionLink, RoleActionLinkDto>()
+        CreateMap<PlanRoleProgramActionLink, PlanRoleActionLinkDto>()
                 .ForMember(d => d.ActionLinkId, opt => opt.MapFrom(s => s.ProgramActionLinkId))
                 .ForMember(d => d.ActionName, opt => opt.MapFrom(s => s.ProgramActionName))
                 .ForMember(d => d.CreatedUser, opt => opt.MapFrom(s => s.CreatedUserName))

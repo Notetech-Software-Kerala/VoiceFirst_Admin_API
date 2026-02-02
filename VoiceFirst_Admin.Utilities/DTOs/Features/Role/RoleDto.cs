@@ -14,5 +14,5 @@ public class RoleDto : CommonDto
 public class RoleDetailDto : RoleDto
 {
 
-    public List<RoleActionLinkDto> ActionLinks { get; set; }
+    public List<PlanRoleActionLinkDto> ActionLinks { get; set; }
 }       

@@ -12,7 +12,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface IRoleRepo
     {
-        Task<SysRoles> CreateAsync(SysRoles entity,List<int> ActionLinkId, CancellationToken cancellationToken = default);
+        Task<SysRoles> CreateAsync(SysRoles entity, List<PlanActionLinkCreateDto> PlanActionLinkCreateDto, CancellationToken cancellationToken = default);
         Task<SysRoles?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysRoles>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysRoles>> GetLookUpAllAsync( CancellationToken cancellationToken = default);
@@ -20,18 +20,18 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<bool> DeleteAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<bool> RestoreAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<SysRoles> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
-        Task<IEnumerable<SysRolesProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId,int planId, CancellationToken cancellationToken = default);
         Task<BulkUpsertError?> AddRoleActionLinksAsync(
             int roleId,
             int applicationId,
-            IEnumerable<int> addActionLinkIds,
+            List<PlanActionLinkCreateDto> planActionLink,
             int loginId,
             CancellationToken cancellationToken = default);
 
         Task<BulkUpsertError?> UpdateRoleActionLinksAsync(
             int roleId,
             int applicationId,
-            IEnumerable<ActionLinkStatusDto> updateActionLinks,
+             List<PlanRoleActionLinkUpdateDto>? UpdateActionLinks,
             int loginId,
             CancellationToken cancellationToken = default);
 

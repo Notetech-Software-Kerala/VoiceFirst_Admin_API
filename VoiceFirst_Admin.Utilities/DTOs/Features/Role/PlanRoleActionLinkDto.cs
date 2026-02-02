@@ -4,8 +4,9 @@ using System.Text;
 
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.Role
 {
-    public class RoleActionLinkDto
+    public class PlanRoleActionLinkDto
     {
+        
         public int ActionLinkId { get; set; }
         public string ActionName { get; set; } = string.Empty;
         public bool Active { get; set; }
@@ -16,5 +17,11 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Role
         public DateTime? ModifiedDate { get; set; }
         //public string DeletedUser { get; set; } = string.Empty;
         //public DateTime? DeletedDate { get; set; }
+    }
+    public class PlanRoleActionLinkDetailsDto
+    {
+
+        public int PlanRoleLinkId { get; set; }
+        public List<PlanRoleActionLinkDto> PlanActionLink { get; set; }
     }
 }
