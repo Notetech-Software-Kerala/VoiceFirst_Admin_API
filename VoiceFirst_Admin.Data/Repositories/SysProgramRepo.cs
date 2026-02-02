@@ -480,6 +480,7 @@ WHERE SysProgramId = @ProgramId
             CheckProgramActionLinksExistAsync(
                         int programId,
                 IEnumerable<int> programActionLinkIds,
+                bool update,
                 IDbConnection connection,
                 IDbTransaction transaction,
                 CancellationToken cancellationToken = default)
@@ -494,22 +495,31 @@ WHERE SysProgramId = @ProgramId
                     WHERE ProgramActionId IN @ProgramActionId And ProgramId = @programId
                 ";
 
-                        var existingCount = await connection.ExecuteScalarAsync<int>(
+                        var exists = await connection.ExecuteScalarAsync<int>(
                             new CommandDefinition(
                                 sql,
                                 new { ProgramActionId = programActionLinkIds , programId = programId },
                                 transaction,
                                 cancellationToken: cancellationToken
                             ));
+                            if (!update)
+                            {
+                                // INSERT case
+                                // true  → already exists (block insert)
+                                // false → safe to insert
+                                return exists > 0;
+                            }
 
-                        // 🔹 If counts mismatch, at least one ID does not exist
-                        return existingCount == programActionLinkIds.Count();
-                    }
+                            // UPDATE case
+                            // true  → all records exist
+                            // false → some records missing
+                            return exists == programActionLinkIds.Count();
+        }
 
 
 
 
-
+        
 
 
 

@@ -22,8 +22,12 @@ namespace VoiceFirst_Admin.Utilities.Constants
         // New generic messages
         public const string PayloadRequired = "Payload is required.";
         public const string NotFound = "Not found.";
+        public const string PostOfficesAreAlreadyLinked = "Some post offices are already linked.Please refresh again.";
+
+        public const string ActionsAreAlreadyLinked = "Some actions are already linked.Please refresh again.";
         public const string Updated = "Updated.";
         public const string ActionsNotFound = "Actions Not found.";
+        public const string PostOfficesNotFound = "Post offices Not found.";
         // Auth
         public const string InvalidCredentials = "Invalid credentials.";
         public const string UserNotFound = "User not found.";
@@ -222,10 +226,13 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
 
         public const string PlaceNotFound =
-         "Selected activity is not available." + BaseRefreshMessage;
+         "Selected place is not available." + BaseRefreshMessage;
 
         public const string ProgramActionNotFound =
          "Some selected actions are no longer available."+ BaseRefreshMessage;
+
+        public const string PostOfficeNotFound =
+       "Some selected post office are no longer available." + BaseRefreshMessage;
 
         public const string ProgramNotFound =
          "Some selected program are no longer available." + BaseRefreshMessage;

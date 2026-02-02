@@ -1,4 +1,4 @@
-using Azure.Core;
+﻿using Azure.Core;
 using Dapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
@@ -30,7 +30,66 @@ public class PostOfficeRepo : IPostOfficeRepo
         _context = context;
     }
 
-    
+
+
+
+
+  
+
+
+
+
+    public async Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
+    List<int> postOfficeIds,
+    CancellationToken cancellationToken = default)
+        {
+            var result = new Dictionary<string, bool>
+        {
+            { "idNotFound", false },
+            { "deletedOrInactive", false }
+        };
+
+
+
+        if (postOfficeIds == null || postOfficeIds.Count == 0)
+            return result;
+
+        const string sql = @"
+        SELECT 
+            PostOfficeId,
+            IsActive,
+            IsDeleted
+        FROM PostOffice
+        WHERE PostOfficeId IN @Ids;
+        ";
+
+        using var connection = _context.CreateConnection();
+
+        var entities = (await connection.QueryAsync<SysProgramActions>(
+            new CommandDefinition(
+                sql,
+                new { Ids = postOfficeIds },
+                cancellationToken: cancellationToken)))
+            .ToList();
+
+        // 1️⃣ Check NOT FOUND
+        if (entities.Count != postOfficeIds.Distinct().Count())
+        {
+            result["idNotFound"] = true;
+        }
+
+        // 2️⃣ Check Deleted or Inactive
+        if (entities.Any(x => x.IsDeleted == true || x.IsActive == false))
+        {
+            result["deletedOrInactive"] = true;
+        }
+
+        return result;
+    }
+
+
+
+
 
     public async Task<PostOffice> CreateAsync(PostOffice entity, CancellationToken cancellationToken = default)
     {

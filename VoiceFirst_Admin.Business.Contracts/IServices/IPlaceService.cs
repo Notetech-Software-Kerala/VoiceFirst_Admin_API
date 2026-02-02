@@ -10,11 +10,11 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
 {
     public interface IPlaceService
     {
-        Task<ApiResponse<PlaceDTO>> CreateAsync(
+        Task<ApiResponse<PlaceDetailDTO>> CreateAsync(
             PlaceCreateDTO dto, int loginId,
             CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<PlaceDTO>?> GetByIdAsync(
+        Task<ApiResponse<PlaceDetailDTO>?> GetByIdAsync(
             int id, CancellationToken cancellationToken = default);
 
 
@@ -23,14 +23,14 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
             CancellationToken cancellationToken = default);
 
 
-        Task<ApiResponse<PlaceDTO>>
+        Task<ApiResponse<PlaceDetailDTO>>
             UpdateAsync(
             PlaceUpdateDTO dto,
             int sysBusinessActivityId, int loginId,
             CancellationToken cancellationToken = default);
 
 
-        Task<ApiResponse<int>> DeleteAsync(int id, int loginId, 
+        Task<ApiResponse<PlaceDetailDTO>> DeleteAsync(int id, int loginId, 
             CancellationToken cancellationToken = default);
 
 
@@ -38,7 +38,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
             GetLookUpAsync(CancellationToken cancellationToken);
 
 
-        Task<ApiResponse<PlaceDTO>> RecoverAsync(
+        Task<ApiResponse<PlaceDetailDTO>> RecoverAsync(
             int id,
             int loginId,
             CancellationToken cancellationToken = default);

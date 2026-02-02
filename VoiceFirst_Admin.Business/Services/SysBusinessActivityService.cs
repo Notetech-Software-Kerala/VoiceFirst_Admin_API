@@ -277,7 +277,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             
         
-         public async Task<ApiResponse<int>> 
+         public async Task<ApiResponse<SysBusinessActivityDTO>> 
             DeleteAsync(
              int id, 
              int loginId, 
@@ -291,7 +291,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (existDto == null)
             {
-                return ApiResponse<int>.Fail(
+                return ApiResponse<SysBusinessActivityDTO>.Fail(
                     Messages.BusinessActivityNotFoundById,
                     StatusCodes.Status404NotFound,
                     ErrorCodes.BusinessActivityNotFoundById);
@@ -299,7 +299,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (existDto.Deleted)
             {
-                return ApiResponse<int>.Fail(
+                return ApiResponse<SysBusinessActivityDTO>.Fail(
                     Messages.BusinessActivityAlreadyDeleted,
                     StatusCodes.Status409Conflict,
                     ErrorCodes.BusinessActivityAlreadyDeleted);
@@ -310,15 +310,18 @@ namespace VoiceFirst_Admin.Business.Services
             if (!rowAffect)
             {
 
-                return ApiResponse<int>.Fail(
+                return ApiResponse<SysBusinessActivityDTO>.Fail(
                      Messages.BusinessActivityAlreadyDeleted,
                      StatusCodes.Status409Conflict,
                      ErrorCodes.BusinessActivityAlreadyDeleted);
             }
 
-          
-            return ApiResponse<int>.
-               Ok(id, Messages.BusinessActivityDeleted,statusCode:StatusCodes.Status200OK);
+            var dto =
+               await _repo.GetByIdAsync
+               (id,
+               cancellationToken);
+            return ApiResponse<SysBusinessActivityDTO>.
+               Ok(dto, Messages.BusinessActivityDeleted,statusCode:StatusCodes.Status200OK);
         }
     }
 }

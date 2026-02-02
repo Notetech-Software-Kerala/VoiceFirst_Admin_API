@@ -21,7 +21,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
             int sysBusinessActivityId, int loginId,
             CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<int>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<SysBusinessActivityDTO>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
         Task<ApiResponse<List<SysBusinessActivityActiveDTO>>> GetActiveAsync(CancellationToken cancellationToken);
         Task<ApiResponse<SysBusinessActivityDTO>> RecoverBusinessActivityAsync(
             int id,

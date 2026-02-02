@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
@@ -7,6 +8,8 @@ using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Place;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -40,29 +43,135 @@ namespace VoiceFirst_Admin.Data.Repositories
             return entity;
         }
 
+        public async Task<bool> BulkInsertPlacePostOfficeLinksAsync(
+           int placeId,
+           IEnumerable<int> postOfficeIds,
+           int createdBy,
+           IDbConnection connection,
+           IDbTransaction tx,
+           CancellationToken cancellationToken)
+        {
+            if (postOfficeIds == null || !postOfficeIds.Any())
+                return false;
 
-        public async Task<int> CreateAsync
-           (Place entity,
-           CancellationToken cancellationToken = default)
+            // -------------------------
+            // CONVERT dynamic → int
+            // -------------------------
+
+            if (postOfficeIds.Count() == 0)
+                return false;
+
+            // -------------------------
+            // SQL
+            // -------------------------
+            const string sql = @"
+        INSERT INTO PlacePostOfficeLink
+            (PlaceId, PostOfficeId, CreatedBy)
+        VALUES
+            (@PlaceId, @PostOfficeId, @CreatedBy);";
+
+            // -------------------------
+            // PARAMETER OBJECTS
+            // -------------------------
+            var parameters = postOfficeIds.Select(id => new
+            {
+                PlaceId = placeId,
+                PostOfficeId = id,
+                CreatedBy = createdBy
+            });
+
+            var rowsAffected = await connection.ExecuteAsync(
+                new CommandDefinition(
+                    sql,
+                    parameters,
+                    transaction: tx,
+                    cancellationToken: cancellationToken));
+
+            return rowsAffected > 0;
+        }
+
+
+
+        public async Task<bool> BulkUpdatePlacePostOfficeLinksAsync(
+ int placeId,
+ IEnumerable<PlacePostOfficeLinksUpdateDTO> dtos,
+ int updatedBy,
+ IDbConnection connection,
+ IDbTransaction tx,
+ CancellationToken cancellationToken)
         {
             const string sql = @"
-                INSERT INTO Place (PlaceName,CreatedBy)
-                VALUES (@PlaceName,@CreatedBy);
-                SELECT CAST(SCOPE_IDENTITY() AS int);";
+UPDATE PlacePostOfficeLink
+SET IsActive   = @IsActive,
+    UpdatedBy = @UpdatedBy,
+    UpdatedAt = SYSDATETIME()
+WHERE PlaceId = @PlaceId
+  AND PostOfficeId = @PostOfficeId
+  AND IsActive <> @IsActive;
+";
 
-            var cmd = new CommandDefinition(sql, new
+            var parameters = dtos.Select(dto => new
             {
-                entity.PlaceName,
-                entity.CreatedBy,
-            }, cancellationToken: cancellationToken);
-            using var connection = _context.CreateConnection();
+                PlaceId = placeId,
+                PostOfficeId = dto.PostOfficeId,
+                IsActive = dto.Active,
+                UpdatedBy = updatedBy
+            });
+
+            var rowsAffected = await connection.ExecuteAsync(
+                new CommandDefinition(
+                    sql,
+                    parameters,
+                    transaction: tx,
+                    cancellationToken: cancellationToken
+                ));
+
+            return rowsAffected > 0;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+        public async Task<int> CreateAsync(
+    Place entity,
+    IDbConnection connection,
+    IDbTransaction transaction,
+    CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+        INSERT INTO Place (PlaceName, CreatedBy)
+        VALUES (@PlaceName, @CreatedBy);
+        SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+            var cmd = new CommandDefinition(
+                sql,
+                new
+                {
+                    entity.PlaceName,
+                    entity.CreatedBy
+                },
+                transaction: transaction, // ✅ THIS is the key
+                cancellationToken: cancellationToken
+            );
+
             int id = await connection.ExecuteScalarAsync<int>(cmd);
             return id;
         }
 
 
-        public async Task<PlaceDTO?> GetByIdAsync(
-          int PlaceId,
+
+        public async Task<PlaceDetailDTO?> GetByIdAsync(
+          int PlaceId,         
+          IDbConnection connection,
+          IDbTransaction transaction,
           CancellationToken cancellationToken = default)
         {
             const string sql = @"
@@ -91,12 +200,49 @@ namespace VoiceFirst_Admin.Data.Repositories
                 WHERE s.PlaceId = @PlaceId;
                 ";
 
-            using var connection = _context.CreateConnection();
-            var entity = await connection.QuerySingleOrDefaultAsync<PlaceDTO>(
-                new CommandDefinition(sql, new { PlaceId = PlaceId }, cancellationToken: cancellationToken)
+            var entity = await connection.QuerySingleOrDefaultAsync<PlaceDetailDTO>(
+                new CommandDefinition(sql, 
+                new { PlaceId = PlaceId },
+                transaction, 
+                cancellationToken: cancellationToken)
             );
+            entity.postOffices = (await GetPlacePostOfficeLinksByPlaceIdAsync(PlaceId, connection, transaction, cancellationToken)).ToList();
             return entity;
         }
+
+
+
+        public async Task<IEnumerable<PlacePostOfficeLinksDTO>>
+            GetPlacePostOfficeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
+            IDbTransaction transaction, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+            SELECT 
+                l.PostOfficeId AS PostOfficeId,
+                a.PostOfficeName AS PostOfficeName,
+                l.IsActive AS Active,
+                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                l.CreatedAt AS CreatedDate,
+                CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
+                l.UpdatedAt AS ModifiedDate               
+            FROM PlacePostOfficeLink l
+            INNER JOIN PostOffice a ON a.PostOfficeId = l.PostOfficeId
+            INNER JOIN Users uC ON uC.UserId = l.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy            
+            WHERE l.PlaceId = @PlaceId ;
+            ";
+
+            return await connection.QueryAsync<PlacePostOfficeLinksDTO>(
+                new CommandDefinition(
+                sql,
+                new { placeId = placeId }, 
+                transaction,
+                cancellationToken: cancellationToken)
+                );
+        }
+
+
+
 
         public async Task<PagedResultDto<PlaceDTO>>
         GetAllAsync(PlaceFilterDTO filter, CancellationToken cancellationToken = default)
@@ -317,7 +463,8 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<bool> UpdateAsync(
-           Place entity,
+           Place entity, IDbConnection connection,
+            IDbTransaction transaction,
            CancellationToken cancellationToken = default)
         {
             var sets = new List<string>();
@@ -357,11 +504,91 @@ namespace VoiceFirst_Admin.Data.Repositories
                             AND IsActive <> @Active)
                   );";
 
-            using var connection = _context.CreateConnection();
+
             var affected = await connection.ExecuteAsync(
-                new CommandDefinition(sql, parameters, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, parameters,transaction, cancellationToken: cancellationToken));
 
             return affected > 0;
+        }
+
+
+
+
+
+
+        public async Task<bool>
+            CheckPlacePostOfficeLinksExistAsync(
+                        int placeId,
+                IEnumerable<int> postOfficeIds,
+                bool update,
+                IDbConnection connection,
+                IDbTransaction transaction,
+                CancellationToken cancellationToken = default)
+        {
+            // If no IDs are sent, treat as invalid
+            if (postOfficeIds == null || !postOfficeIds.Any())
+                return false;
+
+            const string sql = @"
+                    SELECT COUNT(1)
+                    FROM PlacePostOfficeLink
+                    WHERE PostOfficeId IN @postOfficeIds And PlaceId = @placeId
+                ";
+            var exists = await connection.ExecuteScalarAsync<int>(
+               new CommandDefinition(
+                   sql,
+                   new { placeId, postOfficeIds },
+                   transaction,
+                   cancellationToken: cancellationToken
+               ));
+
+            if (!update)
+            {
+                // INSERT case
+                // true  → already exists (block insert)
+                // false → safe to insert
+                return exists > 0;
+            }
+
+            // UPDATE case
+            // true  → all records exist
+            // false → some records missing
+            return exists == postOfficeIds.Count();
+
+
+
+        }
+
+
+
+        public async Task<bool> CheckAlreadyPlacePostOfficeLinkedAsync(
+    int placeId,
+    IEnumerable<int> postOfficeIds,
+    IDbConnection connection,
+    IDbTransaction transaction,
+    CancellationToken cancellationToken = default)
+        {
+            if (postOfficeIds == null || !postOfficeIds.Any())
+                return false;
+
+            const string sql = @"
+        SELECT 1
+        FROM PlacePostOfficeLink
+        WHERE PlaceId = @placeId
+          AND PostOfficeId IN @postOfficeIds
+    ";
+
+            var exists = await connection.ExecuteScalarAsync<int?>(
+                new CommandDefinition(
+                    sql,
+                    new { placeId, postOfficeIds },
+                    transaction,
+                    cancellationToken: cancellationToken
+                ));
+
+            // true  → at least one already exists
+            // false → safe to insert
+            return exists.HasValue;
         }
 
 

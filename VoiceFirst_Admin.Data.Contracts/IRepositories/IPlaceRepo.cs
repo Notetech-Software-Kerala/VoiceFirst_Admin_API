@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Place;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
@@ -10,18 +11,60 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface IPlaceRepo
     {
+        Task<bool>
+            CheckPlacePostOfficeLinksExistAsync(
+                        int placeId,
+                IEnumerable<int> postOfficeIds,
+                bool update,
+                IDbConnection connection,
+                IDbTransaction transaction,
+                CancellationToken cancellationToken = default);
+
+         //Task<bool>
+         //   CheckPlacePostOfficeLinksExistAsync(
+         //               int placeId,
+         //       IEnumerable<int> postOfficeIds,
+         //       IDbConnection connection,
+         //       IDbTransaction transaction,
+         //       CancellationToken cancellationToken = default);
+
+
+        Task<bool> BulkUpdatePlacePostOfficeLinksAsync(
+         int placeId,
+         IEnumerable<PlacePostOfficeLinksUpdateDTO> dtos,
+         int updatedBy,
+         IDbConnection connection,
+         IDbTransaction tx,
+         CancellationToken cancellationToken);
+
         Task<PlaceDTO> PlaceExistsAsync
             (string name,
             int? excludeId = null,
             CancellationToken cancellationToken = default);
 
+        Task<bool> BulkInsertPlacePostOfficeLinksAsync(
+         int programId,
+         IEnumerable<int> actionIds,
+         int createdBy,
+         IDbConnection connection,
+         IDbTransaction transaction,
+         CancellationToken cancellationToken);
+
         Task<int> CreateAsync
             (Place entity,
+            IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default);
 
-        Task<PlaceDTO?> GetByIdAsync(
+        Task<PlaceDetailDTO?> GetByIdAsync(
             int PlaceId, 
+            IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<PlacePostOfficeLinksDTO>>
+            GetPlacePostOfficeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
+            IDbTransaction transaction, CancellationToken cancellationToken = default);
 
         Task<PagedResultDto<PlaceDTO>>
         GetAllAsync(PlaceFilterDTO filter,
@@ -43,7 +86,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
           CancellationToken cancellationToken = default);
 
         Task<bool> 
-            UpdateAsync(Place entity, 
+            UpdateAsync(Place entity, IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default);
 
 

@@ -35,6 +35,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             CheckProgramActionLinksExistAsync(
                          int programId,
                 IEnumerable<int> programActionLinkIds,
+                bool update,
                 IDbConnection connection,
                 IDbTransaction transaction,
                 CancellationToken cancellationToken = default);

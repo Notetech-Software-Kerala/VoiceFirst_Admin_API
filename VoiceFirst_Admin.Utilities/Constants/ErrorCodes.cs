@@ -6,6 +6,7 @@
         public const string ValidationFailed = "VALIDATION_FAILED";
         public const string NotFound = "NOT_FOUND";
         public const string ActionNotFound = "ACTION_NOT_FOUND";
+        public const string PostOfficeNotFound = "POST_OFFICE_NOT_FOUND";
         public const string Conflict = "CONFLICT";
         public const string Unauthorized = "UNAUTHORIZED";
         public const string Forbidden = "FORBIDDEN";
@@ -13,10 +14,14 @@
         public const string InternalServerError = "INTERNAL_SERVER_ERROR";
         public const string NoRowAffected = "NO_ROW_AFFECTED";
         public const string BusinessActivityAlreadyRecovered =
-    "BUSINESS_ACTIVITY_ALREADY_RECOVERED";
+       "BUSINESS_ACTIVITY_ALREADY_RECOVERED";
 
         public const string PlanAlreadyRecovered =
-"PLAN_ALREADY_RECOVERED";
+        "PLAN_ALREADY_RECOVERED";
+
+
+        public const string ActionsAreAlreadyLinked = "ACTIONS_ARE_ALREADY_LINKED";
+        public const string PostOfficeAreAlreadyLinked = "POST_OFFICE_ARE_ALREADY_LINKED";
 
         public const string PlaceAlreadyRecovered =
    "PLACE_ALREADY_RECOVERED";
@@ -45,7 +50,7 @@
         public const string ProgramActionAlreadyExists = "PROGRAM_ACTION_EXISTS";
         public const string ProgramActionAlreadyExistsRecoverable = "PROGRAM_ACTION_EXISTS_RECOVERABLE";
         public const string ProgramActionNotFound = "PROGRAM_ACTION_NOT_FOUND";
-
+       
         public const string ProgramNotFoundById = "PROGRAM_NOT_FOUND";
         public const string ProgramAlreadyExistsRecoverable = "PROGRAM_EXISTS_RECOVERABLE";
         public const string ProgramNameAlreadyExists = "PROGRAM_NAME_EXISTS";
