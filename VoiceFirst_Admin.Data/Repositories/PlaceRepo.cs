@@ -256,11 +256,11 @@ WHERE PlaceId = @PlaceId
             parameters.Add("Limit", limit);
 
             var baseSql = new StringBuilder(@"
-    FROM Place spa
-    INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
-    LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
-    LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
-    ");
+            FROM Place spa
+            INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
+            LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
+            ");
 
             if (filter.Deleted.HasValue)
             {
@@ -320,7 +320,7 @@ WHERE PlaceId = @PlaceId
             {
                 [PlaceSearchBy.PlaceName] = "spa.PlaceName",
                 [PlaceSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
-                [PlaceSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+                [PlaceSearchBy.ModifiedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
                 [PlaceSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
             };
 
@@ -330,12 +330,12 @@ WHERE PlaceId = @PlaceId
                     baseSql.Append($" AND {col} LIKE @Search");
                 else
                     baseSql.Append(@"
-    AND (
-        spa.PlaceName LIKE @Search
-     OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
-     OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
-     OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
-    )");
+                    AND (
+                        spa.PlaceName LIKE @Search
+                     OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
+                     OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
+                     OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
+                    )");
 
                 parameters.Add("Search", $"%{filter.SearchText}%");
             }

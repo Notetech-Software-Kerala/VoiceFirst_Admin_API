@@ -69,6 +69,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string PlaceAlreadyExists =
            "Place  already exists.Please add another name";
+        public const string PlanAlreadyExists =
+          "Place  already exists.Please add another name";
 
         public const string BusinessActivityAlreadyExistsRecoverable =
             "Activity already exists but was deleted. You can recover it.";
@@ -76,11 +78,19 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PlaceAlreadyExistsRecoverable =
           "Place already exists but was deleted. You can recover it.";
 
+
+
+        public const string PlanAlreadyExistsRecoverable =
+          "Plan already exists but was deleted. You can recover it.";
+
         public const string BusinessActivityCreated =
             "Activity  created successfully.";
 
         public const string PlaceCreated =
            "Place  created successfully.";
+
+        public const string PlanCreated =
+           "Plan  created successfully.";
 
         public const string BusinessActivityRecovered =
             "Activity recovered successfully.";
@@ -168,7 +178,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
             "Invalid ActionLinks For selected Application.";
         public const string ProgramNameAlreadyExists =
             "Program name already exists in this application.";
-
+        public const string PlanNameAlreadyExists =
+           "Plan name already exists ";
         public const string ProgramLabelAlreadyExists =
      "Program label already exists in this application.";
 
@@ -180,6 +191,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string ProgramNameAlreadyExistsRecoverable =
          "Program  already exists with this name but was deleted. You can recover it.";
+
+        public const string PlanNameAlreadyExistsRecoverable =
+ "Plan  already exists with this name but was deleted. You can recover it.";
+
 
         public const string ProgramLabelAlreadyExistsRecoverable =
          "Program  already exists with this label but was deleted. You can recover it.";

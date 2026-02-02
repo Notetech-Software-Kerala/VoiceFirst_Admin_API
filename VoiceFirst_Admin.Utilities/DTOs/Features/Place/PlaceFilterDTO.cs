@@ -14,7 +14,7 @@ public enum PlaceSearchBy
 {
     PlaceName,
     CreatedUser,
-    UpdatedUser,
+    ModifiedUser,
     DeletedUser
 }
 

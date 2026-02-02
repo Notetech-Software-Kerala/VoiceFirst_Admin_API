@@ -11,7 +11,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Plan
     {
         PlanName,
         CreatedUser,
-        UpdatedUser,
+        ModifiedUser,
         DeletedUser
     }
 }

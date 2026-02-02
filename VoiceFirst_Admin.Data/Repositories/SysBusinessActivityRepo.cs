@@ -206,7 +206,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             {
                 [BusinessActivitySearchBy.ActivityName] = "spa.BusinessActivityName",
                 [BusinessActivitySearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
-                [BusinessActivitySearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+                [BusinessActivitySearchBy.ModifiedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
                 [BusinessActivitySearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
             };
 
