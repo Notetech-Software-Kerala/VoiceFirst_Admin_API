@@ -62,52 +62,17 @@ namespace VoiceFirst_Admin.Business.Services
 
 
 
-
-        public async Task<ApiResponse<IEnumerable<PlanActiveDto>>> 
-            GetActiveAsync(CancellationToken cancellationToken = default)
-        {
-            var items = await _planRepository.GetActiveAsync(cancellationToken);
-            return ApiResponse<IEnumerable<PlanActiveDto>>.
-                Ok(items, Messages.PlanRetrieved);
-        }
-
-
-
-
-
-
-
-        
-        public async Task<ApiResponse<IEnumerable<ProgramPlanDetailDto>>> GetProgramDetailsByPlanIdAsync(int planId, CancellationToken cancellationToken = default)
-        {
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
-
-            var list = await _planRepository.GetProgramDetailsByPlanIdAsync(planId, connection,transaction, cancellationToken);
-            transaction.Commit();
-            return ApiResponse<IEnumerable<ProgramPlanDetailDto>>.Ok(list, Messages.PlanRetrieved);
-        }
-
-
-
-
-
-
-
-
-
         public async Task<ApiResponse<PlanDetailDto>> CreatePlanAsync(
-        PlanCreateDto dto,
-        int loginId,
-        CancellationToken cancellationToken = default)
+       PlanCreateDto dto,
+       int loginId,
+       CancellationToken cancellationToken = default)
         {
             var existing = await _planRepository.GetByNameAsync
                 (dto.PlanName, cancellationToken);
 
-            if (existing != null )
+            if (existing != null)
             {
-                if(existing.IsDeleted == false)
+                if (existing.IsDeleted == false)
                 {
                     return ApiResponse<PlanDetailDto>.Fail(
                     Messages.PlanNameAlreadyExists,
@@ -153,12 +118,12 @@ namespace VoiceFirst_Admin.Business.Services
             };
 
             using var connection = _context.CreateConnection();
-            connection.Open();               
+            connection.Open();
             using var transaction = connection.BeginTransaction();
 
             try
             {
-                
+
 
                 var createdId = await _planRepository.CreatePlanAsync(
                     entity,
@@ -167,21 +132,21 @@ namespace VoiceFirst_Admin.Business.Services
                     cancellationToken);
 
 
-                
 
-                
-                    await _planRepository.BulkInsertActionLinksAsync(
-                        createdId,
-                        dto.ProgramActionLinkIds,
-                        loginId,
-                        connection,
-                        transaction,
-                        cancellationToken);
-                
 
-                
+
+                await _planRepository.BulkInsertActionLinksAsync(
+                    createdId,
+                    dto.ProgramActionLinkIds,
+                    loginId,
+                    connection,
+                    transaction,
+                    cancellationToken);
+
+
+
                 var outdto = await _planRepository.GetByIdAsync
-                    (createdId, connection,transaction, cancellationToken);
+                    (createdId, connection, transaction, cancellationToken);
                 transaction.Commit();
                 return ApiResponse<PlanDetailDto>.Ok(
                     outdto!,
@@ -196,45 +161,60 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-
-        public async Task<ApiResponse<bool>> UpdateAsync(int planId, PlanUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<PlanActiveDto>>> 
+            GetActiveAsync(CancellationToken cancellationToken = default)
         {
-            // Uniqueness check when PlanName provided
-            if (!string.IsNullOrWhiteSpace(dto.PlanName))
-            {
-                var existing = await _planRepository.GetByNameAsync(dto.PlanName, cancellationToken);
-                if (existing != null && existing.PlanId != planId)
-                {
-                    if (existing.IsDeleted == false)
-                        return ApiResponse<bool>.Fail(Messages.AlreadyExist, StatusCodes.Status409Conflict, ErrorCodes.Conflict);
-                    return ApiResponse<bool>.Fail(Messages.AlreadyExist, StatusCodes.Status422UnprocessableEntity, ErrorCodes.Conflict);
-                }
-            }
-
-            var updated = await _planRepository.UpdatePlanAsync(planId, dto.PlanName, dto.Active, loginId, cancellationToken);
-            if (!updated && (dto.ActionLinks == null || dto.ActionLinks.Count == 0))
-            {
-                return ApiResponse<bool>.Fail(Messages.UpdateFailed, StatusCodes.Status400BadRequest, ErrorCodes.ValidationFailed);
-            }
-
-            if (dto.ActionLinks != null && dto.ActionLinks.Count > 0)
-            {
-                await _planRepository.UpsertPlanProgramActionLinksAsync(planId, dto.ActionLinks, loginId, cancellationToken);
-            }
-
-            return ApiResponse<bool>.Ok(true, Messages.Updated);
+            var items = await _planRepository.GetActiveAsync(cancellationToken);
+            return ApiResponse<IEnumerable<PlanActiveDto>>.
+                Ok(items, Messages.PlanRetrieved);
         }
 
 
-      
 
-        public async Task<ApiResponse<PagedResultDto<PlanDetailDto>>> 
-            GetAllAsync(PlanFilterDto filter, 
+
+
+
+
+        
+        public async Task<ApiResponse<IEnumerable<ProgramPlanDetailDto>>> 
+            GetProgramDetailsByPlanIdAsync
+            (int planId, 
+            CancellationToken cancellationToken = default)
+        {
+
+            var existDto =
+            await _planRepository.IsIdExistAsync(planId,
+            cancellationToken);
+
+            if (existDto == null)
+            {
+                return ApiResponse<IEnumerable<ProgramPlanDetailDto>>.Fail(
+                    Messages.PlanNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.PlanNotFoundById);
+            }
+          
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            var list = await _planRepository.
+                GetProgramDetailsByPlanIdAsync(planId, connection,transaction, cancellationToken);
+            transaction.Commit();
+            return ApiResponse<IEnumerable<ProgramPlanDetailDto>>.Ok(list, Messages.PlanRetrieved);
+        }
+
+
+
+
+
+        public async Task<ApiResponse<PagedResultDto<PlanDto>>>
+            GetAllAsync(PlanFilterDto filter,
             CancellationToken cancellationToken = default)
         {
             var result = await _planRepository.GetAllAsync(filter, cancellationToken);
-                     
-            return ApiResponse<PagedResultDto<PlanDetailDto>>.Ok(
+
+            return ApiResponse<PagedResultDto<PlanDto>>.Ok(
                result,
                result.TotalCount == 0
                    ? Messages.PlansNotFound
@@ -242,6 +222,8 @@ namespace VoiceFirst_Admin.Business.Services
                 statusCode: StatusCodes.Status200OK
            );
         }
+
+
 
 
         public async Task<ApiResponse<PlanDetailDto>>
@@ -289,7 +271,7 @@ namespace VoiceFirst_Admin.Business.Services
             return ApiResponse<PlanDetailDto>.
                Ok(dto.Data, Messages.PlanDeleted, statusCode: StatusCodes.Status200OK);
 
-         
+
         }
 
 
@@ -340,6 +322,44 @@ namespace VoiceFirst_Admin.Business.Services
             return ApiResponse<PlanDetailDto>.
                Ok(dto.Data, Messages.PlanRecovered, statusCode: StatusCodes.Status200OK);
         }
+
+
+
+
+
+        public async Task<ApiResponse<bool>> UpdateAsync(int planId, PlanUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
+        {
+            // Uniqueness check when PlanName provided
+            if (!string.IsNullOrWhiteSpace(dto.PlanName))
+            {
+                var existing = await _planRepository.GetByNameAsync(dto.PlanName, cancellationToken);
+                if (existing != null && existing.PlanId != planId)
+                {
+                    if (existing.IsDeleted == false)
+                        return ApiResponse<bool>.Fail(Messages.AlreadyExist, StatusCodes.Status409Conflict, ErrorCodes.Conflict);
+                    return ApiResponse<bool>.Fail(Messages.AlreadyExist, StatusCodes.Status422UnprocessableEntity, ErrorCodes.Conflict);
+                }
+            }
+
+            var updated = await _planRepository.UpdatePlanAsync(planId, dto.PlanName, dto.Active, loginId, cancellationToken);
+            if (!updated && (dto.ActionLinks == null || dto.ActionLinks.Count == 0))
+            {
+                return ApiResponse<bool>.Fail(Messages.UpdateFailed, StatusCodes.Status400BadRequest, ErrorCodes.ValidationFailed);
+            }
+
+            if (dto.ActionLinks != null && dto.ActionLinks.Count > 0)
+            {
+                await _planRepository.UpsertPlanProgramActionLinksAsync(planId, dto.ActionLinks, loginId, cancellationToken);
+            }
+
+            return ApiResponse<bool>.Ok(true, Messages.Updated);
+        }
+
+
+      
+
+        
+
 
 
         

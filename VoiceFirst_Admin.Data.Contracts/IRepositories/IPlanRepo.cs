@@ -65,7 +65,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task UpsertPlanProgramActionLinksAsync(int planId, 
             IEnumerable<PlanProgramActionLinkUpdateDto> actions, int userId, 
             CancellationToken cancellationToken = default);
-        Task<PagedResultDto<PlanDetailDto>>
+
+        Task<PagedResultDto<PlanDto>>
             GetAllAsync(PlanFilterDto filter, CancellationToken cancellationToken = default);
     }
 }

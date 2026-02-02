@@ -5,6 +5,7 @@ using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Plan;
 using VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -127,6 +128,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         {
             const string sql = @"
                 SELECT  s.PlanId    As PlanId ,
+                        s.IsActive           As Active ,
                         s.IsDeleted            As Deleted      
                 FROM dbo.[Plan] s
                 WHERE PlanId = @PlanId
@@ -161,7 +163,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             return affected > 0;
         }
 
-        public async Task<PagedResultDto<PlanDetailDto>> GetAllAsync(PlanFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<PlanDto>> GetAllAsync(PlanFilterDto filter, CancellationToken cancellationToken = default)
         {
             var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             var limit = filter.Limit <= 0 ? 10 : filter.Limit;
@@ -290,11 +292,11 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             using var connection = _context.CreateConnection();
             var totalCount = await connection.ExecuteScalarAsync<int>(new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
-            var items = await connection.QueryAsync<PlanDetailDto>(new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken));
+            var items = await connection.QueryAsync<PlanDto>(new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken));
 
             
 
-            return new PagedResultDto<PlanDetailDto>
+            return new PagedResultDto<PlanDto>
             {
                 Items = items.ToList(),
                 TotalCount = totalCount,
@@ -562,6 +564,8 @@ namespace VoiceFirst_Admin.Data.Repositories
         //        }
         //    }
 
+
+        
 
 
         public async Task<IEnumerable<PlanActiveDto>>
