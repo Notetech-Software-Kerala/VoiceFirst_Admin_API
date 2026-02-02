@@ -8,6 +8,8 @@
         public const string ActionNotFound = "ACTION_NOT_FOUND";
         public const string PostOfficeNotFound = "POST_OFFICE_NOT_FOUND";
         public const string Conflict = "CONFLICT";
+        public const string PlanAlreadyExists = "PLAN_NAME_EXISTS";
+
         public const string Unauthorized = "UNAUTHORIZED";
         public const string Forbidden = "FORBIDDEN";
         public const string Payload = "PAYLOAD_REQUIRED";
@@ -62,8 +64,9 @@
 
         // ===== SYS BUSINESS ACTIVITY =====
         public const string BusinessActivityAlreadyExists = "BUSINESS_ACTIVITY_EXISTS";
-        public const string PlaceAlreadyExists = "BUSINESS_ACTIVITY_EXISTS";
-        public const string PlaceAlreadyExistsRecoverable = "BUSINESS_ACTIVITY_EXISTS_RECOVERABLE";
+        public const string PlaceAlreadyExists = "PLACE_ACTIVITY_EXISTS";
+        public const string PlanAlreadyExistsRecoverable = "PLAN_EXISTS_RECOVERABLE";
+        public const string PlaceAlreadyExistsRecoverable = "PLACE_EXISTS_RECOVERABLE";
         public const string BusinessActivityAlreadyExistsRecoverable = "BUSINESS_ACTIVITY_EXISTS_RECOVERABLE";
         public const string BusinessActivityNotFound = "BUSINESS_ACTIVITY_NOT_FOUND_DELETED_TRUE";
         public const string BusinessActivityNotFoundById = "BUSINESS_ACTIVITY_NOT_FOUND";

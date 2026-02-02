@@ -101,7 +101,11 @@ namespace VoiceFirst_Admin.Business.Services
                         (Messages.ProgramNameAlreadyExistsRecoverable,
                         StatusCodes.Status422UnprocessableEntity,
                         ErrorCodes.ProgramNameAlreadyExistsRecoverable,
-                        _mapper.Map<SysProgramDto>(existingByName));
+                        new SysProgramDto
+                        {
+                            ProgramId = existingByName.SysProgramId,
+                           
+                        });
 
                 return ApiResponse<SysProgramDto>.Fail
                     (Messages.ProgramNameAlreadyExists,

@@ -11,11 +11,23 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface IPlanRepo
     {
+        Task<PlanDto> PlanExistsAsync
+           (string name, 
+            int? excludeId = null, 
+            CancellationToken cancellationToken = default);
+
         Task<PlanDetailDto> IsIdExistAsync(
          int planId,
          CancellationToken cancellationToken = default);
-        Task<IEnumerable<PlanActiveDto>> GetActiveAsync(CancellationToken cancellationToken = default);
-        Task<IEnumerable<ProgramPlanDetailDto>> GetProgramDetailsByPlanIdAsync(int planId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<PlanActiveDto>> GetActiveAsync
+            (CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<ProgramPlanDetailDto>>
+            GetProgramDetailsByPlanIdAsync(int planId,
+             IDbConnection connection,
+            IDbTransaction transaction, 
+            CancellationToken cancellationToken = default);
+
         Task<Plan?> GetByNameAsync(string planName, CancellationToken cancellationToken = default);
         Task<int> CreatePlanAsync(
        Plan plan,
@@ -23,13 +35,23 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         IDbTransaction transaction,
         CancellationToken cancellationToken = default);
 
-        Task LinkProgramActionLinksAsync(
-            int planId,
-            IEnumerable<int> programActionLinkIds,
-            int createdBy,
-            IDbConnection connection,
-            IDbTransaction transaction,
-            CancellationToken cancellationToken = default);
+
+        Task<bool> BulkInsertActionLinksAsync(
+        int planId,
+        IEnumerable<int> programActionLinkIds,
+        int createdBy,
+        IDbConnection connection,
+        IDbTransaction tx,
+        CancellationToken cancellationToken);
+
+
+        //Task LinkProgramActionLinksAsync(
+        //    int planId,
+        //    IEnumerable<int> programActionLinkIds,
+        //    int createdBy,
+        //    IDbConnection connection,
+        //    IDbTransaction transaction,
+        //    CancellationToken cancellationToken = default);
 
         //Task<int> CreatePlanAsync(VoiceFirst_Admin.Utilities.Models.Entities.Plan plan, CancellationToken cancellationToken = default);
         //Task LinkProgramActionLinksAsync(int planId, IEnumerable<int> programActionLinkIds, int createdBy, CancellationToken cancellationToken = default);
@@ -43,7 +65,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task UpsertPlanProgramActionLinksAsync(int planId, 
             IEnumerable<PlanProgramActionLinkUpdateDto> actions, int userId, 
             CancellationToken cancellationToken = default);
-        Task<PagedResultDto<PlanDetailDto>>
+
+        Task<PagedResultDto<PlanDto>>
             GetAllAsync(PlanFilterDto filter, CancellationToken cancellationToken = default);
     }
 }

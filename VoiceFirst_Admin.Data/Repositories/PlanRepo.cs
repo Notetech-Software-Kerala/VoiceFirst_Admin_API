@@ -1,17 +1,11 @@
 ﻿using Dapper;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
-using VoiceFirst_Admin.Utilities.DTOs.Features.Application;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Plan;
 using VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink;
-using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
-using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -58,33 +52,74 @@ namespace VoiceFirst_Admin.Data.Repositories
             return rows;
         }
 
-        public async Task<PlanDetailDto?> 
-            GetByIdAsync(int planId,IDbConnection connection,IDbTransaction transaction,
+        //public async Task<PlanDetailDto?> 
+        //    GetByIdAsync(int planId,IDbConnection connection,IDbTransaction transaction,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    const string sql = @"
+        //    SELECT
+        //        p.PlanId,
+        //        p.PlanName,
+        //        p.IsActive AS Active,
+        //        p.IsDeleted AS Deleted,
+        //        CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+        //        p.CreatedAt AS CreatedDate,
+        //        ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
+        //        p.UpdatedAt AS ModifiedDate,
+        //        ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
+        //        p.DeletedAt AS DeletedDate
+        //    FROM dbo.[Plan] p
+        //    INNER JOIN dbo.Users uC ON uC.UserId = p.CreatedBy
+        //    LEFT JOIN dbo.Users uU ON uU.UserId = p.UpdatedBy
+        //    LEFT JOIN dbo.Users uD ON uD.UserId = p.DeletedBy
+        //    WHERE p.PlanId = @PlanId;";
+
+
+        //    var dto = await connection.QueryFirstOrDefaultAsync<PlanDetailDto>(
+        //        new CommandDefinition(sql, new { PlanId = planId },transaction, cancellationToken: cancellationToken));
+        //    return dto;
+        //}
+
+
+
+        public async Task<PlanDetailDto?> GetByIdAsync
+            (int id, 
+            IDbConnection connection, 
+            IDbTransaction transaction, 
             CancellationToken cancellationToken = default)
         {
+           
+
             const string sql = @"
-            SELECT
-                p.PlanId,
-                p.PlanName,
-                p.IsActive AS Active,
-                p.IsDeleted AS Deleted,
-                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-                p.CreatedAt AS CreatedDate,
-                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
-                p.UpdatedAt AS ModifiedDate,
-                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
-                p.DeletedAt AS DeletedDate
-            FROM dbo.[Plan] p
-            INNER JOIN dbo.Users uC ON uC.UserId = p.CreatedBy
-            LEFT JOIN dbo.Users uU ON uU.UserId = p.UpdatedBy
-            LEFT JOIN dbo.Users uD ON uD.UserId = p.DeletedBy
-            WHERE p.PlanId = @PlanId;";
-        
+        SELECT 
+            p.PlanId AS PlanId,
+            p.PlanName,            
+            p.IsActive AS Active,
+            p.IsDeleted AS [Deleted],
+            CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+            p.CreatedAt AS CreatedDate,
+            ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
+            p.UpdatedAt AS ModifiedDate,
+            ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
+            p.DeletedAt AS DeletedDate
+        FROM [Plan] p
+        LEFT JOIN Users uC ON uC.UserId = p.CreatedBy
+        LEFT JOIN Users uU ON uU.UserId = p.UpdatedBy
+        LEFT JOIN Users uD ON uD.UserId = p.DeletedBy
+        WHERE p.PlanId = @PlanId;";
+
 
             var dto = await connection.QueryFirstOrDefaultAsync<PlanDetailDto>(
-                new CommandDefinition(sql, new { PlanId = planId },transaction, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, new { PlanId = id }, transaction, cancellationToken: cancellationToken));
+            if (dto == null) return null;
+
+            var links = await GetProgramDetailsByPlanIdAsync(id, connection, transaction, cancellationToken);
+            dto.ProgramPlanDetails = links.ToList();
             return dto;
         }
+
+
+
 
 
         public async Task<PlanDetailDto> IsIdExistAsync(
@@ -93,6 +128,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         {
             const string sql = @"
                 SELECT  s.PlanId    As PlanId ,
+                        s.IsActive           As Active ,
                         s.IsDeleted            As Deleted      
                 FROM dbo.[Plan] s
                 WHERE PlanId = @PlanId
@@ -127,7 +163,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             return affected > 0;
         }
 
-        public async Task<PagedResultDto<PlanDetailDto>> GetAllAsync(PlanFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<PlanDto>> GetAllAsync(PlanFilterDto filter, CancellationToken cancellationToken = default)
         {
             var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             var limit = filter.Limit <= 0 ? 10 : filter.Limit;
@@ -193,7 +229,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             {
                 [PlanSearchBy.PlanName] = "p.PlanName",
                 [PlanSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
-                [PlanSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+                [PlanSearchBy.ModifiedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
                 [PlanSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
             };
 
@@ -256,11 +292,11 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             using var connection = _context.CreateConnection();
             var totalCount = await connection.ExecuteScalarAsync<int>(new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
-            var items = await connection.QueryAsync<PlanDetailDto>(new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken));
+            var items = await connection.QueryAsync<PlanDto>(new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken));
 
             
 
-            return new PagedResultDto<PlanDetailDto>
+            return new PagedResultDto<PlanDto>
             {
                 Items = items.ToList(),
                 TotalCount = totalCount,
@@ -318,7 +354,10 @@ namespace VoiceFirst_Admin.Data.Repositories
             }
         }
 
-        public async Task<IEnumerable<ProgramPlanDetailDto>> GetProgramDetailsByPlanIdAsync(int planId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<ProgramPlanDetailDto>> GetProgramDetailsByPlanIdAsync(int planId,
+            IDbConnection connection,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default)
         {
             const string sql = @"
             SELECT 
@@ -343,8 +382,12 @@ namespace VoiceFirst_Admin.Data.Repositories
             LEFT JOIN Users uD ON uD.UserId = ppl.DeletedBy
             WHERE ppl.PlanId = @PlanId;";
 
-            using var connection = _context.CreateConnection();
-            var rows = await connection.QueryAsync<dynamic>(new CommandDefinition(sql, new { PlanId = planId }, cancellationToken: cancellationToken));
+            
+            var rows = await connection.QueryAsync<dynamic>(
+                new CommandDefinition(sql, 
+                new { PlanId = planId },
+                transaction,
+                cancellationToken: cancellationToken));
 
             var programs = new Dictionary<int, ProgramPlanDetailDto>();
             foreach (var row in rows)
@@ -359,7 +402,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                     programs[(int)row.ProgramId] = program;
                 }
 
-                program.Action.Add(new ProgramActionPlanDetailDto
+                program.Actions.Add(new ProgramActionPlanDetailDto
                 {
                     ActionLinkId = row.ActionLinkId,
                     ActionName = row.ActionName,
@@ -377,11 +420,26 @@ namespace VoiceFirst_Admin.Data.Repositories
             return programs.Values.ToList();
         }
 
+        public async Task<PlanDto> PlanExistsAsync
+           (string name, int? excludeId = null, CancellationToken cancellationToken = default)
+        {
+            var sql = "SELECT IsDeleted As Deleted,PlanId As PlanId  FROM [Plan] WHERE PlanName = @PlanName";
+            if (excludeId.HasValue)
+                sql += " AND PlanId <> @ExcludeId";
+
+            var cmd = new CommandDefinition(sql, new { PlanName = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
+            using var connection = _context.CreateConnection();
+            var entity = await connection.QueryFirstOrDefaultAsync<PlanDto>(cmd);
+            return entity;
+        }
+
+
+
         public async Task<Plan?> GetByNameAsync(string planName, CancellationToken cancellationToken = default)
         {
             const string sql = "SELECT TOP 1 * FROM dbo.[Plan] WHERE PlanName = @PlanName";
             using var connection = _context.CreateConnection();
-            return await connection.QueryFirstOrDefaultAsync<VoiceFirst_Admin.Utilities.Models.Entities.Plan>(new CommandDefinition(sql, new { PlanName = planName }, cancellationToken: cancellationToken));
+            return await connection.QueryFirstOrDefaultAsync<Plan>(new CommandDefinition(sql, new { PlanName = planName }, cancellationToken: cancellationToken));
         }
 
         //public async Task<int> CreatePlanAsync(VoiceFirst_Admin.Utilities.Models.Entities.Plan plan, CancellationToken cancellationToken = default)
@@ -436,30 +494,78 @@ namespace VoiceFirst_Admin.Data.Repositories
            
         }
 
-        public async Task LinkProgramActionLinksAsync(
+        public async Task<bool> BulkInsertActionLinksAsync(
         int planId,
         IEnumerable<int> programActionLinkIds,
         int createdBy,
         IDbConnection connection,
-        IDbTransaction transaction,
-        CancellationToken cancellationToken = default)
-            {
-                const string insertSql = @"
+        IDbTransaction tx,
+        CancellationToken cancellationToken)
+        {
+            if (programActionLinkIds == null || !programActionLinkIds.Any())
+                return false;
+
+            // -------------------------
+            // CONVERT dynamic → int
+            // -------------------------
+
+            if (programActionLinkIds.Count() == 0)
+                return false;
+
+            // -------------------------
+            // SQL
+            // -------------------------
+            const string sql = @"
             INSERT INTO dbo.PlanProgramActionLink
             (PlanId, ProgramActionLinkId, CreatedBy)
             VALUES (@PlanId, @ProgramActionLinkId, @CreatedBy);";
 
-                foreach (var id in programActionLinkIds)
-                {
-                    await connection.ExecuteAsync(
-                        new CommandDefinition(
-                            insertSql,
-                            new { PlanId = planId, ProgramActionLinkId = id, CreatedBy = createdBy },
-                            transaction,
-                            cancellationToken: cancellationToken));
-                }
-            }
+            // -------------------------
+            // PARAMETER OBJECTS
+            // -------------------------
+            var parameters = programActionLinkIds.Select(id => new
+            {
+                PlanId = planId,
+                ProgramActionLinkId = id,
+                CreatedBy = createdBy
+            });
 
+            var rowsAffected = await connection.ExecuteAsync(
+                new CommandDefinition(
+                    sql,
+                    parameters,
+                    transaction: tx,
+                    cancellationToken: cancellationToken));
+
+            return rowsAffected > 0;
+        }
+
+        //public async Task LinkProgramActionLinksAsync(
+        //int planId,
+        //IEnumerable<int> programActionLinkIds,
+        //int createdBy,
+        //IDbConnection connection,
+        //IDbTransaction transaction,
+        //CancellationToken cancellationToken = default)
+        //    {
+        //        const string insertSql = @"
+        //    INSERT INTO dbo.PlanProgramActionLink
+        //    (PlanId, ProgramActionLinkId, CreatedBy)
+        //    VALUES (@PlanId, @ProgramActionLinkId, @CreatedBy);";
+
+        //        foreach (var id in programActionLinkIds)
+        //        {
+        //            await connection.ExecuteAsync(
+        //                new CommandDefinition(
+        //                    insertSql,
+        //                    new { PlanId = planId, ProgramActionLinkId = id, CreatedBy = createdBy },
+        //                    transaction,
+        //                    cancellationToken: cancellationToken));
+        //        }
+        //    }
+
+
+        
 
 
         public async Task<IEnumerable<PlanActiveDto>>

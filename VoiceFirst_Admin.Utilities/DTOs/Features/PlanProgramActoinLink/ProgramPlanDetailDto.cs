@@ -6,6 +6,6 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink
     {
         public int ProgramId { get; set; }
         public string ProgramName { get; set; } = string.Empty;
-        public List<ProgramActionPlanDetailDto> Action { get; set; } = new();
+        public List<ProgramActionPlanDetailDto> Actions { get; set; } = new();
     }
 }

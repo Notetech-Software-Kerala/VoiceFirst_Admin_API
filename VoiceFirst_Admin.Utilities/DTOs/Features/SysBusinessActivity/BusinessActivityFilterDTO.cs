@@ -15,7 +15,7 @@ public enum BusinessActivitySearchBy
 {
     ActivityName,
     CreatedUser,
-    UpdatedUser,
+    ModifiedUser,
     DeletedUser
 }
 
