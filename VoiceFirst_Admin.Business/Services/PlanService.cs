@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
@@ -20,14 +18,20 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IPlanRepo _planRepository;
         private readonly IDapperContext _context;
         private readonly IProgramActionRepo _programActionRepo;
+        private readonly ISysProgramRepo _sysProgramRepo;
         private readonly VoiceFirst_Admin.Data.Contracts.IRepositories.IRoleRepo _roleRepository;
 
-        public PlanService(IPlanRepo planRepository,IDapperContext _context, IProgramActionRepo programActionRepo, IRoleRepo roleRepository)
+        public PlanService(IPlanRepo planRepository,
+            IDapperContext _context, 
+            IProgramActionRepo programActionRepo, 
+            IRoleRepo roleRepository
+            , ISysProgramRepo sysProgramRepo)
         {
             _planRepository = planRepository;
             this._context = _context;
             _programActionRepo = programActionRepo;
             _roleRepository = roleRepository;
+            _sysProgramRepo = sysProgramRepo;
         }
 
 
@@ -91,7 +95,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (dto.ProgramActionLinkIds != null && dto.ProgramActionLinkIds.Any())
             {
-                var exist = await _programActionRepo.
+                var exist = await _sysProgramRepo.
                     IsBulkIdsExistAsync(dto.ProgramActionLinkIds,
                cancellationToken);
                 if (exist["idNotFound"] == true)
@@ -102,7 +106,7 @@ namespace VoiceFirst_Admin.Business.Services
                       ErrorCodes.ActionNotFound
                       );
                 }
-                if (exist["deletedOrInactive"] == true)
+                if (exist["inActive"] == true)
                 {
                     return ApiResponse<PlanDetailDto>.Fail
                        (Messages.ProgramActionNotFound,

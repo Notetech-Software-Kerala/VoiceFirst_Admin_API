@@ -4,7 +4,7 @@ using System.Text;
 
 namespace VoiceFirst_Admin.Business.Contracts.IServices
 {
-    internal class test
+    public interface IUserRoleLinkService
     {
     }
 }
