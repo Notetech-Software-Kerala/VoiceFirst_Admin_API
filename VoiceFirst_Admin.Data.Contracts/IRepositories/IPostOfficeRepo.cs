@@ -17,7 +17,7 @@ public interface IPostOfficeRepo
 
     
 
-    Task<PostOffice> CreateAsync(PostOffice entity, CancellationToken cancellationToken = default);
+    Task<PostOffice> CreateAsync(PostOffice entity,List<string> zipCodes, CancellationToken cancellationToken = default);
     Task<PostOffice?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<PostOfficeZipCode?> GetZipCodeByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<PagedResultDto<PostOffice>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default);
