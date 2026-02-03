@@ -56,7 +56,6 @@ builder.Services.AddAutoMapper(
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 
 builder.Host.UseSerilog((ctx, lc) =>
@@ -100,6 +99,7 @@ var audience = builder.Configuration["Jwt:Audience"]!;
 builder.Services.AddSwaggerGen(c =>
 {
     c.SchemaFilter<EnumSchemaFilter>();
+    c.OperationFilter<SwaggerResponseDescriptionFilter>();
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Voice First Admin", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -122,6 +122,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
 builder.Services
 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
@@ -142,13 +143,14 @@ var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseStaticFiles();
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    c.InjectStylesheet("/swagger-ui/custom.css");
+});
+
 app.UseCors("CORSPolicy");
 app.UseHttpsRedirection();
 
@@ -172,5 +174,23 @@ public class EnumSchemaFilter : ISchemaFilter
 
         schema.Type = "string";
         schema.Format = null;
+    }
+}
+public class SwaggerResponseDescriptionFilter : IOperationFilter
+{
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        var attrs = context.MethodInfo
+            .GetCustomAttributes(true)
+            .OfType<SwaggerResponseDescriptionAttribute>();
+
+        foreach (var a in attrs)
+        {
+            var key = a.StatusCode.ToString();
+            if (operation.Responses.TryGetValue(key, out var resp))
+            {
+                resp.Description = a.Description;
+            }
+        }
     }
 }

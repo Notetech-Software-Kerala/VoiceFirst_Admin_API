@@ -137,6 +137,32 @@ public class MenuRepo : IMenuRepo
 
 // Add GetAllMenuMastersAsync implementation to return master-only list
 // Implemented on the same class (MenuRepo) - add method
+    public async Task<MenuMaster> GetMenuMastersByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+            SELECT
+                m.MenuMasterId,
+                m.MenuName,
+                m.MenuIcon AS MenuIcon,
+                m.MenuRoute AS MenuRoute,
+                m.ApplicationId AS ApplicationId,
+                m.IsActive AS Active,
+                m.IsDeleted AS Deleted,
+                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                m.CreatedAt AS CreatedDate,
+                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
+                m.UpdatedAt AS ModifiedDate,
+                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
+                m.DeletedAt AS DeletedDate FROM dbo.MenuMaster m
+            INNER JOIN dbo.Users uC ON uC.UserId = m.CreatedBy
+            LEFT JOIN dbo.Users uU ON uU.UserId = m.UpdatedBy
+            LEFT JOIN dbo.Users uD ON uD.UserId = m.DeletedBy
+            WHERE MenuMasterId=@MenuMasterId";
+
+        using var connection = _context.CreateConnection();
+        var cmd = new CommandDefinition(sql, new { MenuMasterId = id }, cancellationToken: cancellationToken);
+        return await connection.QuerySingleOrDefaultAsync<MenuMaster>(cmd);
+    }
     public async Task<PagedResultDto<MenuMaster>> GetAllMenuMastersAsync(MenuFilterDto filter, CancellationToken cancellationToken = default)
     {
         var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
@@ -151,7 +177,7 @@ public class MenuRepo : IMenuRepo
             INNER JOIN dbo.Users uC ON uC.UserId = m.CreatedBy
             LEFT JOIN dbo.Users uU ON uU.UserId = m.UpdatedBy
             LEFT JOIN dbo.Users uD ON uD.UserId = m.DeletedBy
-            WHERE 1=1 AND m.IsDeleted = 0");
+            WHERE 1=1 ");
 
         if (filter.Active.HasValue)
         {
@@ -473,7 +499,7 @@ public class MenuRepo : IMenuRepo
         }
     }
 
-    public async Task<bool> BulkUpdateWebMenusAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Menu.WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
+    public async Task<bool> BulkUpdateWebMenusAsync(WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
     {
         using var connection = _context.CreateConnection();
         if (connection.State != ConnectionState.Open) connection.Open();
