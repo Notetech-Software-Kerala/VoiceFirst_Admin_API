@@ -70,19 +70,12 @@ public class PostOfficeService : IPostOfficeService
             CreatedBy = loginId
         };
 
-        var created = await _repo.CreateAsync(entity, cancellationToken);
+        var created = await _repo.CreateAsync(entity, dto.ZipCodes, cancellationToken);
 
         var createdEntity = await _repo.GetByIdAsync(created.PostOfficeId, cancellationToken);
         if (createdEntity == null)
             return ApiResponse<PostOfficeDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
-        // insert zip codes for this post office, if any
-       
-
-        if (dto.ZipCodes.Count() > 0)
-        {
-            await _repo.BulkInsertZipCodesAsync(createdEntity.PostOfficeId, dto.ZipCodes, loginId, cancellationToken);
-        }
-
+        
         var createdDto = await MapWithZipCodesAsync(createdEntity, cancellationToken);
 
         return ApiResponse<PostOfficeDto>.Ok(createdDto, Messages.PostOfficeCreated, StatusCodes.Status201Created);

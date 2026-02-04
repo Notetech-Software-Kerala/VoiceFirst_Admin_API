@@ -7,6 +7,9 @@ using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.API.Controllers;
 
+[Consumes("application/json")]
+[Produces("application/json")]
+
 [Route("api/role")]
 [ApiController]
 public class RoleController : ControllerBase
@@ -19,6 +22,13 @@ public class RoleController : ControllerBase
     }
 
     [HttpPost]
+
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(409, "ZipCodeId not found. Please send valid ZipCodeId.")]
+    [SwaggerResponseDescription(400, "Invalid request payload.")]
+    [SwaggerResponseDescription(500, "Unexpected server error.")]
     public async Task<IActionResult> Create([FromBody] RoleCreateDto model, CancellationToken cancellationToken)
     {
         if (model == null) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));

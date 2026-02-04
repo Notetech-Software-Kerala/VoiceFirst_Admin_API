@@ -9,8 +9,3 @@ public class RoleCreateDto
 
 }
 
-public class PlanActionLinkCreateDto
-{
-    public int PlanId { get; set; } 
-    public List<int> ActionLinkIds { get; set; } = new List<int>();
-}

@@ -32,6 +32,12 @@ public class MenuController : ControllerBase
         var paged = await _service.GetAllMenuMastersAsync(filter, cancellationToken);
         return Ok(ApiResponse<PagedResultDto<MenuMasterDto>>.Ok(paged, Messages.Success));
     }
+    [HttpGet("master/{id:int}")]
+    public async Task<IActionResult> GetAllMenuMastersByIdAsync(int id, CancellationToken cancellationToken)
+    {
+        var menu = await _service.GetAllMenuMastersByIdAsync(id, cancellationToken);
+        return Ok(ApiResponse<MenuMasterDto>.Ok(menu, Messages.Success));
+    }
     [HttpGet("web")]
     public async Task<IActionResult> GetAllWeb(CancellationToken cancellationToken)
     {
@@ -53,7 +59,7 @@ public class MenuController : ControllerBase
     }
 
     [HttpPatch("web/bulk")]
-    public async Task<IActionResult> BulkUpdateWeb([FromBody] VoiceFirst_Admin.Utilities.DTOs.Features.Menu.WebMenuBulkUpdateDto model, CancellationToken cancellationToken)
+    public async Task<IActionResult> BulkUpdateWeb([FromBody] WebMenuBulkUpdateDto model, CancellationToken cancellationToken)
     {
         if (model == null) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
         var res = await _service.BulkUpdateWebMenusAsync(model, userId, cancellationToken);

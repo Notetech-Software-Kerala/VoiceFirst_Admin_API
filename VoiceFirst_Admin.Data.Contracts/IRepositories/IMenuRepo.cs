@@ -21,9 +21,10 @@ public interface IMenuRepo
     CancellationToken cancellationToken = default);
 
     Task<PagedResultDto<MenuMaster>> GetAllMenuMastersAsync(MenuFilterDto filter, CancellationToken cancellationToken = default);
+    Task<MenuMaster> GetMenuMastersByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<bool> UpdateMenuMasterAsync(MenuMaster entity, CancellationToken cancellationToken = default);
     Task<IEnumerable<WebMenu>> GetAllWebMenusAsync( CancellationToken cancellationToken = default);
     Task<IEnumerable<AppMenus>> GetAllAppMenusAsync( CancellationToken cancellationToken = default);
-    Task<bool> BulkUpdateWebMenusAsync(VoiceFirst_Admin.Utilities.DTOs.Features.Menu.WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
+    Task<bool> BulkUpdateWebMenusAsync(WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
     //Task<bool> DeleteMenuProgramLinksAsync(int menuMasterId, CancellationToken cancellationToken = default);
 }

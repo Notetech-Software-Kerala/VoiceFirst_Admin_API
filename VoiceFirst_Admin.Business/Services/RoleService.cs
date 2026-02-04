@@ -80,6 +80,9 @@ public class RoleService : IRoleService
         };
 
         var created = await _repo.CreateAsync(entity, dto.PlanActionLinkCreateDto, cancellationToken);
+        if (created == null)
+            return ApiResponse<RoleDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
+
         var createdEntity = await _repo.GetByIdAsync(created.SysRoleId, cancellationToken);
         if (createdEntity == null)
             return ApiResponse<RoleDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);

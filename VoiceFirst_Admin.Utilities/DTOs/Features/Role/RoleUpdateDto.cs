@@ -12,15 +12,5 @@ public class RoleUpdateDto
     // Update existing links to the desired state
     public List<PlanRoleActionLinkUpdateDto>? UpdateActionLinks { get; set; }
 }
-public class ActionLinkDto
-{
-    
-    public int ActionLinkId { get; set; }
-    public bool Active { get; set; }
-}
 
-public class PlanRoleActionLinkUpdateDto
-{
-    public int RolePlanLinkId { get; set; }
-    public List<ActionLinkDto>? UpdateActionLinks { get; set; }
-}
+

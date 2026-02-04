@@ -54,32 +54,39 @@ public class RoleRepo : IRoleRepo
             var id = await connection.ExecuteScalarAsync<int>(cmd);
 
             entity.SysRoleId = id;
-
-            if (id > 0 && PlanActionLinkCreateDto != null && PlanActionLinkCreateDto.Any())
+            if(id > 0)
             {
-                foreach (var plan in PlanActionLinkCreateDto)
+                if (PlanActionLinkCreateDto != null && PlanActionLinkCreateDto.Any())
                 {
-                    var planRoleId=await InsertRolePlanLinksAsync(connection, tx, id, plan.PlanId, entity.CreatedBy, cancellationToken);
-                    if (planRoleId > 0)
+                    foreach (var plan in PlanActionLinkCreateDto)
                     {
-                        await BulkInsertPlanRoleActionLinksAsync(connection, tx, planRoleId, plan.ActionLinkIds, entity.CreatedBy, cancellationToken);
+                        var planRoleId = await InsertRolePlanLinksAsync(connection, tx, id, plan.PlanId, entity.CreatedBy, cancellationToken);
+                        if (planRoleId > 0)
+                        {
+                            await BulkInsertPlanRoleActionLinksAsync(connection, tx, planRoleId, plan.ActionLinkIds, entity.CreatedBy, cancellationToken);
+                        }
+                        else
+                        {
+                            tx.Rollback();
+                            connection.Close();
+                            return null;
+                        }
                     }
-                    else
-                    {
-                        tx.Rollback();
-                        connection.Close();
-                        return null;
-                    }
+
                 }
-                
+
+
+
+
+                tx.Commit();
+                connection.Close();
+                return entity;
             }
-
-
-
-
-            tx.Commit();
+            tx.Rollback();
             connection.Close();
-            return entity;
+            return null;
+                ;
+
         }
         
         catch
@@ -437,7 +444,7 @@ public class RoleRepo : IRoleRepo
         CancellationToken cancellationToken = default)
         {
 
-        const string sql = @"SELECT 
+            const string sql = @"SELECT 
                 pra.ProgramActionLinkId ,
                 spa.PlanRoleLinkId 
                 FROM PlanRoleLink spa 
@@ -448,7 +455,7 @@ public class RoleRepo : IRoleRepo
                 LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
                 WHERE spa.PlanRoleLinkId = @PlanRoleLinkId ";
 
-        using var connection = _context.CreateConnection();
+             using var connection = _context.CreateConnection();
              connection.Open();
              using var tx = connection.BeginTransaction();
 
