@@ -149,10 +149,11 @@ var app = builder.Build();
 
 app.UseStaticFiles();
 app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.InjectStylesheet("/swagger-ui/custom.css");
-});
+app.UseSwaggerUI();
+//app.UseSwaggerUI(c =>
+//{
+//    c.InjectStylesheet("/swagger-ui/custom.css");
+//});
 
 app.UseCors("CORSPolicy");
 app.UseHttpsRedirection();

@@ -139,7 +139,7 @@ namespace VoiceFirst_Admin.API.Controllers
           [FromQuery] EmployeeFilterDto filter,
           CancellationToken cancellationToken)
         {
-            var response = await _service.GetAllAsync(filter,2, cancellationToken);
+            var response = await _service.GetAllAsync(filter,userId, cancellationToken);
             return StatusCode(response.StatusCode, response);
         }
 
