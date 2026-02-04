@@ -188,14 +188,14 @@ namespace VoiceFirst_Admin.Data.Repositories
      CancellationToken cancellationToken)
         {
             const string sql = @"
-UPDATE SysProgramActionsLink
-SET IsActive   = @IsActive,
-    UpdatedBy = @UpdatedBy,
-    UpdatedAt = SYSDATETIME()
-WHERE ProgramId = @ProgramId
-  AND ProgramActionId = @ProgramActionId
-  AND IsActive <> @IsActive;
-";
+            UPDATE SysProgramActionsLink
+            SET IsActive   = @IsActive,
+                UpdatedBy = @UpdatedBy,
+                UpdatedAt = SYSDATETIME()
+            WHERE ProgramId = @ProgramId
+              AND ProgramActionId = @ProgramActionId
+              AND IsActive <> @IsActive;
+            ";
 
             var parameters = dtos.Select(dto => new
             {

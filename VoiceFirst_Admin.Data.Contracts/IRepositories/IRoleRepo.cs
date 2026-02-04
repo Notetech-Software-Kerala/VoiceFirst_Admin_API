@@ -12,6 +12,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface IRoleRepo
     {
+        Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
+   List<int> roleIds,
+   CancellationToken cancellationToken = default);
         Task<SysRoles> CreateAsync(SysRoles entity, List<PlanActionLinkCreateDto> PlanActionLinkCreateDto, CancellationToken cancellationToken = default);
         Task<SysRoles?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysRoles>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default);

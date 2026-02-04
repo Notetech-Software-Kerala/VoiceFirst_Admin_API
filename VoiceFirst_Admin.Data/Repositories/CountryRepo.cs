@@ -10,6 +10,7 @@ using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Country;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Division;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -152,6 +153,35 @@ public class CountryRepo : ICountryRepo
             PageSize = limit
         };
     }
+
+
+    public async Task<CountryDto> IsIdExistAsync(
+          int countryId,
+          CancellationToken cancellationToken = default)
+    {
+        const string sql = @"
+                    SELECT  s.CountryId    AS CountryId,
+                            s.IsDeleted      AS Deleted,
+                            s.IsActive       AS Active,
+                            s.CountryIsoAlphaTwo  As IsoAlphaTwo
+                    FROM dbo.Country s
+                    WHERE s.countryId = @countryId;
+                ";
+
+
+        using var connection = _context.CreateConnection();
+
+        var dto = await connection.QuerySingleOrDefaultAsync<CountryDto>(
+            new CommandDefinition(
+                sql,
+                new { countryId = countryId },
+                cancellationToken: cancellationToken
+            )
+        );
+        return dto;
+    }
+
+
 
     public async Task<IEnumerable<Country>> GetActiveAsync(CancellationToken cancellationToken = default)
     {

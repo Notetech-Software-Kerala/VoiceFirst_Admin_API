@@ -34,9 +34,12 @@ builder.Services.AddScoped<ICountryRepo, CountryRepo>();
 builder.Services.AddScoped<IPlanRepo, PlanRepo>();
 builder.Services.AddScoped<IRoleRepo, RoleRepo>();
 builder.Services.AddScoped<IMenuRepo, MenuRepo>();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IUserRoleLinkRepo,UserRoleLinkRepo>();
 
 builder.Services.AddScoped<IPlaceRepo, PlaceRepo>();
 // Services
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
 builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();

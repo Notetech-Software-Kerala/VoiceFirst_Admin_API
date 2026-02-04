@@ -121,7 +121,7 @@ namespace VoiceFirst_Admin.API.Controllers
 
 
         [HttpDelete("{id:int}")]
-        [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -291,7 +291,7 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(typeof(ApiResponse<SysProgramDto>), StatusCodes.Status422UnprocessableEntity)]
-        public async Task<IActionResult> UpdateAsync(int id, [FromBody] VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramUpdateDTO model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateAsync(int id, [FromBody]SysProgramUpdateDTO model, CancellationToken cancellationToken)
         {
             if (model == null)
                 return BadRequest(ApiResponse<object>.Fail(

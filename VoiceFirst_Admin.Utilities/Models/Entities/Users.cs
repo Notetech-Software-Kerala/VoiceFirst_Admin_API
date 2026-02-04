@@ -23,5 +23,6 @@ public class Users : BaseModel
     public byte[] HashKey { get; set; } = Array.Empty<byte>();
     public byte[] SaltKey { get; set; } = Array.Empty<byte>();
 
-    public short BirthYear { get; set; }
+    public short? BirthYear { get; set; }
+
 }

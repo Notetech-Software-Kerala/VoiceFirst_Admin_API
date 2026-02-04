@@ -28,6 +28,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string Updated = "Updated.";
         public const string ActionsNotFound = "Actions Not found.";
         public const string PostOfficesNotFound = "Post offices Not found.";
+        public const string MobileCountryCodeNotFound = "Mobile country code Not found.";
         // Auth
         public const string InvalidCredentials = "Invalid credentials.";
         public const string UserNotFound = "User not found.";
@@ -121,6 +122,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string ProgramsNotFound =
              "Programs  not found.";
+        public const string EmployeesNotFound =
+     "Employees  not found.";
+
 
         public const string BusinessActivityDeleted =
             "Activity  deleted sucessfully.";
@@ -178,6 +182,14 @@ namespace VoiceFirst_Admin.Utilities.Constants
             "Invalid ActionLinks For selected Application.";
         public const string ProgramNameAlreadyExists =
             "Program name already exists in this application.";
+
+        public const string EmployeeEmailAlreadyExists =
+      "Employee email already exists.";
+
+
+        public const string EmployeeMobileNoAlreadyExists =
+      "Employee mobile no already exists.";
+
         public const string PlanNameAlreadyExists =
            "Plan name already exists ";
         public const string ProgramLabelAlreadyExists =
@@ -192,6 +204,14 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ProgramNameAlreadyExistsRecoverable =
          "Program  already exists with this name but was deleted. You can recover it.";
 
+ 
+
+        public const string EmployeeEmailAlreadyExistsRecoverable =
+        "Employee  already exists with this email but was deleted. You can recover it.";
+
+        public const string EmployeeMobileNoAlreadyExistsRecoverable =
+       "Employee  already exists with this mobile no but was deleted. You can recover it.";
+
         public const string PlanNameAlreadyExistsRecoverable =
  "Plan  already exists with this name but was deleted. You can recover it.";
 
@@ -204,9 +224,15 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string ProgramCreated =
             "Program created successfully.";
+        public const string EmployeeCreated =
+            "Employee created successfully.";
 
         public const string ProgramRecovered =
             "Program recovered successfully.";
+
+
+        public const string EmployeeRecovered =
+            "Employee recovered successfully.";
 
         public const string PlaceRecovered =
            "Place recovered successfully.";
@@ -214,17 +240,27 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string ProgramNotFoundById =
             "Program not found.";
+
+        public const string EmployeeNotFoundById =
+    "Employee not found.";
+
         public const string ProgramDeleted =
             "Program deleted sucessfully.";
 
-        
+        public const string EmployeeDeleted =
+         "Employee deleted sucessfully.";
 
 
         public const string ProgramRetrieved =
             "Program retrieve sucessfully.";
 
+        public const string EmployeeRetrieved =
+           "Employee retrieve sucessfully.";
+
         public const string ProgramUpdated =
             "Program updated sucessfully.";
+
+       
 
         public const string BaseRefreshMessage =
             "Please refresh and try again.";
@@ -246,8 +282,17 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ProgramActionNotFound =
          "Some selected actions are no longer available."+ BaseRefreshMessage;
 
+        public const string RolesNotAvailable =
+      "Some selected roles are no longer available." + BaseRefreshMessage;
+
         public const string PostOfficeNotFound =
        "Some selected post office are no longer available." + BaseRefreshMessage;
+
+        public const string MobileCountryCodeNotAvailable =
+      "Some selected  country code  are no longer available." + BaseRefreshMessage;
+
+        public const string EmployeeNotAvailable =
+    "Some selected  employee  are no longer available." + BaseRefreshMessage;
 
         public const string ProgramNotFound =
          "Some selected program are no longer available." + BaseRefreshMessage;
@@ -264,6 +309,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ProgramAlreadyRecovered =
        "Program is already recovered.Please refresh again.";
 
+        public const string EmployeeAlreadyRecovered =
+       "Employee is already recovered.Please refresh again.";
+
         public const string BusinessActivityAlreadyDeleted =
      "Activity is already deleted.Please refresh again.";
 
@@ -275,6 +323,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string ProgramAlreadyDeleted =
     "Program is already deleted.Please refresh again.";
+
+        public const string EmployeeAlreadyDeleted =
+"Employee is already deleted.Please refresh again.";
 
         public const string ProgramActionRestoreSucessfully = "Program action restored sucessfully.";
         public const string ProgramActionDeleteSucessfully = "Program action deleted sucessfully.";
@@ -297,7 +348,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string RoleNameDefault = "This is a system default role and cannot be created..";
         public const string RoleAlreadyDeleted = "Role already deleted.";
         public const string RoleAlreadyRestored = "Role already restored.";
-
+        public const string RolesNotFound = "Roles Not found .";
         public const string CountryRetrieveSucessfully = "Country retrieve sucessfully.";
         public const string DivisionOneRetrieveSucessfully = "Division one retrieve sucessfully.";
         public const string DivisionTwoRetrieveSucessfully = "Division two retrieve sucessfully.";
