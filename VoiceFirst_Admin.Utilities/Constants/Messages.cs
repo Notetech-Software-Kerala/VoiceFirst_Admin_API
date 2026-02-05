@@ -1,6 +1,7 @@
 ﻿    using System;
 using System.Collections.Generic;
 using System.Text;
+using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.Utilities.Constants
 {
@@ -18,7 +19,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string UpdateFailed = "Update failed.";
         public const string BadRequest = "Bad Request.";
         public const string Nil = "NIL.";
-
+        public const string Unauthorized = "Unauthorized.";
+        public const string PayloadInvalid = "Invalid request payload.";
+        public const string InternalServerError= "Unexpected server error.";
+        public const string EmployeeUpdated = "Employee updated successfully.";
         // New generic messages
         public const string PayloadRequired = "Payload is required.";
         public const string NotFound = "Not found.";

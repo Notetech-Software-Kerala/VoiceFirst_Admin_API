@@ -566,7 +566,7 @@ namespace VoiceFirst_Admin.Business.Services
 
                 return ApiResponse<EmployeeDetailDto>.Ok(
                     dtoOut!,
-                    Messages.UserUpdated,
+                    Messages.EmployeeUpdated,
                     statusCode: StatusCodes.Status200OK);
             }
             catch
