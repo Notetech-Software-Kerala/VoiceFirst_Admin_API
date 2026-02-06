@@ -428,13 +428,13 @@ WHERE po.IsDeleted = 0
             sql.AppendLine("  AND po.CountryId = @CountryId");
 
         if (filter?.DivOneId is not null)
-            sql.AppendLine("  AND po.DivOneId = @DivOneId");
+            sql.AppendLine("  AND po.DivisionOneId = @DivOneId");
 
         if (filter?.DivTwoId is not null)
-            sql.AppendLine("  AND po.DivTwoId = @DivTwoId");
+            sql.AppendLine("  AND po.DivisionTwoId = @DivTwoId");
 
         if (filter?.DivThreeId is not null)
-            sql.AppendLine("  AND po.DivThreeId = @DivThreeId");
+            sql.AppendLine("  AND po.DivisionThreeId = @DivThreeId");
 
         // ZipCode filter via EXISTS (your requirement)
         if (!string.IsNullOrWhiteSpace(filter?.ZipCode))

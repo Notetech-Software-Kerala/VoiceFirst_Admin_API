@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -114,12 +115,29 @@ public class PostOfficeService : IPostOfficeService
     }
 
     
-    public async Task<IEnumerable<PostOfficeLookupDto>> GetLookupAsync(PostOfficeLookUpFilterDto filter, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<IEnumerable<PostOfficeLookupDto>>> GetLookupAsync(PostOfficeLookUpFilterDto filter, CancellationToken cancellationToken = default)
     {
+        // Division hierarchy checks
+        if (filter.DivTwoId.HasValue && !filter.DivOneId.HasValue)
+            return ApiResponse<IEnumerable<PostOfficeLookupDto>>.Fail(Messages.DivisionOneRequiredForDivisionTwo, StatusCodes.Status400BadRequest);
+        if (filter.DivThreeId.HasValue && !filter.DivTwoId.HasValue)
+            return ApiResponse<IEnumerable<PostOfficeLookupDto>>.Fail(Messages.DivisionTwoRequiredForDivisionThree, StatusCodes.Status400BadRequest);
+
+        // check existence using country repo
+        var countryDivs = await _countryRepo.ExistsCountryAndDivisionsAsync(filter.CountryId.Value, filter.DivOneId, filter.DivTwoId, filter.DivThreeId, cancellationToken);
+        if (!countryDivs.CountryExists)
+            return ApiResponse<IEnumerable<PostOfficeLookupDto>>.Fail(Messages.CountryNotFound, StatusCodes.Status404NotFound);
+        if (filter.DivOneId.HasValue && !countryDivs.DivOneExists)
+            return ApiResponse<IEnumerable<PostOfficeLookupDto>>.Fail(Messages.DivisionOneNotFound, StatusCodes.Status404NotFound);
+        if (filter.DivTwoId.HasValue && !countryDivs.DivTwoExists)
+            return ApiResponse<IEnumerable<PostOfficeLookupDto>>.Fail(Messages.DivisionTwoNotFound, StatusCodes.Status404NotFound);
+        if (filter.DivThreeId.HasValue && !countryDivs.DivThreeExists)
+            return ApiResponse<IEnumerable<PostOfficeLookupDto>>.Fail(Messages.DivisionThreeNotFound, StatusCodes.Status404NotFound);
         var entities = await _repo.GetLookupAsync(filter,cancellationToken);
         if (entities == null) return null;
         var dto = _mapper.Map<IEnumerable<PostOfficeLookupDto>>(entities);
-        return dto;
+        return ApiResponse<IEnumerable<PostOfficeLookupDto>>.Ok(dto, Messages.PostOfficeRetrieveSucessfully, StatusCodes.Status200OK);
+       
     }
 
     public async Task<ApiResponse<PostOfficeDto>> UpdateAsync(PostOfficeUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
