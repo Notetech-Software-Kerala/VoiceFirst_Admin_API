@@ -35,6 +35,7 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<PlanDetailDto>), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [HttpPost]
+        //[SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult>
           CreateAsync([FromBody] PlanCreateDto model,
           CancellationToken cancellationToken)
