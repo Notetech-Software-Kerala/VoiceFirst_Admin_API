@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.Constants.Swagger;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Role;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
@@ -24,11 +25,14 @@ public class RoleController : ControllerBase
     [HttpPost]
 
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    [SwaggerResponseDescription(409, "ZipCodeId not found. Please send valid ZipCodeId.")]
-    [SwaggerResponseDescription(400, "Invalid request payload.")]
-    [SwaggerResponseDescription(500, "Unexpected server error.")]
+
+    [SwaggerResponseDescription(StatusCodes.Status201Created, Description.ROLE_CREATED, Messages.RoleCreated, DataExamples.ROLCREATEDATA)]
+    [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.ROLE_FAILD, Messages.RoleFailed)]
+    [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.RoleNameAlreadyExists)]
+    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Messages.SomethingWentWrong, Messages.SomethingWentWrong)]
     public async Task<IActionResult> Create([FromBody] RoleCreateDto model, CancellationToken cancellationToken)
     {
         if (model == null) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));

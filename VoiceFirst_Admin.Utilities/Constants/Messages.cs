@@ -288,6 +288,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         // ===== SYS ROLES =====
         public const string RoleCreated = "Role created sucessfully.";
+        public const string RoleFailed = "Role creation failed.";
         public const string RoleRetrieveSucessfully = "Role retrieve sucessfully.";
         public const string RoleUpdatedSucessfully = "Role updated sucessfully.";
         public const string RoleDeleteSucessfully = "Role deleted sucessfully.";

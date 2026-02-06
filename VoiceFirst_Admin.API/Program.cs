@@ -2,11 +2,13 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
+using System.Text.Json;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Business.Services;
 using VoiceFirst_Admin.Data.Context;
@@ -187,10 +189,30 @@ public class SwaggerResponseDescriptionFilter : IOperationFilter
         foreach (var a in attrs)
         {
             var key = a.StatusCode.ToString();
-            if (operation.Responses.TryGetValue(key, out var resp))
-            {
-                resp.Description = a.Description;
-            }
+            if (!operation.Responses.TryGetValue(key, out var resp)) continue;
+
+            // 1) Swagger Description column
+            resp.Description = a.Description;
+
+            // 2) Example JSON in "Example Value"
+            if (!resp.Content.ContainsKey("application/json"))
+                resp.Content["application/json"] = new OpenApiMediaType();
+
+            resp.Content["application/json"].Example = new OpenApiString(BuildExampleJson(a));
         }
+    }
+
+    private static string BuildExampleJson(SwaggerResponseDescriptionAttribute a)
+    {
+        var messageJson = JsonSerializer.Serialize(a.Message);
+        var errorJson = a.Error == null ? "null" : JsonSerializer.Serialize(a.Error);
+        var dataJson = string.IsNullOrWhiteSpace(a.DataJson) ? "null" : a.DataJson.Trim();
+
+        return $@"{{
+  ""statusCode"": {a.StatusCode},
+  ""message"": {messageJson},
+  ""error"": {errorJson},
+  ""data"": {dataJson}
+}}";
     }
 }
