@@ -42,5 +42,23 @@ public class PostOfficeMappingProfile : Profile
         CreateMap<PostOfficeZipCode, ZipCodeLookUp>()
             .ForMember(d => d.ZipCodeLinkId, opt => opt.MapFrom(s => s.PostOfficeZipCodeLinkId))
             .ForMember(d => d.ZipCode, opt => opt.MapFrom(s => s.ZipCode));
+        CreateMap<PostOffice, PostOfficeDetailLookupDto>()
+             .ForMember(d => d.PostOfficeId, opt => opt.MapFrom(s => s.PostOfficeId))
+                .ForMember(d => d.PostOfficeName, opt => opt.MapFrom(s => s.PostOfficeName))
+                .ForMember(d => d.CountryName, opt => opt.MapFrom(s => s.CountryName))
+                .ForMember(d => d.CountryId, opt => opt.MapFrom(s => s.CountryId))
+                .ForMember(d => d.DivOneName, opt => opt.MapFrom(s => s.DivisionOneName))
+                .ForMember(d => d.DivOneId, opt => opt.MapFrom(s => s.DivisionOneId))
+                .ForMember(d => d.DivTwoName, opt => opt.MapFrom(s => s.DivisionTwoName))
+                .ForMember(d => d.DivTwoId, opt => opt.MapFrom(s => s.DivisionTwoId))
+                .ForMember(d => d.DivThreeName, opt => opt.MapFrom(s => s.DivisionThreeName))
+                .ForMember(d => d.DivThreeId, opt => opt.MapFrom(s => s.DivisionThreeId));
+        
+
+        CreateMap<PostOfficeLookUpFilterDto, PostOfficeLookUpWithZipCodeFilterDto>()
+            .ForMember(d => d.CountryId, opt => opt.MapFrom(s => s.CountryId))
+            .ForMember(d => d.DivOneId, opt => opt.MapFrom(s => s.DivOneId))
+            .ForMember(d => d.DivThreeId, opt => opt.MapFrom(s => s.DivThreeId))
+            .ForMember(d => d.DivTwoId, opt => opt.MapFrom(s => s.DivTwoId));
     }
 }

@@ -102,19 +102,20 @@ builder.Services.AddCors(options => {
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 var issuer = builder.Configuration["Jwt:Issuer"]!;
 var audience = builder.Configuration["Jwt:Audience"]!;
-
-builder.Services.AddSwaggerGen(c =>
+if (builder.Environment.IsDevelopment())
 {
-    c.SchemaFilter<EnumSchemaFilter>();
-    c.OperationFilter<SwaggerResponseDescriptionFilter>();
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Voice First Admin", Version = "v1" });
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    builder.Services.AddSwaggerGen(c =>
     {
-        Description = "JWT Authorization header using the Bearer scheme",
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer"
-    });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        c.SchemaFilter<EnumSchemaFilter>();
+        c.OperationFilter<SwaggerResponseDescriptionFilter>();
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Voice First Admin", Version = "v1" });
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Description = "JWT Authorization header using the Bearer scheme",
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer"
+        });
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
@@ -128,7 +129,9 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
-});
+    });
+}
+
 
 builder.Services
 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -148,16 +151,20 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseStaticFiles();
 
 // Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    //app.UseSwaggerUI(c =>
+    //{
+    //    c.InjectStylesheet("/swagger-ui/custom.css");
+    //});
+}
 
-app.UseStaticFiles();
-app.UseSwagger();
-app.UseSwaggerUI();
-//app.UseSwaggerUI(c =>
-//{
-//    c.InjectStylesheet("/swagger-ui/custom.css");
-//});
+
 
 app.UseCors("CORSPolicy");
 app.UseHttpsRedirection();

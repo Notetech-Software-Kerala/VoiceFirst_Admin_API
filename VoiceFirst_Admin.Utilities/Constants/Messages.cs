@@ -379,6 +379,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string DivisionTwoNotFound = "Selected division two not found for the division one.";
         public const string DivisionThreeNotFound = "Selected division three not found for the division two.";
         public const string DivisionOneRequiredForDivisionTwo = "Division one is required when supplying division two.";
+        public const string CountryRequiredForDivisionOne = "Country is required when supplying division one.";
         public const string DivisionTwoRequiredForDivisionThree = "Division two is required when supplying division three.";
 
     }

@@ -63,6 +63,13 @@ public class PostOfficeController : ControllerBase
         var response = await _service.GetLookupAsync(filter,cancellationToken);
        return StatusCode(response.StatusCode, response); 
     }
+    [HttpGet]
+    [Route("api/post-office-details/lookup")]
+    public async Task<IActionResult> GetPostOfficeDetailsByZipCodeAsync([FromQuery] string zipCode, CancellationToken cancellationToken)
+    {
+        var response = await _service.GetPostOfficeDetailsByZipCodeAsync(zipCode, cancellationToken);
+       return StatusCode(response.StatusCode, response); 
+    }
 
     [HttpPatch]
     [Route("api/post-office/{id:int}")]
