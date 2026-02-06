@@ -5,10 +5,15 @@
         // ===== COMMON =====
         public const string ValidationFailed = "VALIDATION_FAILED";
         public const string NotFound = "NOT_FOUND";
+        public const string RolesNotFound = "ROLES_NOT_FOUND";
+        public const string RolesNotAvailable= "ROLES_NOT_AVAILABEL";
         public const string ActionNotFound = "ACTION_NOT_FOUND";
         public const string PostOfficeNotFound = "POST_OFFICE_NOT_FOUND";
+        public const string MobileCountryCodeNotAvaliable = "MOBILE_COUNTRY_CODE_NOT_AVALIABLE";
+        public const string MobileCountryCodeNotFound = "MOBILE_COUNTRY_CODE_NOT_FOUND";
         public const string Conflict = "CONFLICT";
         public const string PlanAlreadyExists = "PLAN_NAME_EXISTS";
+        public const string EmployeeNotFoundById = "EMPLOYEE_NOT_FOUND";
 
         public const string Unauthorized = "UNAUTHORIZED";
         public const string Forbidden = "FORBIDDEN";
@@ -41,8 +46,16 @@
         public const string ProgramAlreadyRecovered =
    "PROGRAM_ALREADY_RECOVERED";
 
+
+        public const string EmployeeAlreadyRecovered =
+   "EMPLOYEE_ALREADY_RECOVERED";
+
         public const string ProgramAlreadyDeleted =
 "PROGRAM_ALREADY_DELETED";
+
+
+        public const string EmployeeAlreadyDeleted =
+"EMPLOYEE_ALREADY_DELETED";
 
         public const string PlatFormAlreadyExists = "PLATFORM_EXISTS";
         public const string PlatFormAlreadyExistsRecoverable = "PLATFORM_EXISTS_RECOVERABLE";
@@ -54,10 +67,16 @@
         public const string ProgramActionNotFound = "PROGRAM_ACTION_NOT_FOUND";
        
         public const string ProgramNotFoundById = "PROGRAM_NOT_FOUND";
+        public const string EmployeeNotAvaliable = "EMPLOYEE_NOT_AVAILABLE";
         public const string ProgramAlreadyExistsRecoverable = "PROGRAM_EXISTS_RECOVERABLE";
         public const string ProgramNameAlreadyExists = "PROGRAM_NAME_EXISTS";
+        public const string EmployeeEmailAlreadyExists = "EMPLOYEE_EMAIL_EXISTS";
+        public const string EmployeeMobileNoAlreadyExists = "EMPLOYEE_MOBILE_NO_EXISTS";
         public const string ProgramLabelAlreadyExists = "PROGRAM_LABEL_EXISTS";
         public const string ProgramRouteAlreadyExists = "PROGRAM_ROUTE_EXISTS";
+        public const string EmployeeEmailAlreadyExistsRecoverable = "EMPLOYEE_EMAIL_EXISTS_RECOVERABLE";
+        public const string EmployeeMobileNoAlreadyExistsRecoverable = "EMPLOYEE_MOBILE_EXISTS_RECOVERABLE";
+
         public const string ProgramNameAlreadyExistsRecoverable = "PROGRAM_NAME_EXISTS_RECOVERABLE";
         public const string ProgramLabelAlreadyExistsRecoverable = "PROGRAM_LABEL_EXISTS_RECOVERABLE";
         public const string ProgramRouteAlreadyExistsRecoverable = "PROGRAM_ROUTE_EXISTS_RECOVERABLE";

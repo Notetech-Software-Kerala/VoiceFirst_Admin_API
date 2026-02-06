@@ -36,9 +36,14 @@ builder.Services.AddScoped<ICountryRepo, CountryRepo>();
 builder.Services.AddScoped<IPlanRepo, PlanRepo>();
 builder.Services.AddScoped<IRoleRepo, RoleRepo>();
 builder.Services.AddScoped<IMenuRepo, MenuRepo>();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IAuthRepo, AuthRepo>();
+builder.Services.AddScoped<IUserRoleLinkRepo,UserRoleLinkRepo>();
 
 builder.Services.AddScoped<IPlaceRepo, PlaceRepo>();
 // Services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
 builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
@@ -148,10 +153,11 @@ var app = builder.Build();
 
 app.UseStaticFiles();
 app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.InjectStylesheet("/swagger-ui/custom.css");
-});
+app.UseSwaggerUI();
+//app.UseSwaggerUI(c =>
+//{
+//    c.InjectStylesheet("/swagger-ui/custom.css");
+//});
 
 app.UseCors("CORSPolicy");
 app.UseHttpsRedirection();

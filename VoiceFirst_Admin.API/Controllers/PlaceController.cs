@@ -61,6 +61,12 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<PlaceDTO>), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(201, Messages.PlaceCreated)]
+        [SwaggerResponseDescription(409, Messages.PlaceAlreadyExists)]
+        [SwaggerResponseDescription(422, Messages.PlaceAlreadyExistsRecoverable)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> CreateAsync(
             [FromBody] PlaceCreateDTO model,
             CancellationToken cancellationToken)
@@ -94,6 +100,11 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.PlaceRetrieved)]
+        [SwaggerResponseDescription(404, Messages.PlaceNotFoundById)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
 
         public async Task<IActionResult>
             GetByIdAsync(int id, CancellationToken cancellationToken)
@@ -118,6 +129,9 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [HttpGet]
+        [SwaggerResponseDescription(200, Messages.PlacesRetrieved)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> GetAllAsync(
           [FromQuery] PlaceFilterDTO filter,
           CancellationToken cancellationToken)
@@ -134,6 +148,9 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<List<PlaceLookUpDTO?>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.PlacesRetrieved)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> GetLookUpAsync(
 
           CancellationToken cancellationToken)
@@ -195,6 +212,14 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(typeof(ApiResponse<PlaceDTO>), StatusCodes.Status422UnprocessableEntity)]
+        [SwaggerResponseDescription(200, Messages.PlaceUpdated)]
+        [SwaggerResponseDescription(204, Messages.Updated)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(404, Messages.PlaceNotFoundById)]
+        [SwaggerResponseDescription(409, Messages.PlaceAlreadyExists)]
+        [SwaggerResponseDescription(422, Messages.PlaceAlreadyExistsRecoverable)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> UpdateAsync(
         int id,
         [FromBody] PlaceUpdateDTO model,
@@ -224,6 +249,12 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.PlaceRecovered)]
+        [SwaggerResponseDescription(404, Messages.PlaceNotFoundById)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(409, Messages.PlaceAlreadyRecovered)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
 
         public async Task<IActionResult> RecoverAsync(
             int id,
@@ -251,6 +282,12 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.PlaceDeleted)]
+        [SwaggerResponseDescription(404, Messages.PlaceNotFoundById)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(409, Messages.PlaceAlreadyDeleted)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult>
             DeleteAsync(int id, CancellationToken cancellationToken)
         {

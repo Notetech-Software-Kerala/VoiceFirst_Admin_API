@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Application;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
@@ -17,6 +18,12 @@ namespace VoiceFirst_Admin.API.Controllers
         }
         
         [HttpGet("lookup")]
+        [ProducesResponseType(typeof(ApiResponse<List<ApplicationActiveDTO>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.ApplicationRetrieved)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> GetActiveAsync(
             CancellationToken cancellationToken)
         {

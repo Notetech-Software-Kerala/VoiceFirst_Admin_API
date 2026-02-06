@@ -264,6 +264,55 @@ public class RoleRepo : IRoleRepo
         return affected > 0;
     }
 
+
+    public async Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
+   List<int> roleIds,
+   CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<string, bool>
+    {
+        { "idNotFound", false },
+        { "deletedOrInactive", false }
+    };
+
+
+
+        if (roleIds == null || roleIds.Count == 0)
+            return result;
+
+        const string sql = @"
+        SELECT 
+            SysRoleId,
+            IsActive,
+            IsDeleted
+        FROM SysRoles
+        WHERE SysRoleId IN @Ids;
+        ";
+
+        using var connection = _context.CreateConnection();
+
+        var entities = (await connection.QueryAsync<SysProgramActions>(
+            new CommandDefinition(
+                sql,
+                new { Ids = roleIds },
+                cancellationToken: cancellationToken)))
+            .ToList();
+
+        // 1?? Check NOT FOUND
+        if (entities.Count != roleIds.Distinct().Count())
+        {
+            result["idNotFound"] = true;
+        }
+
+        // 2?? Check Deleted or Inactive
+        if (entities.Any(x => x.IsDeleted == true || x.IsActive == false))
+        {
+            result["deletedOrInactive"] = true;
+        }
+
+        return result;
+    }
+
     public async Task<bool> DeleteAsync(SysRoles entity, CancellationToken cancellationToken = default)
     {
         const string sql = @"UPDATE SysRoles SET IsDeleted = 1, DeletedAt = SYSDATETIME(), DeletedBy=@DeletedBy WHERE SysRoleId = @SysRoleId AND IsDeleted = 0;";

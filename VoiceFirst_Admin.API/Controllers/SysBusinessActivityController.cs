@@ -59,6 +59,12 @@ public class SysBusinessActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(201,Messages.BusinessActivityCreated)]
+    [SwaggerResponseDescription(409, Messages.BusinessActivityAlreadyExists)]
+    [SwaggerResponseDescription(422, Messages.BusinessActivityAlreadyExistsRecoverable)]
+    [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+    [SwaggerResponseDescription(401, Messages.Unauthorized)]
+    [SwaggerResponseDescription(500, Messages.InternalServerError)]   
     public async Task<IActionResult> CreateAsync(
         [FromBody] SysBusinessActivityCreateDTO model,
         CancellationToken cancellationToken)
@@ -92,6 +98,11 @@ public class SysBusinessActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(200, Messages.BusinessActivityRetrieved)]
+    [SwaggerResponseDescription(404, Messages.BusinessActivityNotFoundById)]
+    [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+    [SwaggerResponseDescription(401, Messages.Unauthorized)]
+    [SwaggerResponseDescription(500, Messages.InternalServerError)]
     
     public async Task<IActionResult> 
         GetByIdAsync(int id, CancellationToken cancellationToken)
@@ -116,6 +127,9 @@ public class SysBusinessActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
     [HttpGet]
+    [SwaggerResponseDescription(200, Messages.BusinessActivitiesRetrieved)]
+    [SwaggerResponseDescription(401, Messages.Unauthorized)]
+    [SwaggerResponseDescription(500, Messages.InternalServerError)]
     public async Task<IActionResult> GetAllAsync(
       [FromQuery] BusinessActivityFilterDTO filter,
       CancellationToken cancellationToken)
@@ -132,6 +146,9 @@ public class SysBusinessActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<List<SysBusinessActivityActiveDTO?>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(200, Messages.BusinessActivitiesRetrieved)]
+    [SwaggerResponseDescription(401, Messages.Unauthorized)]
+    [SwaggerResponseDescription(500, Messages.InternalServerError)]
     public async Task<IActionResult> GetActiveAsync(
      
       CancellationToken cancellationToken)
@@ -193,6 +210,14 @@ public class SysBusinessActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status422UnprocessableEntity)]
+    [SwaggerResponseDescription(200, Messages.BusinessActivityUpdated)]
+    [SwaggerResponseDescription(204, Messages.Updated)]
+    [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+    [SwaggerResponseDescription(404, Messages.BusinessActivityNotFoundById)]
+    [SwaggerResponseDescription(409, Messages.BusinessActivityAlreadyExists)]
+    [SwaggerResponseDescription(422, Messages.BusinessActivityAlreadyExistsRecoverable)]
+    [SwaggerResponseDescription(401, Messages.Unauthorized)]
+    [SwaggerResponseDescription(500, Messages.InternalServerError)]
     public async Task<IActionResult> UpdateAsync(
     int id,
     [FromBody] SysBusinessActivityUpdateDTO model,
@@ -222,6 +247,12 @@ public class SysBusinessActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(200, Messages.BusinessActivityRecovered)]
+    [SwaggerResponseDescription(404, Messages.BusinessActivityNotFoundById)]
+    [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+    [SwaggerResponseDescription(409, Messages.BusinessActivityAlreadyRecovered)]
+    [SwaggerResponseDescription(401, Messages.Unauthorized)]
+    [SwaggerResponseDescription(500, Messages.InternalServerError)]
 
     public async Task<IActionResult> RecoverAsync(
         int id,
@@ -249,6 +280,12 @@ public class SysBusinessActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(200, Messages.BusinessActivityDeleted)]
+    [SwaggerResponseDescription(404, Messages.BusinessActivityNotFoundById)]
+    [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+    [SwaggerResponseDescription(409, Messages.BusinessActivityAlreadyDeleted)]
+    [SwaggerResponseDescription(401, Messages.Unauthorized)]
+    [SwaggerResponseDescription(500, Messages.InternalServerError)]
     public async Task<IActionResult>
         DeleteAsync(int id, CancellationToken cancellationToken)
     {

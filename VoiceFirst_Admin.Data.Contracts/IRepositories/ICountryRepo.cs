@@ -10,6 +10,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories;
 
 public interface ICountryRepo
 {
+    Task<CountryDto> IsIdExistAsync(
+          int countryId,
+          CancellationToken cancellationToken = default);
     Task<PagedResultDto<Country>> GetAllAsync(CountryFilterDto filter, CancellationToken cancellationToken = default);
     Task<IEnumerable<Country>> GetActiveAsync(CancellationToken cancellationToken = default);
 

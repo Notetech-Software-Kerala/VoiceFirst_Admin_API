@@ -70,6 +70,14 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<SysProgramDto>), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(201, Messages.ProgramCreated)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(404, Messages.PlatformNotFound)]
+        [SwaggerResponseDescription(409, Messages.ProgramLabelAlreadyExists)]
+        [SwaggerResponseDescription(409, Messages.ProgramRouteAlreadyExists)]
+        [SwaggerResponseDescription(409, Messages.ProgramNameAlreadyExists)]
+        [SwaggerResponseDescription(422, Messages.ProgramAlreadyExistsRecoverable)]
         public async Task<IActionResult> Create(
             [FromBody] SysProgramCreateDTO model,
             CancellationToken cancellationToken)
@@ -100,6 +108,11 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.ProgramRetrieved)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(404, Messages.ProgramNotFoundById)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult>
             GetByIdAsync([FromRoute] int id, 
             CancellationToken cancellationToken)
@@ -121,12 +134,18 @@ namespace VoiceFirst_Admin.API.Controllers
 
 
         [HttpDelete("{id:int}")]
-        [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.ProgramDeleted)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(404, Messages.ProgramNotFoundById)]
+        [SwaggerResponseDescription(409, Messages.ProgramAlreadyDeleted)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)
         {
             if (id <= 0)
@@ -150,6 +169,12 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.ProgramRecovered)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(404, Messages.ProgramNotFoundById)]
+        [SwaggerResponseDescription(409, Messages.ProgramAlreadyRecovered)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> RecoverAsync(
             int id,
             CancellationToken cancellationToken)
@@ -174,6 +199,9 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<PagedResultDto<SysProgramDto>>),StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.ProgramsNotFound)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> GetAllAsync(
           [FromQuery] SysProgramFilterDTO filter,
           CancellationToken cancellationToken)
@@ -188,6 +216,9 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<List<SysProgramLookUp?>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.ProgramRetrieved)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> GetProgramLookupAsync(CancellationToken cancellationToken)
         {
             var result = await _service.GetProgramLookupAsync(cancellationToken);
@@ -204,6 +235,12 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.ProgramRetrieved)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(404, Messages.ApplicationNotFoundById)]
+        [SwaggerResponseDescription(409, Messages.NoApplicationPermission)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> GetAllActiveByApplicationIdAsync(int applicationId, CancellationToken cancellationToken)
         {
             var result = await _service.GetAllActiveByApplicationIdAsync(applicationId, cancellationToken);
@@ -217,6 +254,12 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.ProgramRetrieved)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(404, Messages.ProgramNotFound)]
+        [SwaggerResponseDescription(409, Messages.NoApplicationPermission)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> GetAllActiveForPlanAsync(CancellationToken cancellationToken)
         {
             var result = await _service.GetAllActiveForPlanAsync(cancellationToken);
@@ -231,6 +274,11 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(200, Messages.ProgramActionRetrieveSucessfully)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(404, Messages.ProgramActionNotFound)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> GetActionLookupByProgramIdAsync(int programId, CancellationToken cancellationToken)
         {
             var result = await _service.GetActionLookupByProgramIdAsync(programId, cancellationToken);
@@ -291,7 +339,17 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(typeof(ApiResponse<SysProgramDto>), StatusCodes.Status422UnprocessableEntity)]
-        public async Task<IActionResult> UpdateAsync(int id, [FromBody] VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram.SysProgramUpdateDTO model, CancellationToken cancellationToken)
+        [SwaggerResponseDescription(200, Messages.ProgramUpdated)]
+        [SwaggerResponseDescription(204, Messages.Updated)]
+        [SwaggerResponseDescription(400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(404, Messages.ProgramNotFoundById)]
+        [SwaggerResponseDescription(409, Messages.ProgramLabelAlreadyExists)]
+        [SwaggerResponseDescription(409, Messages.ProgramRouteAlreadyExists)]
+        [SwaggerResponseDescription(409, Messages.ProgramNameAlreadyExists)]
+        [SwaggerResponseDescription(422, Messages.ProgramAlreadyExistsRecoverable)]
+        [SwaggerResponseDescription(401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(500, Messages.InternalServerError)]
+        public async Task<IActionResult> UpdateAsync(int id, [FromBody]SysProgramUpdateDTO model, CancellationToken cancellationToken)
         {
             if (model == null)
                 return BadRequest(ApiResponse<object>.Fail(
