@@ -410,20 +410,65 @@ public class PostOfficeRepo : IPostOfficeRepo
         };
     }
 
-    public async Task<IEnumerable<PostOffice>> GetLookupAsync(CancellationToken cancellationToken = default)
+
+
+    public async Task<IEnumerable<PostOffice>> GetLookupAsync(PostOfficeLookUpFilterDto filter, CancellationToken cancellationToken = default)
     {
         var sql = new StringBuilder(@"
-        SELECT
-            PostOfficeId,
-            PostOfficeName 
-        FROM PostOffice
-        WHERE IsDeleted = 0 AND IsActive = 1 ORDER BY PostOfficeName ASC
-        ");
+SELECT
+    po.PostOfficeId,
+    po.PostOfficeName
+FROM PostOffice po
+WHERE po.IsDeleted = 0
+  AND po.IsActive = 1
+");
+
+        // Optional filters (only appended if provided)
+        if (filter?.CountryId is not null)
+            sql.AppendLine("  AND po.CountryId = @CountryId");
+
+        if (filter?.DivOneId is not null)
+            sql.AppendLine("  AND po.DivOneId = @DivOneId");
+
+        if (filter?.DivTwoId is not null)
+            sql.AppendLine("  AND po.DivTwoId = @DivTwoId");
+
+        if (filter?.DivThreeId is not null)
+            sql.AppendLine("  AND po.DivThreeId = @DivThreeId");
+
+        // ZipCode filter via EXISTS (your requirement)
+        if (!string.IsNullOrWhiteSpace(filter?.ZipCode))
+        {
+            sql.AppendLine(@"
+  AND EXISTS (
+      SELECT 1
+      FROM PostOfficeZipCodeLink l
+      INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
+      WHERE l.PostOfficeId = po.PostOfficeId
+        AND l.IsActive = 1
+        AND z.ZipCode LIKE @ZipCodeSearch
+  )
+");
+        }
+
+        sql.AppendLine("ORDER BY po.PostOfficeName ASC;");
+
+        var param = new
+        {
+            CountryId = filter?.CountryId,
+            DivOneId = filter?.DivOneId,
+            DivTwoId = filter?.DivTwoId,
+            DivThreeId = filter?.DivThreeId,
+            ZipCodeSearch = !string.IsNullOrWhiteSpace(filter?.ZipCode)
+                ? $"%{filter!.ZipCode.Trim()}%"
+                : null
+        };
 
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<PostOffice>(
-            new CommandDefinition(sql.ToString(), cancellationToken: cancellationToken));
+            new CommandDefinition(sql.ToString(), param, cancellationToken: cancellationToken));
     }
+
 
     public async Task<PostOffice?> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {

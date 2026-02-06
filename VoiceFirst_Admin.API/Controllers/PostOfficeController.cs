@@ -58,9 +58,9 @@ public class PostOfficeController : ControllerBase
 
     [HttpGet]
     [Route("api/post-office/lookup")]
-    public async Task<IActionResult> GetLookupAsync(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetLookupAsync([FromQuery] PostOfficeLookUpFilterDto filter, CancellationToken cancellationToken)
     {
-        var items = await _service.GetLookupAsync(cancellationToken);
+        var items = await _service.GetLookupAsync(filter,cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.PostOfficeRetrieveSucessfully));
     }
 

@@ -21,9 +21,9 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<List<ApplicationActiveDTO>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-        [SwaggerResponseDescription(200, Messages.ApplicationRetrieved)]
-        [SwaggerResponseDescription(401, Messages.Unauthorized)]
-        [SwaggerResponseDescription(500, Messages.InternalServerError)]
+        //[SwaggerResponseDescription(200, Messages.ApplicationRetrieved)]
+        //[SwaggerResponseDescription(401, Messages.Unauthorized)]
+        //[SwaggerResponseDescription(500, Messages.InternalServerError)]
         public async Task<IActionResult> GetActiveAsync(
             CancellationToken cancellationToken)
         {

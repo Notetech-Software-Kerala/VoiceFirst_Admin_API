@@ -113,9 +113,10 @@ public class PostOfficeService : IPostOfficeService
         };
     }
 
-    public async Task<IEnumerable<PostOfficeLookupDto>> GetLookupAsync(CancellationToken cancellationToken = default)
+    
+    public async Task<IEnumerable<PostOfficeLookupDto>> GetLookupAsync(PostOfficeLookUpFilterDto filter, CancellationToken cancellationToken = default)
     {
-        var entities = await _repo.GetLookupAsync(cancellationToken);
+        var entities = await _repo.GetLookupAsync(filter,cancellationToken);
         if (entities == null) return null;
         var dto = _mapper.Map<IEnumerable<PostOfficeLookupDto>>(entities);
         return dto;
