@@ -6,6 +6,7 @@ using Microsoft.OpenApi;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
 using System.Text.Json;
@@ -26,6 +27,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IDapperContext, DapperContext>();
 builder.Services.AddAutoMapper(typeof(SysBusinessActivityProfile).Assembly);
 builder.Services.AddControllers();
+
+// Redis
+var redisConnectionString = builder.Configuration["Redis:ConnectionString"]!;
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(redisConnectionString));
+
 // Repository
 builder.Services.AddScoped<IProgramActionRepo, ProgramActionRepo>();
 builder.Services.AddScoped<ISysBusinessActivityRepo, SysBusinessActivityRepo>();

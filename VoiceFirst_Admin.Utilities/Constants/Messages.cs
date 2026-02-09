@@ -391,5 +391,11 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string CountryRequiredForDivisionOne = "Country is required when supplying division one.";
         public const string DivisionTwoRequiredForDivisionThree = "Division two is required when supplying division three.";
 
+        // ===== FORGOT / RESET PASSWORD =====
+        public const string ForgotPasswordEmailSent = "If this email is registered, a password-reset link has been sent.";
+        public const string ResetPasswordSuccess = "Password has been reset successfully.";
+        public const string InvalidOrExpiredToken = "The reset token is invalid or has expired.";
+        public const string PasswordResetFailed = "Password reset failed. Please try again.";
+
     }
 }

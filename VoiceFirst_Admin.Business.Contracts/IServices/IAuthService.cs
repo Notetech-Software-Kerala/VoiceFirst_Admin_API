@@ -1,23 +1,23 @@
-﻿using Microsoft.AspNetCore.Identity.Data;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Auth;
+using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.Business.Contracts.IServices
 {
     public interface IAuthService
     {
         Task LoginAsync(
-            LoginRequest request,
+            LoginDto request,
             CancellationToken cancellationToken);
 
-        Task ForgotPasswordAsync(
-            ForgotPasswordRequest request,
+        Task<ApiResponse<object>> ForgotPasswordAsync(
+            ForgotPasswordDto request,
             CancellationToken cancellationToken);
 
-        Task ResetPasswordAsync(
-            ResetPasswordRequest request,
+        Task<ApiResponse<object>> ResetPasswordAsync(
+            ResetPasswordDto request,
             CancellationToken cancellationToken);
 
         Task ChangePasswordAsync(

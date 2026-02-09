@@ -12,39 +12,39 @@ namespace VoiceFirst_Admin.Utilities.Security
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(emailDtoModel.t8_from_email)) return false;
-                if (string.IsNullOrWhiteSpace(emailDtoModel.t8_to_email)) return false;
-                if (string.IsNullOrWhiteSpace(emailDtoModel.t8_email_subject)) return false;
+                if (string.IsNullOrWhiteSpace(emailDtoModel.from_email)) return false;
+                if (string.IsNullOrWhiteSpace(emailDtoModel.to_email)) return false;
+                if (string.IsNullOrWhiteSpace(emailDtoModel.email_subject)) return false;
 
                 // Build email body
                 var emailBody = new StringBuilder("<html><body>");
-                if (!string.IsNullOrEmpty(emailDtoModel.t8_email_html_body))
+                if (!string.IsNullOrEmpty(emailDtoModel.email_html_body))
                 {
-                    emailBody.Append(emailDtoModel.t8_email_html_body);
+                    emailBody.Append(emailDtoModel.email_html_body);
                 }
-                if (!string.IsNullOrEmpty(emailDtoModel.t8_signature_content))
+                if (!string.IsNullOrEmpty(emailDtoModel.signature_content))
                 {
-                    emailBody.Append(emailDtoModel.t8_signature_content);
+                    emailBody.Append(emailDtoModel.signature_content);
                 }
                 emailBody.Append("</body></html>");
 
                 // Create SMTP message
                 var mail = new MailMessage
                 {
-                    From = new MailAddress(emailDtoModel.t8_from_email),
-                    Subject = emailDtoModel.t8_email_subject,
+                    From = new MailAddress(emailDtoModel.from_email),
+                    Subject = emailDtoModel.email_subject,
                     Body = emailBody.ToString(),
                     IsBodyHtml = true
                 };
-                mail.To.Add(new MailAddress(emailDtoModel.t8_to_email));
+                mail.To.Add(new MailAddress(emailDtoModel.to_email));
 
                 using var smtp = new SmtpClient("smtp.gmail.com", 587)
                 {
                     EnableSsl = true
                 };
-                if (!string.IsNullOrWhiteSpace(emailDtoModel.t8_from_email_password))
+                if (!string.IsNullOrWhiteSpace(emailDtoModel.from_email_password))
                 {
-                    smtp.Credentials = new System.Net.NetworkCredential(emailDtoModel.t8_from_email, emailDtoModel.t8_from_email_password);
+                    smtp.Credentials = new System.Net.NetworkCredential(emailDtoModel.from_email, emailDtoModel.from_email_password);
                 }
                 smtp.Send(mail);
 

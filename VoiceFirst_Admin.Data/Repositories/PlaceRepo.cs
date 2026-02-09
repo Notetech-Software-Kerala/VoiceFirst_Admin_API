@@ -218,32 +218,15 @@ namespace VoiceFirst_Admin.Data.Repositories
             GetPlaceZipCodeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
             IDbTransaction transaction, CancellationToken cancellationToken = default)
         {
-            //const string sql = @"
-            //SELECT 
-            //    l.PostOfficeId AS PostOfficeId,
-            //    a.PostOfficeName AS PostOfficeName,
-            //    l.IsActive AS Active,
-            //    CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-            //    l.CreatedAt AS CreatedDate,
-            //    CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
-            //    l.UpdatedAt AS ModifiedDate               
-            //FROM PlacePostOfficeLink l
-            //INNER JOIN PostOffice a ON a.PostOfficeId = l.PostOfficeId
-            //INNER JOIN Users uC ON uC.UserId = l.CreatedBy
-            //LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy            
-            //WHERE l.PlaceId = @PlaceId ;
-            //";
+           
 
             var sql = @"SELECT 
     po.PostOfficeId,
     po.PostOfficeName,
-
     pzl.PlaceZipCodeLinkId, -- split starts here
-    z.ZipCodeId,
+    pzl.PostOfficeZipCodeLinkId AS ZipCodeLinkId, 
     z.ZipCode,
-
     pzl.IsActive AS Active,
-
     CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
     pzl.CreatedAt AS CreatedDate,
 
