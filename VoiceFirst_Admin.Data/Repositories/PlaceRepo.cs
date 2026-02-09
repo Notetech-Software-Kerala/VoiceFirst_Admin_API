@@ -221,33 +221,33 @@ namespace VoiceFirst_Admin.Data.Repositories
            
 
             var sql = @"SELECT 
-    po.PostOfficeId,
-    po.PostOfficeName,
-    pzl.PlaceZipCodeLinkId, -- split starts here
-    pzl.PostOfficeZipCodeLinkId AS ZipCodeLinkId, 
-    z.ZipCode,
-    pzl.IsActive AS Active,
-    CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-    pzl.CreatedAt AS CreatedDate,
+                        po.PostOfficeId,
+                        po.PostOfficeName,
+                        pzl.PlaceZipCodeLinkId, -- split starts here
+                        pzl.PostOfficeZipCodeLinkId AS ZipCodeLinkId, 
+                        z.ZipCode,
+                        pzl.IsActive AS Active,
+                        CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                        pzl.CreatedAt AS CreatedDate,
 
-    CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
-    pzl.UpdatedAt AS ModifiedDate
-FROM PlaceZipCodeLink pzl
-INNER JOIN PostOfficeZipCodeLink pozl
-    ON pozl.PostOfficeZipCodeLinkId = pzl.PostOfficeZipCodeLinkId
-    AND pozl.IsActive = 1
-INNER JOIN PostOffice po
-    ON po.PostOfficeId = pozl.PostOfficeId
-    AND po.IsDeleted = 0
-    AND po.IsActive = 1
-INNER JOIN ZipCode z
-    ON z.ZipCodeId = pozl.ZipCodeId
-INNER JOIN Users uC
-    ON uC.UserId = pzl.CreatedBy
-LEFT JOIN Users uU
-    ON uU.UserId = pzl.UpdatedBy
-WHERE pzl.PlaceId = @PlaceId
-ORDER BY po.PostOfficeName, z.ZipCode;";
+                        CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
+                        pzl.UpdatedAt AS ModifiedDate
+                        FROM PlaceZipCodeLink pzl
+                        INNER JOIN PostOfficeZipCodeLink pozl
+                            ON pozl.PostOfficeZipCodeLinkId = pzl.PostOfficeZipCodeLinkId
+                            AND pozl.IsActive = 1
+                        INNER JOIN PostOffice po
+                            ON po.PostOfficeId = pozl.PostOfficeId
+                            AND po.IsDeleted = 0
+                            AND po.IsActive = 1
+                        INNER JOIN ZipCode z
+                            ON z.ZipCodeId = pozl.ZipCodeId
+                        INNER JOIN Users uC
+                            ON uC.UserId = pzl.CreatedBy
+                        LEFT JOIN Users uU
+                            ON uU.UserId = pzl.UpdatedBy
+                        WHERE pzl.PlaceId = @PlaceId
+                        ORDER BY po.PostOfficeName, z.ZipCode;";
 
 
             var lookup = new Dictionary<int, PlaceZipCodeLinkDetailDTO>();
