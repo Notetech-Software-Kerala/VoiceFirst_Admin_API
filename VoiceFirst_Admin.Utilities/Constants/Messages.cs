@@ -27,11 +27,13 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PayloadRequired = "Payload is required.";
         public const string NotFound = "Not found.";
         public const string PostOfficesAreAlreadyLinked = "Some post offices are already linked.Please refresh again.";
+        public const string ZipCodesAreAlreadyLinked = "Some Zip codes  are already linked.Please refresh again.";
 
         public const string ActionsAreAlreadyLinked = "Some actions are already linked.Please refresh again.";
         public const string Updated = "Updated.";
         public const string ActionsNotFound = "Actions Not found.";
         public const string PostOfficesNotFound = "Post offices Not found.";
+        public const string ZipCodesNotFound = "ZipCodes Not found.";
         public const string MobileCountryCodeNotFound = "Mobile country code Not found.";
         // Auth
         public const string InvalidCredentials = "Invalid credentials.";
@@ -181,6 +183,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PlanRetrieved =
            "Plan retrieve sucessfully.";
 
+        public const string PlanUpdated =
+           "Plan updated sucessfully.";
+
         // ===== SYS Program  =====
         public const string InvalidActionLinksForApplication =
             "Invalid ActionLinks For selected Application.";
@@ -291,6 +296,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string PostOfficeNotFound =
        "Some selected post office are no longer available." + BaseRefreshMessage;
+
+
+        public const string ZipCodesNotAvaliable =
+       "Some selected zipCodes are no longer available." + BaseRefreshMessage;
 
         public const string MobileCountryCodeNotAvailable =
       "Some selected  country code  are no longer available." + BaseRefreshMessage;

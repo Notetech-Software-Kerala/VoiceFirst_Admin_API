@@ -15,7 +15,9 @@ public interface IPostOfficeRepo
     List<int> postOfficeIds,
     CancellationToken cancellationToken = default);
 
-    
+    Task<Dictionary<string, bool>> AreAllZipCodeLinksValidAsync(
+      List<int> zipCodeLinkIds,
+      CancellationToken cancellationToken = default);
 
     Task<PostOffice> CreateAsync(PostOffice entity,List<string> zipCodes, CancellationToken cancellationToken = default);
     Task<PostOffice?> GetByIdAsync(int id, CancellationToken cancellationToken = default);

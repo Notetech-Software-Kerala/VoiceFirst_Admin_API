@@ -4,9 +4,9 @@ using System.Text;
 
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.Place
 {
-    public class PlacePostOfficeLinksUpdateDTO
+    public class PlaceZipCodeLinkUpdateDTO
     {
-        public int PostOfficeId { get; set; }
+        public int ZipCodeLinkId { get; set; }
         public bool Active { get; set; }
     }
 }

@@ -35,8 +35,85 @@ public class PostOfficeRepo : IPostOfficeRepo
 
 
 
-  
 
+    public async Task<Dictionary<string, bool>> AreAllZipCodeLinksValidAsync(
+      List<int> zipCodeLinkIds,
+      CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<string, bool>
+        {
+            { "idNotFound", false },
+            { "deletedOrInactive", false }
+        };
+
+
+
+        if (zipCodeLinkIds == null || zipCodeLinkIds.Count == 0)
+            return result; // nothing to validate
+
+        const string sql = @"
+            SELECT 
+                l.PostOfficeZipCodeLinkId,
+                l.IsActive As ZipCodeLinkIsActive,
+                po.IsActive As PostOfficeIsActive,
+                po.IsDeleted As PostOfficeIsDeleted,
+                c.IsActive As CountryIsActive,
+                c.IsDeleted As CountryIsDeleted,
+                d1.IsActive As Division1IsActive,
+                d1.IsDeleted As  Division1IsDeleted,
+                d2.IsActive As Division2IsActive,
+                d2.IsDeleted As Division2IsDeleted,
+                d3.IsActive Division3IsActive,
+                d3.IsDeleted  As Division3IsDeleted
+            FROM PostOfficeZipCodeLink l
+            JOIN PostOffice po 
+                ON po.PostOfficeId = l.PostOfficeId  
+            JOIN Country c 
+                ON c.CountryId = po.CountryId
+            LEFT JOIN DivisionOne d1 
+                ON d1.DivisionOneId = po.DivisionOneId
+            LEFT JOIN DivisionTwo d2 
+                ON d2.DivisionTwoId = po.DivisionTwoId
+            LEFT JOIN DivisionThree d3 
+                ON d3.DivisionThreeId = po.DivisionThreeId
+            JOIN ZipCode z
+                ON z.ZipCodeId = l.ZipCodeId
+            WHERE l.PostOfficeZipCodeLinkId IN @Ids;
+            ";
+
+
+        using var connection = _context.CreateConnection();
+
+        var rows = (await connection.QueryAsync<ZipLinkValidationDto>(
+      new CommandDefinition(
+          sql,
+          new { Ids = zipCodeLinkIds },
+          cancellationToken: cancellationToken)))
+      .ToList();
+
+
+
+        // 1️⃣ Not Found
+        if (rows.Count != zipCodeLinkIds.Distinct().Count())
+        {
+            result["idNotFound"] = true;
+        }
+
+        // 2️⃣ Deleted or Inactive
+        if (rows.Any(x => 
+        !x.ZipCodeLinkIsActive 
+        || !x.CountryIsActive || x.CountryIsDeleted
+        || !x.PostOfficeIsActive || x.PostOfficeIsDeleted
+        || !x.Division1IsActive || x.Division1IsDeleted
+        || !x.Division2IsActive || x.Division2IsDeleted
+        || !x.Division3IsActive || x.Division3IsDeleted
+        ))
+        {
+            result["deletedOrInactive"] = true;
+        }
+
+        return result;
+    }
 
 
 

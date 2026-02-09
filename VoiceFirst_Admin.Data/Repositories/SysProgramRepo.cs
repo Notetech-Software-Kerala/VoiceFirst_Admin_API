@@ -132,13 +132,13 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
         public async Task<bool> BulkInsertActionLinksAsync(
-       int programId,
-       IEnumerable<int> actionIds,
-       int createdBy,
-       IDbConnection connection,
-       IDbTransaction tx,
-       CancellationToken cancellationToken)
-        {
+           int programId,
+           IEnumerable<int> actionIds,
+           int createdBy,
+           IDbConnection connection,
+           IDbTransaction tx,
+           CancellationToken cancellationToken)
+            {
             if (actionIds == null || !actionIds.Any())
                 return false;
 

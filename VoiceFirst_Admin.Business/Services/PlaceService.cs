@@ -46,7 +46,8 @@ namespace VoiceFirst_Admin.Business.Services
           CancellationToken cancellationToken)
         {
 
-            var existingEntity = await _repo.PlaceExistsAsync(
+            var existingEntity = 
+                await _repo.PlaceExistsAsync(
                 dto.PlaceName,
                 null,
                 cancellationToken);
@@ -74,25 +75,25 @@ namespace VoiceFirst_Admin.Business.Services
                  );
             }
 
-            if (dto.PostOfficeIds != null && dto.PostOfficeIds.Any())
+            if (dto.ZipCodeLinkIds != null && dto.ZipCodeLinkIds.Any())
             {
                 var exist = await _postOfficeRepo.
-                    IsBulkIdsExistAsync(dto.PostOfficeIds,
+                    AreAllZipCodeLinksValidAsync(dto.ZipCodeLinkIds,
                cancellationToken);
                 if (exist["idNotFound"] == true)
                 {
                     return ApiResponse<PlaceDetailDTO>.Fail(
-                      Messages.PostOfficesNotFound,
+                      Messages.ZipCodesNotFound,
                       StatusCodes.Status404NotFound,
-                      ErrorCodes.PostOfficeNotFound
+                      ErrorCodes.ZipCodesNotFound
                       );
                 }
                 if (exist["deletedOrInactive"] == true)
                 {
                     return ApiResponse<PlaceDetailDTO>.Fail
-                       (Messages.PostOfficeNotFound,
+                       (Messages.ZipCodesNotAvaliable,
                        StatusCodes.Status409Conflict,
-                       ErrorCodes.PostOfficeNotFound);
+                       ErrorCodes.ZipCodesNotAvaliable);
                 }
 
             }
@@ -115,10 +116,10 @@ namespace VoiceFirst_Admin.Business.Services
 
 
 
-                await _repo.BulkInsertPlacePostOfficeLinksAsync
+                await _repo.BulkInsertPlaceZipCodeLinksAsync
                     (
                     entity.PlaceId,
-                    dto.PostOfficeIds,
+                    dto.ZipCodeLinkIds,
                     loginId,
                     connection,
                     transaction,
@@ -289,13 +290,13 @@ namespace VoiceFirst_Admin.Business.Services
 
 
 
-                if (dto.UpdatePostOffices != null)
+                if (dto.UpdateZipCodeLinkIds != null)
                 {
                     var isPostOfficeLinked =
-                     await _repo.CheckPlacePostOfficeLinksExistAsync(
+                     await _repo.CheckPlaceZipCodeLinksExistAsync(
                          placeId,
-                         dto.UpdatePostOffices
-                             .Select(x => x.PostOfficeId)
+                         dto.UpdateZipCodeLinkIds
+                             .Select(x => x.ZipCodeLinkId)
                              .ToList(),
                          true,
                          connection,
@@ -305,15 +306,15 @@ namespace VoiceFirst_Admin.Business.Services
                     {
                         transaction.Rollback();
                         return ApiResponse<PlaceDetailDTO>.Fail(
-                          Messages.PostOfficesNotFound,
+                          Messages.ZipCodesNotFound,
                           StatusCodes.Status404NotFound,
-                          ErrorCodes.PostOfficeNotFound
+                          ErrorCodes.ZipCodesNotFound
                           );
                     }
 
-                    postOfficeLink = await _repo.BulkUpdatePlacePostOfficeLinksAsync(
+                    postOfficeLink = await _repo.BulkUpdatePlaceZipCodeLinksAsync(
                              placeId,
-                             dto.UpdatePostOffices,
+                             dto.UpdateZipCodeLinkIds,
                              loginId,
                              connection,
                              transaction,
@@ -322,12 +323,12 @@ namespace VoiceFirst_Admin.Business.Services
 
 
 
-                if (dto.InsertPostOffices != null)
+                if (dto.InsertZipCodeLinkIds != null)
                 {
                     var linkedPostOfficeFound =
-                    await _repo.CheckPlacePostOfficeLinksExistAsync(
+                    await _repo.CheckPlaceZipCodeLinksExistAsync(
                         placeId,
-                        dto.InsertPostOffices,
+                        dto.InsertZipCodeLinkIds,
                         false,
                         connection,
                         transaction,
@@ -336,34 +337,34 @@ namespace VoiceFirst_Admin.Business.Services
                     {
                         transaction.Rollback();
                         return ApiResponse<PlaceDetailDTO>.Fail(
-                          Messages.PostOfficesAreAlreadyLinked,
+                          Messages.ZipCodesAreAlreadyLinked,
                           StatusCodes.Status409Conflict,
-                          ErrorCodes.PostOfficeAreAlreadyLinked
+                          ErrorCodes.ZipCodesAreAlreadyLinked
                           );
                     }
 
                     var exist = await _postOfficeRepo.
-                     IsBulkIdsExistAsync(dto.InsertPostOffices,
+                     AreAllZipCodeLinksValidAsync(dto.InsertZipCodeLinkIds,
                       cancellationToken);
                     if (exist["idNotFound"] == true)
                     {
                         return ApiResponse<PlaceDetailDTO>.Fail(
-                       Messages.PostOfficesNotFound,
+                       Messages.ZipCodesNotFound,
                        StatusCodes.Status404NotFound,
-                       ErrorCodes.PostOfficeNotFound
+                       ErrorCodes.ZipCodesNotFound
                        );
                     }
                     if (exist["deletedOrInactive"] == true)
                     {
                         return ApiResponse<PlaceDetailDTO>.Fail
-                           (Messages.PostOfficeNotFound,
+                           (Messages.ZipCodesNotAvaliable,
                            StatusCodes.Status409Conflict,
-                           ErrorCodes.PostOfficeNotFound);
+                           ErrorCodes.ZipCodesNotAvaliable);
                     }
 
-                    postOfficeLink = await _repo.BulkInsertPlacePostOfficeLinksAsync(
+                    postOfficeLink = await _repo.BulkInsertPlaceZipCodeLinksAsync(
                                placeId,
-                               dto.InsertPostOffices,
+                               dto.InsertZipCodeLinkIds,
                                loginId,
                                connection,
                                transaction,

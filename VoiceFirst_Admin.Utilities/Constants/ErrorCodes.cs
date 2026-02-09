@@ -9,6 +9,8 @@
         public const string RolesNotAvailable= "ROLES_NOT_AVAILABEL";
         public const string ActionNotFound = "ACTION_NOT_FOUND";
         public const string PostOfficeNotFound = "POST_OFFICE_NOT_FOUND";
+        public const string ZipCodesNotFound = "ZIP_CODES_NOT_FOUND";
+        public const string ZipCodesNotAvaliable = "ZIP_CODES_NOT_AVALIABLE";
         public const string MobileCountryCodeNotAvaliable = "MOBILE_COUNTRY_CODE_NOT_AVALIABLE";
         public const string MobileCountryCodeNotFound = "MOBILE_COUNTRY_CODE_NOT_FOUND";
         public const string Conflict = "CONFLICT";
@@ -29,7 +31,7 @@
 
         public const string ActionsAreAlreadyLinked = "ACTIONS_ARE_ALREADY_LINKED";
         public const string PostOfficeAreAlreadyLinked = "POST_OFFICE_ARE_ALREADY_LINKED";
-
+        public const string ZipCodesAreAlreadyLinked = "ZIP_CODES_ARE_ALREADY_LINKED";
         public const string PlaceAlreadyRecovered =
    "PLACE_ALREADY_RECOVERED";
 

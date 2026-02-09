@@ -2,12 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
-using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
-using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Users;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
-using VoiceFirst_Admin.Utilities.Models.Entities;
+using VoiceFirst_Admin.Utilities.Constants.Swagger;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
@@ -32,15 +30,15 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<EmployeeDetailDto>), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-        //[SwaggerResponseDescription(201, Messages.EmployeeCreated)]
-        //[SwaggerResponseDescription(400, Messages.PayloadRequired)]
-        //[SwaggerResponseDescription(401, Messages.Unauthorized)]
-        //[SwaggerResponseDescription(404, Messages.CountryNotFound)]
-        //[SwaggerResponseDescription(409, Messages.EmployeeEmailAlreadyExists)]
-        //[SwaggerResponseDescription(409, Messages.EmployeeMobileNoAlreadyExists)]
-        //[SwaggerResponseDescription(422, Messages.EmployeeEmailAlreadyExistsRecoverable)]
-        //[SwaggerResponseDescription(422, Messages.EmployeeMobileNoAlreadyExistsRecoverable)]
-        //[SwaggerResponseDescription(500, Messages.InternalServerError)]
+        [SwaggerResponseDescription(StatusCodes.Status201Created, Description.USER_CREATED, Messages.EmployeeCreated)]
+        [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.MobileCountryCodeNotFound)]
+        [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.EmployeeEmailAlreadyExists)]
+        [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.EmployeeMobileNoAlreadyExists)]
+        [SwaggerResponseDescription(StatusCodes.Status422UnprocessableEntity, Description.UNPROCESSABLE_422, Messages.EmployeeEmailAlreadyExistsRecoverable)]
+        [SwaggerResponseDescription(StatusCodes.Status422UnprocessableEntity, Description.UNPROCESSABLE_422, Messages.EmployeeMobileNoAlreadyExistsRecoverable)]
+        [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
         public async Task<IActionResult> Create(
          [FromBody] EmployeeCreateDto model,
          CancellationToken cancellationToken)
@@ -71,11 +69,11 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-        //[SwaggerResponseDescription(200, Messages.EmployeeRetrieved)]
-        //[SwaggerResponseDescription(400, Messages.PayloadRequired)]
-        //[SwaggerResponseDescription(401, Messages.Unauthorized)]
-        //[SwaggerResponseDescription(404, Messages.EmployeeNotFoundById)]
-        //[SwaggerResponseDescription(500, Messages.InternalServerError)]
+        [SwaggerResponseDescription(StatusCodes.Status200OK, Description.USER_RETRIEVED, Messages.EmployeeRetrieved)]
+        [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.EmployeeNotFoundById)]
+        [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
         public async Task<IActionResult>
             GetByIdAsync([FromRoute] int id,
             CancellationToken cancellationToken)
@@ -103,12 +101,12 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-        //[SwaggerResponseDescription(200, Messages.EmployeeDeleted)]
-        //[SwaggerResponseDescription(400, Messages.PayloadRequired)]
-        //[SwaggerResponseDescription(401, Messages.Unauthorized)]
-        //[SwaggerResponseDescription(404, Messages.EmployeeNotFoundById)]
-        //[SwaggerResponseDescription(409, Messages.EmployeeAlreadyDeleted)]
-        //[SwaggerResponseDescription(500, Messages.InternalServerError)]
+        [SwaggerResponseDescription(StatusCodes.Status200OK, Description.USER_DELETED, Messages.EmployeeDeleted)]
+        [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.EmployeeNotFoundById)]
+        [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.USER_ALREADY_DELETED_409, Messages.EmployeeAlreadyDeleted)]
+        [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
         public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)
         {
             if (id <= 0)
@@ -132,12 +130,12 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-        //[SwaggerResponseDescription(200, Messages.EmployeeRecovered)]
-        //[SwaggerResponseDescription(400, Messages.PayloadRequired)]
-        //[SwaggerResponseDescription(401, Messages.Unauthorized)]
-        //[SwaggerResponseDescription(404, Messages.EmployeeNotFoundById)]
-        //[SwaggerResponseDescription(409, Messages.EmployeeAlreadyRecovered)]
-        //[SwaggerResponseDescription(500, Messages.InternalServerError)]
+        [SwaggerResponseDescription(StatusCodes.Status200OK, Description.USER_RECOVERED, Messages.EmployeeRecovered)]
+        [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.EmployeeNotFoundById)]
+        [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.USER_ALREADY_RECOVERED_409, Messages.EmployeeAlreadyRecovered)]
+        [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
         public async Task<IActionResult> RecoverAsync(
             int id,
             CancellationToken cancellationToken)
@@ -162,9 +160,9 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<PagedResultDto<EmployeeDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-        //[SwaggerResponseDescription(200, Messages.EmployeeRetrieved)]
-        //[SwaggerResponseDescription(401, Messages.Unauthorized)]
-        //[SwaggerResponseDescription(500, Messages.InternalServerError)]
+        [SwaggerResponseDescription(StatusCodes.Status200OK, Description.USERS_RETRIEVED, Messages.EmployeeRetrieved)]
+        [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
         public async Task<IActionResult> GetAllAsync(
           [FromQuery] EmployeeFilterDto filter,
           CancellationToken cancellationToken)
@@ -185,16 +183,16 @@ namespace VoiceFirst_Admin.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(typeof(ApiResponse<EmployeeDetailDto>), StatusCodes.Status422UnprocessableEntity)]
-        //[SwaggerResponseDescription(200, Messages.EmployeeUpdated)]
-        //[SwaggerResponseDescription(204, Messages.Updated)]
-        //[SwaggerResponseDescription(400, Messages.PayloadRequired)]
-        //[SwaggerResponseDescription(404, Messages.EmployeeNotFoundById)]
-        //[SwaggerResponseDescription(409, Messages.EmployeeEmailAlreadyExists)]
-        //[SwaggerResponseDescription(409, Messages.EmployeeMobileNoAlreadyExists)]
-        //[SwaggerResponseDescription(422, Messages.EmployeeEmailAlreadyExistsRecoverable)]
-        //[SwaggerResponseDescription(422, Messages.EmployeeMobileNoAlreadyExistsRecoverable)]
-        //[SwaggerResponseDescription(401, Messages.Unauthorized)]
-        //[SwaggerResponseDescription(500, Messages.InternalServerError)]
+        [SwaggerResponseDescription(StatusCodes.Status200OK, Description.USER_UPDATED, Messages.EmployeeUpdated)]
+        [SwaggerResponseDescription(StatusCodes.Status204NoContent, Description.USER_UPDATED, Messages.Updated)]
+        [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.EmployeeNotFoundById)]
+        [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.EmployeeEmailAlreadyExists)]
+        [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.EmployeeMobileNoAlreadyExists)]
+        [SwaggerResponseDescription(StatusCodes.Status422UnprocessableEntity, Description.UNPROCESSABLE_422, Messages.EmployeeEmailAlreadyExistsRecoverable)]
+        [SwaggerResponseDescription(StatusCodes.Status422UnprocessableEntity, Description.UNPROCESSABLE_422, Messages.EmployeeMobileNoAlreadyExistsRecoverable)]
+        [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
         public async Task<IActionResult> UpdateAsync(int id, [FromBody] EmployeeUpdateDto model, CancellationToken cancellationToken)
         {
             if (model == null)

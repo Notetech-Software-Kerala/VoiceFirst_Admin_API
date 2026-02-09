@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using VoiceFirst_Admin.Utilities.Models.Common;
+using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.Place
 {
@@ -9,6 +10,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Place
     {
         public int PlaceId { get; set; }
         public string PlaceName { get; set; } = string.Empty;
+        //public List<PlaceZipCodeLinkDTO> ZipCodes { get; set; } 
         public bool Active { get; set; }
         public bool Deleted { get; set; }
         public string CreatedUser { get; set; } = string.Empty;
