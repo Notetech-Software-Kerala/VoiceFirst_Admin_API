@@ -102,8 +102,7 @@ builder.Services.AddCors(options => {
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 var issuer = builder.Configuration["Jwt:Issuer"]!;
 var audience = builder.Configuration["Jwt:Audience"]!;
-if (builder.Environment.IsDevelopment())
-{
+
     builder.Services.AddSwaggerGen(c =>
     {
         c.SchemaFilter<EnumSchemaFilter>();
@@ -130,7 +129,6 @@ if (builder.Environment.IsDevelopment())
         }
     });
     });
-}
 
 
 builder.Services
@@ -163,7 +161,8 @@ if (app.Environment.IsDevelopment())
     //    c.InjectStylesheet("/swagger-ui/custom.css");
     //});
 }
-
+app.UseSwagger();
+app.UseSwaggerUI();
 
 
 app.UseCors("CORSPolicy");
