@@ -252,7 +252,7 @@ public class PostOfficeRepo : IPostOfficeRepo
             LEFT JOIN DivisionThree ON DivisionThree.DivisionThreeId = po.DivisionThreeId
             LEFT JOIN Users uU ON uU.UserId = po.UpdatedBy
             LEFT JOIN Users uD ON uD.UserId = po.DeletedBy
-            WHERE po.PostOfficeId = @Id;";
+            WHERE po.PostOfficeId = @Id ;";
 
         var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
@@ -668,7 +668,7 @@ WHERE po.IsDeleted = 0
             INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
             INNER JOIN Users uC ON uC.UserId = l.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
-            WHERE l.PostOfficeId = @PostOfficeId ";
+            WHERE l.PostOfficeId = @PostOfficeId  ";
 
         var cmd = new CommandDefinition(sql, new { PostOfficeId = postOfficeId }, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();

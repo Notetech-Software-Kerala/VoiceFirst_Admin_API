@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,7 +46,7 @@ public class PostOfficeController : ControllerBase
     public async Task<IActionResult> GetZipCodesByPostOfficeIdAsync(int postOfficeId, CancellationToken cancellationToken)
     {
         var item = await _service.GetZipCodesByPostOfficeIdAsync(postOfficeId, cancellationToken);
-        return Ok(ApiResponse<object>.Ok(item, Messages.ZipCodesRetrieveSucessfully));
+        return StatusCode(item.StatusCode, item);
     }
 
     [HttpGet]
