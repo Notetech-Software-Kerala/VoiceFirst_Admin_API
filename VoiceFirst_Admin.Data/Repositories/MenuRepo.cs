@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.Metrics;
@@ -6,8 +7,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Menu;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
+using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories;
@@ -499,7 +502,7 @@ public class MenuRepo : IMenuRepo
         }
     }
 
-    public async Task<bool> BulkUpdateWebMenusAsync(WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
+    public async Task<BulkUpsertError> BulkUpdateWebMenusAsync(WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
     {
         using var connection = _context.CreateConnection();
         if (connection.State != ConnectionState.Open) connection.Open();
@@ -520,7 +523,25 @@ public class MenuRepo : IMenuRepo
                     if (m.NewOrderUnderToParent != null && m.NewOrderUnderToParent.Count > 0)
                     {
                         var parentId = m.ParentWebMenuId ?? 0;
+                        if (parentId != 0)
+                        {
+                            const string parentSql = @"
+                            SELECT TOP 1 w.WebMenuId, m.MenuRoute
+                            FROM dbo.WebMenus w
+                            INNER JOIN dbo.MenuMaster m ON m.MenuMasterId = w.MenuMasterId
+                            WHERE w.WebMenuId = @WebMenuId AND w.IsDeleted = 0;";
 
+                            var parent = await connection.QuerySingleOrDefaultAsync<(int WebMenuId, string? MenuRoute)>(
+                                new CommandDefinition(parentSql, new { WebMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken)
+                            );
+
+                            if (parent.WebMenuId == 0) // not found
+                                return new BulkUpsertError { Message = Messages.ParentMenuNotFound, StatuaCode = StatusCodes.Status404NotFound };
+                           
+
+                            if (!string.IsNullOrWhiteSpace(parent.MenuRoute))
+                                return new BulkUpsertError { Message = Messages.CannotAddOrUpdate, StatuaCode = StatusCodes.Status406NotAcceptable };
+                        }
                         // get sibling sort orders to infer spacing
                         const string selectSiblingsSql = @"SELECT SortOrder FROM dbo.WebMenus WHERE ParentWebMenuId = @ParentWebMenuId AND IsDeleted = 0 ORDER BY SortOrder";
                         var siblingOrders = (await connection.QueryAsync<int>(new CommandDefinition(selectSiblingsSql, new { ParentWebMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken))).ToList();
@@ -553,11 +574,86 @@ public class MenuRepo : IMenuRepo
             {
                 foreach (var r in dto.Reorders)
                 {
-                    int order = 1;
-                    const string updateOrderSql = @"UPDATE dbo.WebMenus SET SortOrder = @SortOrder, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
-                    foreach (var id in r.OrderedIds)
+                    // NOTE: pick the correct parent id for the group you are reordering.
+                    // Assuming r.ParentWebMenuId exists (like your move snippet).
+                    var parentId = r.ParentWebMenuId;
+                    if (parentId != 0)
                     {
-                        await connection.ExecuteAsync(new CommandDefinition(updateOrderSql, new { SortOrder = order++, UpdatedBy = loginId, WebMenuId = id }, transaction: tx, cancellationToken: cancellationToken));
+                        const string parentSql = @"
+                            SELECT TOP 1 w.WebMenuId, m.MenuRoute
+                            FROM dbo.WebMenus w
+                            INNER JOIN dbo.MenuMaster m ON m.MenuMasterId = w.MenuMasterId
+                            WHERE w.WebMenuId = @WebMenuId AND w.IsDeleted = 0;";
+
+                        var parent = await connection.QuerySingleOrDefaultAsync<(int WebMenuId, string? MenuRoute)>(
+                            new CommandDefinition(parentSql, new { WebMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken)
+                        );
+
+                        if (parent.WebMenuId == 0) // not found
+                            return new BulkUpsertError { Message = Messages.ParentMenuNotFound, StatuaCode = StatusCodes.Status404NotFound };
+
+
+                        if (!string.IsNullOrWhiteSpace(parent.MenuRoute))
+                            return new BulkUpsertError { Message = Messages.CannotAddOrUpdate, StatuaCode = StatusCodes.Status406NotAcceptable };
+                    }
+                    // get sibling sort orders to infer spacing
+                    const string selectSiblingsSql = @"
+                        SELECT SortOrder
+                        FROM dbo.WebMenus
+                        WHERE ParentWebMenuId = @ParentWebMenuId AND IsDeleted = 0
+                        ORDER BY SortOrder";
+
+                    var siblingOrders = (await connection.QueryAsync<int>(
+                        new CommandDefinition(selectSiblingsSql, new { ParentWebMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken)
+                    )).ToList();
+
+                    int step = 100; // default spacing
+                    if (siblingOrders.Count >= 2)
+                    {
+                        var diffs = new List<int>();
+                        for (int i = 1; i < siblingOrders.Count; i++)
+                            diffs.Add(siblingOrders[i] - siblingOrders[i - 1]);
+
+                        var avg = (int)System.Math.Round(diffs.Average());
+                        if (avg > 0) step = avg;
+                    }
+
+                    int baseOffset = step / 2; // 50 when step == 100
+                                               // 1) park them to unique negative values (no collisions)
+                    const string parkSql = @"
+                        UPDATE dbo.WebMenus
+                        SET SortOrder = @SortOrder,
+                            UpdatedBy = @UpdatedBy,
+                            UpdatedAt = SYSDATETIME()
+                        WHERE ParentWebMenuId = @ParentWebMenuId;";
+
+                    int park = -1;
+                    
+                        await connection.ExecuteAsync(new CommandDefinition(
+                            parkSql,
+                            new { SortOrder = park--, UpdatedBy = loginId, ParentWebMenuId = parentId },
+                            transaction: tx,
+                            cancellationToken: cancellationToken
+                        ));
+                    
+                    const string updateOrderSql = @"
+                        UPDATE dbo.WebMenus
+                        SET SortOrder = @SortOrder,
+                            UpdatedBy = @UpdatedBy,
+                            UpdatedAt = SYSDATETIME()
+                        WHERE WebMenuId = @WebMenuId";
+
+                    for (int idx = 0; idx < r.OrderedIds.Count; idx++)
+                    {
+                        var id = r.OrderedIds[idx];
+                        var sort = baseOffset + (idx * step);
+
+                        await connection.ExecuteAsync(new CommandDefinition(
+                            updateOrderSql,
+                            new { SortOrder = sort, UpdatedBy = loginId, WebMenuId = id },
+                            transaction: tx,
+                            cancellationToken: cancellationToken
+                        ));
                     }
                 }
             }
@@ -573,7 +669,7 @@ public class MenuRepo : IMenuRepo
             }
 
             tx.Commit();
-            return true;
+            return null;
         }
         catch
         {

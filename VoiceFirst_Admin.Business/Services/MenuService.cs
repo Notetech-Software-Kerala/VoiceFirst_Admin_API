@@ -35,7 +35,8 @@ public class MenuService : IMenuService
         if (dto == null) return ApiResponse<object>.Fail(Messages.PayloadRequired);
 
         var ok = await _repo.BulkUpdateWebMenusAsync(dto, loginId, cancellationToken);
-        if (!ok) return ApiResponse<object>.Fail(Messages.Failed);
+        if (ok!=null) 
+            return ApiResponse<object>.Fail(ok.Message, ok.StatuaCode);
         return ApiResponse<object>.Ok(null!, Messages.Updated);
     }
 

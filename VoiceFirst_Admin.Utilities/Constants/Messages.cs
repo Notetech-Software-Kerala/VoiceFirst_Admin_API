@@ -381,6 +381,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PostOfficeNameAlreadyExists = "Post office name already exists.";
         public const string PostOfficeNameExistsInTrash = "This post office name exists in trash. Restore it to use again.";
 
+        // Menu
+        public const string ParentMenuNotFound = "Parent menu not found..";
+        public const string CannotAddOrUpdate = "Cannot add/reorder children under a parent that has a route.";
+
         // Country / Division messages
         public const string CountryRequired = "Country is required.";
         public const string CountryNotFound = "Selected country not found.";
