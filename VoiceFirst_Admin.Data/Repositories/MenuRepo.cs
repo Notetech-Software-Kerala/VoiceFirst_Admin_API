@@ -553,11 +553,69 @@ public class MenuRepo : IMenuRepo
             {
                 foreach (var r in dto.Reorders)
                 {
-                    int order = 1;
-                    const string updateOrderSql = @"UPDATE dbo.WebMenus SET SortOrder = @SortOrder, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE WebMenuId = @WebMenuId";
+                    // NOTE: pick the correct parent id for the group you are reordering.
+                    // Assuming r.ParentWebMenuId exists (like your move snippet).
+                    var parentId = r.ParentWebMenuId; 
+
+                    // get sibling sort orders to infer spacing
+                    const string selectSiblingsSql = @"
+        SELECT SortOrder
+        FROM dbo.WebMenus
+        WHERE ParentWebMenuId = @ParentWebMenuId AND IsDeleted = 0
+        ORDER BY SortOrder";
+
+                    var siblingOrders = (await connection.QueryAsync<int>(
+                        new CommandDefinition(selectSiblingsSql, new { ParentWebMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken)
+                    )).ToList();
+
+                    int step = 100; // default spacing
+                    if (siblingOrders.Count >= 2)
+                    {
+                        var diffs = new List<int>();
+                        for (int i = 1; i < siblingOrders.Count; i++)
+                            diffs.Add(siblingOrders[i] - siblingOrders[i - 1]);
+
+                        var avg = (int)System.Math.Round(diffs.Average());
+                        if (avg > 0) step = avg;
+                    }
+
+                    int baseOffset = step / 2; // 50 when step == 100
+                                               // 1) park them to unique negative values (no collisions)
+                    const string parkSql = @"
+UPDATE dbo.WebMenus
+SET SortOrder = @SortOrder,
+    UpdatedBy = @UpdatedBy,
+    UpdatedAt = SYSDATETIME()
+WHERE WebMenuId = @WebMenuId;";
+
+                    int park = -1;
                     foreach (var id in r.OrderedIds)
                     {
-                        await connection.ExecuteAsync(new CommandDefinition(updateOrderSql, new { SortOrder = order++, UpdatedBy = loginId, WebMenuId = id }, transaction: tx, cancellationToken: cancellationToken));
+                        await connection.ExecuteAsync(new CommandDefinition(
+                            parkSql,
+                            new { SortOrder = park--, UpdatedBy = loginId, WebMenuId = id },
+                            transaction: tx,
+                            cancellationToken: cancellationToken
+                        ));
+                    }
+                    const string updateOrderSql = @"
+        UPDATE dbo.WebMenus
+        SET SortOrder = @SortOrder,
+            UpdatedBy = @UpdatedBy,
+            UpdatedAt = SYSDATETIME()
+        WHERE WebMenuId = @WebMenuId";
+
+                    for (int idx = 0; idx < r.OrderedIds.Count; idx++)
+                    {
+                        var id = r.OrderedIds[idx];
+                        var sort = baseOffset + (idx * step);
+
+                        await connection.ExecuteAsync(new CommandDefinition(
+                            updateOrderSql,
+                            new { SortOrder = sort, UpdatedBy = loginId, WebMenuId = id },
+                            transaction: tx,
+                            cancellationToken: cancellationToken
+                        ));
                     }
                 }
             }
