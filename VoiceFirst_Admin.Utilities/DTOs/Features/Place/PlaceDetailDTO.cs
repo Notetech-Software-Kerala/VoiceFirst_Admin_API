@@ -8,7 +8,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Place
     public class PlaceDetailDTO:PlaceDTO
     {
         
-        public List<PlacePostOfficeLinksDTO> postOffices { get; set; }
+        public List<PlaceZipCodeLinkDetailDTO> PostOffices { get; set; }
     
     }
 }

@@ -12,9 +12,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
     public interface IPlaceRepo
     {
         Task<bool>
-            CheckPlacePostOfficeLinksExistAsync(
+            CheckPlaceZipCodeLinksExistAsync(
                         int placeId,
-                IEnumerable<int> postOfficeIds,
+                IEnumerable<int> zipCodeLinkId,
                 bool update,
                 IDbConnection connection,
                 IDbTransaction transaction,
@@ -29,9 +29,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
          //       CancellationToken cancellationToken = default);
 
 
-        Task<bool> BulkUpdatePlacePostOfficeLinksAsync(
+        Task<bool> BulkUpdatePlaceZipCodeLinksAsync(
          int placeId,
-         IEnumerable<PlacePostOfficeLinksUpdateDTO> dtos,
+         IEnumerable<PlaceZipCodeLinkUpdateDTO> dtos,
          int updatedBy,
          IDbConnection connection,
          IDbTransaction tx,
@@ -42,9 +42,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             int? excludeId = null,
             CancellationToken cancellationToken = default);
 
-        Task<bool> BulkInsertPlacePostOfficeLinksAsync(
+        Task<bool> BulkInsertPlaceZipCodeLinksAsync(
          int programId,
-         IEnumerable<int> actionIds,
+         IEnumerable<int> zipCodeLinkIds,
          int createdBy,
          IDbConnection connection,
          IDbTransaction transaction,
@@ -62,8 +62,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             IDbTransaction transaction,
             CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<PlacePostOfficeLinksDTO>>
-            GetPlacePostOfficeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
+        Task<IEnumerable<PlaceZipCodeLinkDetailDTO>>
+            GetPlaceZipCodeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
             IDbTransaction transaction, CancellationToken cancellationToken = default);
 
         Task<PagedResultDto<PlaceDTO>>

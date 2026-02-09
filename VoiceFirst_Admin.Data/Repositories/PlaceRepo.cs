@@ -43,40 +43,40 @@ namespace VoiceFirst_Admin.Data.Repositories
             return entity;
         }
 
-        public async Task<bool> BulkInsertPlacePostOfficeLinksAsync(
+        public async Task<bool> BulkInsertPlaceZipCodeLinksAsync(
            int placeId,
-           IEnumerable<int> postOfficeIds,
+           IEnumerable<int> zipCodeLinkIds,
            int createdBy,
            IDbConnection connection,
            IDbTransaction tx,
            CancellationToken cancellationToken)
         {
-            if (postOfficeIds == null || !postOfficeIds.Any())
+            if (zipCodeLinkIds == null || !zipCodeLinkIds.Any())
                 return false;
 
             // -------------------------
             // CONVERT dynamic → int
             // -------------------------
 
-            if (postOfficeIds.Count() == 0)
+            if (zipCodeLinkIds.Count() == 0)
                 return false;
 
             // -------------------------
             // SQL
             // -------------------------
             const string sql = @"
-        INSERT INTO PlacePostOfficeLink
-            (PlaceId, PostOfficeId, CreatedBy)
+        INSERT INTO PlaceZipCodeLink
+            (PlaceId, PostOfficeZipCodeLinkId, CreatedBy)
         VALUES
-            (@PlaceId, @PostOfficeId, @CreatedBy);";
+            (@PlaceId, @PostOfficeZipCodeLinkId, @CreatedBy);";
 
             // -------------------------
             // PARAMETER OBJECTS
             // -------------------------
-            var parameters = postOfficeIds.Select(id => new
+            var parameters = zipCodeLinkIds.Select(id => new
             {
                 PlaceId = placeId,
-                PostOfficeId = id,
+                PostOfficeZipCodeLinkId = id,
                 CreatedBy = createdBy
             });
 
@@ -92,28 +92,28 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
 
-        public async Task<bool> BulkUpdatePlacePostOfficeLinksAsync(
- int placeId,
- IEnumerable<PlacePostOfficeLinksUpdateDTO> dtos,
- int updatedBy,
- IDbConnection connection,
- IDbTransaction tx,
- CancellationToken cancellationToken)
+        public async Task<bool> BulkUpdatePlaceZipCodeLinksAsync(
+         int placeId,
+         IEnumerable<PlaceZipCodeLinkUpdateDTO> dtos,
+         int updatedBy,
+         IDbConnection connection,
+         IDbTransaction tx,
+         CancellationToken cancellationToken)
         {
             const string sql = @"
-UPDATE PlacePostOfficeLink
-SET IsActive   = @IsActive,
-    UpdatedBy = @UpdatedBy,
-    UpdatedAt = SYSDATETIME()
-WHERE PlaceId = @PlaceId
-  AND PostOfficeId = @PostOfficeId
-  AND IsActive <> @IsActive;
-";
+            UPDATE PlaceZipCodeLink
+            SET IsActive   = @IsActive,
+                UpdatedBy = @UpdatedBy,
+                UpdatedAt = SYSDATETIME()
+            WHERE PlaceId = @PlaceId
+              AND PostOfficeZipCodeLinkId = @PostOfficeZipCodeLinkId
+              AND IsActive <> @IsActive;
+            ";
 
             var parameters = dtos.Select(dto => new
             {
                 PlaceId = placeId,
-                PostOfficeId = dto.PostOfficeId,
+                PostOfficeZipCodeLinkId = dto.ZipCodeLinkId,
                 IsActive = dto.Active,
                 UpdatedBy = updatedBy
             });
@@ -206,39 +206,93 @@ WHERE PlaceId = @PlaceId
                 transaction, 
                 cancellationToken: cancellationToken)
             );
-            entity.postOffices = (await GetPlacePostOfficeLinksByPlaceIdAsync(PlaceId, connection, transaction, cancellationToken)).ToList();
+            if(entity == null)
+                return null;
+            entity.PostOffices = (await GetPlaceZipCodeLinksByPlaceIdAsync(PlaceId, connection, transaction, cancellationToken)).ToList();
             return entity;
         }
 
 
 
-        public async Task<IEnumerable<PlacePostOfficeLinksDTO>>
-            GetPlacePostOfficeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
+        public async Task<IEnumerable<PlaceZipCodeLinkDetailDTO>>
+            GetPlaceZipCodeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
             IDbTransaction transaction, CancellationToken cancellationToken = default)
         {
-            const string sql = @"
-            SELECT 
-                l.PostOfficeId AS PostOfficeId,
-                a.PostOfficeName AS PostOfficeName,
-                l.IsActive AS Active,
-                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-                l.CreatedAt AS CreatedDate,
-                CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
-                l.UpdatedAt AS ModifiedDate               
-            FROM PlacePostOfficeLink l
-            INNER JOIN PostOffice a ON a.PostOfficeId = l.PostOfficeId
-            INNER JOIN Users uC ON uC.UserId = l.CreatedBy
-            LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy            
-            WHERE l.PlaceId = @PlaceId ;
-            ";
+            //const string sql = @"
+            //SELECT 
+            //    l.PostOfficeId AS PostOfficeId,
+            //    a.PostOfficeName AS PostOfficeName,
+            //    l.IsActive AS Active,
+            //    CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+            //    l.CreatedAt AS CreatedDate,
+            //    CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
+            //    l.UpdatedAt AS ModifiedDate               
+            //FROM PlacePostOfficeLink l
+            //INNER JOIN PostOffice a ON a.PostOfficeId = l.PostOfficeId
+            //INNER JOIN Users uC ON uC.UserId = l.CreatedBy
+            //LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy            
+            //WHERE l.PlaceId = @PlaceId ;
+            //";
 
-            return await connection.QueryAsync<PlacePostOfficeLinksDTO>(
-                new CommandDefinition(
-                sql,
-                new { placeId = placeId }, 
-                transaction,
-                cancellationToken: cancellationToken)
-                );
+            var sql = @"SELECT 
+    po.PostOfficeId,
+    po.PostOfficeName,
+
+    pzl.PlaceZipCodeLinkId, -- split starts here
+    z.ZipCodeId,
+    z.ZipCode,
+
+    pzl.IsActive AS Active,
+
+    CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+    pzl.CreatedAt AS CreatedDate,
+
+    CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
+    pzl.UpdatedAt AS ModifiedDate
+FROM PlaceZipCodeLink pzl
+INNER JOIN PostOfficeZipCodeLink pozl
+    ON pozl.PostOfficeZipCodeLinkId = pzl.PostOfficeZipCodeLinkId
+    AND pozl.IsActive = 1
+INNER JOIN PostOffice po
+    ON po.PostOfficeId = pozl.PostOfficeId
+    AND po.IsDeleted = 0
+    AND po.IsActive = 1
+INNER JOIN ZipCode z
+    ON z.ZipCodeId = pozl.ZipCodeId
+INNER JOIN Users uC
+    ON uC.UserId = pzl.CreatedBy
+LEFT JOIN Users uU
+    ON uU.UserId = pzl.UpdatedBy
+WHERE pzl.PlaceId = @PlaceId
+ORDER BY po.PostOfficeName, z.ZipCode;";
+
+
+            var lookup = new Dictionary<int, PlaceZipCodeLinkDetailDTO>();
+
+            var result = await connection.QueryAsync<
+               PlaceZipCodeLinkDetailDTO,
+               PlaceZipCodeLinkDTO,
+               PlaceZipCodeLinkDetailDTO>(
+               sql,
+               (postOffice, zip) =>
+               {
+                   if (!lookup.TryGetValue(postOffice.PostOfficeId, out var dto))
+                   {
+                       dto = postOffice;
+                       dto.ZipCodes = new List<PlaceZipCodeLinkDTO>();
+                       lookup.Add(dto.PostOfficeId, dto);
+                   }
+
+                   dto.ZipCodes.Add(zip);
+                   return dto;
+               },
+               param: new { placeId },
+               transaction: transaction,
+               splitOn: "PlaceZipCodeLinkId"
+           );
+
+
+            return lookup.Values;
         }
 
 
@@ -517,27 +571,27 @@ WHERE PlaceId = @PlaceId
 
 
         public async Task<bool>
-            CheckPlacePostOfficeLinksExistAsync(
+            CheckPlaceZipCodeLinksExistAsync(
                         int placeId,
-                IEnumerable<int> postOfficeIds,
+                IEnumerable<int> PostOfficeZipCodeLinkId,
                 bool update,
                 IDbConnection connection,
                 IDbTransaction transaction,
                 CancellationToken cancellationToken = default)
         {
             // If no IDs are sent, treat as invalid
-            if (postOfficeIds == null || !postOfficeIds.Any())
+            if (PostOfficeZipCodeLinkId == null || !PostOfficeZipCodeLinkId.Any())
                 return false;
 
             const string sql = @"
                     SELECT COUNT(1)
-                    FROM PlacePostOfficeLink
-                    WHERE PostOfficeId IN @postOfficeIds And PlaceId = @placeId
+                    FROM PlaceZipCodeLink
+                    WHERE PostOfficeZipCodeLinkId IN @PostOfficeZipCodeLinkId And PlaceId = @placeId
                 ";
             var exists = await connection.ExecuteScalarAsync<int>(
                new CommandDefinition(
                    sql,
-                   new { placeId, postOfficeIds },
+                   new { placeId, PostOfficeZipCodeLinkId },
                    transaction,
                    cancellationToken: cancellationToken
                ));
@@ -553,7 +607,7 @@ WHERE PlaceId = @PlaceId
             // UPDATE case
             // true  → all records exist
             // false → some records missing
-            return exists == postOfficeIds.Count();
+            return exists == PostOfficeZipCodeLinkId.Count();
 
 
 
@@ -561,27 +615,27 @@ WHERE PlaceId = @PlaceId
 
 
 
-        public async Task<bool> CheckAlreadyPlacePostOfficeLinkedAsync(
+        public async Task<bool> CheckAlreadyPlaceZipCodeLinkedAsync(
     int placeId,
-    IEnumerable<int> postOfficeIds,
+    IEnumerable<int> postOfficeZipCodeLinkId,
     IDbConnection connection,
     IDbTransaction transaction,
     CancellationToken cancellationToken = default)
         {
-            if (postOfficeIds == null || !postOfficeIds.Any())
+            if (postOfficeZipCodeLinkId == null || !postOfficeZipCodeLinkId.Any())
                 return false;
 
             const string sql = @"
         SELECT 1
-        FROM PlacePostOfficeLink
+        FROM PlaceZipCodeLink
         WHERE PlaceId = @placeId
-          AND PostOfficeId IN @postOfficeIds
+          AND PostOfficeZipCodeLinkId IN @PostOfficeZipCodeLinkId
     ";
 
             var exists = await connection.ExecuteScalarAsync<int?>(
                 new CommandDefinition(
                     sql,
-                    new { placeId, postOfficeIds },
+                    new { placeId, postOfficeZipCodeLinkId },
                     transaction,
                     cancellationToken: cancellationToken
                 ));

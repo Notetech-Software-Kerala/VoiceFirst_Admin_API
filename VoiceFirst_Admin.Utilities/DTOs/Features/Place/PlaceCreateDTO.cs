@@ -8,12 +8,12 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Place
     {
         public string PlaceName { get; set; } = string.Empty;
 
-        private List<int> _postOfficeIds = new();
-
-        public List<int> PostOfficeIds
+        private List<int> _zipCodeLinkIds = new();
+        
+        public List<int> ZipCodeLinkIds
         {
-            get => _postOfficeIds;
-            set => _postOfficeIds = value?
+            get => _zipCodeLinkIds;
+            set => _zipCodeLinkIds = value?
                 .Distinct()
                 .ToList()
                 ?? new List<int>();
