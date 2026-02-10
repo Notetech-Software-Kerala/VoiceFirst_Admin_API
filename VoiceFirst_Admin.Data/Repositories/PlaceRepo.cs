@@ -218,53 +218,36 @@ namespace VoiceFirst_Admin.Data.Repositories
             GetPlaceZipCodeLinksByPlaceIdAsync(int placeId, IDbConnection connection,
             IDbTransaction transaction, CancellationToken cancellationToken = default)
         {
-            //const string sql = @"
-            //SELECT 
-            //    l.PostOfficeId AS PostOfficeId,
-            //    a.PostOfficeName AS PostOfficeName,
-            //    l.IsActive AS Active,
-            //    CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-            //    l.CreatedAt AS CreatedDate,
-            //    CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
-            //    l.UpdatedAt AS ModifiedDate               
-            //FROM PlacePostOfficeLink l
-            //INNER JOIN PostOffice a ON a.PostOfficeId = l.PostOfficeId
-            //INNER JOIN Users uC ON uC.UserId = l.CreatedBy
-            //LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy            
-            //WHERE l.PlaceId = @PlaceId ;
-            //";
+           
 
             var sql = @"SELECT 
-    po.PostOfficeId,
-    po.PostOfficeName,
+                        po.PostOfficeId,
+                        po.PostOfficeName,
+                        pzl.PlaceZipCodeLinkId, -- split starts here
+                        pzl.PostOfficeZipCodeLinkId AS ZipCodeLinkId, 
+                        z.ZipCode,
+                        pzl.IsActive AS Active,
+                        CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                        pzl.CreatedAt AS CreatedDate,
 
-    pzl.PlaceZipCodeLinkId, -- split starts here
-    z.ZipCodeId,
-    z.ZipCode,
-
-    pzl.IsActive AS Active,
-
-    CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-    pzl.CreatedAt AS CreatedDate,
-
-    CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
-    pzl.UpdatedAt AS ModifiedDate
-FROM PlaceZipCodeLink pzl
-INNER JOIN PostOfficeZipCodeLink pozl
-    ON pozl.PostOfficeZipCodeLinkId = pzl.PostOfficeZipCodeLinkId
-    AND pozl.IsActive = 1
-INNER JOIN PostOffice po
-    ON po.PostOfficeId = pozl.PostOfficeId
-    AND po.IsDeleted = 0
-    AND po.IsActive = 1
-INNER JOIN ZipCode z
-    ON z.ZipCodeId = pozl.ZipCodeId
-INNER JOIN Users uC
-    ON uC.UserId = pzl.CreatedBy
-LEFT JOIN Users uU
-    ON uU.UserId = pzl.UpdatedBy
-WHERE pzl.PlaceId = @PlaceId
-ORDER BY po.PostOfficeName, z.ZipCode;";
+                        CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
+                        pzl.UpdatedAt AS ModifiedDate
+                        FROM PlaceZipCodeLink pzl
+                        INNER JOIN PostOfficeZipCodeLink pozl
+                            ON pozl.PostOfficeZipCodeLinkId = pzl.PostOfficeZipCodeLinkId
+                            AND pozl.IsActive = 1
+                        INNER JOIN PostOffice po
+                            ON po.PostOfficeId = pozl.PostOfficeId
+                            AND po.IsDeleted = 0
+                            AND po.IsActive = 1
+                        INNER JOIN ZipCode z
+                            ON z.ZipCodeId = pozl.ZipCodeId
+                        INNER JOIN Users uC
+                            ON uC.UserId = pzl.CreatedBy
+                        LEFT JOIN Users uU
+                            ON uU.UserId = pzl.UpdatedBy
+                        WHERE pzl.PlaceId = @PlaceId
+                        ORDER BY po.PostOfficeName, z.ZipCode;";
 
 
             var lookup = new Dictionary<int, PlaceZipCodeLinkDetailDTO>();

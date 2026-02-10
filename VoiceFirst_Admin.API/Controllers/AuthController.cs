@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Auth;
+using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
@@ -48,7 +49,18 @@ namespace VoiceFirst_Admin.API.Controllers
        [FromBody] ForgotPasswordDto request,
        CancellationToken cancellationToken)
         {
-            return Ok();
+            if (request == null || string.IsNullOrWhiteSpace(request.Email))
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    Messages.PayloadRequired,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.Payload));
+            }
+
+            var response = await _authService.ForgotPasswordAsync(
+                request, cancellationToken);
+
+            return StatusCode(response.StatusCode, response);
         }
 
 
@@ -58,7 +70,21 @@ namespace VoiceFirst_Admin.API.Controllers
             [FromBody] ResetPasswordDto request,
             CancellationToken cancellationToken)
         {
-            return Ok();
+            if (request == null
+                || string.IsNullOrWhiteSpace(request.Email)
+                || string.IsNullOrWhiteSpace(request.Token)
+                || string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    Messages.PayloadRequired,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.Payload));
+            }
+
+            var response = await _authService.ResetPasswordAsync(
+                request, cancellationToken);
+
+            return StatusCode(response.StatusCode, response);
         }
 
 

@@ -107,5 +107,9 @@
         // ===== COMPANY =====
         public const string CompanyNotFound = "COMPANY_NOT_FOUND";
         public const string CompanyAlreadyExists = "COMPANY_ALREADY_EXISTS";
+
+        // ===== AUTH =====
+        public const string InvalidOrExpiredToken = "INVALID_OR_EXPIRED_TOKEN";
+        public const string PasswordResetFailed = "PASSWORD_RESET_FAILED";
     }
 }

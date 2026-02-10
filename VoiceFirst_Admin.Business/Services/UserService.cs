@@ -201,12 +201,12 @@ namespace VoiceFirst_Admin.Business.Services
                 // Send welcome email with temporary password
                 EmailHelper.SendMail(new EmailDTO
                 {
-                    t8_from_email = "product.head@notetech.com",
-                    t8_from_email_password = "jrwk jomc dqif xxkl",
-                    t8_to_email = employee.Email,
-                    t8_email_subject = "Welcome to VoiceFirst Admin",
-                    t8_email_html_body = $"<p>Dear {employee.FirstName},</p><p>Your account has been created.</p><p>Temporary password: <strong>{password}</strong></p><p>Please sign in and change your password immediately.</p>",
-                    t8_signature_content = "<p>Regards,<br/>VoiceFirst Admin Team</p>"
+                    from_email = "product.head@notetech.com",
+                    from_email_password = "jrwk jomc dqif xxkl",
+                    to_email = employee.Email,
+                    email_subject = "Welcome to VoiceFirst Admin",
+                    email_html_body = $"<p>Dear {employee.FirstName},</p><p>Your account has been created.</p><p>Temporary password: <strong>{password}</strong></p><p>Please sign in and change your password immediately.</p>",
+                    signature_content = "<p>Regards,<br/>VoiceFirst Admin Team</p>"
                 });
                 return ApiResponse<EmployeeDetailDto>.Ok(
                     dtoOut!,

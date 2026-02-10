@@ -7,7 +7,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Place
     public class PlaceZipCodeLinkDTO
     {
         public int PlaceZipCodeLinkId { get; set; }
-        public int ZipCodeId { get; set; }
+        public int ZipCodeLinkId { get; set; }
         public string ZipCode { get; set; } = string.Empty;
         public bool Active { get; set; }      
         public string CreatedUser { get; set; } = string.Empty;
