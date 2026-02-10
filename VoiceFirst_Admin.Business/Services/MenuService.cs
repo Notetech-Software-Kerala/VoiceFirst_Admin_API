@@ -1,10 +1,5 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
@@ -14,7 +9,6 @@ using VoiceFirst_Admin.Utilities.DTOs.Features.Role;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace VoiceFirst_Admin.Business.Services;
 
@@ -29,7 +23,6 @@ public class MenuService : IMenuService
         _mapper = mapper;
         _sysProgramRepo = sysProgramRepo;
     }
-
     public async Task<ApiResponse<object>> BulkUpdateWebMenusAsync(WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
     {
         if (dto == null) return ApiResponse<object>.Fail(Messages.PayloadRequired);
@@ -48,7 +41,6 @@ public class MenuService : IMenuService
             return ApiResponse<object>.Fail(ok.Message, ok.StatuaCode);
         return ApiResponse<object>.Ok(null, Messages.AppMenuUpdatedSucessfully);
     }
-
     public async Task<ApiResponse<MenuMasterDto>> CreateAsync(MenuCreateDto dto, int loginId, CancellationToken cancellationToken = default)
     {
         if (dto == null) return ApiResponse<MenuMasterDto>.Fail(Messages.PayloadRequired);
@@ -77,8 +69,6 @@ public class MenuService : IMenuService
                     StatusCodes.Status400BadRequest);
             }
         }
-            
-
         // basic entity mapping
         var entity = _mapper.Map<MenuMaster>(dto);
         entity.CreatedBy = loginId;
@@ -86,7 +76,6 @@ public class MenuService : IMenuService
         // If this is a main menu (no route) there should be no program links and no application id
         var programIdsModel = isMainMenu ? null : _mapper.Map<List<MenuProgramLink>>(dto.ProgramIds);
         
-
         var createdId = await _repo.CreateMenuAsync(entity, programIdsModel, dto.Web, dto.App, loginId, cancellationToken);
         if(createdId<=0)
             return ApiResponse<MenuMasterDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
@@ -95,7 +84,6 @@ public class MenuService : IMenuService
 
         return ApiResponse<MenuMasterDto>.Ok(list, Messages.MenuCreated, StatusCodes.Status201Created);
     }
-
     public async Task<PagedResultDto<MenuMasterDto>> GetAllMenuMastersAsync(MenuFilterDto filter, CancellationToken cancellationToken = default)
     {
         var data = await _repo.GetAllMenuMastersAsync(filter, cancellationToken);
@@ -108,14 +96,12 @@ public class MenuService : IMenuService
             PageSize = filter.Limit
         };
     }
-
     public async Task<List<WebMenuDto>> GetAllWebMenusAsync(CancellationToken cancellationToken = default)
     {
         var data = await _repo.GetAllWebMenusAsync(cancellationToken);
         var list = _mapper.Map<List<WebMenuDto>>(data);
         return list;
     }
-
     public async Task<List<AppMenuDto>> GetAllAppMenusAsync(CancellationToken cancellationToken = default)
     {
         var data = await _repo.GetAllAppMenusAsync(cancellationToken);
@@ -140,11 +126,7 @@ public class MenuService : IMenuService
 
 
     }
-    public async Task<ApiResponse<MenuMasterDto>> UpdateMenuMasterAsync(
-    int id,
-    MenuMasterUpdateDto dto,
-    int loginId,
-    CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<MenuMasterDto>> UpdateMenuMasterAsync(int id,MenuMasterUpdateDto dto,int loginId,CancellationToken cancellationToken = default)
     {
         if (dto == null)
             return ApiResponse<MenuMasterDto>.Fail(Messages.PayloadRequired);
@@ -287,7 +269,4 @@ public class MenuService : IMenuService
 
         return ApiResponse<MenuMasterDto>.Ok(result, Messages.MenuUpdatedSucessfully);
     }
-
-
-
 }

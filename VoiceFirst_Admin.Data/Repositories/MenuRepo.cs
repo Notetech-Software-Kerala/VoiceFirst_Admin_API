@@ -92,7 +92,7 @@ public class MenuRepo : IMenuRepo
         const string sql = @"
             SELECT
                 w.AppMenuId,
-                w.ParentWebMenuId,
+                w.ParentAppMenuId,
                 w.MenuMasterId,
                 m.MenuName,
                 m.MenuIcon,
@@ -328,11 +328,7 @@ public class MenuRepo : IMenuRepo
             throw;
         }
     }
-    public async Task<BulkUpsertError?> UpdateMenuMasterAsync(
-    MenuMaster entity,
-    List<MenuProgramLink>? addProgramIds,
-    List<MenuProgramLink>? updateProgramIds,
-    CancellationToken cancellationToken = default)
+    public async Task<BulkUpsertError?> UpdateMenuMasterAsync(MenuMaster entity,List<MenuProgramLink>? addProgramIds,List<MenuProgramLink>? updateProgramIds,CancellationToken cancellationToken = default)
     {
         using var connection = _context.CreateConnection();
         if (connection.State != ConnectionState.Open) connection.Open();
