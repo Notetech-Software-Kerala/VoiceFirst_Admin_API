@@ -30,25 +30,25 @@ public class MenuController : ControllerBase
     public async Task<IActionResult> GetAllMasters([FromQuery] MenuFilterDto filter, CancellationToken cancellationToken)
     {
         var paged = await _service.GetAllMenuMastersAsync(filter, cancellationToken);
-        return Ok(ApiResponse<PagedResultDto<MenuMasterDto>>.Ok(paged, Messages.Success));
+        return Ok(ApiResponse<PagedResultDto<MenuMasterDto>>.Ok(paged, Messages.MenuRetrieveSucessfully));
     }
     [HttpGet("master/{id:int}")]
     public async Task<IActionResult> GetAllMenuMastersByIdAsync(int id, CancellationToken cancellationToken)
     {
         var menu = await _service.GetAllMenuMastersByIdAsync(id, cancellationToken);
-        return Ok(ApiResponse<MenuMasterDto>.Ok(menu, Messages.Success));
+        return Ok(ApiResponse<MenuMasterDetailDto>.Ok(menu, Messages.MenuRetrieveSucessfully));
     }
     [HttpGet("web")]
     public async Task<IActionResult> GetAllWeb(CancellationToken cancellationToken)
     {
         var data = await _service.GetAllWebMenusAsync(cancellationToken);
-        return Ok(ApiResponse<List<WebMenuDto>>.Ok(data, Messages.Success));
+        return Ok(ApiResponse<List<WebMenuDto>>.Ok(data, Messages.WebMenuRetrieveSucessfully));
     }
     [HttpGet("app")]
     public async Task<IActionResult> GetAllApp(CancellationToken cancellationToken)
     {
         var data = await _service.GetAllAppMenusAsync(cancellationToken);
-        return Ok(ApiResponse<List<AppMenuDto>>.Ok(data, Messages.Success));
+        return Ok(ApiResponse<List<AppMenuDto>>.Ok(data, Messages.AppMenuRetrieveSucessfully));
     }
     [HttpPatch("master/{id:int}")]
     public async Task<IActionResult> UpdateMaster(int id, [FromBody] MenuMasterUpdateDto model, CancellationToken cancellationToken)
@@ -63,7 +63,26 @@ public class MenuController : ControllerBase
     {
         if (model == null) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
         var res = await _service.BulkUpdateWebMenusAsync(model, userId, cancellationToken);
-        return StatusCode(res.StatusCode, res);
+        if (res.StatusCode != StatusCodes.Status200OK)
+            return StatusCode(res.StatusCode, res);
+        else
+        {
+            var data = await _service.GetAllWebMenusAsync(cancellationToken);
+            return Ok(ApiResponse<List<WebMenuDto>>.Ok(data, Messages.WebMenuUpdatedSucessfully));
+        }
+    }
+    [HttpPatch("app/bulk")]
+    public async Task<IActionResult> BulkUpdateApp([FromBody] AppMenuBulkUpdateDto model, CancellationToken cancellationToken)
+    {
+        if (model == null) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired));
+        var res = await _service.BulkUpdateAppMenusAsync(model, userId, cancellationToken);
+        if(res.StatusCode!= StatusCodes.Status200OK)
+            return StatusCode(res.StatusCode, res);
+        else
+        {
+            var data = await _service.GetAllAppMenusAsync(cancellationToken);
+            return Ok(ApiResponse<List<AppMenuDto>>.Ok(data, Messages.WebMenuUpdatedSucessfully));
+        }
     }
 
     

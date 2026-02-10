@@ -391,6 +391,31 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PostOfficeNameExistsInTrash = "This post office name exists in trash. Restore it to use again.";
 
         // Menu
+        public const string MenuRestoreSucessfully = "Menu restored sucessfully.";
+        public const string MenuDeleteSucessfully = "Menu deleted sucessfully.";
+        public const string AppMenuRestoreSucessfully = "App menu restored sucessfully.";
+        public const string AppMenuDeleteSucessfully = "App menu deleted sucessfully.";
+        public const string WebMenuRestoreSucessfully = "Web menu restored sucessfully.";
+        public const string WebMenuDeleteSucessfully = "Web menu deleted sucessfully.";
+        public const string MenuAlreadyDeleted = "Menu already deleted.";
+        public const string MenuAlreadyRestored = "Menu already restored.";
+        public const string AppMenuAlreadyDeleted = "App menu already deleted.";
+        public const string AppMenuAlreadyRestored = "App menu already restored.";
+        public const string WebMenuAlreadyDeleted = "Web menu already deleted.";
+        public const string WebMenuAlreadyRestored = "Web menu already restored.";
+        public const string MenuCreated = "Menu created sucessfully.";
+        public const string MenuUpdatedSucessfully = "Menu updated sucessfully.";
+        public const string WebMenuUpdatedSucessfully = "Web menu updated sucessfully.";
+        public const string AppMenuUpdatedSucessfully = "App menu updated sucessfully.";
+        public const string MenuRetrieveSucessfully = "Menu retrieve sucessfully.";
+        public const string WebMenuRetrieveSucessfully = "Web menu retrieve sucessfully.";
+        public const string AppMenuRetrieveSucessfully = "App Menu retrieve sucessfully.";
+        public const string MenuNameAlreadyExists = "Menu name already exists.";
+        public const string MenuMasterAlreadyExistsInWeb = "Menu master already exists in web.";
+        public const string MenuMasterAlreadyExistsInApp = "Menu master already exists in app.";
+        public const string MenuNameExistsInTrash = "This menu name exists in trash. Restore it to use again.";
+        public const string WebMenuExistsInTrash = "This web menu  exists in trash. Restore it to use again.";
+        public const string AppMenuExistsInTrash = "This app menu  exists in trash. Restore it to use again.";
         public const string ParentMenuNotFound = "Parent menu not found..";
         public const string CannotAddOrUpdate = "Cannot add/reorder children under a parent that has a route.";
 
