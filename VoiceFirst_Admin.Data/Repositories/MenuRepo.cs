@@ -707,19 +707,19 @@ public class MenuRepo : IMenuRepo
 
         try
         {
-            if (dto.MoveAndReorder.Count()>0)
+            if ( dto.MoveAndReorder!=null && dto.MoveAndReorder.Count() > 0 )
             {
                 var err = await HandleMoveAndReorderAsync(connection, tx, dto.MoveAndReorder, loginId, cancellationToken);
                 if (err != null) { tx.Rollback(); return err; }
             }
 
-            if (dto.Reorders.Count()>0)
+            if ( dto.Reorders != null && dto.Reorders.Count() > 0 )
             {
                 var err = await HandleReordersAsync(connection, tx, dto.Reorders, loginId, cancellationToken);
                 if (err != null) { tx.Rollback(); return err; }
             }
 
-            if (dto.StatusUpdate.Count() > 0)
+            if ( dto.StatusUpdate != null && dto.StatusUpdate.Count() > 0 )
             {
                 await HandleStatusUpdateAsync(connection, tx, dto.StatusUpdate, loginId, cancellationToken);
             }
@@ -920,19 +920,19 @@ public class MenuRepo : IMenuRepo
 
         try
         {
-            if (dto.MoveAndReorder is { Count: > 0 })
+            if (dto.MoveAndReorder != null && dto.MoveAndReorder is { Count: > 0 })
             {
                 var err = await HandleAppMoveAndReorderAsync(connection, tx, dto.MoveAndReorder, loginId, cancellationToken);
                 if (err != null) { tx.Rollback(); return err; }
             }
 
-            if (dto.Reorders is { Count: > 0 })
+            if (dto.Reorders != null && dto.Reorders is { Count: > 0 })
             {
                 var err = await HandleAppReordersAsync(connection, tx, dto.Reorders, loginId, cancellationToken);
                 if (err != null) { tx.Rollback(); return err; }
             }
 
-            if (dto.StatusUpdate is { Count: > 0 })
+            if (dto.StatusUpdate != null &&  dto.StatusUpdate is { Count: > 0 })
             {
                 await HandleAppStatusUpdateAsync(connection, tx, dto.StatusUpdate, loginId, cancellationToken);
             }
