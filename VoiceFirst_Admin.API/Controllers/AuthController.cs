@@ -12,21 +12,93 @@ namespace VoiceFirst_Admin.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private const string RefreshTokenCookieName = "refreshToken";
 
         private readonly IAuthService _authService;
+      
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IWebHostEnvironment env)
         {
             _authService = authService;
+           
         }
 
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(
-          [FromBody] LoginDto request,
+          [FromBody] LoginRequestDto request,
           CancellationToken cancellationToken)
         {
-            return Ok();
+            if (request == null
+                || string.IsNullOrWhiteSpace(request.Email)
+                || string.IsNullOrWhiteSpace(request.Password)
+                || request.Device == null)
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    Messages.PayloadRequired,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.Payload));
+            }
+
+            var response = await _authService.LoginAsync(
+                request, cancellationToken);
+
+            if (response.StatusCode == StatusCodes.Status200OK && response.Data != null)
+            {
+                SetRefreshTokenCookie(
+                    response.Data.RefreshToken,
+                    response.Data.RefreshTokenExpiresAtUtc);
+
+                // Return only access token in JSON body
+                var clientResponse = ApiResponse<LoginResponseDto>.Ok(
+                    response.Data.Response,
+                    response.Message,
+                    response.StatusCode);
+
+                return StatusCode(clientResponse.StatusCode, clientResponse);
+            }
+
+            return StatusCode(response.StatusCode, response);
+        }
+
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken(
+            CancellationToken cancellationToken)
+        {
+    
+            var refreshToken = Request.Cookies[RefreshTokenCookieName];
+
+         
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return Unauthorized(ApiResponse<object>.Fail(
+                    Messages.Unauthorized,
+                    StatusCodes.Status401Unauthorized,
+                    ErrorCodes.Unauthorized));
+            }
+
+            var response = await _authService.RefreshTokenAsync(
+                refreshToken, cancellationToken);
+
+            if (response.StatusCode == StatusCodes.Status200OK && response.Data != null)
+            {
+                SetRefreshTokenCookie(
+                    response.Data.RefreshToken,
+                    response.Data.RefreshTokenExpiresAtUtc);
+
+                var clientResponse = ApiResponse<LoginResponseDto>.Ok(
+                    response.Data.Response,
+                    response.Message,
+                    response.StatusCode);
+
+                return StatusCode(clientResponse.StatusCode, clientResponse);
+            }
+
+            // On failure, clear the cookie
+            ClearRefreshTokenCookie();
+            return StatusCode(response.StatusCode, response);
         }
 
 
@@ -35,11 +107,28 @@ namespace VoiceFirst_Admin.API.Controllers
         public async Task<IActionResult> Logout(
         CancellationToken cancellationToken)
         {
-            var userId = User.FindFirst("sub")?.Value;
+            var userIdClaim = User.FindFirst("sub")?.Value;
+            var sessionIdClaim = User.FindFirst("sessionId")?.Value;
 
-            await _authService.LogoutAsync(userId, cancellationToken);
+            if (string.IsNullOrWhiteSpace(userIdClaim)
+                || string.IsNullOrWhiteSpace(sessionIdClaim))
+            {
+                return Unauthorized(ApiResponse<object>.Fail(
+                    Messages.Unauthorized,
+                    StatusCodes.Status401Unauthorized,
+                    ErrorCodes.Unauthorized));
+            }
 
-            return NoContent();
+            var userId = int.Parse(userIdClaim);
+            var sessionId = int.Parse(sessionIdClaim);
+
+            var response = await _authService.LogoutAsync(
+                userId, sessionId, cancellationToken);
+
+            // Clear refresh token cookie
+            ClearRefreshTokenCookie();
+
+            return StatusCode(response.StatusCode, response);
         }
 
 
@@ -72,7 +161,7 @@ namespace VoiceFirst_Admin.API.Controllers
         {
             if (request == null
                 || string.IsNullOrWhiteSpace(request.Email)
-                || string.IsNullOrWhiteSpace(request.Token)
+                || string.IsNullOrWhiteSpace(request.Otp)
                 || string.IsNullOrWhiteSpace(request.NewPassword))
             {
                 return BadRequest(ApiResponse<object>.Fail(
@@ -99,6 +188,15 @@ namespace VoiceFirst_Admin.API.Controllers
         }
 
 
+        private void SetRefreshTokenCookie(string token, DateTime expiresAtUtc)
+        {
+            
+            Response.Cookies.Append(RefreshTokenCookieName, token);
+        }
 
+        private void ClearRefreshTokenCookie()
+        {          
+            Response.Cookies.Delete(RefreshTokenCookieName);
+        }
     }
 }

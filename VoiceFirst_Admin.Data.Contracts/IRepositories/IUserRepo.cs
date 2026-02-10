@@ -13,8 +13,10 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
     {
 
 
-   
 
+        Task<Users?> GetUserByEmailAsync(
+            string email,
+            CancellationToken cancellationToken = default);
 
         Task<bool> UpdateAsync(
          Users entity,

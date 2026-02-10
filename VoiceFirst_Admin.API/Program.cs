@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json;
 using VoiceFirst_Admin.Business.Contracts.IServices;
@@ -16,6 +17,7 @@ using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Data.Repositories;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Auth;
 using VoiceFirst_Admin.Utilities.Mapping;
 using VoiceFirst_Admin.Utilities.Middlewares;
 using VoiceFirst_Admin.Utilities.Models.Common;
@@ -106,35 +108,63 @@ builder.Services.AddCors(options => {
             ((hosts) => true));
 });
 
-var jwtKey = builder.Configuration["Jwt:Key"]!;
-var issuer = builder.Configuration["Jwt:Issuer"]!;
-var audience = builder.Configuration["Jwt:Audience"]!;
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
+builder.Services.AddSingleton(jwtSettings);
+
+var jwtKey = jwtSettings.Key;
+var issuer = jwtSettings.Issuer;
+var audience = jwtSettings.Audience;
 
     builder.Services.AddSwaggerGen(c =>
     {
+
         c.SchemaFilter<EnumSchemaFilter>();
         c.OperationFilter<SwaggerResponseDescriptionFilter>();
+        c.MapType<LoginRequestDto>(() => new OpenApiSchema
+        {
+            Example = new OpenApiObject
+            {
+                ["email"] = new OpenApiString("akhila@notetech.com"),
+                ["password"] = new OpenApiString("123456"),
+                ["device"] = new OpenApiObject
+                {
+                    ["deviceID"] = new OpenApiString("IMEI-867530912345678"),
+                    ["version"] = new OpenApiInteger(1),
+                    ["deviceName"] = new OpenApiString("Pixel 8 Pro"),
+                    ["deviceType"] = new OpenApiString("Mobile"),
+                    ["os"] = new OpenApiString("Android"),
+                    ["osVersion"] = new OpenApiString("14"),
+                    ["manufacturer"] = new OpenApiString("Google"),
+                    ["model"] = new OpenApiString("Pixel 8 Pro")
+                }
+            }
+        });
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "Voice First Admin", Version = "v1" });
         c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
-            Description = "JWT Authorization header using the Bearer scheme",
+            Description = "Paste a token and click Authorize.\n\n"
+                        + "• For protected endpoints → paste the **Access Token**\n"
+                        + "• For refresh-token endpoint → paste the **Refresh Token**",
+            Name = "Authorization",
+            In = ParameterLocation.Header,
             Type = SecuritySchemeType.Http,
-            Scheme = "bearer"
+            Scheme = "bearer",
+            BearerFormat = "JWT"
         });
         c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
         {
-            new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
+                new OpenApiSecurityScheme
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
     });
 
 
@@ -142,6 +172,7 @@ builder.Services
 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
 {
+    options.MapInboundClaims = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -150,7 +181,34 @@ builder.Services
         ValidateIssuerSigningKey = true,
         ValidIssuer = issuer,
         ValidAudience = audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        NameClaimType = JwtRegisteredClaimNames.Sub
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var userId = context.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            var sessionId = context.Principal?.FindFirst("sessionId")?.Value;
+
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(sessionId))
+            {
+                context.Fail("Missing session claims.");
+                return;
+            }
+
+            var redis = context.HttpContext.RequestServices
+                .GetRequiredService<IConnectionMultiplexer>();
+            var db = redis.GetDatabase();
+            var sessionKey = $"active_session:{userId}:{sessionId}";
+
+            var isActive = await db.KeyExistsAsync(sessionKey);
+            if (!isActive)
+            {
+                context.Fail("Session has been invalidated.");
+            }
+        }
     };
 });
 

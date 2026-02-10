@@ -8,8 +8,12 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
 {
     public interface IAuthService
     {
-        Task LoginAsync(
-            LoginDto request,
+        Task<ApiResponse<LoginResultDto>> LoginAsync(
+            LoginRequestDto request,
+            CancellationToken cancellationToken);
+
+        Task<ApiResponse<LoginResultDto>> RefreshTokenAsync(
+            string refreshToken,
             CancellationToken cancellationToken);
 
         Task<ApiResponse<object>> ForgotPasswordAsync(
@@ -25,8 +29,9 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
             ChangePasswordDto request,
             CancellationToken cancellationToken);
 
-        Task LogoutAsync(
-            string userId,
+        Task<ApiResponse<object>> LogoutAsync(
+            int userId,
+            int sessionId,
             CancellationToken cancellationToken);
     }
 }

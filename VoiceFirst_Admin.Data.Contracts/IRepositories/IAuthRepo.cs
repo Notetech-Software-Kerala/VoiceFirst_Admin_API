@@ -7,8 +7,29 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface IAuthRepo
     {
-        Task<Users?> GetUserByEmailAsync(
+        Task<Users?> GetUserForLoginAsync(
             string email,
+            CancellationToken cancellationToken = default);
+
+        Task<int> UpsertDeviceAsync(
+            UserDevice device,
+            CancellationToken cancellationToken = default);
+
+        Task<int> CreateSessionAsync(
+            int userId,
+            int userDeviceId,
+            CancellationToken cancellationToken = default);
+
+        Task InvalidateSessionAsync(
+            int userDeviceLoginId,
+            CancellationToken cancellationToken = default);
+
+        Task InvalidateAllSessionsAsync(
+            int userId,
+            CancellationToken cancellationToken = default);
+
+        Task<int?> GetApplicationVersionIdAsync(
+            int version,
             CancellationToken cancellationToken = default);
 
         Task<bool> UpdatePasswordAsync(

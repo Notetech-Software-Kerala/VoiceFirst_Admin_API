@@ -54,6 +54,15 @@ namespace VoiceFirst_Admin.Utilities.Constants
         // OTP
         public const string InvalidOtp = "Invalid OTP.";
         public const string OtpExpired = "OTP expired.";
+        public const string ForgotPasswordLimitExceeded = "You have exceeded the maximum number of password reset requests for today. Please try again tomorrow.";
+        public const string OtpAttemptsExceeded = "Too many invalid OTP attempts. Please request a new OTP.";
+        public const string ForgotPasswordCooldown = "Please wait before requesting another OTP.";
+
+        // Login / Logout
+        public const string LogoutSuccess = "Logged out successfully.";
+        public const string AccountInactive = "Your account is inactive. Please contact support.";
+        public const string AccountDeleted = "Your account has been deleted. Please contact support.";
+        public const string DeviceInfoRequired = "Device information is required.";
  
 
 
@@ -396,9 +405,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string DivisionTwoRequiredForDivisionThree = "Division two is required when supplying division three.";
 
         // ===== FORGOT / RESET PASSWORD =====
-        public const string ForgotPasswordEmailSent = "If this email is registered, a password-reset link has been sent.";
+        public const string ForgotPasswordEmailSent = "If this email is registered, a password-reset OTP has been sent.";
         public const string ResetPasswordSuccess = "Password has been reset successfully.";
-        public const string InvalidOrExpiredToken = "The reset token is invalid or has expired.";
+        public const string InvalidOrExpiredToken = "The OTP is invalid or has expired.";
         public const string PasswordResetFailed = "Password reset failed. Please try again.";
 
     }

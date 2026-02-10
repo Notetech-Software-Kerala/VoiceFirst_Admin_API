@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
 using VoiceFirst_Admin.Business.Contracts.IServices;
@@ -16,7 +18,6 @@ using VoiceFirst_Admin.Utilities.DTOs.Features.Users;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
-using System.Net.Mail;
 using VoiceFirst_Admin.Utilities.Security;
 
 namespace VoiceFirst_Admin.Business.Services
@@ -29,13 +30,15 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IDapperContext _dapperContext;
         private readonly ICountryRepo _countryRepo;
         private readonly IRoleRepo _roleRepo;
+        private readonly IConfiguration _configuration;
         public UserService(
             IUserRepo repo,
             IUserRoleLinkRepo userRoleLinkRepo,
             IMapper mapper,
             IDapperContext dapperContext,
             ICountryRepo countryRepo,
-            IRoleRepo roleRepo)
+            IRoleRepo roleRepo,
+            IConfiguration configuration)
         {
             _repo = repo;
             _mapper = mapper;
@@ -43,6 +46,7 @@ namespace VoiceFirst_Admin.Business.Services
             _countryRepo = countryRepo;
             _userRoleLinkRepo = userRoleLinkRepo;
             _roleRepo = roleRepo;
+            _configuration = configuration;
         }
 
 
@@ -201,8 +205,8 @@ namespace VoiceFirst_Admin.Business.Services
                 // Send welcome email with temporary password
                 EmailHelper.SendMail(new EmailDTO
                 {
-                    from_email = "product.head@notetech.com",
-                    from_email_password = "jrwk jomc dqif xxkl",
+                    from_email = _configuration["Email:FromEmail"]!,
+                    from_email_password = _configuration["Email:FromPassword"],
                     to_email = employee.Email,
                     email_subject = "Welcome to VoiceFirst Admin",
                     email_html_body = $"<p>Dear {employee.FirstName},</p><p>Your account has been created.</p><p>Temporary password: <strong>{password}</strong></p><p>Please sign in and change your password immediately.</p>",
