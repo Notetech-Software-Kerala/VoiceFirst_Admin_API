@@ -528,15 +528,15 @@ WHERE po.IsDeleted = 0
         if (!string.IsNullOrWhiteSpace(filter?.ZipCode))
         {
             sql.AppendLine(@"
-  AND EXISTS (
-      SELECT 1
-      FROM PostOfficeZipCodeLink l
-      INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
-      WHERE l.PostOfficeId = po.PostOfficeId
-        AND l.IsActive = 1
-        AND z.ZipCode LIKE @ZipCodeSearch
-  )
-");
+              AND EXISTS (
+                  SELECT 1
+                  FROM PostOfficeZipCodeLink l
+                  INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
+                  WHERE l.PostOfficeId = po.PostOfficeId
+                    AND l.IsActive = 1
+                    AND z.ZipCode LIKE @ZipCodeSearch
+              )
+            ");
         }
 
         sql.AppendLine("ORDER BY po.PostOfficeName ASC;");

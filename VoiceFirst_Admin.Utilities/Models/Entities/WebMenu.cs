@@ -8,7 +8,7 @@ namespace VoiceFirst_Admin.Utilities.Models.Entities
     public class WebMenu : BaseModel
     {
         public int WebMenuId { get; set; }
-        public int ParentAppMenuId { get; set; } = 0;
+        public int ParentWebMenuId { get; set; } = 0;
         public int MenuMasterId { get; set; }
         public string MenuName { get; set; } = string.Empty;
         public string MenuIcon { get; set; } = string.Empty;
