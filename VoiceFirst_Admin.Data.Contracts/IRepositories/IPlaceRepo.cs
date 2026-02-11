@@ -71,15 +71,21 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             CancellationToken cancellationToken = default);
 
 
-        Task<bool> DeleteAsync
-            (int id, int deletedBy,
+        Task<bool> DeleteAsync(
+            int placeId,
+            int updatedBy,
+            IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default);
 
         Task<List<PlaceLookUpDTO?>> 
-            GetActiveAsync(CancellationToken cancellationToken = default);
+            GetActiveAsync(int zipCodeId, CancellationToken cancellationToken = default);
 
-        Task<bool> RecoverAsync
-            (int id, int loginId, 
+        Task<bool> RecoverAsync(
+            int placeId,
+            int updatedBy,
+            IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default);
         Task<PlaceDTO> IsIdExistAsync(
           int placeId,
@@ -90,6 +96,12 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             IDbTransaction transaction,
             CancellationToken cancellationToken = default);
 
+        Task<bool> CheckAlreadyPlaceZipCodeLinkedAsync(
+            int placeId,
+            IEnumerable<int> postOfficeZipCodeLinkId,
+            IDbConnection connection,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default);
 
     }
 }
