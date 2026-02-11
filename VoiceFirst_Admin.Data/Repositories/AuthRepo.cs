@@ -40,6 +40,28 @@ namespace VoiceFirst_Admin.Data.Repositories
             );
         }
 
+        public async Task<Users?> GetUserByIdForAuthAsync(
+            int userId,
+            CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT UserId, FirstName, LastName, Email,
+                       HashKey, SaltKey, IsDeleted, IsActive
+                FROM dbo.Users
+                WHERE UserId = @UserId AND IsDeleted = 0;
+            ";
+
+            using var connection = _context.CreateConnection();
+
+            return await connection.QuerySingleOrDefaultAsync<Users>(
+                new CommandDefinition(
+                    sql,
+                    new { UserId = userId },
+                    cancellationToken: cancellationToken
+                )
+            );
+        }
+
         public async Task<int> UpsertDeviceAsync(
             UserDevice device,
             CancellationToken cancellationToken = default)
@@ -201,6 +223,28 @@ namespace VoiceFirst_Admin.Data.Repositories
             );
 
             return affected > 0;
+        }
+
+        public async Task<IEnumerable<string>> GetActiveRolesByUserIdAsync(
+            int userId,
+            CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT r.RoleName
+                FROM dbo.UserRoleLink l
+                INNER JOIN dbo.SysRoles r ON r.SysRoleId = l.SysRoleId
+                WHERE l.UserId = @UserId AND l.IsActive = 1;
+            ";
+
+            using var connection = _context.CreateConnection();
+
+            return await connection.QueryAsync<string>(
+                new CommandDefinition(
+                    sql,
+                    new { UserId = userId },
+                    cancellationToken: cancellationToken
+                )
+            );
         }
     }
 }

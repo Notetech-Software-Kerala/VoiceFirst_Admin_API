@@ -1,15 +1,16 @@
 ﻿using Azure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.Constants.Swagger;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
-using VoiceFirst_Admin.Utilities.Constants.Swagger;
 
 [ApiController]
-[Route("api/business-activity")]
+[Route("api/activity")]
 public class SysBusinessActivityController : ControllerBase
 {
     private readonly ISysBusinessActivityService _service;
@@ -273,7 +274,7 @@ public class SysBusinessActivityController : ControllerBase
     }
 
 
-
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]

@@ -1,4 +1,4 @@
-﻿    using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using VoiceFirst_Admin.Utilities.Models.Common;
@@ -63,6 +63,12 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string AccountInactive = "Your account is inactive. Please contact support.";
         public const string AccountDeleted = "Your account has been deleted. Please contact support.";
         public const string DeviceInfoRequired = "Device information is required.";
+
+        // Change Password
+        public const string ChangePasswordSuccess = "Password changed successfully. Please login again on other devices.";
+        public const string OldPasswordIncorrect = "Current password is incorrect.";
+        public const string NewPasswordSameAsOld = "New password cannot be the same as the current password.";
+        public const string ChangePasswordFailed = "Password change failed. Please try again.";
  
 
 

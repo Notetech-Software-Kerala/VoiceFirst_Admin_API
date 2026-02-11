@@ -182,7 +182,8 @@ builder.Services
         ValidIssuer = issuer,
         ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        NameClaimType = JwtRegisteredClaimNames.Sub
+        NameClaimType = JwtRegisteredClaimNames.Sub,
+        RoleClaimType = "roles"
     };
 
     options.Events = new JwtBearerEvents
@@ -233,6 +234,7 @@ app.UseSwaggerUI();
 app.UseCors("CORSPolicy");
 app.UseHttpsRedirection();
 
+app.UseAuthentication();   // MUST COME FIRST
 app.UseAuthorization();
 
 app.UseMiddleware<RequestLoggingMiddleware>();

@@ -86,16 +86,15 @@ public static class JwtTokenHelper
         {
             if (kv.Value is null) continue;
 
-            // roles array support
-            //if (kv.Key.Equals("roles", StringComparison.OrdinalIgnoreCase))
-            //{
-            //    if (kv.Value is IEnumerable<string> roles)
-            //    {
-            //        foreach (var r in roles.Where(r => !string.IsNullOrWhiteSpace(r)))
-            //            claims.Add(new Claim(ClaimTypes.Role, r));
-            //    }
-            //    continue;
-            //}
+            if (kv.Key.Equals("roles", StringComparison.OrdinalIgnoreCase))
+            {
+                if (kv.Value is IEnumerable<string> roles)
+                {
+                    foreach (var r in roles.Where(r => !string.IsNullOrWhiteSpace(r)))
+                        claims.Add(new Claim("roles", r));
+                }
+                continue;
+            }
 
             var valueStr = Convert.ToString(kv.Value, CultureInfo.InvariantCulture);
             if (string.IsNullOrWhiteSpace(valueStr)) continue;
