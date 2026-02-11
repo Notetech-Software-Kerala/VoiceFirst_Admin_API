@@ -7,7 +7,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Menu
 {
     public class AppMenuDto :CommonDto
     {
-        public int WebMenuId { get; set; }
+        public int AppMenuId { get; set; }
         public int? ParentId { get; set; }
         public int MenuId { get; set; }
         public string MenuName { get; set; } = string.Empty;
