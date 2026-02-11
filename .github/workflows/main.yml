@@ -103,6 +103,13 @@ jobs:
           Write-Host "ASPNETCORE_ENVIRONMENT set to Production"
         continue-on-error: true
 
+      - name: Start IIS Application Pool
+        shell: powershell
+        run: |
+          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:$env:APP_POOL_NAME
+          Start-Sleep -Seconds 3
+          Write-Host "Application pool started"
+
       - name: Verify Redis is running
         shell: powershell
         run: |
@@ -116,13 +123,6 @@ jobs:
             Write-Host "Install Redis: https://github.com/tporadowski/redis/releases or use Docker: docker run -d -p 6379:6379 redis"
             throw "Redis is required for the application to function properly"
           }
-
-      - name: Start IIS Application Pool
-        shell: powershell
-        run: |
-          & "C:\Windows\System32\inetsrv\appcmd.exe" start apppool /apppool.name:$env:APP_POOL_NAME
-          Start-Sleep -Seconds 3
-          Write-Host "Application pool started"
 
       - name: Verify deployment
         shell: powershell
