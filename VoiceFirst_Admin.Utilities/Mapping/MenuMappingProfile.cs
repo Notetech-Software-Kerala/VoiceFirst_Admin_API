@@ -73,7 +73,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.DeletedDate, opt => opt.MapFrom(s => s.DeletedAt))
                 .ForMember(d => d.ModifiedDate, opt => opt.MapFrom(s => s.UpdatedAt)); 
             CreateMap<AppMenus, AppMenuDto>()
-                .ForMember(d => d.WebMenuId, opt => opt.MapFrom(s => s.AppMenuId))
+                .ForMember(d => d.AppMenuId, opt => opt.MapFrom(s => s.AppMenuId))
                 .ForMember(d => d.MenuId, opt => opt.MapFrom(s => s.MenuMasterId))
                 .ForMember(d => d.ParentId, opt => opt.MapFrom(s => s.ParentAppMenuId))
                 .ForMember(d => d.MenuName, opt => opt.MapFrom(s => s.MenuName))

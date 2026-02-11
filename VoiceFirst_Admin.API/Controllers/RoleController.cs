@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
@@ -28,10 +29,14 @@ public class RoleController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
 
     [SwaggerResponseDescription(StatusCodes.Status201Created, Description.ROLE_CREATED, Messages.RoleCreated, DataExamples.ROLCREATEDATA)]
+    [SwaggerResponseDescription(StatusCodes.Status403Forbidden, Description.SYSTEM_ROLE_403, Messages.RoleNameDefault)]
     [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.ROLE_FAILD, Messages.RoleFailed)]
     [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.RoleNameAlreadyExists)]
+    [SwaggerResponseDescription(StatusCodes.Status422UnprocessableEntity, Description.CONFLICT_WITH_DELETED_422, Messages.RoleNameExistsInTrash)]
     [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Messages.SomethingWentWrong, Messages.SomethingWentWrong)]
     public async Task<IActionResult> Create([FromBody] RoleCreateDto model, CancellationToken cancellationToken)
     {
@@ -39,8 +44,14 @@ public class RoleController : ControllerBase
         var created = await _service.CreateAsync(model, userId, cancellationToken);
         return StatusCode(created.StatusCode, created);
     }
-
+    [AllowAnonymous]
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<RoleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(StatusCodes.Status200OK, Description.PROGRAM_RETRIEVED, Messages.RoleRetrieveSucessfully, DataExamples.ROLCREATEDATA)]
+    [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.NotFound)]
+    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {
         var item = await _service.GetByIdAsync(id, cancellationToken);
@@ -48,6 +59,12 @@ public class RoleController : ControllerBase
         return Ok(ApiResponse<RoleDto>.Ok(item, Messages.RoleRetrieveSucessfully));
     }
     [HttpGet("plan-role-link")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<PlanRoleActionLinkDetailsDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(StatusCodes.Status200OK, Description.PROGRAM_RETRIEVED, Messages.RoleRetrieveSucessfully, DataExamples.ROLGETALLDATA)]
+    [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.NotFound)]
+    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
     public async Task<IActionResult> GetByPlanIdAsync([FromQuery] PlanRoleDto planRoleDto, CancellationToken cancellationToken)
     {
         var item = await _service.GetByPlanIdAsync(planRoleDto, cancellationToken);
@@ -56,18 +73,39 @@ public class RoleController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(StatusCodes.Status200OK, Description.ACTIVITIES_RETRIEVED, Messages.RoleRetrieveSucessfully, DataExamples.ROLGETALLDATA)]
+    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
     public async Task<IActionResult> GetAll([FromQuery] RoleFilterDto filter, CancellationToken cancellationToken)
     {
         var items = await _service.GetAllAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.RoleRetrieveSucessfully));
     }
     [HttpGet("lookup")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(StatusCodes.Status200OK, Description.USERS_RETRIEVED, Messages.RoleRetrieveSucessfully, DataExamples.ROLLOOKUPATA)]
+    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
     public async Task<IActionResult> GetLookupAsync(CancellationToken cancellationToken)
     {
         var items = await _service.GetLookUpAllAsync(cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.RoleRetrieveSucessfully));
     }
     [HttpPatch("{id:int}")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+
+    [SwaggerResponseDescription(StatusCodes.Status200OK, Description.ROLE_UPDATED, Messages.RoleCreated, DataExamples.ROLUPDATEDATA)]
+    [SwaggerResponseDescription(StatusCodes.Status403Forbidden, Description.SYSTEM_ROLE_403, Messages.RoleNameDefault)]
+    [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.ROLE_FAILD, Messages.RoleFailed)]
+    [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.RoleNameAlreadyExists)]
+    [SwaggerResponseDescription(StatusCodes.Status422UnprocessableEntity, Description.CONFLICT_WITH_DELETED_422, Messages.RoleNameExistsInTrash)]
+    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Messages.SomethingWentWrong, Messages.SomethingWentWrong)]
     public async Task<IActionResult> Update(int id, [FromBody] RoleUpdateDto model, CancellationToken cancellationToken)
     {
         var res = await _service.UpdateAsync(model, id, userId, cancellationToken);
@@ -75,6 +113,12 @@ public class RoleController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(StatusCodes.Status200OK, Description.ACTIVITY_DELETED, Messages.RoleDeleteSucessfully)]
+    [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.NotFound)]
+    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var res = await _service.DeleteAsync(id, userId, cancellationToken);
@@ -82,6 +126,12 @@ public class RoleController : ControllerBase
     }
 
     [HttpPatch("recover/{id:int}")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [SwaggerResponseDescription(StatusCodes.Status200OK, Description.ACTIVITY_RECOVERED, Messages.RoleRestoreSucessfully)]
+    [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.NotFound)]
+    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
     public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
     {
         var res = await _service.RestoreAsync(id, userId, cancellationToken);

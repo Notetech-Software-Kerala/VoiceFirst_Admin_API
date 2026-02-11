@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -151,20 +152,7 @@ var audience = jwtSettings.Audience;
             Scheme = "bearer",
             BearerFormat = "JWT"
         });
-        c.AddSecurityRequirement(new OpenApiSecurityRequirement
-        {
-            {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                Array.Empty<string>()
-            }
-        });
+        c.OperationFilter<AuthorizeCheckOperationFilter>();
     });
 
 
@@ -288,10 +276,46 @@ public class SwaggerResponseDescriptionFilter : IOperationFilter
         var dataJson = string.IsNullOrWhiteSpace(a.DataJson) ? "null" : a.DataJson.Trim();
 
         return $@"{{
-  ""statusCode"": {a.StatusCode},
-  ""message"": {messageJson},
-  ""error"": {errorJson},
-  ""data"": {dataJson}
-}}";
+          ""statusCode"": {a.StatusCode},
+          ""message"": {messageJson},
+          ""error"": {errorJson},
+          ""data"": {dataJson}
+        }}";
+    }
+}
+
+
+public class AuthorizeCheckOperationFilter : IOperationFilter
+{
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        var hasAuthorize =
+            context.MethodInfo.DeclaringType?.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any() == true
+            || context.MethodInfo.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any();
+
+        var hasAllowAnonymous =
+            context.MethodInfo.DeclaringType?.GetCustomAttributes(true).OfType<AllowAnonymousAttribute>().Any() == true
+            || context.MethodInfo.GetCustomAttributes(true).OfType<AllowAnonymousAttribute>().Any();
+
+        if (!hasAuthorize || hasAllowAnonymous)
+            return;
+
+        operation.Security = new List<OpenApiSecurityRequirement>
+        {
+            new()
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            }
+        };
     }
 }

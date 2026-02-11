@@ -18,8 +18,11 @@ namespace VoiceFirst_Admin.Utilities.Constants.Swagger
 
         // Success / operation (role)
         public const string ROLE_CREATED = "Creates a new role with the provided details.";
+        public const string ROLE_UPDATED = "Update role with the provided details.";
         public const string ROLE_FAILD = "Faild to create a new role with the provided details";
         public const string CONFLICT_409 = "Conflict. Resource already exists or the request violates a uniqueness constraint.";
+        public const string CONFLICT_WITH_DELETED_422 = "This  name exists in DELETED LIST. Restore it to use again the application.";
+        public const string SYSTEM_ROLE_403 = "This is a system default role name and you cannot be created ..";
 
         // Success / operation (business activity)
         public const string ACTIVITY_CREATED = "Creates a new  activity.";
