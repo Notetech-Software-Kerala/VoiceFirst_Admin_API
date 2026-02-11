@@ -1006,7 +1006,7 @@ public class MenuRepo : IMenuRepo
         }
     }
 
-    private async Task UpdateAppParentAsync(IDbConnection connection,IDbTransaction tx,int appMenuId,int? parentWebMenuId,int loginId,CancellationToken cancellationToken)
+    private async Task UpdateAppParentAsync(IDbConnection connection,IDbTransaction tx,int appMenuId,int? parentAppMenuId, int loginId,CancellationToken cancellationToken)
     {
         const string updateParentSql = @"
             UPDATE dbo.AppMenus
@@ -1017,7 +1017,7 @@ public class MenuRepo : IMenuRepo
 
         await connection.ExecuteAsync(new CommandDefinition(
             updateParentSql,
-            new { ParentWebMenuId = parentWebMenuId, UpdatedBy = loginId, AppMenuId = appMenuId },
+            new { ParentAppMenuId = parentAppMenuId, UpdatedBy = loginId, AppMenuId = appMenuId },
             transaction: tx,
             cancellationToken: cancellationToken));
     }
@@ -1034,7 +1034,7 @@ public class MenuRepo : IMenuRepo
             WHERE w.AppMenuId = @AppMenuId AND w.IsDeleted = 0;";
 
         var parent = await connection.QuerySingleOrDefaultAsync<(int AppMenuId, string? MenuRoute)>(
-            new CommandDefinition(parentSql, new { WebMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken));
+            new CommandDefinition(parentSql, new { AppMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken));
 
         if (parent.AppMenuId == 0)
             return new BulkUpsertError { Message = Messages.ParentMenuNotFound, StatuaCode = StatusCodes.Status404NotFound };
