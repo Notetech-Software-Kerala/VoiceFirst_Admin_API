@@ -24,8 +24,9 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
             ResetPasswordDto request,
             CancellationToken cancellationToken);
 
-        Task ChangePasswordAsync(
-            string userId,
+        Task<ApiResponse<object>> ChangePasswordAsync(
+            int userId,
+            int sessionId,
             ChangePasswordDto request,
             CancellationToken cancellationToken);
 

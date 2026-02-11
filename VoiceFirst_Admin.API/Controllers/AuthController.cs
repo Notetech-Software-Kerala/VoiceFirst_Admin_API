@@ -184,7 +184,35 @@ namespace VoiceFirst_Admin.API.Controllers
             [FromBody] ChangePasswordDto request,
             CancellationToken cancellationToken)
         {
-            return Ok();
+            if (request == null
+                || string.IsNullOrWhiteSpace(request.OldPassword)
+                || string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    Messages.PayloadRequired,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.Payload));
+            }
+
+            var userIdClaim = User.FindFirst("sub")?.Value;
+            var sessionIdClaim = User.FindFirst("sessionId")?.Value;
+
+            if (string.IsNullOrWhiteSpace(userIdClaim)
+                || string.IsNullOrWhiteSpace(sessionIdClaim))
+            {
+                return Unauthorized(ApiResponse<object>.Fail(
+                    Messages.Unauthorized,
+                    StatusCodes.Status401Unauthorized,
+                    ErrorCodes.Unauthorized));
+            }
+
+            var userId = int.Parse(userIdClaim);
+            var sessionId = int.Parse(sessionIdClaim);
+
+            var response = await _authService.ChangePasswordAsync(
+                userId, sessionId, request, cancellationToken);
+
+            return StatusCode(response.StatusCode, response);
         }
 
 

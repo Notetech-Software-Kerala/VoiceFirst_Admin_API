@@ -11,6 +11,10 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             string email,
             CancellationToken cancellationToken = default);
 
+        Task<Users?> GetUserByIdForAuthAsync(
+            int userId,
+            CancellationToken cancellationToken = default);
+
         Task<int> UpsertDeviceAsync(
             UserDevice device,
             CancellationToken cancellationToken = default);
@@ -36,6 +40,10 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             int userId,
             byte[] hashKey,
             byte[] saltKey,
+            CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<string>> GetActiveRolesByUserIdAsync(
+            int userId,
             CancellationToken cancellationToken = default);
     }
 }

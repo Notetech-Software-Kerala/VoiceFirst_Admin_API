@@ -143,14 +143,18 @@ namespace VoiceFirst_Admin.Business.Services
             var sessionId = await _authRepo.CreateSessionAsync(
                 user.UserId, userDeviceId, cancellationToken);
 
-            // 8. Generate JWT tokens
-            var claims = BuildClaims(user, sessionId, userDeviceId);
+            // 8. Fetch active roles
+            var roles = await _authRepo.GetActiveRolesByUserIdAsync(
+                user.UserId, cancellationToken);
+
+            // 9. Generate JWT tokens
+            var claims = BuildClaims(user, sessionId, userDeviceId, roles);
             var tokenPair = JwtTokenHelper.CreateTokenPair(claims, _jwtSettings);
 
-            // 9. Store refresh token hash in Redis
+            // 10. Store refresh token hash in Redis
             await StoreRefreshTokenAsync(user.UserId, sessionId, tokenPair.RefreshToken);
 
-            // 10. Mark session as active in Redis (TTL = access token lifetime)
+            // 11. Mark session as active in Redis (TTL = access token lifetime)
             await ActivateSessionAsync(user.UserId, sessionId);
 
             // 10. Build response (refresh token NOT in JSON — controller sets it as cookie)
@@ -251,7 +255,10 @@ namespace VoiceFirst_Admin.Business.Services
             var deviceIdStr = principal.FindFirst("deviceId")?.Value ?? "0";
             var deviceId = int.Parse(deviceIdStr);
 
-            var claims = BuildClaims(user, sessionId, deviceId);
+            var roles = await _authRepo.GetActiveRolesByUserIdAsync(
+                userId, cancellationToken);
+
+            var claims = BuildClaims(user, sessionId, deviceId, roles);
             var tokenPair = JwtTokenHelper.CreateTokenPair(claims, _jwtSettings);
 
             // 5. Replace old refresh token hash in Redis (rotation)
@@ -494,19 +501,17 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
         private static Dictionary<string, object?> BuildClaims(
-            Users user, int sessionId, int deviceId)
+            Users user, int sessionId, int deviceId, IEnumerable<string> roles)
         {
             return new Dictionary<string, object?>
             {
                 [JwtRegisteredClaimNames.Sub] = user.UserId.ToString(),
                 [JwtRegisteredClaimNames.Email] = user.Email,
-
-                //["userId"] = user.UserId.ToString(),
-                //["email"] = user.Email,
                 ["firstName"] = user.FirstName,
                 ["lastName"] = user.LastName,
                 ["sessionId"] = sessionId.ToString(),
-                ["deviceId"] = deviceId.ToString()
+                ["deviceId"] = deviceId.ToString(),
+                ["roles"] = roles
             };
         }
 
@@ -547,12 +552,79 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public Task ChangePasswordAsync(
-           string userId,
+        public async Task<ApiResponse<object>> ChangePasswordAsync(
+           int userId,
+           int sessionId,
            ChangePasswordDto request,
            CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            // 1. Fetch user by ID
+            var user = await _authRepo.GetUserByIdForAuthAsync(userId, cancellationToken);
+
+            if (user is null)
+            {
+                return ApiResponse<object>.Fail(
+                    Messages.UserNotFound,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.UserNotFound);
+            }
+
+            // 2. Verify old password
+            var storedHash = Convert.ToBase64String(user.HashKey);
+            var storedSalt = Convert.ToBase64String(user.SaltKey);
+
+            var isOldPasswordValid = await PasswordHasher.VerifyPasswordAsync(
+                request.OldPassword, storedHash, storedSalt);
+
+            if (!isOldPasswordValid)
+            {
+                return ApiResponse<object>.Fail(
+                    Messages.OldPasswordIncorrect,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.OldPasswordIncorrect);
+            }
+
+            // 3. Ensure new password is different from old
+            var isNewSameAsOld = await PasswordHasher.VerifyPasswordAsync(
+                request.NewPassword, storedHash, storedSalt);
+
+            if (isNewSameAsOld)
+            {
+                return ApiResponse<object>.Fail(
+                    Messages.NewPasswordSameAsOld,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.NewPasswordSameAsOld);
+            }
+
+            // 4. Hash new password
+            var hashResult = await PasswordHasher.HashPasswordAsync(request.NewPassword);
+            var hashKey = Convert.FromBase64String(hashResult.Hash);
+            var saltKey = Convert.FromBase64String(hashResult.Salt);
+
+            // 5. Update password in DB
+            var updated = await _authRepo.UpdatePasswordAsync(
+                userId, hashKey, saltKey, cancellationToken);
+
+            if (!updated)
+            {
+                return ApiResponse<object>.Fail(
+                    Messages.ChangePasswordFailed,
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCodes.ChangePasswordFailed);
+            }
+
+            // 6. Invalidate ALL other sessions (force re-login on other devices)
+            //    but keep the current session active
+            await _authRepo.InvalidateAllSessionsAsync(userId, cancellationToken);
+            await InvalidateAllUserSessionsAsync(userId);
+
+            // 7. Re-activate ONLY the current session so user stays logged in on this device
+            await ActivateSessionAsync(userId, sessionId);
+
+            return ApiResponse<object>.Ok(
+                null!,
+                Messages.ChangePasswordSuccess,
+                StatusCodes.Status200OK);
         }
     }
 }

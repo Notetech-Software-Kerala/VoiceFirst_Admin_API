@@ -110,8 +110,8 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<IEnumerable<UserRoleLinksDto>>
-       GetRoleLinksByUserIdAsync(int userId, IDbConnection connection,
-       IDbTransaction transaction, CancellationToken cancellationToken = default)
+           GetRoleLinksByUserIdAsync(int userId, IDbConnection connection,
+           IDbTransaction transaction, CancellationToken cancellationToken = default)
         {
             const string sql = @"
             SELECT 
