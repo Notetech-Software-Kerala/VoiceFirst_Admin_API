@@ -9,7 +9,6 @@ namespace VoiceFirst_Admin.Utilities.Security;
 
 public static class JwtTokenHelper
 {
-    // Creates access + refresh JWT tokens
     public static TokenPair CreateTokenPair(IDictionary<string, object?> claimsData, JwtSettings settings)
     {
         var now = DateTime.UtcNow;
@@ -17,8 +16,8 @@ public static class JwtTokenHelper
         var accessExpires = now.AddMinutes(settings.AccessTokenExpiryMinutes);
         var refreshExpires = now.AddDays(settings.RefreshTokenExpiryDays);
 
-        var accessToken = CreateJwt(claimsData, settings, accessExpires, tokenType: "access");
-        var refreshToken = CreateJwt(claimsData, settings, refreshExpires, tokenType: "refresh");
+        var accessToken = CreateJwt(claimsData, settings.Key, settings, accessExpires, tokenType: "access");
+        var refreshToken = CreateJwt(claimsData, settings.RefreshTokenKey, settings, refreshExpires, tokenType: "refresh");
 
         return new TokenPair
         {
@@ -29,20 +28,19 @@ public static class JwtTokenHelper
         };
     }
 
-    // Creates only a new access token (fresh)
     public static (string accessToken, DateTime expiresAtUtc) CreateFreshAccessToken(
         IDictionary<string, object?> claimsData, JwtSettings settings)
     {
         var now = DateTime.UtcNow;
         var accessExpires = now.AddMinutes(settings.AccessTokenExpiryMinutes);
-        var token = CreateJwt(claimsData, settings, accessExpires, tokenType: "access");
+        var token = CreateJwt(claimsData, settings.Key, settings, accessExpires, tokenType: "access");
         return (token, accessExpires);
     }
 
-    // Validate refresh token without DB (signature + expiry + tokenType)
     public static ClaimsPrincipal ValidateRefreshToken(string refreshToken, JwtSettings settings)
-        => ValidateToken(refreshToken, settings, requiredTokenType: "refresh");
-    public static ClaimsPrincipal ValidateToken(string token, JwtSettings jwt, bool validateLifetime = true)
+        => ValidateToken(refreshToken, settings.RefreshTokenKey, settings, requiredTokenType: "refresh");
+
+    public static ClaimsPrincipal ValidateAccessToken(string token, JwtSettings jwt, bool validateLifetime = true)
     {
         var handler = new JwtSecurityTokenHandler();
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));
@@ -64,8 +62,10 @@ public static class JwtTokenHelper
 
         return handler.ValidateToken(token, parameters, out _);
     }
+
     private static string CreateJwt(
         IDictionary<string, object?> claimsData,
+        string signingKeyStr,
         JwtSettings settings,
         DateTime expiresAtUtc,
         string tokenType)
@@ -78,7 +78,6 @@ public static class JwtTokenHelper
 
         var claims = new List<Claim>
         {
-            // token type helps distinguish access vs refresh
             new("tokenType", tokenType)
         };
 
@@ -102,7 +101,7 @@ public static class JwtTokenHelper
             claims.Add(new Claim(kv.Key, valueStr));
         }
 
-        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.Key));
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKeyStr));
         var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
@@ -115,7 +114,7 @@ public static class JwtTokenHelper
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private static ClaimsPrincipal ValidateToken(string token, JwtSettings settings, string requiredTokenType)
+    private static ClaimsPrincipal ValidateToken(string token, string signingKeyStr, JwtSettings settings, string requiredTokenType)
     {
         var handler = new JwtSecurityTokenHandler();
 
@@ -128,7 +127,7 @@ public static class JwtTokenHelper
 
             ValidIssuer = settings.Issuer,
             ValidAudience = settings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.Key)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKeyStr)),
             ClockSkew = TimeSpan.Zero
         };
 

@@ -61,6 +61,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         // Login / Logout
         public const string LogoutSuccess = "Logged out successfully.";
+        public const string AccountLockedOut = "Account is locked due to too many failed login attempts. Please try again after {0} minutes.";
+        public const string InvalidCredentialsWithAttempts = "Invalid credentials. {0} attempt(s) remaining before lockout.";
         public const string AccountInactive = "Your account is inactive. Please contact support.";
         public const string AccountDeleted = "Your account has been deleted. Please contact support.";
         public const string DeviceInfoRequired = "Device information is required.";

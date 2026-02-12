@@ -29,7 +29,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddScoped<IDapperContext, DapperContext>();
 builder.Services.AddAutoMapper(typeof(SysBusinessActivityProfile).Assembly);
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 // Redis
 var redisConnectionString = builder.Configuration["Redis:ConnectionString"]!;
@@ -52,8 +56,10 @@ builder.Services.AddScoped<IUserRoleLinkRepo,UserRoleLinkRepo>();
 
 builder.Services.AddScoped<IPlaceRepo, PlaceRepo>();
 // Services
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
 builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
@@ -127,6 +133,7 @@ var audience = jwtSettings.Audience;
             {
                 ["email"] = new OpenApiString("akhila@notetech.com"),
                 ["password"] = new OpenApiString("123456"),
+                ["clientType"] = new OpenApiString("Web"),
                 ["device"] = new OpenApiObject
                 {
                     ["deviceID"] = new OpenApiString("IMEI-867530912345678"),
@@ -190,26 +197,36 @@ builder.Services
             var redis = context.HttpContext.RequestServices
                 .GetRequiredService<IConnectionMultiplexer>();
             var db = redis.GetDatabase();
-            var sessionKey = $"active_session:{userId}:{sessionId}";
 
-            var isActive = await db.KeyExistsAsync(sessionKey);
-            if (!isActive)
+            // ONE Redis call — validates session, device, and token version
+            var sessionKey = $"session:{userId}:{sessionId}";
+            var sessionData = await db.HashGetAllAsync(sessionKey);
+
+            if (sessionData.Length == 0)
             {
                 context.Fail("Session has been invalidated.");
                 return;
             }
 
-            // Validate token version — rejects old access tokens after refresh
-            var tokenVer = context.Principal?.FindFirst("tokenVer")?.Value;
-            if (string.IsNullOrWhiteSpace(tokenVer))
+            var fields = sessionData.ToDictionary(
+                x => x.Name.ToString(),
+                x => x.Value.ToString());
+
+            // Verify deviceId matches the session's bound device
+            var tokenDeviceId = context.Principal?.FindFirst("deviceId")?.Value;
+            if (string.IsNullOrWhiteSpace(tokenDeviceId)
+                || !fields.TryGetValue("deviceId", out var storedDeviceId)
+                || storedDeviceId != tokenDeviceId)
             {
-                context.Fail("Missing token version.");
+                context.Fail("Device mismatch.");
                 return;
             }
 
-            var tokenVerKey = $"token_ver:{userId}:{sessionId}";
-            var currentVer = await db.StringGetAsync(tokenVerKey);
-            if (currentVer.IsNullOrEmpty || currentVer != tokenVer)
+            // Validate token version — rejects old access tokens after refresh
+            var tokenVer = context.Principal?.FindFirst("tokenVer")?.Value;
+            if (string.IsNullOrWhiteSpace(tokenVer)
+                || !fields.TryGetValue("tokenVer", out var currentVer)
+                || currentVer != tokenVer)
             {
                 context.Fail("Token version mismatch. Please re-authenticate.");
             }

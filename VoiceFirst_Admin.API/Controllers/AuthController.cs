@@ -1,28 +1,25 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Auth;
+using VoiceFirst_Admin.Utilities.Enums;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {
         private const string RefreshTokenCookieName = "refreshToken";
 
         private readonly IAuthService _authService;
-      
 
-        public AuthController(IAuthService authService, IWebHostEnvironment env)
+        public AuthController(IAuthService authService)
         {
             _authService = authService;
-           
         }
-
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(
@@ -43,33 +40,22 @@ namespace VoiceFirst_Admin.API.Controllers
             var response = await _authService.LoginAsync(
                 request, cancellationToken);
 
-            if (response.StatusCode == StatusCodes.Status200OK && response.Data != null)
-            {
-                SetRefreshTokenCookie(
-                    response.Data.RefreshToken,
-                    response.Data.RefreshTokenExpiresAtUtc);
+            if (response.StatusCode != StatusCodes.Status200OK || response.Data is null)
+                return StatusCode(response.StatusCode, response);
 
-                // Return only access token in JSON body
-                var clientResponse = ApiResponse<LoginResponseDto>.Ok(
-                    response.Data.Response,
-                    response.Message,
-                    response.StatusCode);
-
-                return StatusCode(clientResponse.StatusCode, clientResponse);
-            }
-
-            return StatusCode(response.StatusCode, response);
+            return BuildTokenResponse(response.Data, response.Message, response.StatusCode);
         }
-
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken(
+            [FromBody] RefreshTokenRequestDto? body,
             CancellationToken cancellationToken)
         {
-    
-            var refreshToken = Request.Cookies[RefreshTokenCookieName];
+            // Mobile sends refresh token in body, Web sends via cookie
+            var refreshToken = body?.RefreshToken;
 
-         
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                refreshToken = Request.Cookies[RefreshTokenCookieName];
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
@@ -82,30 +68,19 @@ namespace VoiceFirst_Admin.API.Controllers
             var response = await _authService.RefreshTokenAsync(
                 refreshToken, cancellationToken);
 
-            if (response.StatusCode == StatusCodes.Status200OK && response.Data != null)
+            if (response.StatusCode != StatusCodes.Status200OK || response.Data is null)
             {
-                SetRefreshTokenCookie(
-                    response.Data.RefreshToken,
-                    response.Data.RefreshTokenExpiresAtUtc);
-
-                var clientResponse = ApiResponse<LoginResponseDto>.Ok(
-                    response.Data.Response,
-                    response.Message,
-                    response.StatusCode);
-
-                return StatusCode(clientResponse.StatusCode, clientResponse);
+                ClearRefreshTokenCookie();
+                return StatusCode(response.StatusCode, response);
             }
 
-            // On failure, clear the cookie
-            ClearRefreshTokenCookie();
-            return StatusCode(response.StatusCode, response);
+            return BuildTokenResponse(response.Data, response.Message, response.StatusCode);
         }
-
 
         [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout(
-        CancellationToken cancellationToken)
+            CancellationToken cancellationToken)
         {
             var userIdClaim = User.FindFirst("sub")?.Value;
             var sessionIdClaim = User.FindFirst("sessionId")?.Value;
@@ -125,106 +100,63 @@ namespace VoiceFirst_Admin.API.Controllers
             var response = await _authService.LogoutAsync(
                 userId, sessionId, cancellationToken);
 
-            // Clear refresh token cookie
             ClearRefreshTokenCookie();
 
             return StatusCode(response.StatusCode, response);
         }
 
-
-
-        [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword(
-       [FromBody] ForgotPasswordDto request,
-       CancellationToken cancellationToken)
+        /// <summary>
+        /// Web  → refresh token in HttpOnly cookie, access token in body.
+        /// Mobile → both tokens in body (no cookie).
+        /// </summary>
+        private IActionResult BuildTokenResponse(LoginResultDto data, string message, int statusCode)
         {
-            if (request == null || string.IsNullOrWhiteSpace(request.Email))
+            if (data.ClientType == ClientType.Mobile)
             {
-                return BadRequest(ApiResponse<object>.Fail(
-                    Messages.PayloadRequired,
-                    StatusCodes.Status400BadRequest,
-                    ErrorCodes.Payload));
+                var mobileResponse = new MobileLoginResponseDto
+                {
+                    AccessToken = data.Response.AccessToken,
+                    AccessTokenExpiresAtUtc = data.Response.AccessTokenExpiresAtUtc,
+                    RefreshToken = data.RefreshToken,
+                    RefreshTokenExpiresAtUtc = data.RefreshTokenExpiresAtUtc
+                };
+
+                var result = ApiResponse<MobileLoginResponseDto>.Ok(
+                    mobileResponse, message, statusCode);
+
+                return StatusCode(result.StatusCode, result);
             }
 
-            var response = await _authService.ForgotPasswordAsync(
-                request, cancellationToken);
+            // Web: refresh token in secure cookie, only access token in body
+            SetRefreshTokenCookie(data.RefreshToken, data.RefreshTokenExpiresAtUtc);
 
-            return StatusCode(response.StatusCode, response);
+            var clientResponse = ApiResponse<LoginResponseDto>.Ok(
+                data.Response, message, statusCode);
+
+            return StatusCode(clientResponse.StatusCode, clientResponse);
         }
-
-
-
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword(
-            [FromBody] ResetPasswordDto request,
-            CancellationToken cancellationToken)
-        {
-            if (request == null
-                || string.IsNullOrWhiteSpace(request.Email)
-                || string.IsNullOrWhiteSpace(request.Otp)
-                || string.IsNullOrWhiteSpace(request.NewPassword))
-            {
-                return BadRequest(ApiResponse<object>.Fail(
-                    Messages.PayloadRequired,
-                    StatusCodes.Status400BadRequest,
-                    ErrorCodes.Payload));
-            }
-
-            var response = await _authService.ResetPasswordAsync(
-                request, cancellationToken);
-
-            return StatusCode(response.StatusCode, response);
-        }
-
-
-
-        [Authorize]
-        [HttpPost("change-password")]
-        public async Task<IActionResult> ChangePassword(
-            [FromBody] ChangePasswordDto request,
-            CancellationToken cancellationToken)
-        {
-            if (request == null
-                || string.IsNullOrWhiteSpace(request.OldPassword)
-                || string.IsNullOrWhiteSpace(request.NewPassword))
-            {
-                return BadRequest(ApiResponse<object>.Fail(
-                    Messages.PayloadRequired,
-                    StatusCodes.Status400BadRequest,
-                    ErrorCodes.Payload));
-            }
-
-            var userIdClaim = User.FindFirst("sub")?.Value;
-            var sessionIdClaim = User.FindFirst("sessionId")?.Value;
-
-            if (string.IsNullOrWhiteSpace(userIdClaim)
-                || string.IsNullOrWhiteSpace(sessionIdClaim))
-            {
-                return Unauthorized(ApiResponse<object>.Fail(
-                    Messages.Unauthorized,
-                    StatusCodes.Status401Unauthorized,
-                    ErrorCodes.Unauthorized));
-            }
-
-            var userId = int.Parse(userIdClaim);
-            var sessionId = int.Parse(sessionIdClaim);
-
-            var response = await _authService.ChangePasswordAsync(
-                userId, sessionId, request, cancellationToken);
-
-            return StatusCode(response.StatusCode, response);
-        }
-
 
         private void SetRefreshTokenCookie(string token, DateTime expiresAtUtc)
         {
-            
-            Response.Cookies.Append(RefreshTokenCookieName, token);
+            Response.Cookies.Append(RefreshTokenCookieName, token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Path = "/",
+                Expires = expiresAtUtc
+            });
         }
 
         private void ClearRefreshTokenCookie()
-        {          
-            Response.Cookies.Delete(RefreshTokenCookieName);
+        {
+            Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Path = "/"
+            });
         }
     }
 }

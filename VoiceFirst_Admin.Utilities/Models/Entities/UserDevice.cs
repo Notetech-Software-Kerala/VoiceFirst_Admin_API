@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using VoiceFirst_Admin.Utilities.Enums;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.Utilities.Models.Entities;
@@ -19,5 +20,6 @@ public class UserDevice : BaseModel
     public string OSVersion { get; set; } = string.Empty;
     public string Manufacturer { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
+    public int ClientType { get; set; } = 1;
 }
 
