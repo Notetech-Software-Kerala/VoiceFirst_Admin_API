@@ -196,6 +196,22 @@ builder.Services
             if (!isActive)
             {
                 context.Fail("Session has been invalidated.");
+                return;
+            }
+
+            // Validate token version — rejects old access tokens after refresh
+            var tokenVer = context.Principal?.FindFirst("tokenVer")?.Value;
+            if (string.IsNullOrWhiteSpace(tokenVer))
+            {
+                context.Fail("Missing token version.");
+                return;
+            }
+
+            var tokenVerKey = $"token_ver:{userId}:{sessionId}";
+            var currentVer = await db.StringGetAsync(tokenVerKey);
+            if (currentVer.IsNullOrEmpty || currentVer != tokenVer)
+            {
+                context.Fail("Token version mismatch. Please re-authenticate.");
             }
         }
     };

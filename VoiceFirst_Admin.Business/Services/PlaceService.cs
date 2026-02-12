@@ -46,35 +46,7 @@ namespace VoiceFirst_Admin.Business.Services
           CancellationToken cancellationToken)
         {
 
-            var existingEntity = 
-                await _repo.PlaceExistsAsync(
-                dto.PlaceName,
-                null,
-                cancellationToken);
-
-            if (existingEntity != null)
-            {
-                if (!existingEntity.Deleted)
-                {
-                    // ❌ Active duplicate
-
-                    return ApiResponse<PlaceDetailDTO>.Fail
-                       (Messages.PlaceAlreadyExists,
-                       StatusCodes.Status409Conflict,
-                       ErrorCodes.PlaceAlreadyExists
-                       );
-                }
-                return ApiResponse<PlaceDetailDTO>.Fail(
-                     Messages.PlaceAlreadyExistsRecoverable,
-                     StatusCodes.Status422UnprocessableEntity,
-                      ErrorCodes.PlaceAlreadyExistsRecoverable,
-                      new PlaceDetailDTO
-                      {
-                          PlaceId = existingEntity.PlaceId
-                      }
-                 );
-            }
-
+            // validate zip codes before anything else
             if (dto.ZipCodeLinkIds != null && dto.ZipCodeLinkIds.Any())
             {
                 var exist = await _postOfficeRepo.
@@ -95,12 +67,13 @@ namespace VoiceFirst_Admin.Business.Services
                        StatusCodes.Status409Conflict,
                        ErrorCodes.ZipCodesNotAvaliable);
                 }
-
             }
 
-
-            var entity = _mapper.Map<Place>(dto);
-            entity.CreatedBy = loginId;
+            var existingEntity =
+                await _repo.PlaceExistsAsync(
+                dto.PlaceName,
+                null,
+                cancellationToken);
 
             using var connection = _context.CreateConnection();
             connection.Open();
@@ -108,16 +81,69 @@ namespace VoiceFirst_Admin.Business.Services
 
             try
             {
+                if (existingEntity != null)
+                {
+                    // place name already exists – check if zip codes are already linked
+                    if (dto.ZipCodeLinkIds != null && dto.ZipCodeLinkIds.Any())
+                    {
+                        var alreadyLinked =
+                            await _repo.CheckAlreadyPlaceZipCodeLinkedAsync(
+                                existingEntity.PlaceId,
+                                dto.ZipCodeLinkIds,
+                                connection,
+                                transaction,
+                                cancellationToken);
+
+                        if (alreadyLinked)
+                        {
+                            transaction.Rollback();
+                            return ApiResponse<PlaceDetailDTO>.Fail(
+                                Messages.ZipCodesAlreadyLinkedWithPlace,
+                                StatusCodes.Status409Conflict,
+                                ErrorCodes.ZipCodesAlreadyLinkedWithPlace);
+                        }
+
+                        // zip codes are not linked yet – link them to existing place
+                        await _repo.BulkInsertPlaceZipCodeLinksAsync(
+                            existingEntity.PlaceId,
+                            dto.ZipCodeLinkIds,
+                            loginId,
+                            connection,
+                            transaction,
+                            cancellationToken);
+                    }
+                    else
+                    {
+                        // no zip codes sent and name already exists
+                        transaction.Rollback();
+                        return ApiResponse<PlaceDetailDTO>.Fail(
+                            Messages.PlaceAlreadyExists,
+                            StatusCodes.Status409Conflict,
+                            ErrorCodes.PlaceAlreadyExists);
+                    }
+
+                    var dtoOut = await _repo.GetByIdAsync(
+                        existingEntity.PlaceId,
+                        connection,
+                        transaction,
+                        cancellationToken);
+
+                    transaction.Commit();
+                    return ApiResponse<PlaceDetailDTO>.Ok(
+                        dtoOut!,
+                        Messages.PlaceCreated,
+                        StatusCodes.Status201Created);
+                }
+
+                // place name is new – insert into Place table then link zip codes
+                var entity = _mapper.Map<Place>(dto);
+                entity.CreatedBy = loginId;
 
                 entity.PlaceId =
-                await _repo.CreateAsync
-                (entity, connection,transaction, cancellationToken);
+                    await _repo.CreateAsync(
+                        entity, connection, transaction, cancellationToken);
 
-
-
-
-                await _repo.BulkInsertPlaceZipCodeLinksAsync
-                    (
+                await _repo.BulkInsertPlaceZipCodeLinksAsync(
                     entity.PlaceId,
                     dto.ZipCodeLinkIds,
                     loginId,
@@ -125,24 +151,21 @@ namespace VoiceFirst_Admin.Business.Services
                     transaction,
                     cancellationToken);
 
-                var dtoOut = await _repo.GetByIdAsync
-                    (entity.PlaceId,
-                     connection,
+                var result = await _repo.GetByIdAsync(
+                    entity.PlaceId,
+                    connection,
                     transaction,
                     cancellationToken);
 
-               
-
                 transaction.Commit();
                 return ApiResponse<PlaceDetailDTO>.Ok(
-                    dtoOut!,
+                    result!,
                     Messages.PlaceCreated,
-                   StatusCodes.Status201Created);
-
+                    StatusCodes.Status201Created);
             }
             catch
             {
-               transaction.Rollback();
+                transaction.Rollback();
                 throw;
             }
         }
@@ -192,9 +215,9 @@ namespace VoiceFirst_Admin.Business.Services
 
 
         public async Task<ApiResponse<List<PlaceLookUpDTO>>>
-        GetLookUpAsync(CancellationToken cancellationToken)
+        GetLookUpAsync(int zipCodeId, CancellationToken cancellationToken)
         {
-            var result = await _repo.GetActiveAsync(cancellationToken)
+            var result = await _repo.GetActiveAsync(zipCodeId, cancellationToken)
                          ?? new List<PlaceLookUpDTO>();
 
             return ApiResponse<List<PlaceLookUpDTO>>.Ok(
@@ -231,15 +254,6 @@ namespace VoiceFirst_Admin.Business.Services
                    StatusCodes.Status404NotFound,
                     ErrorCodes.PlaceNotFoundById);
             }
-            else if (existDto.Deleted)
-            {
-
-                return ApiResponse<PlaceDetailDTO>.Fail(
-                 Messages.PlaceNotFound,
-                 StatusCodes.Status409Conflict,
-                  ErrorCodes.PlaceNotFound);
-
-            }
 
 
 
@@ -254,25 +268,11 @@ namespace VoiceFirst_Admin.Business.Services
 
                 if (existingEntity is not null)
                 {
-                    if (!existingEntity.Deleted)
-                    {
-                        // ❌ Active duplicate
-
-                        return ApiResponse<PlaceDetailDTO>.Fail
-                           (Messages.PlaceAlreadyExists,
-                           StatusCodes.Status409Conflict,
-                           ErrorCodes.PlaceAlreadyExists
-                           );
-                    }
-                    return ApiResponse<PlaceDetailDTO>.Fail(
-                         Messages.PlaceAlreadyExistsRecoverable,
-                         StatusCodes.Status422UnprocessableEntity,
-                          ErrorCodes.PlaceAlreadyExistsRecoverable,
-                          new PlaceDetailDTO
-                          {
-                              PlaceId = existingEntity.PlaceId
-                          }
-                     );
+                    return ApiResponse<PlaceDetailDTO>.Fail
+                       (Messages.PlaceAlreadyExists,
+                       StatusCodes.Status409Conflict,
+                       ErrorCodes.PlaceAlreadyExists
+                       );
                 }
             }
             using var connection = _context.CreateConnection();
@@ -425,31 +425,38 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.PlaceNotFoundById);
             }
 
-            if (!existDto.Deleted)
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
             {
-                return ApiResponse<PlaceDetailDTO>.Fail(
-                    Messages.PlaceAlreadyRecovered,
-                    StatusCodes.Status409Conflict,
-                    ErrorCodes.PlaceAlreadyRecovered);
-            }
+                var rowAffect = await _repo.RecoverAsync(
+                    id, loginId, connection, transaction, cancellationToken);
 
-            var rowAffect = await _repo.RecoverAsync
-                (id, loginId, cancellationToken);
-            if (!rowAffect)
+                if (!rowAffect)
+                {
+                    transaction.Rollback();
+                    return ApiResponse<PlaceDetailDTO>.Fail(
+                         Messages.PlaceAlreadyRecovered,
+                         StatusCodes.Status409Conflict,
+                         ErrorCodes.PlaceAlreadyRecovered);
+                }
+
+                var dtoOut = await _repo.GetByIdAsync(
+                    id, connection, transaction, cancellationToken);
+
+                transaction.Commit();
+                return ApiResponse<PlaceDetailDTO>.Ok(
+                    dtoOut!,
+                    Messages.PlaceRecovered,
+                    statusCode: StatusCodes.Status200OK);
+            }
+            catch
             {
-
-                return ApiResponse<PlaceDetailDTO>.Fail(
-                     Messages.PlaceAlreadyRecovered,
-                     StatusCodes.Status409Conflict,
-                     ErrorCodes.PlaceAlreadyRecovered);
+                transaction.Rollback();
+                throw;
             }
-
-            var dto =
-               await GetByIdAsync
-               (id,
-               cancellationToken);
-            return ApiResponse<PlaceDetailDTO>.
-               Ok(dto.Data, Messages.PlaceRecovered, statusCode: StatusCodes.Status200OK);
         }
 
 
@@ -460,7 +467,6 @@ namespace VoiceFirst_Admin.Business.Services
             int loginId,
             CancellationToken cancellationToken = default)
         {
-
 
             var existDto =
             await _repo.IsIdExistAsync(id,
@@ -474,33 +480,38 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.PlaceNotFoundById);
             }
 
-            if (existDto.Deleted)
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
             {
-                return ApiResponse<PlaceDetailDTO>.Fail(
-                    Messages.PlaceAlreadyDeleted,
-                    StatusCodes.Status409Conflict,
-                    ErrorCodes.PlaceAlreadyDeleted);
-            }
+                var rowAffect = await _repo.DeleteAsync(
+                    id, loginId, connection, transaction, cancellationToken);
 
-            var rowAffect = await _repo.DeleteAsync
-                (id, loginId, cancellationToken);
-            if (!rowAffect)
+                if (!rowAffect)
+                {
+                    transaction.Rollback();
+                    return ApiResponse<PlaceDetailDTO>.Fail(
+                         Messages.PlaceAlreadyDeleted,
+                         StatusCodes.Status409Conflict,
+                         ErrorCodes.PlaceAlreadyDeleted);
+                }
+
+                var dtoOut = await _repo.GetByIdAsync(
+                    id, connection, transaction, cancellationToken);
+
+                transaction.Commit();
+                return ApiResponse<PlaceDetailDTO>.Ok(
+                    dtoOut!,
+                    Messages.PlaceDeleted,
+                    statusCode: StatusCodes.Status200OK);
+            }
+            catch
             {
-
-                return ApiResponse<PlaceDetailDTO>.Fail(
-                     Messages.PlaceAlreadyDeleted,
-                     StatusCodes.Status409Conflict,
-                     ErrorCodes.PlaceAlreadyDeleted);
+                transaction.Rollback();
+                throw;
             }
-
-            var dto =
-             await GetByIdAsync
-             (id,
-             cancellationToken);
-            return ApiResponse<PlaceDetailDTO>.
-               Ok(dto.Data, Messages.PlaceDeleted, statusCode: StatusCodes.Status200OK);
-
-          
         }
     }
 }

@@ -33,6 +33,7 @@ namespace VoiceFirst_Admin.Business.Services
         private const string CooldownKeyPrefix = "pwd_reset_lock:";
         private const string RefreshTokenKeyPrefix = "refresh_token:";
         private const string ActiveSessionKeyPrefix = "active_session:";
+        private const string TokenVersionKeyPrefix = "token_ver:";
         private const int MaxForgotPasswordPerDay = 3;
         private const int MaxOtpAttempts = 5;
         private static readonly TimeSpan RateLimitExpiry = TimeSpan.FromHours(24);
@@ -147,14 +148,17 @@ namespace VoiceFirst_Admin.Business.Services
             var roles = await _authRepo.GetActiveRolesByUserIdAsync(
                 user.UserId, cancellationToken);
 
-            // 9. Generate JWT tokens
-            var claims = BuildClaims(user, sessionId, userDeviceId, roles);
+            // 9. Initialize token version in Redis
+            var tokenVersion = await InitTokenVersionAsync(user.UserId, sessionId);
+
+            // 10. Generate JWT tokens
+            var claims = BuildClaims(user, sessionId, userDeviceId, roles, tokenVersion);
             var tokenPair = JwtTokenHelper.CreateTokenPair(claims, _jwtSettings);
 
-            // 10. Store refresh token hash in Redis
+            // 11. Store refresh token hash in Redis
             await StoreRefreshTokenAsync(user.UserId, sessionId, tokenPair.RefreshToken);
 
-            // 11. Mark session as active in Redis (TTL = access token lifetime)
+            // 12. Mark session as active in Redis (TTL = access token lifetime)
             await ActivateSessionAsync(user.UserId, sessionId);
 
             // 10. Build response (refresh token NOT in JSON — controller sets it as cookie)
@@ -258,7 +262,10 @@ namespace VoiceFirst_Admin.Business.Services
             var roles = await _authRepo.GetActiveRolesByUserIdAsync(
                 userId, cancellationToken);
 
-            var claims = BuildClaims(user, sessionId, deviceId, roles);
+            // 4b. Increment token version to invalidate old access tokens
+            var tokenVersion = await IncrementTokenVersionAsync(userId, sessionId);
+
+            var claims = BuildClaims(user, sessionId, deviceId, roles, tokenVersion);
             var tokenPair = JwtTokenHelper.CreateTokenPair(claims, _jwtSettings);
 
             // 5. Replace old refresh token hash in Redis (rotation)
@@ -293,12 +300,14 @@ namespace VoiceFirst_Admin.Business.Services
             // 1. Invalidate DB session
             await _authRepo.InvalidateSessionAsync(sessionId, cancellationToken);
 
-            // 2. Remove refresh token and active session from Redis
+            // 2. Remove refresh token, active session, and token version from Redis
             var db = _redis.GetDatabase();
             var refreshKey = $"{RefreshTokenKeyPrefix}{userId}:{sessionId}";
             var sessionKey = $"{ActiveSessionKeyPrefix}{userId}:{sessionId}";
+            var tokenVerKey = $"{TokenVersionKeyPrefix}{userId}:{sessionId}";
             await db.KeyDeleteAsync(refreshKey);
             await db.KeyDeleteAsync(sessionKey);
+            await db.KeyDeleteAsync(tokenVerKey);
 
             return ApiResponse<object>.Ok(
                 null!,
@@ -501,7 +510,7 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
         private static Dictionary<string, object?> BuildClaims(
-            Users user, int sessionId, int deviceId, IEnumerable<string> roles)
+            Users user, int sessionId, int deviceId, IEnumerable<string> roles, long tokenVersion)
         {
             return new Dictionary<string, object?>
             {
@@ -511,6 +520,7 @@ namespace VoiceFirst_Admin.Business.Services
                 ["lastName"] = user.LastName,
                 ["sessionId"] = sessionId.ToString(),
                 ["deviceId"] = deviceId.ToString(),
+                ["tokenVer"] = tokenVersion.ToString(),
                 ["roles"] = roles
             };
         }
@@ -533,6 +543,24 @@ namespace VoiceFirst_Admin.Business.Services
                 TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpiryMinutes + 1));
         }
 
+        private async Task<long> InitTokenVersionAsync(int userId, int sessionId)
+        {
+            var db = _redis.GetDatabase();
+            var key = $"{TokenVersionKeyPrefix}{userId}:{sessionId}";
+            await db.StringSetAsync(key, 1,
+                TimeSpan.FromDays(_jwtSettings.RefreshTokenExpiryDays));
+            return 1;
+        }
+
+        private async Task<long> IncrementTokenVersionAsync(int userId, int sessionId)
+        {
+            var db = _redis.GetDatabase();
+            var key = $"{TokenVersionKeyPrefix}{userId}:{sessionId}";
+            var newVersion = await db.StringIncrementAsync(key);
+            await db.KeyExpireAsync(key, TimeSpan.FromDays(_jwtSettings.RefreshTokenExpiryDays));
+            return newVersion;
+        }
+
         private async Task InvalidateAllUserSessionsAsync(int userId)
         {
             var db = _redis.GetDatabase();
@@ -546,6 +574,12 @@ namespace VoiceFirst_Admin.Business.Services
 
             var refreshPattern = $"{RefreshTokenKeyPrefix}{userId}:*";
             await foreach (var key in server.KeysAsync(pattern: refreshPattern))
+            {
+                await db.KeyDeleteAsync(key);
+            }
+
+            var tokenVerPattern = $"{TokenVersionKeyPrefix}{userId}:*";
+            await foreach (var key in server.KeysAsync(pattern: tokenVerPattern))
             {
                 await db.KeyDeleteAsync(key);
             }
@@ -620,6 +654,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             // 7. Re-activate ONLY the current session so user stays logged in on this device
             await ActivateSessionAsync(userId, sessionId);
+            await InitTokenVersionAsync(userId, sessionId);
 
             return ApiResponse<object>.Ok(
                 null!,

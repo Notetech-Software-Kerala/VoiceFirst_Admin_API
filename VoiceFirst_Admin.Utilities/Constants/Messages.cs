@@ -28,6 +28,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string NotFound = "Not found.";
         public const string PostOfficesAreAlreadyLinked = "Some post offices are already linked.Please refresh again.";
         public const string ZipCodesAreAlreadyLinked = "Some Zip codes  are already linked.Please refresh again.";
+        public const string ZipCodesAlreadyLinkedWithPlace = "These zip codes are already linked with this place.";
 
         public const string ActionsAreAlreadyLinked = "Some actions are already linked.Please refresh again.";
         public const string Updated = "Updated.";

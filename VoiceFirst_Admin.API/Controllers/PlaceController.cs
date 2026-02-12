@@ -152,10 +152,10 @@ namespace VoiceFirst_Admin.API.Controllers
         [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
         [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
         public async Task<IActionResult> GetLookUpAsync(
-
+          [FromQuery] int zipCodeId,
           CancellationToken cancellationToken)
         {
-            var response = await _service.GetLookUpAsync(cancellationToken);
+            var response = await _service.GetLookUpAsync(zipCodeId, cancellationToken);
             return StatusCode(response.StatusCode, response);
         }
 

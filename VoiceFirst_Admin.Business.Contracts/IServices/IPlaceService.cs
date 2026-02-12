@@ -35,7 +35,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
 
 
         Task<ApiResponse<List<PlaceLookUpDTO>>> 
-            GetLookUpAsync(CancellationToken cancellationToken);
+            GetLookUpAsync(int zipCodeId, CancellationToken cancellationToken);
 
 
         Task<ApiResponse<PlaceDetailDTO>> RecoverAsync(

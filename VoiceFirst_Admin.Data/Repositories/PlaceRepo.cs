@@ -33,7 +33,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         public async Task<PlaceDTO> PlaceExistsAsync
             (string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
-            var sql = "SELECT IsDeleted As Deleted,PlaceId As PlaceId  FROM Place WHERE PlaceName = @PlaceName";
+            var sql = "SELECT PlaceId As PlaceId FROM Place WHERE PlaceName = @PlaceName";
             if (excludeId.HasValue)
                 sql += " AND PlaceId <> @ExcludeId";
 
@@ -178,25 +178,18 @@ namespace VoiceFirst_Admin.Data.Repositories
                 SELECT 
                     s.PlaceId   ,
                     s.PlaceName     ,
-                    s.IsActive             As Active        ,
-                    s.IsDeleted            As Deleted      ,
                     s.CreatedAt             As CreatedDate    ,
                     s.UpdatedAt             As   ModifiedDate  ,
-                    s.DeletedAt              As   DeletedDate  ,
 
                     -- Created User
                     CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
 
                     -- Updated User
-                    CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS ModifiedUser,
-
-                    -- Deleted User
-                    CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
+                    CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS ModifiedUser
 
                 FROM dbo.Place s
                 INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
                 LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
-                LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
                 WHERE s.PlaceId = @PlaceId;
                 ";
 
@@ -295,21 +288,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             var baseSql = new StringBuilder(@"
             FROM Place spa
             INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
-            LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
-            LEFT JOIN Users uD ON uD.UserId = spa.DeletedBy WHERE 1=1
+            LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy WHERE 1=1
             ");
-
-            if (filter.Deleted.HasValue)
-            {
-                baseSql.Append(" AND spa.IsDeleted = @IsDeleted");
-                parameters.Add("IsDeleted", filter.Deleted.Value);
-            }
-
-            if (filter.Active.HasValue)
-            {
-                baseSql.Append(" AND spa.IsActive = @IsActive");
-                parameters.Add("IsActive", filter.Active.Value);
-            }
 
             if (!string.IsNullOrWhiteSpace(filter.CreatedFromDate) &&
                 DateTime.TryParse(filter.CreatedFromDate, out var createdFrom))
@@ -339,26 +319,11 @@ namespace VoiceFirst_Admin.Data.Repositories
                 parameters.Add("UpdatedTo", updatedTo.Date);
             }
 
-            if (!string.IsNullOrWhiteSpace(filter.DeletedFromDate) &&
-                DateTime.TryParse(filter.DeletedFromDate, out var deletedFrom))
-            {
-                baseSql.Append(" AND spa.DeletedAt >= @DeletedFrom");
-                parameters.Add("DeletedFrom", deletedFrom);
-            }
-
-            if (!string.IsNullOrWhiteSpace(filter.DeletedToDate) &&
-                DateTime.TryParse(filter.DeletedToDate, out var deletedTo))
-            {
-                baseSql.Append(" AND spa.DeletedAt < DATEADD(day, 1, @DeletedTo)");
-                parameters.Add("DeletedTo", deletedTo.Date);
-            }
-
             var searchByMap = new Dictionary<PlaceSearchBy, string>
             {
                 [PlaceSearchBy.PlaceName] = "spa.PlaceName",
                 [PlaceSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
-                [PlaceSearchBy.ModifiedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
-                [PlaceSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
+                [PlaceSearchBy.ModifiedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)"
             };
 
             if (!string.IsNullOrWhiteSpace(filter.SearchText))
@@ -371,7 +336,6 @@ namespace VoiceFirst_Admin.Data.Repositories
                         spa.PlaceName LIKE @Search
                      OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
                      OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
-                     OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search
                     )");
 
                 parameters.Add("Search", $"%{filter.SearchText}%");
@@ -381,16 +345,12 @@ namespace VoiceFirst_Admin.Data.Repositories
             {
                 ["PlaceId"] = "spa.PlaceId",
                 ["PlaceName"] = "spa.PlaceName",
-                ["Active"] = "spa.IsActive",
-                ["Deleted"] = "spa.IsDeleted",
                 ["CreatedDate"] = "spa.CreatedAt",
                 ["ModifiedDate"] = "spa.UpdatedAt",
-                ["DeletedDate"] = "spa.DeletedAt",
             };
 
             var sortOrder = filter.SortOrder == SortOrder.Desc ? "DESC" : "ASC";
 
-            // 🔹 CHANGED: Default sorting is now PlaceName (Alphabetical order)
             var sortKey = string.IsNullOrWhiteSpace(filter.SortBy)
                 ? "PlaceName"
                 : filter.SortBy;
@@ -405,26 +365,17 @@ namespace VoiceFirst_Admin.Data.Repositories
         spa.PlaceId,
         spa.PlaceName,
         spa.CreatedAt,
-        spa.IsActive,
         spa.UpdatedAt,
-        spa.IsDeleted,
-        spa.DeletedAt,
         uC.UserId AS CreatedById,
         CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
         uU.UserId AS UpdatedById,
         CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
-        uD.UserId AS DeletedById,
-        CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName,
         spa.PlaceId AS PlaceId,
         spa.PlaceName AS PlaceName,
-        spa.IsActive AS Active,
-        spa.IsDeleted AS Deleted,
         spa.CreatedAt AS CreatedDate,
         spa.UpdatedAt AS ModifiedDate,
-        spa.DeletedAt AS DeletedDate,
         CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-        ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
-        ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser
+        ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser
     {baseSql}
     ORDER BY {sortColumn} {sortOrder}
     OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;
@@ -455,8 +406,7 @@ namespace VoiceFirst_Admin.Data.Repositories
          CancellationToken cancellationToken = default)
         {
             const string sql = @"
-                SELECT  s.PlaceId    As PlaceId ,
-                        s.IsDeleted            As Deleted      
+                SELECT  s.PlaceId    As PlaceId
                 FROM dbo.Place s
                 WHERE PlaceId = @PlaceId
                  ;
@@ -480,19 +430,24 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<List<PlaceLookUpDTO?>> GetActiveAsync(
+         int zipCodeId,
          CancellationToken cancellationToken = default)
         {
             const string sql = @"
-                SELECT 
-                PlaceId As PlaceId,
-                PlaceName  As PlaceName     
-                FROM dbo.Place 
-                WHERE  isDeleted = 0 And isActive = 1 ORDER BY PlaceName ASC;
+                SELECT DISTINCT
+                    p.PlaceId  AS PlaceId,
+                    p.PlaceName AS PlaceName
+                FROM dbo.Place p
+                INNER JOIN dbo.PlaceZipCodeLink pzl
+                    ON pzl.PlaceId = p.PlaceId
+                    AND pzl.IsActive = 1
+                WHERE pzl.PostOfficeZipCodeLinkId = @ZipCodeId
+                ORDER BY p.PlaceName ASC;
                 ";
 
             using var connection = _context.CreateConnection();
             var entity = await connection.QueryAsync<PlaceLookUpDTO?>(
-                new CommandDefinition(sql, cancellationToken: cancellationToken)
+                new CommandDefinition(sql, new { ZipCodeId = zipCodeId }, cancellationToken: cancellationToken)
             );
             return entity.ToList();
         }
@@ -507,17 +462,10 @@ namespace VoiceFirst_Admin.Data.Repositories
             var sets = new List<string>();
             var parameters = new DynamicParameters();
 
-            // Always add parameters (nullable-safe)
             parameters.Add("PlaceName", entity.PlaceName);
-            parameters.Add("Active", entity.IsActive.HasValue
-                ? (entity.IsActive.Value ? 1 : 0)
-                : (int?)null);
 
             if (!string.IsNullOrWhiteSpace(entity.PlaceName))
                 sets.Add("PlaceName = @PlaceName");
-
-            if (entity.IsActive.HasValue)
-                sets.Add("IsActive = @Active");
 
             if (sets.Count == 0)
                 return false;
@@ -533,12 +481,9 @@ namespace VoiceFirst_Admin.Data.Repositories
                 UPDATE Place
                 SET {string.Join(", ", sets)}
                 WHERE PlaceId = @PlaceId
-                  AND IsDeleted = 0
                   AND (
                         (@PlaceName IS NOT NULL 
                             AND PlaceName <> @PlaceName)
-                     OR (@Active IS NOT NULL 
-                            AND IsActive <> @Active)
                   );";
 
 
@@ -630,38 +575,54 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
 
-        public async Task<bool> DeleteAsync
-            (int id, int deletedBy,
+        public async Task<bool> DeleteAsync(
+            int placeId,
+            int updatedBy,
+            IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE Place SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE PlaceId = @PlaceId And IsDeleted = 0;";
-
-            using var connection = _context.CreateConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                connection.Open();
-            }
+            const string sql = @"
+                UPDATE PlaceZipCodeLink
+                SET IsActive  = 0,
+                    UpdatedBy = @UpdatedBy,
+                    UpdatedAt = SYSDATETIME()
+                WHERE PlaceId = @PlaceId
+                  AND IsActive = 1;";
 
             var affectedRows = await connection.ExecuteAsync(
-                new CommandDefinition(sql, new { PlaceId = id, deletedBy }, cancellationToken: cancellationToken));
+                new CommandDefinition(
+                    sql,
+                    new { PlaceId = placeId, UpdatedBy = updatedBy },
+                    transaction,
+                    cancellationToken: cancellationToken));
             return affectedRows > 0;
         }
 
 
 
 
-        public async Task<bool> RecoverAsync
-            (int id, int loginId, 
+        public async Task<bool> RecoverAsync(
+            int placeId,
+            int updatedBy,
+            IDbConnection connection,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default)
         {
-            const string sql = @"UPDATE Place SET IsDeleted = 0 ,DeletedBy = NULL, DeletedAt = NULL , UpdatedBy = @LoginId, UpdatedAt = SYSDATETIME() WHERE PlaceId = @PlaceId And IsDeleted = 1";
-            using var connection = _context.CreateConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                connection.Open();
-            }
+            const string sql = @"
+                UPDATE PlaceZipCodeLink
+                SET IsActive  = 1,
+                    UpdatedBy = @UpdatedBy,
+                    UpdatedAt = SYSDATETIME()
+                WHERE PlaceId = @PlaceId
+                  AND IsActive = 0;";
+
             var affectedRows = await connection.ExecuteAsync(
-                new CommandDefinition(sql, new { PlaceId = id, LoginId = loginId }, cancellationToken: cancellationToken));
+                new CommandDefinition(
+                    sql,
+                    new { PlaceId = placeId, UpdatedBy = updatedBy },
+                    transaction,
+                    cancellationToken: cancellationToken));
             return affectedRows > 0;
         }
 
