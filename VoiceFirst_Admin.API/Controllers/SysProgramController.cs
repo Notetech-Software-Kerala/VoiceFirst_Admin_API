@@ -10,6 +10,7 @@ using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Constants.Swagger;
+using Microsoft.AspNetCore.Authorization;
 
 namespace VoiceFirst_Admin.API.Controllers
 {
@@ -228,8 +229,8 @@ namespace VoiceFirst_Admin.API.Controllers
 
 
 
-
-        [HttpGet("active-by-application/{applicationId:int}")]
+        
+        [HttpGet("active-by-application-/{applicationId:int}")]
         [ProducesResponseType(typeof(ApiResponse<SysProgramByApplicationIdDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -245,6 +246,25 @@ namespace VoiceFirst_Admin.API.Controllers
         public async Task<IActionResult> GetAllActiveByApplicationIdAsync(int applicationId, CancellationToken cancellationToken)
         {
             var result = await _service.GetAllActiveByApplicationIdAsync(applicationId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
+        }
+        
+        [HttpGet("lookup/active/{applicationId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<ProgramLookUp>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(StatusCodes.Status200OK, Description.PROGRAM_RETRIEVED, Messages.ProgramRetrieved)]
+        [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.ApplicationNotFoundById)]
+        [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.PlatformNotFound)]
+        [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
+        public async Task<IActionResult> GetLookUpAllActiveByApplicationIdAsync(int applicationId, CancellationToken cancellationToken)
+        {
+            var result = await _service.GetLookUpAllActiveByApplicationIdAsync(applicationId, cancellationToken);
             return StatusCode(result.StatusCode, result);
         }
 

@@ -69,12 +69,12 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
            CancellationToken cancellationToken);
 
         Task<bool> BulkUpdateActionLinksAsync(
-    int programId,
-    IEnumerable<SysProgramActionLinkUpdateDTO> dtos,
-    int updatedBy,
-    IDbConnection connection,
-    IDbTransaction tx,
-    CancellationToken cancellationToken);
+        int programId,
+        IEnumerable<SysProgramActionLinkUpdateDTO> dtos,
+        int updatedBy,
+        IDbConnection connection,
+        IDbTransaction tx,
+        CancellationToken cancellationToken);
 
         Task<int> CreateAsync(
             SysProgram entity, 
@@ -95,10 +95,14 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<bool> RecoverProgramAsync(
             int id, int loginId, 
             CancellationToken cancellationToken = default);
-        
 
-        
-       
+        Task<List<ProgramLookUp>>
+            GetActiveProgramLookupAsync(
+                int? applicationId = null,
+                CancellationToken cancellationToken = default);
+
+
+
         Task<PagedResultDto<SysProgramDto>> GetAllAsync(
             SysProgramFilterDTO filter,
             CancellationToken cancellationToken = default);

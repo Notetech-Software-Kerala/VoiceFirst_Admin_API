@@ -307,7 +307,45 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
+        public async Task<List<ProgramLookUp>>
+            GetActiveProgramLookupAsync(
+                int? applicationId = null,
+                CancellationToken cancellationToken = default)
+        {
+            var sql = new StringBuilder(@"
+                    SELECT
+                        p.SysProgramId AS ProgramId,
+                        p.ProgramName
+                    FROM SysProgram p
+                    WHERE p.IsDeleted = 0
+                      AND p.IsActive = 1
+                ");
 
+            // 🔹 Filter by ApplicationId if provided, else fallback to CompanyId = 0
+            if (applicationId.HasValue)
+            {
+                sql.Append(" AND p.ApplicationId = @ApplicationId ");
+            }
+            else
+            {
+                sql.Append(" AND p.CompanyId = 0 ");
+            }
+
+            sql.Append(" ORDER BY p.ProgramName ASC;");
+
+            using var connection = _context.CreateConnection();
+
+            var items = (await connection.QueryAsync<ProgramLookUp>(
+                new CommandDefinition(
+                    sql.ToString(),
+                    new { ApplicationId = applicationId },
+                    cancellationToken: cancellationToken
+                ))).ToList();
+
+            
+
+            return items;
+        }
 
 
         public async Task<List<SysProgramLookUp>>

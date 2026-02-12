@@ -42,6 +42,9 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
 
         Task<ApiResponse<List<SysProgramLookUp>>> GetProgramLookupAsync(
             CancellationToken cancellationToken = default);
+        Task<ApiResponse<List<ProgramLookUp>>> GetLookUpAllActiveByApplicationIdAsync(
+            int applicationId,
+            CancellationToken cancellationToken = default);
 
 
         Task<ApiResponse<List<SysProgramLookUp>>> 
