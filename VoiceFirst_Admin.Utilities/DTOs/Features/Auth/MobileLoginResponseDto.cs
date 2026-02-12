@@ -1,11 +1,9 @@
-using VoiceFirst_Admin.Utilities.Enums;
-
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.Auth;
 
-public class LoginResultDto
+public class MobileLoginResponseDto
 {
-    public LoginResponseDto Response { get; set; } = new();
+    public string AccessToken { get; set; } = string.Empty;
+    public DateTime AccessTokenExpiresAtUtc { get; set; }
     public string RefreshToken { get; set; } = string.Empty;
     public DateTime RefreshTokenExpiresAtUtc { get; set; }
-    public ClientType ClientType { get; set; }
 }

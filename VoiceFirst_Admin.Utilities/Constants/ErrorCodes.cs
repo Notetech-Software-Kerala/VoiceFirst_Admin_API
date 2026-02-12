@@ -116,6 +116,7 @@
         public const string OtpAttemptsExceeded = "OTP_ATTEMPTS_EXCEEDED";
         public const string ForgotPasswordCooldown = "FORGOT_PASSWORD_COOLDOWN";
         public const string InvalidCredentials = "INVALID_CREDENTIALS";
+        public const string AccountLockedOut = "ACCOUNT_LOCKED_OUT";
         public const string AccountInactive = "ACCOUNT_INACTIVE";
         public const string AccountDeleted = "ACCOUNT_DELETED";
         public const string DeviceInfoRequired = "DEVICE_INFO_REQUIRED";

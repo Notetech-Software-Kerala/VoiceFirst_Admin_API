@@ -5,6 +5,7 @@ using System.Data;
 using System.Text;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.DTOs.Features.UserDevice;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories
@@ -62,7 +63,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             );
         }
 
-        public async Task<int> UpsertDeviceAsync(
+        public async Task<DeviceUpsertResult> UpsertDeviceAsync(
             UserDevice device,
             CancellationToken cancellationToken = default)
         {
@@ -80,14 +81,14 @@ namespace VoiceFirst_Admin.Data.Repositories
                         Model         = @Model,
                         UpdatedAt     = SYSDATETIME()
                 WHEN NOT MATCHED THEN
-                    INSERT (DeviceID, ApplicationVersionId, DeviceName, DeviceType, OS, OSVersion, Manufacturer, Model, CreatedAt, IsDeleted)
-                    VALUES (@DeviceID, @ApplicationVersionId, @DeviceName, @DeviceType, @OS, @OSVersion, @Manufacturer, @Model, SYSDATETIME(), 0)
-                OUTPUT inserted.UserDeviceId;
+                    INSERT (DeviceID, ApplicationVersionId, DeviceName, DeviceType, OS, OSVersion, Manufacturer, Model, ClientType, CreatedAt, IsDeleted)
+                    VALUES (@DeviceID, @ApplicationVersionId, @DeviceName, @DeviceType, @OS, @OSVersion, @Manufacturer, @Model, @ClientType, SYSDATETIME(), 0)
+                OUTPUT inserted.UserDeviceId, inserted.ClientType;
             ";
 
             using var connection = _context.CreateConnection();
 
-            return await connection.ExecuteScalarAsync<int>(
+            return await connection.QuerySingleAsync<DeviceUpsertResult>(
                 new CommandDefinition(
                     sql,
                     new
@@ -99,7 +100,8 @@ namespace VoiceFirst_Admin.Data.Repositories
                         device.OS,
                         device.OSVersion,
                         device.Manufacturer,
-                        device.Model
+                        device.Model,
+                        device.ClientType
                     },
                     cancellationToken: cancellationToken
                 )

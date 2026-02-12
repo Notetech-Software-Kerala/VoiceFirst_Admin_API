@@ -241,7 +241,7 @@ public class SysBusinessActivityController : ControllerBase
 
 
 
-
+    [Authorize(Roles = "Admin")]
     [HttpPatch("recover/{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
@@ -274,7 +274,7 @@ public class SysBusinessActivityController : ControllerBase
     }
 
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Notetech Superadmin")]
     [HttpDelete("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]

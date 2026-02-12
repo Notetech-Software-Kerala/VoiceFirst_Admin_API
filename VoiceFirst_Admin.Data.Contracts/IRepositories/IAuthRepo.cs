@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using VoiceFirst_Admin.Utilities.DTOs.Features.UserDevice;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Contracts.IRepositories
@@ -15,7 +16,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             int userId,
             CancellationToken cancellationToken = default);
 
-        Task<int> UpsertDeviceAsync(
+        Task<DeviceUpsertResult> UpsertDeviceAsync(
             UserDevice device,
             CancellationToken cancellationToken = default);
 
