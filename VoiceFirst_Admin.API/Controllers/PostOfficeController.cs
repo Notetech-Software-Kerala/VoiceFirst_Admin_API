@@ -8,6 +8,7 @@ using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
+using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.API.Controllers;
 
@@ -42,10 +43,10 @@ public class PostOfficeController : ControllerBase
         return Ok(ApiResponse<PostOfficeDto>.Ok(item, Messages.PostOfficeRetrieveSucessfully));
     }
     [HttpGet]
-    [Route("api/zipcodes/lookup/{postOfficeId:int}")]
-    public async Task<IActionResult> GetZipCodesByPostOfficeIdAsync(int postOfficeId, CancellationToken cancellationToken)
+    [Route("api/zipcodes/lookup")]
+    public async Task<IActionResult> GetZipCodesByPostOfficeIdAndPlaceIdAsync([FromQuery] GetZipCodeLookUpDto getZipCodeLookUpDto, CancellationToken cancellationToken)
     {
-        var item = await _service.GetZipCodesByPostOfficeIdAsync(postOfficeId, cancellationToken);
+        var item = await _service.GetZipCodesByPostOfficeIdAsync(getZipCodeLookUpDto.PostOfficeId, getZipCodeLookUpDto.PlaceId, cancellationToken);
         return StatusCode(item.StatusCode, item);
     }
 
