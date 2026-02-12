@@ -435,6 +435,40 @@ namespace VoiceFirst_Admin.Business.Services
                 Messages.ProgramRetrieved,
                 StatusCodes.Status200OK);
         }
+        public async Task<ApiResponse<List<ProgramLookUp>>>
+            GetLookUpAllActiveByApplicationIdAsync(
+            int applicationId,
+            CancellationToken cancellationToken = default)
+        {
+
+
+            // Platform check (Application)
+            var app = await _applicationRepo.
+                IsIdExistAsync(applicationId,
+                cancellationToken);
+
+            if (app == null)
+                return ApiResponse<List<ProgramLookUp>>.Fail(
+                    Messages.ApplicationNotFoundById,
+                    StatusCodes.Status404NotFound,
+                    ErrorCodes.PlatFormNotFound
+                    );
+
+            if (app.IsActive == false)
+                return ApiResponse<List<ProgramLookUp>>.Fail(
+                        Messages.PlatformNotFound,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.PlatFormNotActive
+                        );
+
+            var items = await _repo.GetActiveProgramLookupAsync(
+                applicationId, cancellationToken);
+
+            return ApiResponse<List<ProgramLookUp>>.Ok(
+                items,
+                Messages.ProgramRetrieved,
+                StatusCodes.Status200OK);
+        }
 
 
         public async Task<ApiResponse<List<SysProgramLookUp>>>

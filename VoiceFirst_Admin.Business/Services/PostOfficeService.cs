@@ -89,13 +89,14 @@ public class PostOfficeService : IPostOfficeService
         var dto = await MapWithZipCodesAsync(entity, cancellationToken);
         return dto;
     }
-    public async Task<ApiResponse<IEnumerable<ZipCodeLookUp>?>> GetZipCodesByPostOfficeIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<IEnumerable<ZipCodeLookUp>?>> GetZipCodesByPostOfficeIdAsync(int id,
+    int? placeId = null, CancellationToken cancellationToken = default)
     {
         var postOffice = await _repo.GetByIdAsync(id, cancellationToken);
         if (postOffice == null || postOffice.IsDeleted==true)
             return ApiResponse<IEnumerable<ZipCodeLookUp>?>.Fail(Messages.PostOfficeNotFound, StatusCodes.Status404NotFound);
 
-        var entity = await _repo.GetZipCodesByPostOfficeIdAsync(id, cancellationToken);
+        var entity = await _repo.GetZipCodesByPostOfficeIdAsync(id, placeId, cancellationToken);
         if (entity == null) return null;
         var dto = _mapper.Map<IEnumerable<ZipCodeLookUp>>(entity);
         return ApiResponse<IEnumerable<ZipCodeLookUp>?>.Ok(dto, Messages.ZipCodesRetrieveSucessfully, StatusCodes.Status200OK);
@@ -317,7 +318,7 @@ public class PostOfficeService : IPostOfficeService
     private async Task<PostOfficeDto> MapWithZipCodesAsync(PostOffice entity, CancellationToken cancellationToken)
     {
         var dto = _mapper.Map<PostOfficeDto>(entity);
-        var zips = await _repo.GetZipCodesByPostOfficeIdAsync(entity.PostOfficeId, cancellationToken);
+        var zips = await _repo.GetZipCodesByPostOfficeIdAsync(entity.PostOfficeId,null, cancellationToken);
         dto.ZipCodes = _mapper.Map<IEnumerable<ZipCodeDto>>(zips);
         return dto;
     }

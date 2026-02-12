@@ -492,24 +492,24 @@ public class PostOfficeRepo : IPostOfficeRepo
     public async Task<IEnumerable<PostOffice>> GetLookupAsync(PostOfficeLookUpWithZipCodeFilterDto filter, CancellationToken cancellationToken = default)
     {
         var sql = new StringBuilder(@"
-SELECT
-    po.PostOfficeId,
-    po.PostOfficeName,
-    po.CountryId,
-    po.DivisionOneId,
-    po.DivisionThreeId,
-DivisionOne.DivisionOneName,
-                DivisionTwo.DivisionTwoName,
-                DivisionThree.DivisionThreeName,
-po.DivisionTwoId
-FROM PostOffice po
-INNER JOIN Country ON Country.CountryId = po.CountryId
-LEFT JOIN DivisionTwo ON DivisionTwo.DivisionTwoId = po.DivisionTwoId
-LEFT JOIN DivisionOne ON DivisionOne.DivisionOneId = po.DivisionOneId
-LEFT JOIN DivisionThree ON DivisionThree.DivisionThreeId = po.DivisionThreeId
-WHERE po.IsDeleted = 0
-  AND po.IsActive = 1
-");
+        SELECT
+            po.PostOfficeId,
+            po.PostOfficeName,
+            po.CountryId,
+            po.DivisionOneId,
+            po.DivisionThreeId,
+            DivisionOne.DivisionOneName,
+            DivisionTwo.DivisionTwoName,
+            DivisionThree.DivisionThreeName,
+        po.DivisionTwoId
+        FROM PostOffice po
+        INNER JOIN Country ON Country.CountryId = po.CountryId
+        LEFT JOIN DivisionTwo ON DivisionTwo.DivisionTwoId = po.DivisionTwoId
+        LEFT JOIN DivisionOne ON DivisionOne.DivisionOneId = po.DivisionOneId
+        LEFT JOIN DivisionThree ON DivisionThree.DivisionThreeId = po.DivisionThreeId
+        WHERE po.IsDeleted = 0
+          AND po.IsActive = 1
+        ");
 
         // Optional filters (only appended if provided)
         if (filter?.CountryId is not null)
@@ -649,11 +649,11 @@ WHERE po.IsDeleted = 0
         var affected = await connection.ExecuteAsync(cmd);
         return affected > 0;
     }
-    
 
-    public async Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdAsync(int postOfficeId, CancellationToken cancellationToken = default)
+
+    public async Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdAsync(int postOfficeId, int? placeId, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT
+        var sql = @"SELECT
                 l.PostOfficeZipCodeLinkId,
                 l.PostOfficeId,
                 z.ZipCode,
@@ -670,7 +670,25 @@ WHERE po.IsDeleted = 0
             LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
             WHERE l.PostOfficeId = @PostOfficeId  ";
 
-        var cmd = new CommandDefinition(sql, new { PostOfficeId = postOfficeId }, cancellationToken: cancellationToken);
+        var parameters = new DynamicParameters();
+        parameters.Add("PostOfficeId", postOfficeId);
+
+        // ✅ Only add this filter + parameter when PlaceId is provided
+        if (placeId > 0)
+        {
+            sql += @"
+  AND NOT EXISTS (
+      SELECT 1
+      FROM PlaceZipCodeLink p
+      WHERE p.PlaceId = @PlaceId
+        AND p.PostOfficeZipCodeLinkId = l.PostOfficeZipCodeLinkId
+  )
+";
+            parameters.Add("PlaceId", placeId.Value);
+        }
+
+        var cmd = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
+
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<PostOfficeZipCode>(cmd);
     }
