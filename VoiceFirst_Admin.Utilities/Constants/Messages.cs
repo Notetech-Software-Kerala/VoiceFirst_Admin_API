@@ -385,6 +385,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string DivisionThreeRetrieveSucessfully = "Division three retrieve sucessfully.";
 
         public const string PostOfficeRestoreSucessfully = "Post office restored sucessfully.";
+        public const string RequiredPostOfficeIds = "PostOfficeIds are required.";
         public const string PostOfficeDeleteSucessfully = "Post office deleted sucessfully.";
         public const string PostOfficeZipCodeRestoreSucessfully = "Zip code restored sucessfully.";
         public const string PostOfficeZipCodeDeleteSucessfully = "Zip code deleted sucessfully.";

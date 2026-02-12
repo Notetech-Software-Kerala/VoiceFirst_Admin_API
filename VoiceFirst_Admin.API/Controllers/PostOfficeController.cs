@@ -44,9 +44,16 @@ public class PostOfficeController : ControllerBase
     }
     [HttpGet]
     [Route("api/zipcodes/lookup")]
-    public async Task<IActionResult> GetZipCodesByPostOfficeIdAndPlaceIdAsync([FromQuery] GetZipCodeLookUpDto getZipCodeLookUpDto, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetZipCodesByPostOfficeIdAndPlaceIdAsync([FromQuery] GetPostOfficeIdZipCodeLookUpDto getZipCodeLookUpDto, CancellationToken cancellationToken)
     {
         var item = await _service.GetZipCodesByPostOfficeIdAsync(getZipCodeLookUpDto.PostOfficeId, getZipCodeLookUpDto.PlaceId, cancellationToken);
+        return StatusCode(item.StatusCode, item);
+    }
+    [HttpGet]
+    [Route("api/zipcodes/lookup/post-office-ids")]
+    public async Task<IActionResult> GetZipCodesByPostOfficeIdsAndPlaceIdAsync([FromQuery] GetPostOfficeIdsZipCodeLookUpDto getZipCodeLookUpDto, CancellationToken cancellationToken)
+    {
+        var item = await _service.GetZipCodesByPostOfficeIdsAsync(getZipCodeLookUpDto.PostOfficeIds, getZipCodeLookUpDto.PlaceId, cancellationToken);
         return StatusCode(item.StatusCode, item);
     }
 

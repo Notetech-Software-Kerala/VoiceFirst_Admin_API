@@ -692,6 +692,76 @@ public class PostOfficeRepo : IPostOfficeRepo
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<PostOfficeZipCode>(cmd);
     }
+    public async Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdsAsync(
+    List<int> postOfficeIds,
+    int? placeId,
+    CancellationToken cancellationToken = default)
+    {
+        if (postOfficeIds == null) throw new ArgumentNullException(nameof(postOfficeIds));
+        var ids = postOfficeIds.Distinct().ToArray();
+        if (ids.Length == 0) return Enumerable.Empty<PostOfficeZipCode>();
+
+        var sql = @"
+;WITH q AS
+(
+    SELECT
+        l.PostOfficeZipCodeLinkId,
+        l.PostOfficeId,
+        z.ZipCode,
+        l.CreatedAt,
+        l.IsActive,
+        l.UpdatedAt,
+        uC.UserId AS CreatedById,
+        CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+        uU.UserId AS UpdatedById,
+        CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
+        ROW_NUMBER() OVER (PARTITION BY l.PostOfficeZipCodeLinkId ORDER BY l.PostOfficeZipCodeLinkId) AS rn
+    FROM PostOfficeZipCodeLink l
+    INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
+    INNER JOIN Users uC ON uC.UserId = l.CreatedBy
+    LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
+    WHERE l.PostOfficeId IN @PostOfficeIds
+";
+
+        var parameters = new DynamicParameters();
+        parameters.Add("PostOfficeIds", ids);
+
+        // ✅ Only add this filter + parameter when PlaceId is provided
+        if (placeId.HasValue && placeId.Value > 0)
+        {
+            sql += @"
+      AND NOT EXISTS (
+          SELECT 1
+          FROM PlaceZipCodeLink p
+          WHERE p.PlaceId = @PlaceId
+            AND p.PostOfficeZipCodeLinkId = l.PostOfficeZipCodeLinkId
+      )
+";
+            parameters.Add("PlaceId", placeId.Value);
+        }
+
+        sql += @"
+)
+SELECT
+    PostOfficeZipCodeLinkId,
+    PostOfficeId,
+    ZipCode,
+    CreatedAt,
+    IsActive,
+    UpdatedAt,
+    CreatedById,
+    CreatedUserName,
+    UpdatedById,
+    UpdatedUserName
+FROM q
+WHERE rn = 1;
+";
+
+        var cmd = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
+
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<PostOfficeZipCode>(cmd);
+    }
     public async Task<IEnumerable<PostOfficeZipCode>> GetAllZipCodesAsync(string SearchText, CancellationToken cancellationToken = default)
     {
         // After schema change ZipCode is moved to master table 'ZipCode' and links are in 'PostOfficeZipCodeLink'

@@ -13,6 +13,8 @@ public interface IPostOfficeService
     Task<PostOfficeDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<ApiResponse<IEnumerable<ZipCodeLookUp>?>> GetZipCodesByPostOfficeIdAsync(int id,
     int? placeId = null, CancellationToken cancellationToken = default);
+    Task<ApiResponse<IEnumerable<ZipCodeLookUp>?>> GetZipCodesByPostOfficeIdsAsync(List<int> id,
+    int? placeId = null, CancellationToken cancellationToken = default);
     Task<ApiResponse<IEnumerable<PostOfficeLookupDto>>> GetLookupAsync(PostOfficeLookUpFilterDto filter,CancellationToken cancellationToken = default);
     Task<ApiResponse<IEnumerable<PostOfficeDetailLookupDto>>> GetPostOfficeDetailsByZipCodeAsync(string zipCode, CancellationToken cancellationToken = default);
     Task<PagedResultDto<PostOfficeDto>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default);
