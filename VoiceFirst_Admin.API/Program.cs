@@ -229,6 +229,19 @@ builder.Services
                 || currentVer != tokenVer)
             {
                 context.Fail("Token version mismatch. Please re-authenticate.");
+                return;
+            }
+
+            // Verify browser/client fingerprint matches the login origin
+            var userAgent = context.HttpContext.Request.Headers.UserAgent.ToString();
+            var fpBytes = System.Security.Cryptography.SHA256.HashData(
+                Encoding.UTF8.GetBytes(userAgent));
+            var fingerprint = Convert.ToBase64String(fpBytes);
+
+            if (!fields.TryGetValue("fingerprint", out var storedFp)
+                || storedFp != fingerprint)
+            {
+                context.Fail("Client fingerprint mismatch.");
             }
         }
     };

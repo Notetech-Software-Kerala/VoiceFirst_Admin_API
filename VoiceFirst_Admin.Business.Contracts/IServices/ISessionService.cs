@@ -4,9 +4,11 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices;
 
 public interface ISessionService
 {
-    Task ActivateSessionAsync(int userId, int sessionId, int deviceId);
+    Task ActivateSessionAsync(int userId, int sessionId, int deviceId, string fingerprint);
 
     Task<bool> VerifySessionDeviceAsync(int userId, int sessionId, int deviceId);
+
+    Task<bool> VerifyFingerprintAsync(int userId, int sessionId, string fingerprint);
 
     Task<long> InitTokenVersionAsync(int userId, int sessionId);
 

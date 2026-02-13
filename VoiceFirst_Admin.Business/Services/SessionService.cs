@@ -25,11 +25,15 @@ public class SessionService : ISessionService
         _jwtSettings = jwtSettings;
     }
 
-    public async Task ActivateSessionAsync(int userId, int sessionId, int deviceId)
+    public async Task ActivateSessionAsync(int userId, int sessionId, int deviceId, string fingerprint)
     {
         var db = _redis.GetDatabase();
         var key = $"{SessionKeyPrefix}{userId}:{sessionId}";
-        await db.HashSetAsync(key, "deviceId", deviceId.ToString());
+        await db.HashSetAsync(key,
+        [
+            new HashEntry("deviceId", deviceId.ToString()),
+            new HashEntry("fingerprint", fingerprint)
+        ]);
         await db.KeyExpireAsync(key, TimeSpan.FromDays(_jwtSettings.RefreshTokenExpiryDays));
     }
 
@@ -43,6 +47,18 @@ public class SessionService : ISessionService
             return false;
 
         return storedDeviceId == deviceId.ToString();
+    }
+
+    public async Task<bool> VerifyFingerprintAsync(int userId, int sessionId, string fingerprint)
+    {
+        var db = _redis.GetDatabase();
+        var key = $"{SessionKeyPrefix}{userId}:{sessionId}";
+        var stored = await db.HashGetAsync(key, "fingerprint");
+
+        if (stored.IsNullOrEmpty)
+            return false;
+
+        return stored == fingerprint;
     }
 
     public async Task<long> InitTokenVersionAsync(int userId, int sessionId)
