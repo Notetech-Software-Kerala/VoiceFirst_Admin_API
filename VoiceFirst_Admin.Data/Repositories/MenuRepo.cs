@@ -155,11 +155,11 @@ public class MenuRepo : IMenuRepo
                 m.IsPrimaryProgram,
                 sp.ProgramName,
                 sp.ProgramRoute,
-                m.IsActive AS Active,
+                m.IsActive,
                 CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-                m.CreatedAt AS CreatedDate,
+                m.CreatedAt,
                 ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
-                m.UpdatedAt AS ModifiedDate FROM dbo.MenuProgramLink m
+                m.UpdatedAt FROM dbo.MenuProgramLink m
             INNER JOIN dbo.Users uC ON uC.UserId = m.CreatedBy
             INNER JOIN dbo.SysProgram sp ON sp.SysProgramId = m.ProgramId
             LEFT JOIN dbo.Users uU ON uU.UserId = m.UpdatedBy
@@ -220,6 +220,7 @@ public class MenuRepo : IMenuRepo
             if (filter.SearchBy.HasValue && searchByMap.TryGetValue(filter.SearchBy.Value, out var col))
             {
                 baseSql.Append($" AND {col} LIKE @Search");
+                parameters.Add("Search", $"%{filter.SearchText}%");
             }
             else
             {
@@ -237,6 +238,7 @@ public class MenuRepo : IMenuRepo
 
                 baseSql.Append(")");
             }
+
         }
 
         var sortMap = new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase)

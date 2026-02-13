@@ -118,7 +118,7 @@ public class MenuService : IMenuService
         var menuPrograms = await _repo.GetAllMenuProrgamByMenuMastersIdAsync(id, cancellationToken);
         if (menuPrograms.Count() > 0)
         {
-            var menuProgramsList= _mapper.Map<List<MenuProgramLinkDto>>(data);
+            var menuProgramsList= _mapper.Map<List<MenuProgramLinkDto>>(menuPrograms);
             menuDetails.menuProgramLinks = menuProgramsList;
 
         }

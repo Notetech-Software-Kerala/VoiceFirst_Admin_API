@@ -102,6 +102,29 @@ public class PostOfficeService : IPostOfficeService
         return ApiResponse<IEnumerable<ZipCodeLookUp>?>.Ok(dto, Messages.ZipCodesRetrieveSucessfully, StatusCodes.Status200OK);
      
     }
+    public async Task<ApiResponse<IEnumerable<ZipCodeLookUp>?>> GetZipCodesByPostOfficeIdsAsync(List<int> ids,
+    int? placeId = null, CancellationToken cancellationToken = default)
+    {
+        if (ids == null || !ids.Any())
+        {
+            return ApiResponse<IEnumerable<ZipCodeLookUp>?>.Fail(Messages.RequiredPostOfficeIds,
+                StatusCodes.Status400BadRequest);
+        }
+        foreach (var item in ids)
+        {
+            var postOffice = await _repo.GetByIdAsync(item, cancellationToken);
+            if (postOffice == null || postOffice.IsDeleted == true)
+                return ApiResponse<IEnumerable<ZipCodeLookUp>?>.Fail(Messages.PostOfficeNotFound, StatusCodes.Status404NotFound);
+        }
+        
+        
+
+        var entity = await _repo.GetZipCodesByPostOfficeIdsAsync(ids, placeId, cancellationToken);
+        if (entity == null) return null;
+        var dto = _mapper.Map<IEnumerable<ZipCodeLookUp>>(entity);
+        return ApiResponse<IEnumerable<ZipCodeLookUp>?>.Ok(dto, Messages.ZipCodesRetrieveSucessfully, StatusCodes.Status200OK);
+     
+    }
 
     public async Task<PagedResultDto<PostOfficeDto>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default)
     {
