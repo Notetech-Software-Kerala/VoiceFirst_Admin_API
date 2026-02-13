@@ -303,9 +303,56 @@ namespace VoiceFirst_Admin.Data.Repositories
             var baseSql = new StringBuilder(@"
             FROM Place spa
             INNER JOIN Users uC ON uC.UserId = spa.CreatedBy
-            LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy WHERE 1=1
+            LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
+            LEFT JOIN PlaceZipCodeLink pzl ON pzl.PlaceId = spa.PlaceId AND pzl.IsActive = 1
+            LEFT JOIN PostOfficeZipCodeLink pozl ON pozl.PostOfficeZipCodeLinkId = pzl.PostOfficeZipCodeLinkId AND pozl.IsActive = 1
+            LEFT JOIN PostOffice po ON po.PostOfficeId = pozl.PostOfficeId AND po.IsDeleted = 0
+            LEFT JOIN ZipCode z ON z.ZipCodeId = pozl.ZipCodeId
+            LEFT JOIN Country c ON c.CountryId = po.CountryId
+            LEFT JOIN DivisionOne d1 ON d1.DivisionOneId = po.DivisionOneId
+            LEFT JOIN DivisionTwo d2 ON d2.DivisionTwoId = po.DivisionTwoId
+            LEFT JOIN DivisionThree d3 ON d3.DivisionThreeId = po.DivisionThreeId
+            WHERE 1=1
             ");
 
+            // ── Dropdown / multi-select filters ──
+            if (filter.CountryIds is { Count: > 0 })
+            {
+                baseSql.Append(" AND c.CountryId IN @CountryIds");
+                parameters.Add("CountryIds", filter.CountryIds);
+            }
+
+            if (filter.DivisionOneIds is { Count: > 0 })
+            {
+                baseSql.Append(" AND d1.DivisionOneId IN @DivisionOneIds");
+                parameters.Add("DivisionOneIds", filter.DivisionOneIds);
+            }
+
+            if (filter.DivisionTwoIds is { Count: > 0 })
+            {
+                baseSql.Append(" AND d2.DivisionTwoId IN @DivisionTwoIds");
+                parameters.Add("DivisionTwoIds", filter.DivisionTwoIds);
+            }
+
+            if (filter.DivisionThreeIds is { Count: > 0 })
+            {
+                baseSql.Append(" AND d3.DivisionThreeId IN @DivisionThreeIds");
+                parameters.Add("DivisionThreeIds", filter.DivisionThreeIds);
+            }
+
+            if (filter.PostOfficeIds is { Count: > 0 })
+            {
+                baseSql.Append(" AND po.PostOfficeId IN @PostOfficeIds");
+                parameters.Add("PostOfficeIds", filter.PostOfficeIds);
+            }
+
+            if (filter.ZipCodeLinkIds is { Count: > 0 })
+            {
+                baseSql.Append(" AND pzl.PostOfficeZipCodeLinkId IN @ZipCodeLinkIds");
+                parameters.Add("ZipCodeLinkIds", filter.ZipCodeLinkIds);
+            }
+
+            // ── Date filters ──
             if (!string.IsNullOrWhiteSpace(filter.CreatedFromDate) &&
                 DateTime.TryParse(filter.CreatedFromDate, out var createdFrom))
             {
@@ -334,6 +381,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 parameters.Add("UpdatedTo", updatedTo.Date);
             }
 
+            // ── Search ──
             var searchByMap = new Dictionary<PlaceSearchBy, string>
             {
                 [PlaceSearchBy.PlaceName] = "spa.PlaceName",
@@ -344,14 +392,18 @@ namespace VoiceFirst_Admin.Data.Repositories
             if (!string.IsNullOrWhiteSpace(filter.SearchText))
             {
                 if (filter.SearchBy.HasValue && searchByMap.TryGetValue(filter.SearchBy.Value, out var col))
+                {
                     baseSql.Append($" AND {col} LIKE @Search");
+                }
                 else
+                {
                     baseSql.Append(@"
                     AND (
                         spa.PlaceName LIKE @Search
                      OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search
                      OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search
                     )");
+                }
 
                 parameters.Add("Search", $"%{filter.SearchText}%");
             }
@@ -373,25 +425,19 @@ namespace VoiceFirst_Admin.Data.Repositories
             if (!sortMap.TryGetValue(sortKey, out var sortColumn))
                 sortColumn = sortMap["PlaceId"];
 
-            var countSql = "SELECT COUNT(1) " + baseSql;
+            var countSql = "SELECT COUNT(DISTINCT spa.PlaceId) " + baseSql;
 
             var itemsSql = $@"
     SELECT
         spa.PlaceId,
         spa.PlaceName,
-        spa.CreatedAt,
-        spa.UpdatedAt,
-        uC.UserId AS CreatedById,
-        CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
-        uU.UserId AS UpdatedById,
-        CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
-        spa.PlaceId AS PlaceId,
-        spa.PlaceName AS PlaceName,
         spa.CreatedAt AS CreatedDate,
         spa.UpdatedAt AS ModifiedDate,
         CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
         ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser
     {baseSql}
+    GROUP BY spa.PlaceId, spa.PlaceName, spa.CreatedAt, spa.UpdatedAt,
+             uC.FirstName, uC.LastName, uU.FirstName, uU.LastName
     ORDER BY {sortColumn} {sortOrder}
     OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;
     ";
