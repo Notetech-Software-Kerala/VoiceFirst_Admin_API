@@ -64,7 +64,7 @@ public class PostOfficeService : IPostOfficeService
         var entity = new PostOffice
         {
             PostOfficeName = dto.PostOfficeName,
-            CountryId = dto.CountryId,
+            CountryId = dto.CountryId ?? 0,
             DivisionOneId = dto.DivOneId,
             DivisionTwoId = dto.DivTwoId,
             DivisionThreeId = dto.DivThreeId,
@@ -87,6 +87,13 @@ public class PostOfficeService : IPostOfficeService
         var entity = await _repo.GetByIdAsync(id, cancellationToken);
         if (entity == null) return null;
         var dto = await MapWithZipCodesAsync(entity, cancellationToken);
+        var countryDetails = await _countryRepo.GetByCountryIdAsync(dto.CountryId, cancellationToken);
+        if (countryDetails != null)
+        {
+            dto.DivOneLabel = countryDetails.DivisionOneName;
+            dto.DivTwoLabel = countryDetails.DivisionTwoName;
+            dto.DivThreeLabel = countryDetails.DivisionThreeName;
+        }
         return dto;
     }
     public async Task<ApiResponse<IEnumerable<ZipCodeLookUp>?>> GetZipCodesByPostOfficeIdAsync(int id,
@@ -133,6 +140,7 @@ public class PostOfficeService : IPostOfficeService
         foreach (var e in entities.Items)
         {
             list.Add(await MapWithZipCodesAsync(e, cancellationToken));
+            
         }
         return new PagedResultDto<PostOfficeDto>
         {
@@ -232,10 +240,10 @@ public class PostOfficeService : IPostOfficeService
             {
                 PostOfficeId = id,
                 PostOfficeName = dto.PostOfficeName ?? string.Empty,
-            CountryId = dto.CountryId,
-            DivisionOneId = dto.DivOneId,
-            DivisionTwoId = dto.DivTwoId,
-            DivisionThreeId = dto.DivThreeId,
+                CountryId = dto.CountryId??0,
+                DivisionOneId = dto.DivOneId,
+                DivisionTwoId = dto.DivTwoId,
+                DivisionThreeId = dto.DivThreeId,
                 IsActive = dto.Active,
                 UpdatedBy = loginId
             };

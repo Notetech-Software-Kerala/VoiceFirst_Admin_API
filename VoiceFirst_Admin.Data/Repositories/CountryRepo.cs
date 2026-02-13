@@ -194,6 +194,15 @@ public class CountryRepo : ICountryRepo
         var items = await connection.QueryAsync<Country>(sql);
         return items;
     }
+    public async Task<Country> GetByCountryIdAsync(int id,CancellationToken cancellationToken = default)
+    {
+        const string sql = @"SELECT CountryId, CountryName, DivisionOneName, DivisionTwoName, DivisionThreeName, CountryDialCode, CountryIsoAlphaTwo, IsActive, IsDeleted
+                             FROM Country where CountryId=@CountryId";
+
+        using var connection = _context.CreateConnection();
+        var items = await connection.QueryFirstOrDefaultAsync<Country>(sql, new { CountryId =id});
+        return items;
+    }
 
     //   DivisionOne
 
