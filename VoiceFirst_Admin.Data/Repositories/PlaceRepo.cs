@@ -220,7 +220,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                         c.DivisionOneName AS DivisionOneLabel,
                         c.DivisionTwoName AS DivisionTwoLabel,
                         c.DivisionThreeName AS DivisionThreeLabel,
-                        d1.DivisionOneName,
+                        d1.DivisionOneName, 
                         d2.DivisionTwoName,
                         d3.DivisionThreeName,
                         pzl.PlaceZipCodeLinkId, -- split starts here
