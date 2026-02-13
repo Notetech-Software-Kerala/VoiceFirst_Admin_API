@@ -82,11 +82,13 @@ public class PostOfficeService : IPostOfficeService
         return ApiResponse<PostOfficeDto>.Ok(createdDto, Messages.PostOfficeCreated, StatusCodes.Status201Created);
     }
 
-    public async Task<PostOfficeDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<PostOfficeDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await _repo.GetByIdAsync(id, cancellationToken);
         if (entity == null) return null;
-        var dto = await MapWithZipCodesAsync(entity, cancellationToken);
+        var dto = _mapper.Map<PostOfficeDetailDto>(entity);
+        var zips = await _repo.GetZipCodesByPostOfficeIdAsync(entity.PostOfficeId, null, cancellationToken);
+        dto.ZipCodes = _mapper.Map<IEnumerable<ZipCodeDto>>(zips);
         var countryDetails = await _countryRepo.GetByCountryIdAsync(dto.CountryId, cancellationToken);
         if (countryDetails != null)
         {
@@ -133,8 +135,28 @@ public class PostOfficeService : IPostOfficeService
      
     }
 
-    public async Task<PagedResultDto<PostOfficeDto>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<PagedResultDto<PostOfficeDto>>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default)
     {
+        if (filter.DivOneId.HasValue && !filter.CountryId.HasValue)
+            return ApiResponse<PagedResultDto<PostOfficeDto>>.Fail(Messages.CountryRequiredForDivisionOne, StatusCodes.Status400BadRequest);
+        if (filter.DivTwoId.HasValue && !filter.DivOneId.HasValue)
+            return ApiResponse<PagedResultDto<PostOfficeDto>>.Fail(Messages.DivisionOneRequiredForDivisionTwo, StatusCodes.Status400BadRequest);
+        if (filter.DivThreeId.HasValue && !filter.DivTwoId.HasValue)
+            return ApiResponse<PagedResultDto<PostOfficeDto>>.Fail(Messages.DivisionTwoRequiredForDivisionThree, StatusCodes.Status400BadRequest);
+
+        // check existence using country repo
+        if (filter.CountryId.HasValue)
+        {
+            var countryDivs = await _countryRepo.ExistsCountryAndDivisionsAsync(filter.CountryId.Value, filter.DivOneId, filter.DivTwoId, filter.DivThreeId, cancellationToken);
+            if (!countryDivs.CountryExists)
+                return ApiResponse<PagedResultDto<PostOfficeDto>>.Fail(Messages.CountryNotFound, StatusCodes.Status404NotFound);
+            if (filter.DivOneId.HasValue && !countryDivs.DivOneExists)
+                return ApiResponse<PagedResultDto<PostOfficeDto>>.Fail(Messages.DivisionOneNotFound, StatusCodes.Status404NotFound);
+            if (filter.DivTwoId.HasValue && !countryDivs.DivTwoExists)
+                return ApiResponse<PagedResultDto<PostOfficeDto>>.Fail(Messages.DivisionTwoNotFound, StatusCodes.Status404NotFound);
+            if (filter.DivThreeId.HasValue && !countryDivs.DivThreeExists)
+                return ApiResponse<PagedResultDto<PostOfficeDto>>.Fail(Messages.DivisionThreeNotFound, StatusCodes.Status404NotFound);
+        }
         var entities = await _repo.GetAllAsync(filter, cancellationToken);
         var list = new List<PostOfficeDto>();
         foreach (var e in entities.Items)
@@ -142,13 +164,16 @@ public class PostOfficeService : IPostOfficeService
             list.Add(await MapWithZipCodesAsync(e, cancellationToken));
             
         }
-        return new PagedResultDto<PostOfficeDto>
+        var result = new PagedResultDto<PostOfficeDto>
         {
             Items = list,
             TotalCount = entities.TotalCount,
             PageNumber = filter.PageNumber,
             PageSize = filter.Limit
         };
+        
+
+        return ApiResponse<PagedResultDto<PostOfficeDto>>.Ok(result,Messages.PostOfficeRetrieveSucessfully);
     }
 
     

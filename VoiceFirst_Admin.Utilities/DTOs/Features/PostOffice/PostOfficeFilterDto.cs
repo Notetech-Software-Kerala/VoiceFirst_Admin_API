@@ -7,6 +7,10 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice
 {
     public class PostOfficeFilterDto :CommonFilterDto
     {
+        public int? CountryId { get; set; }
+        public int? DivOneId { get; set; }
+        public int? DivTwoId { get; set; }
+        public int? DivThreeId { get; set; }
         public PostOfficeSearchBy? SearchBy { get; set; }
     }
     public class PostOfficeLookUpFilterDto 
