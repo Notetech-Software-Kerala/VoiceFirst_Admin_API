@@ -18,7 +18,7 @@ public class MenuMasterDto
     public string DeletedUser { get; set; } = string.Empty;
     public DateTime? DeletedDate { get; set; }
 }
-public class MenuMasterDetailDto
+public class MenuMasterDetailDto : MenuMasterDto
 {
     public List<MenuProgramLinkDto> menuProgramLinks { get; set; }
 }
