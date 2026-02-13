@@ -10,14 +10,14 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices;
 public interface IPostOfficeService
 {
     Task<ApiResponse<PostOfficeDto>> CreateAsync(PostOfficeCreateDto dto, int loginId, CancellationToken cancellationToken = default);
-    Task<PostOfficeDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<PostOfficeDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<ApiResponse<IEnumerable<ZipCodeLookUp>?>> GetZipCodesByPostOfficeIdAsync(int id,
     int? placeId = null, CancellationToken cancellationToken = default);
     Task<ApiResponse<IEnumerable<ZipCodeLookUp>?>> GetZipCodesByPostOfficeIdsAsync(List<int> id,
     int? placeId = null, CancellationToken cancellationToken = default);
     Task<ApiResponse<IEnumerable<PostOfficeLookupDto>>> GetLookupAsync(PostOfficeLookUpFilterDto filter,CancellationToken cancellationToken = default);
     Task<ApiResponse<IEnumerable<PostOfficeDetailLookupDto>>> GetPostOfficeDetailsByZipCodeAsync(string zipCode, CancellationToken cancellationToken = default);
-    Task<PagedResultDto<PostOfficeDto>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default);
+    Task<ApiResponse<PagedResultDto<PostOfficeDto>>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default);
     Task<ApiResponse<PostOfficeDto>> UpdateAsync(PostOfficeUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default);
     Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
     Task<ApiResponse<object>> RestoreAsync(int id, int loginId, CancellationToken cancellationToken = default);

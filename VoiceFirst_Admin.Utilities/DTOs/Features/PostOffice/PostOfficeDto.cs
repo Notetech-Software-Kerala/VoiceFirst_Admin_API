@@ -7,9 +7,6 @@ public class PostOfficeDto : CommonDto
     public int PostOfficeId { get; set; }
     public string PostOfficeName { get; set; }
     public string? CountryName { get; set; } 
-    public string? DivOneLabel { get; set; } 
-    public string? DivTwoLabel { get; set; } 
-    public string? DivThreeLabel { get; set; } 
     public int CountryId { get; set; }
     public int DivOneId { get; set; }
     public string DivOneName { get; set; } 
@@ -19,3 +16,11 @@ public class PostOfficeDto : CommonDto
     public string DivThreeName { get; set; }
     public IEnumerable<ZipCodeDto> ZipCodes { get; set; } = new List<ZipCodeDto>();
 }
+public class PostOfficeDetailDto : PostOfficeDto
+{
+
+    public string? DivOneLabel { get; set; } 
+    public string? DivTwoLabel { get; set; } 
+    public string? DivThreeLabel { get; set; } 
+}
+

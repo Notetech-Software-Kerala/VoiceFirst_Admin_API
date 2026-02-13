@@ -311,6 +311,29 @@ public class PostOfficeRepo : IPostOfficeRepo
             baseSql.Append(" AND po.IsDeleted = @IsDeleted");
             parameters.Add("IsDeleted", filter.Deleted.Value);
         }
+        if (filter.CountryId.HasValue)
+        {
+            baseSql.Append(" AND po.CountryId = @CountryId");
+            parameters.Add("CountryId", filter.CountryId.Value);
+            if (filter.DivOneId.HasValue)
+            {
+                baseSql.Append(" AND po.DivisionOneId = @DivisionOneId");
+                parameters.Add("DivisionOneId", filter.DivOneId.Value);
+                if (filter.DivTwoId.HasValue)
+                {
+                    baseSql.Append(" AND po.DivisionTwoId = @DivisionTwoId");
+                    parameters.Add("DivisionTwoId", filter.DivTwoId.Value);
+                    if (filter.DivThreeId.HasValue)
+                    {
+                        baseSql.Append(" AND po.DivisionThreeId = @DivisionThreeId");
+                        parameters.Add("DivisionThreeId", filter.DivThreeId.Value);
+                    }
+                }
+                
+            }
+            
+        }
+        
 
         if (filter.Active.HasValue)
         {
