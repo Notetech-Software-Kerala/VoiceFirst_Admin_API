@@ -401,6 +401,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PostOfficeNameExistsInTrash = "This post office name exists in trash. Restore it to use again.";
 
         // Menu
+        public const string MenuProgramLinkNotFound =
+         "Some selected program are not link with menu.";
         public const string MenuRestoreSucessfully = "Menu restored sucessfully.";
         public const string MenuDeleteSucessfully = "Menu deleted sucessfully.";
         public const string AppMenuRestoreSucessfully = "App menu restored sucessfully.";

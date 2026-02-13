@@ -50,8 +50,8 @@ public class MenuService : IMenuService
         {
             var programIds = dto.ProgramIds
                      .Select(x => x.ProgramId)
-                     .Where(id => id.HasValue && id.Value > 0)
-                     .Select(id => id!.Value)
+                     .Where(id => id > 0)
+                     .Select(id => id!)
                      .Distinct()
                      .ToList();
 
@@ -177,8 +177,8 @@ public class MenuService : IMenuService
             {
                 var programIds = dto.ProgramIds
                     .Select(x => x.ProgramId)
-                    .Where(x => x.HasValue && x.Value > 0)
-                    .Select(x => x!.Value)
+                    .Where(x =>  x > 0)
+                    .Select(x => x!)
                     .Distinct()
                     .ToList();
 
@@ -201,8 +201,8 @@ public class MenuService : IMenuService
             {
                 var programIds = dto.UpdateProgramIds
                     .Select(x => x.ProgramId)
-                    .Where(x => x.HasValue && x.Value > 0)
-                    .Select(x => x!.Value)
+                    .Where(x =>  x > 0)
+                    .Select(x => x!)
                     .Distinct()
                     .ToList();
 

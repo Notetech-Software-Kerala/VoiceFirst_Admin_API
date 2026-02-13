@@ -31,11 +31,16 @@ namespace VoiceFirst_Admin.Utilities.Mapping
             .ForMember(d => d.IsActive, opt => opt.MapFrom(s => s.Active))
                 .ForMember(d => d.MenuIcon, opt => opt.MapFrom(s => s.Icon));
 
+            CreateMap<MenuProgramUpdateDto, MenuProgramLink>()
+            .ForMember(d => d.ProgramId, opt => opt.MapFrom(s => s.ProgramId))
+            .ForMember(d => d.IsPrimaryProgram, opt => opt.MapFrom(s => s.Primary))
+            .ForMember(d => d.IsActive, opt => opt.MapFrom(s => s.Active));
+
             CreateMap<MenuProgramLink, MenuProgramLinkDto>()
             .ForMember(d => d.MenuProgramLinkId, opt => opt.MapFrom(s => s.MenuProgramLinkId))
             .ForMember(d => d.Route, opt => opt.MapFrom(s => s.ProgramRoute))
             .ForMember(d => d.ProgramId, opt => opt.MapFrom(s => s.ProgramId))
-            .ForMember(d => d.IsPrimary, opt => opt.MapFrom(s => s.IsPrimaryProgram))
+            .ForMember(d => d.Primary, opt => opt.MapFrom(s => s.IsPrimaryProgram))
                 .ForMember(d => d.ProgramName, opt => opt.MapFrom(s => s.ProgramName))
                 .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))
                 .ForMember(d => d.CreatedUser, opt => opt.MapFrom(s => s.CreatedUserName))
@@ -48,6 +53,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.MenuName, opt => opt.MapFrom(s => s.MenuName))
                 .ForMember(d => d.Route, opt => opt.MapFrom(s => s.MenuRoute))
                 .ForMember(d => d.PlateFormId, opt => opt.MapFrom(s => s.ApplicationId))
+                .ForMember(d => d.PlateForm, opt => opt.MapFrom(s => s.ApplicationName))
                 .ForMember(d => d.Icon, opt => opt.MapFrom(s => s.MenuIcon))
                 .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))
                 .ForMember(d => d.Deleted, opt => opt.MapFrom(s => s.IsDeleted))
