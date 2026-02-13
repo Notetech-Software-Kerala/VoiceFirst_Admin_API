@@ -14,4 +14,6 @@ public interface IMenuService
     Task<List<AppMenuDto>> GetAllAppMenusAsync( CancellationToken cancellationToken = default);
     Task<ApiResponse<object>> BulkUpdateWebMenusAsync(WebMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
     Task<ApiResponse<object>> BulkUpdateAppMenusAsync(AppMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default);
+    Task<ApiResponse<object>> DeleteMenuMasterAsync(int id, int loginId, CancellationToken cancellationToken = default);
+    Task<ApiResponse<object>> RestoreMenuMasterAsync(int id, int loginId, CancellationToken cancellationToken = default);
 }

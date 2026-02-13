@@ -18,6 +18,9 @@ public class MenuMasterDto
     public DateTime? ModifiedDate { get; set; }
     public string DeletedUser { get; set; }
     public DateTime? DeletedDate { get; set; }
+
+    public bool Web { get; set; }
+    public bool App { get; set; }
 }
 public class MenuMasterDetailDto : MenuMasterDto
 {

@@ -128,6 +128,7 @@ public class MenuRepo : IMenuRepo
                 m.MenuIcon ,
                 m.MenuRoute ,
                 m.ApplicationId ,
+                ap.ApplicationName,
                 m.IsActive,
                 m.IsDeleted,
                 CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
@@ -139,11 +140,35 @@ public class MenuRepo : IMenuRepo
             INNER JOIN dbo.Users uC ON uC.UserId = m.CreatedBy
             LEFT JOIN dbo.Users uU ON uU.UserId = m.UpdatedBy
             LEFT JOIN dbo.Users uD ON uD.UserId = m.DeletedBy
+            LEFT JOIN dbo.Application ap ON ap.ApplicationId = m.ApplicationId
             WHERE MenuMasterId=@MenuMasterId";
 
         using var connection = _context.CreateConnection();
         var cmd = new CommandDefinition(sql, new { MenuMasterId = id }, cancellationToken: cancellationToken);
         return await connection.QuerySingleOrDefaultAsync<MenuMaster>(cmd);
+    }
+    public async Task<bool> DeleteMenuMasterAsync(MenuMaster entity, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"UPDATE MenuMaster SET IsDeleted = 1, DeletedAt = SYSDATETIME(), DeletedBy = @DeletedBy  WHERE MenuMasterId = @Id AND IsDeleted = 0;";
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", entity.MenuMasterId);
+        parameters.Add("DeletedBy", entity.DeletedBy);
+        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(cmd);
+        return affected > 0;
+    }
+
+    public async Task<bool> RestoreMenuMasterAsync(MenuMaster entity, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"UPDATE MenuMaster SET IsDeleted = 0, DeletedAt = NULL, DeletedBy = NULL, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME()  WHERE MenuMasterId = @Id AND IsDeleted = 1;";
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", entity.MenuMasterId);
+        parameters.Add("UpdatedBy", entity.UpdatedBy);
+        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(cmd);
+        return affected > 0;
     }
     public async Task<IEnumerable<MenuProgramLink>> GetAllMenuProrgamByMenuMastersIdAsync(int menuMastersId, CancellationToken cancellationToken = default)
     {
@@ -1128,6 +1153,8 @@ public class MenuRepo : IMenuRepo
                 cancellationToken: cancellationToken));
         }
     }
+
+
 
 
 

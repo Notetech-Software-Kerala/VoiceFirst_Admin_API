@@ -38,6 +38,21 @@ public class MenuController : ControllerBase
         var menu = await _service.GetAllMenuMastersByIdAsync(id, cancellationToken);
         return Ok(ApiResponse<MenuMasterDetailDto>.Ok(menu, Messages.MenuRetrieveSucessfully));
     }
+    [HttpDelete]
+    [Route("master/{id:int}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        var res = await _service.DeleteMenuMasterAsync(id, userId, cancellationToken);
+        return StatusCode(res.StatusCode, res);
+    }
+
+    [HttpPatch]
+    [Route("master/recover/{id:int}")]
+    public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
+    {
+        var res = await _service.RestoreMenuMasterAsync(id, userId, cancellationToken);
+        return StatusCode(res.StatusCode, res);
+    }
     [HttpGet("web")]
     public async Task<IActionResult> GetAllWeb(CancellationToken cancellationToken)
     {

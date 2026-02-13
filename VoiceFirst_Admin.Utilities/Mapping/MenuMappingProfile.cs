@@ -68,6 +68,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.MenuName, opt => opt.MapFrom(s => s.MenuName))
                 .ForMember(d => d.Route, opt => opt.MapFrom(s => s.MenuRoute))
                 .ForMember(d => d.PlateFormId, opt => opt.MapFrom(s => s.ApplicationId))
+                .ForMember(d => d.PlateForm, opt => opt.MapFrom(s => s.ApplicationName))
                 .ForMember(d => d.Icon, opt => opt.MapFrom(s => s.MenuIcon))
                 .ForMember(d => d.Active, opt => opt.MapFrom(s => s.IsActive))
                 .ForMember(d => d.Deleted, opt => opt.MapFrom(s => s.IsDeleted))
