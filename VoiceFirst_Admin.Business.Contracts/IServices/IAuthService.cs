@@ -7,10 +7,12 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
     {
         Task<ApiResponse<LoginResultDto>> LoginAsync(
             LoginRequestDto request,
+            string fingerprint,
             CancellationToken cancellationToken);
 
         Task<ApiResponse<LoginResultDto>> RefreshTokenAsync(
             string refreshToken,
+            string fingerprint,
             CancellationToken cancellationToken);
 
         Task<ApiResponse<object>> LogoutAsync(

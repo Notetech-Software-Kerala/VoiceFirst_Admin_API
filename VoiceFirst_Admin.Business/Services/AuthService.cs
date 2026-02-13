@@ -30,6 +30,7 @@ namespace VoiceFirst_Admin.Business.Services
 
         public async Task<ApiResponse<LoginResultDto>> LoginAsync(
             LoginRequestDto request,
+            string fingerprint,
             CancellationToken cancellationToken)
         {
             // 1. Validate device info
@@ -164,8 +165,8 @@ namespace VoiceFirst_Admin.Business.Services
             // 13. Store refresh token hash in Redis
             await _sessionService.StoreRefreshTokenAsync(user.UserId, sessionId, tokenPair.RefreshToken);
 
-            // 14. Mark session as active in Redis (TTL = access token lifetime)
-            await _sessionService.ActivateSessionAsync(user.UserId, sessionId, userDeviceId);
+            // 14. Mark session as active in Redis
+            await _sessionService.ActivateSessionAsync(user.UserId, sessionId, userDeviceId, fingerprint);
 
             // 15. Build response
             var result = new LoginResultDto
@@ -188,6 +189,7 @@ namespace VoiceFirst_Admin.Business.Services
 
         public async Task<ApiResponse<LoginResultDto>> RefreshTokenAsync(
             string refreshToken,
+            string fingerprint,
             CancellationToken cancellationToken)
         {
             // 1. Validate refresh token signature + expiry + tokenType
@@ -250,6 +252,20 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.InvalidOrExpiredToken);
             }
 
+            // 2c. Verify browser/client fingerprint matches the login origin
+            var fingerprintMatch = await _sessionService.VerifyFingerprintAsync(userId, sessionId, fingerprint);
+            if (!fingerprintMatch)
+            {
+                // Fingerprint mismatch — token used from a different browser/client
+                await _sessionService.InvalidateSessionKeysAsync(userId, sessionId);
+                await _authRepo.InvalidateSessionAsync(sessionId, cancellationToken);
+
+                return ApiResponse<LoginResultDto>.Fail(
+                    Messages.InvalidOrExpiredToken,
+                    StatusCodes.Status401Unauthorized,
+                    ErrorCodes.InvalidOrExpiredToken);
+            }
+
             // 3. Fetch user to ensure still active
             var user = await _authRepo.GetUserForLoginAsync(
                 principal.FindFirst(ClaimTypes.Email)?.Value ?? "",
@@ -283,7 +299,7 @@ namespace VoiceFirst_Admin.Business.Services
             await _sessionService.StoreRefreshTokenAsync(userId, sessionId, tokenPair.RefreshToken);
 
             // 6. Re-activate session in Redis
-            await _sessionService.ActivateSessionAsync(userId, sessionId, deviceId);
+            await _sessionService.ActivateSessionAsync(userId, sessionId, deviceId, fingerprint);
 
             var result = new LoginResultDto
             {
