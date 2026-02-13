@@ -10,7 +10,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Menu
         public int ProgramId { get; set; }
         public string ProgramName { get; set; }
         public string? Route { get; set; }
-        public bool? IsPrimary { get; set; }
+        public bool? Primary { get; set; }
         public bool? Active { get; set; }
         public DateTime? CreatedDate { get; set; }
         public string? CreatedUser { get; set; }

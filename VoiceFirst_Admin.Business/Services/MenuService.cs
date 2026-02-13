@@ -50,8 +50,8 @@ public class MenuService : IMenuService
         {
             var programIds = dto.ProgramIds
                      .Select(x => x.ProgramId)
-                     .Where(id => id.HasValue && id.Value > 0)
-                     .Select(id => id!.Value)
+                     .Where(id => id > 0)
+                     .Select(id => id!)
                      .Distinct()
                      .ToList();
 
@@ -88,6 +88,23 @@ public class MenuService : IMenuService
     {
         var data = await _repo.GetAllMenuMastersAsync(filter, cancellationToken);
         var list = _mapper.Map<List<MenuMasterDto>>(data.Items);
+        if (list.Count > 0)
+        {
+            foreach (var item in list)
+            {
+                var webmenu = await _repo.ExistsMenuMasterByWebAsync(item.MenuId, null, cancellationToken);
+                if(webmenu != null )
+                {
+                    item.Web = true;
+                }
+                var appmenu = await _repo.ExistsMenuMasterByAppAsync(item.MenuId, null, cancellationToken);
+                if(appmenu != null )
+                {
+                    item.App = true;
+                }
+            }
+        }
+        
         return new PagedResultDto<MenuMasterDto>
         {
             Items = list,
@@ -115,6 +132,16 @@ public class MenuService : IMenuService
             return null;
 
         var menuDetails= _mapper.Map<MenuMasterDetailDto>(data);
+        var webmenu = await _repo.ExistsMenuMasterByWebAsync(menuDetails.MenuId, null, cancellationToken);
+        if (webmenu != null)
+        {
+            menuDetails.Web = true;
+        }
+        var appmenu = await _repo.ExistsMenuMasterByAppAsync(menuDetails.MenuId, null, cancellationToken);
+        if (appmenu != null)
+        {
+            menuDetails.App = true;
+        }
         var menuPrograms = await _repo.GetAllMenuProrgamByMenuMastersIdAsync(id, cancellationToken);
         if (menuPrograms.Count() > 0)
         {
@@ -177,8 +204,8 @@ public class MenuService : IMenuService
             {
                 var programIds = dto.ProgramIds
                     .Select(x => x.ProgramId)
-                    .Where(x => x.HasValue && x.Value > 0)
-                    .Select(x => x!.Value)
+                    .Where(x =>  x > 0)
+                    .Select(x => x!)
                     .Distinct()
                     .ToList();
 
@@ -201,8 +228,8 @@ public class MenuService : IMenuService
             {
                 var programIds = dto.UpdateProgramIds
                     .Select(x => x.ProgramId)
-                    .Where(x => x.HasValue && x.Value > 0)
-                    .Select(x => x!.Value)
+                    .Where(x =>  x > 0)
+                    .Select(x => x!)
                     .Distinct()
                     .ToList();
 
@@ -268,5 +295,48 @@ public class MenuService : IMenuService
         var result = _mapper.Map<MenuMasterDto>(menuMaster);
 
         return ApiResponse<MenuMasterDto>.Ok(result, Messages.MenuUpdatedSucessfully);
+    }
+
+
+    public async Task<ApiResponse<object>> DeleteMenuMasterAsync(int id, int loginId, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repo.GetMenuMastersByIdAsync(id, cancellationToken);
+        if (entity == null)
+            return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+        if (entity.IsDeleted == true)
+            return ApiResponse<object>.Fail(Messages.MenuAlreadyDeleted, StatusCodes.Status400BadRequest);
+
+        var ok = await _repo.DeleteMenuMasterAsync(new MenuMaster
+        {
+            MenuMasterId = id,
+            DeletedBy = loginId
+        }, cancellationToken);
+
+        if (!ok)
+            return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+        return ApiResponse<object>.Ok(null!, Messages.MenuDeleteSucessfully, StatusCodes.Status200OK);
+    }
+
+    public async Task<ApiResponse<object>> RestoreMenuMasterAsync(int id, int loginId, CancellationToken cancellationToken = default)
+    {
+        var entity = await _repo.GetMenuMastersByIdAsync(id, cancellationToken);
+        if (entity == null)
+            return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+        if (!entity.IsDeleted == true)
+            return ApiResponse<object>.Fail(Messages.MenuAlreadyRestored, StatusCodes.Status400BadRequest);
+
+        var ok = await _repo.RestoreMenuMasterAsync(new MenuMaster
+        {
+            MenuMasterId = id,
+            UpdatedBy = loginId
+        }, cancellationToken);
+
+        if (!ok)
+            return ApiResponse<object>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
+
+        return ApiResponse<object>.Ok(null!, Messages.MenuRestoreSucessfully, StatusCodes.Status200OK);
     }
 }

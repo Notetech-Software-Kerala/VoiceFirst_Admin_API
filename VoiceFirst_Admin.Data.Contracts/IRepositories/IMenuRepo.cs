@@ -25,4 +25,6 @@ public interface IMenuRepo
     Task<AppMenus?> ExistsMenuMasterByAppAsync(int menuMasterId, int? excludeId = null, CancellationToken cancellationToken = default);
     Task<int> CreateAppMenuAsync(int menuMasterId, int createdBy, CancellationToken cancellationToken);
     Task<int> CreateWebMenuAsync(int menuMasterId, int createdBy, CancellationToken cancellationToken);
+    Task<bool> DeleteMenuMasterAsync(MenuMaster entity, CancellationToken cancellationToken = default);
+    Task<bool> RestoreMenuMasterAsync(MenuMaster entity, CancellationToken cancellationToken = default);
 }

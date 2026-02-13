@@ -125,25 +125,50 @@ public class MenuRepo : IMenuRepo
             SELECT
                 m.MenuMasterId,
                 m.MenuName,
-                m.MenuIcon AS MenuIcon,
-                m.MenuRoute AS MenuRoute,
-                m.ApplicationId AS ApplicationId,
-                m.IsActive AS Active,
-                m.IsDeleted AS Deleted,
+                m.MenuIcon ,
+                m.MenuRoute ,
+                m.ApplicationId ,
+                ap.ApplicationName,
+                m.IsActive,
+                m.IsDeleted,
                 CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-                m.CreatedAt AS CreatedDate,
+                m.CreatedAt,
                 ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
-                m.UpdatedAt AS ModifiedDate,
+                m.UpdatedAt,
                 ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
-                m.DeletedAt AS DeletedDate FROM dbo.MenuMaster m
+                m.DeletedAt  FROM dbo.MenuMaster m
             INNER JOIN dbo.Users uC ON uC.UserId = m.CreatedBy
             LEFT JOIN dbo.Users uU ON uU.UserId = m.UpdatedBy
             LEFT JOIN dbo.Users uD ON uD.UserId = m.DeletedBy
+            LEFT JOIN dbo.Application ap ON ap.ApplicationId = m.ApplicationId
             WHERE MenuMasterId=@MenuMasterId";
 
         using var connection = _context.CreateConnection();
         var cmd = new CommandDefinition(sql, new { MenuMasterId = id }, cancellationToken: cancellationToken);
         return await connection.QuerySingleOrDefaultAsync<MenuMaster>(cmd);
+    }
+    public async Task<bool> DeleteMenuMasterAsync(MenuMaster entity, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"UPDATE MenuMaster SET IsDeleted = 1, DeletedAt = SYSDATETIME(), DeletedBy = @DeletedBy  WHERE MenuMasterId = @Id AND IsDeleted = 0;";
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", entity.MenuMasterId);
+        parameters.Add("DeletedBy", entity.DeletedBy);
+        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(cmd);
+        return affected > 0;
+    }
+
+    public async Task<bool> RestoreMenuMasterAsync(MenuMaster entity, CancellationToken cancellationToken = default)
+    {
+        const string sql = @"UPDATE MenuMaster SET IsDeleted = 0, DeletedAt = NULL, DeletedBy = NULL, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME()  WHERE MenuMasterId = @Id AND IsDeleted = 1;";
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", entity.MenuMasterId);
+        parameters.Add("UpdatedBy", entity.UpdatedBy);
+        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(cmd);
+        return affected > 0;
     }
     public async Task<IEnumerable<MenuProgramLink>> GetAllMenuProrgamByMenuMastersIdAsync(int menuMastersId, CancellationToken cancellationToken = default)
     {
@@ -163,7 +188,7 @@ public class MenuRepo : IMenuRepo
             INNER JOIN dbo.Users uC ON uC.UserId = m.CreatedBy
             INNER JOIN dbo.SysProgram sp ON sp.SysProgramId = m.ProgramId
             LEFT JOIN dbo.Users uU ON uU.UserId = m.UpdatedBy
-            WHERE MenuMasterId=@MenuMasterId";
+            WHERE MenuMasterId=@MenuMasterId and sp.IsDeleted=0";
 
         using var connection = _context.CreateConnection();
         var cmd = new CommandDefinition(sql, new { MenuMasterId = menuMastersId }, cancellationToken: cancellationToken);
@@ -183,6 +208,7 @@ public class MenuRepo : IMenuRepo
             INNER JOIN dbo.Users uC ON uC.UserId = m.CreatedBy
             LEFT JOIN dbo.Users uU ON uU.UserId = m.UpdatedBy
             LEFT JOIN dbo.Users uD ON uD.UserId = m.DeletedBy
+            LEFT JOIN dbo.Application ap ON ap.ApplicationId = m.ApplicationId
             WHERE 1=1 ");
 
         if (filter.Active.HasValue)
@@ -263,17 +289,18 @@ public class MenuRepo : IMenuRepo
             SELECT
                 m.MenuMasterId,
                 m.MenuName,
-                m.MenuIcon AS MenuIcon,
-                m.MenuRoute AS MenuRoute,
-                m.ApplicationId AS ApplicationId,
-                m.IsActive AS Active,
-                m.IsDeleted AS Deleted,
+                m.MenuIcon ,
+                m.MenuRoute,
+                m.ApplicationId,
+                ap.ApplicationName,
+                m.IsActive,
+                m.IsDeleted,
                 CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-                m.CreatedAt AS CreatedDate,
+                m.CreatedAt,
                 ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
-                m.UpdatedAt AS ModifiedDate,
+                m.UpdatedAt,
                 ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
-                m.DeletedAt AS DeletedDate
+                m.DeletedAt
             {baseSql}
             ORDER BY {sortColumn} {sortOrder}
             OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
@@ -358,14 +385,17 @@ public class MenuRepo : IMenuRepo
             {
                 await DeleteMenuProgramLinksAsync(connection, tx, entity.MenuMasterId, entity.UpdatedBy ?? 0, cancellationToken);
             }
-            else
-            {
+           
                 if (addProgramIds is { Count: > 0 })
                     await InsertMenuProgramLinksAsync(connection, tx, entity.MenuMasterId, addProgramIds, entity.UpdatedBy ?? 0, cancellationToken);
 
                 if (updateProgramIds is { Count: > 0 })
-                    await UpdateMenuProgramLinksAsync(connection, tx, updateProgramIds, entity.UpdatedBy ?? 0, cancellationToken);
-            }
+                {
+                    var  error = await UpdateMenuProgramLinksAsync(connection, tx, updateProgramIds, entity.UpdatedBy ?? 0, entity.MenuMasterId ,cancellationToken);
+                    if (error != null) { tx.Rollback(); return error; }
+                }
+                    
+            
 
             tx.Commit();
             return null;
@@ -417,15 +447,19 @@ public class MenuRepo : IMenuRepo
             transaction: tx,
             cancellationToken: cancellationToken));
     }
-    private async Task UpdateMenuProgramLinksAsync(IDbConnection connection,IDbTransaction tx,IEnumerable<MenuProgramLink> updateProgramIds,int updatedBy,CancellationToken cancellationToken)
+    private async Task<BulkUpsertError?> UpdateMenuProgramLinksAsync(IDbConnection connection,IDbTransaction tx,IEnumerable<MenuProgramLink> updateProgramIds,int updatedBy,int MenuMasterId,CancellationToken cancellationToken)
     {
         foreach (var item in updateProgramIds)
         {
+            var query = "select MenuProgramLinkId from MenuProgramLink where programId=@ProgramId and menuMasterId=@MenuMasterId";
 
+            var MenuProgramLinkId = await connection.QueryFirstOrDefaultAsync<int>(query,new { MenuMasterId= MenuMasterId, ProgramId= item.ProgramId },transaction:tx);
+            if(MenuProgramLinkId<=0)
+                return new BulkUpsertError { Message = Messages.MenuProgramLinkNotFound, StatuaCode = StatusCodes.Status404NotFound };
             var sets = new List<string>();
             var p = new DynamicParameters();
 
-            p.Add("MenuProgramLinkId", item.MenuProgramLinkId);
+            p.Add("MenuProgramLinkId", MenuProgramLinkId);
             p.Add("UpdatedBy", updatedBy);
 
             if (item.IsPrimaryProgram.HasValue)
@@ -460,6 +494,7 @@ public class MenuRepo : IMenuRepo
             
             
         }
+        return null;
     }
     public async Task<int> CreateWebMenuAsync(int menuMasterId,int createdBy,CancellationToken cancellationToken)
     {
@@ -1118,6 +1153,8 @@ public class MenuRepo : IMenuRepo
                 cancellationToken: cancellationToken));
         }
     }
+
+
 
 
 
