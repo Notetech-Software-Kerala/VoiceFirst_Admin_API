@@ -216,6 +216,13 @@ namespace VoiceFirst_Admin.Data.Repositories
             var sql = @"SELECT 
                         po.PostOfficeId,
                         po.PostOfficeName,
+                        c.CountryName,
+                        c.DivisionOneName AS DivisionOneLabel,
+                        c.DivisionTwoName AS DivisionTwoLabel,
+                        c.DivisionThreeName AS DivisionThreeLabel,
+                        d1.DivisionOneName, 
+                        d2.DivisionTwoName,
+                        d3.DivisionThreeName,
                         pzl.PlaceZipCodeLinkId, -- split starts here
                         pzl.PostOfficeZipCodeLinkId AS ZipCodeLinkId, 
                         z.ZipCode,
@@ -233,6 +240,14 @@ namespace VoiceFirst_Admin.Data.Repositories
                             ON po.PostOfficeId = pozl.PostOfficeId
                             AND po.IsDeleted = 0
                             AND po.IsActive = 1
+                        INNER JOIN Country c
+                            ON c.CountryId = po.CountryId
+                        LEFT JOIN DivisionOne d1
+                            ON d1.DivisionOneId = po.DivisionOneId
+                        LEFT JOIN DivisionTwo d2
+                            ON d2.DivisionTwoId = po.DivisionTwoId
+                        LEFT JOIN DivisionThree d3
+                            ON d3.DivisionThreeId = po.DivisionThreeId
                         INNER JOIN ZipCode z
                             ON z.ZipCodeId = pozl.ZipCodeId
                         INNER JOIN Users uC
