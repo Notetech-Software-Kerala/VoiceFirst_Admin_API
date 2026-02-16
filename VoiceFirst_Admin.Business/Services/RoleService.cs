@@ -53,7 +53,7 @@ public class RoleService : IRoleService
                 Messages.RoleNameAlreadyExists,
                 StatusCodes.Status409Conflict);
         }
-        foreach(var plan in dto.PlanActionLinkCreateDto)
+        foreach(var plan in dto.CreatePlanActionLink)
         {
             if (plan.ActionLinkIds != null && plan.ActionLinkIds.Count() > 0)
             {
@@ -79,7 +79,7 @@ public class RoleService : IRoleService
             CreatedBy = loginId
         };
 
-        var created = await _repo.CreateAsync(entity, dto.PlanActionLinkCreateDto, cancellationToken);
+        var created = await _repo.CreateAsync(entity, dto.CreatePlanActionLink, cancellationToken);
         if (created == null)
             return ApiResponse<RoleDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
 
