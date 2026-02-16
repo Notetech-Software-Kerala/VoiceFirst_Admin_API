@@ -355,7 +355,7 @@ public class RoleRepo : IRoleRepo
 
     public async Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT spa.SysRoleId ,spa.PlanId,
+        const string sql = @"SELECT spa.SysRoleId ,spa.PlanId,pl.PlanName,
                 spa.PlanRoleLinkId ,
                 pra.PlanRoleProgramActionLinkId ,
                 pra.ProgramActionLinkId ,
@@ -370,6 +370,7 @@ public class RoleRepo : IRoleRepo
             Inner join PlanRoleProgramActionLink pra on pra.PlanRoleLinkId=spa.PlanRoleLinkId
             LEFT JOIN SysProgramActionsLink pal ON pal.SysProgramActionLinkId = pra.ProgramActionLinkId
             LEFT JOIN SysProgramActions pa ON pa.SysProgramActionId = pal.ProgramActionId
+            LEFT JOIN dbo.[Plan] pl ON pl.PlanId = spa.PlanId
             INNER JOIN Users uC ON uC.UserId = pra.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = pra.UpdatedBy
             WHERE spa.SysRoleId = @RoleId ";

@@ -8,5 +8,6 @@ public class PlanRoleActionLinkDetailsDto
 
     public int PlanRoleLinkId { get; set; }
     public int PlanId { get; set; }
+    public string PlanName { get; set; }
     public List<PlanRoleActionLinkDto> PlanActionLink { get; set; }
 }
