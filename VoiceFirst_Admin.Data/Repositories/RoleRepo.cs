@@ -222,6 +222,7 @@ public class RoleRepo : IRoleRepo
     {
         var sets = new List<string>();
         var parameters = new DynamicParameters();
+        
         using var connection = _context.CreateConnection();
         if (!string.IsNullOrWhiteSpace(entity.RoleName))
         {
@@ -240,8 +241,16 @@ public class RoleRepo : IRoleRepo
         }
         if (entity.ApplicationId != default)
         {
-            await connection.ExecuteAsync(new CommandDefinition("UPDATE PlanRoleProgramActionLink SET IsDeleted = 1, DeletedBy = @UpdatedBy, DeletedAt = SYSDATETIME() WHERE SysRoleId = @RoleId;", new { RoleId = entity.SysRoleId, UpdatedBy=entity.UpdatedBy },cancellationToken: cancellationToken));
-            sets.Add("ApplicationId = @ApplicationId");
+            
+            if (entity.ApplicationId != 2)
+            {
+                
+                    await connection.ExecuteAsync(new CommandDefinition("UPDATE PlanRoleLink SET IsDeleted = 1, DeletedBy = @UpdatedBy, DeletedAt = SYSDATETIME() WHERE SysRoleId = @SysRoleId;", new { SysRoleId = entity.SysRoleId, UpdatedBy = entity.UpdatedBy }, cancellationToken: cancellationToken));
+                
+            }
+
+
+                sets.Add("ApplicationId = @ApplicationId");
             parameters.Add("ApplicationId", entity.ApplicationId);
         }
       
