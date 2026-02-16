@@ -7,10 +7,10 @@ public class RoleUpdateDto
     public int? PlatformId { get; set; }
 
     // Add these links (insert if not exists)
-    public List<PlanActionLinkCreateDto>? CreateActionLink { get; set; }
+    public List<PlanActionLinkCreateDto>? CreatePlanActionLink { get; set; }
 
     // Update existing links to the desired state
-    public List<PlanRoleActionLinkUpdateDto>? UpdateActionLinks { get; set; }
+    public List<PlanRoleActionLinkUpdateDto>? UpdatePlanActionLinks { get; set; }
 }
 
 
