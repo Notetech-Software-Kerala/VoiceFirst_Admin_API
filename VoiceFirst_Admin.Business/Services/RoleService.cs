@@ -183,9 +183,9 @@ public class RoleService : IRoleService
         }
        
         // update action links
-        if (dto.PlanActionLinkCreateDto != null && dto.PlanActionLinkCreateDto.Count()>0)
+        if (dto.CreatePlanActionLink != null && dto.CreatePlanActionLink.Count()>0)
         {
-            foreach (var item in dto.PlanActionLinkCreateDto)
+            foreach (var item in dto.CreatePlanActionLink)
             {
                 var invalidIds = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
                 roleDetails.ApplicationId ,
@@ -201,7 +201,7 @@ public class RoleService : IRoleService
                 var addError = await _repo.AddRoleActionLinksAsync(
                     id,
                     roleDetails.ApplicationId,
-                    dto.PlanActionLinkCreateDto,
+                    dto.CreatePlanActionLink,
                     loginId,
                     cancellationToken);
 
@@ -210,7 +210,7 @@ public class RoleService : IRoleService
             }
             
         }
-        if (dto.UpdateActionLinks != null)
+        if (dto.UpdatePlanActionLinks != null)
         {
             //var actionLinksIds = dto.UpdateActionLinks.Select(x => x.ActionLinkId).ToList();
             //var list = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
@@ -227,7 +227,7 @@ public class RoleService : IRoleService
             var updateError = await _repo.UpdateRoleActionLinksAsync(
                id,
                dto.PlatformId ?? 0,
-               dto.UpdateActionLinks,
+               dto.UpdatePlanActionLinks,
                loginId,
                cancellationToken);
 
