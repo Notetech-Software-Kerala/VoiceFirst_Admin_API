@@ -53,7 +53,7 @@ public class RoleService : IRoleService
                 Messages.RoleNameAlreadyExists,
                 StatusCodes.Status409Conflict);
         }
-        foreach(var plan in dto.PlanActionLinkCreateDto)
+        foreach(var plan in dto.CreatePlanActionLink)
         {
             if (plan.ActionLinkIds != null && plan.ActionLinkIds.Count() > 0)
             {
@@ -79,7 +79,7 @@ public class RoleService : IRoleService
             CreatedBy = loginId
         };
 
-        var created = await _repo.CreateAsync(entity, dto.PlanActionLinkCreateDto, cancellationToken);
+        var created = await _repo.CreateAsync(entity, dto.CreatePlanActionLink, cancellationToken);
         if (created == null)
             return ApiResponse<RoleDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
 
@@ -97,7 +97,7 @@ public class RoleService : IRoleService
     {
         var entity = await _repo.GetByIdAsync(planRoleDto.RoleId, cancellationToken);
         if (entity == null) return null;
-        var links = await _repo.GetActionIdsByRoleIdAsync(planRoleDto.RoleId, planRoleDto.PlanId, cancellationToken);
+        var links = await _repo.GetActionIdsByRoleIdAsync(planRoleDto.RoleId ,cancellationToken);
         
         PlanRoleActionLinkDetailsDto planRoleActionLinkDetails = new PlanRoleActionLinkDetailsDto();
         if (links.Count() > 0)
@@ -109,14 +109,25 @@ public class RoleService : IRoleService
 
         return planRoleActionLinkDetails;
     }
-    public async Task<RoleDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<RoleDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await _repo.GetByIdAsync(id, cancellationToken);
         if (entity == null) return null;
-        var dto = _mapper.Map<RoleDto>(entity);
-        //var links = await _repo.GetActionIdsByRoleIdAsync(id, cancellationToken);
-        //var actionLinksMap = _mapper.Map<IEnumerable<PlanRoleActionLinkDto>>(links);
-        //dto.ActionLinks = actionLinksMap.ToList();
+        var dto = _mapper.Map<RoleDetailDto>(entity);
+        var links = await _repo.GetActionIdsByRoleIdAsync(id, cancellationToken);
+        List<PlanRoleActionLinkDetailsDto> planRoleActionLinkDetails =
+    links?
+    .GroupBy(x => new { x.PlanId, x.PlanRoleLinkId })
+    .Select(g => new PlanRoleActionLinkDetailsDto
+    {
+        PlanId = g.Key.PlanId,
+        PlanRoleLinkId = g.Key.PlanRoleLinkId,
+        PlanName = g.FirstOrDefault()?.PlanName,
+        PlanActionLink = _mapper.Map<List<PlanRoleActionLinkDto>>(g.ToList())
+    })
+    .ToList()
+    ?? new List<PlanRoleActionLinkDetailsDto>();
+        dto.PlanRoleActionLink = planRoleActionLinkDetails;
         return dto;
     }
 
@@ -183,9 +194,9 @@ public class RoleService : IRoleService
         }
        
         // update action links
-        if (dto.PlanActionLinkCreateDto != null && dto.PlanActionLinkCreateDto.Count()>0)
+        if (dto.CreatePlanActionLink != null && dto.CreatePlanActionLink.Count()>0)
         {
-            foreach (var item in dto.PlanActionLinkCreateDto)
+            foreach (var item in dto.CreatePlanActionLink)
             {
                 var invalidIds = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
                 roleDetails.ApplicationId ,
@@ -201,7 +212,7 @@ public class RoleService : IRoleService
                 var addError = await _repo.AddRoleActionLinksAsync(
                     id,
                     roleDetails.ApplicationId,
-                    dto.PlanActionLinkCreateDto,
+                    dto.CreatePlanActionLink,
                     loginId,
                     cancellationToken);
 
@@ -210,7 +221,7 @@ public class RoleService : IRoleService
             }
             
         }
-        if (dto.UpdateActionLinks != null)
+        if (dto.UpdatePlanActionLinks != null)
         {
             //var actionLinksIds = dto.UpdateActionLinks.Select(x => x.ActionLinkId).ToList();
             //var list = await _sysProgramRepo.GetInvalidProgramActionLinkIdsForApplicationAsync(
@@ -227,7 +238,7 @@ public class RoleService : IRoleService
             var updateError = await _repo.UpdateRoleActionLinksAsync(
                id,
                dto.PlatformId ?? 0,
-               dto.UpdateActionLinks,
+               dto.UpdatePlanActionLinks,
                loginId,
                cancellationToken);
 

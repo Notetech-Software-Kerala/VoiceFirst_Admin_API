@@ -5,7 +5,7 @@ public class RoleCreateDto
     public string RoleName { get; set; } 
     public string? RolePurpose { get; set; }
     public int PlatformId { get; set; }
-    public List<PlanActionLinkCreateDto> PlanActionLinkCreateDto { get; set; }
+    public List<PlanActionLinkCreateDto> CreatePlanActionLink { get; set; }
 
 }
 

@@ -21,6 +21,38 @@ public class DataExamples
     ""deletedUser"": "" "",
     ""deletedDate"": null
   }";
+    public const string ROLCBYIDDATA = @" {
+""planRoleActionLink"": [
+      {
+        ""planRoleLinkId"": 14,
+        ""planId"": 1,
+        ""planActionLink"": [
+          {
+            ""actionLinkId"": 5,
+            ""actionName"": ""Editt"",
+            ""active"": true,
+            ""createdUser"": ""Mithun N"",
+            ""createdDate"": ""2026-02-03T20:12:00.238"",
+            ""modifiedUser"": "" "",
+            ""modifiedDate"": null
+          }
+        ]
+      }
+    ],
+    ""roleId"": 1,
+    ""roleName"": ""ADMIN"",
+    ""isMandatory"": false,
+    ""rolePurpose"": ""Admin description"",
+    ""platformId"": 2,
+    ""active"": true,
+    ""deleted"": false,
+    ""createdDate"": ""2026-02-03T20:12:00.204"",
+    ""createdUser"": ""Mithun N"",
+    ""modifiedDate"": null,
+    ""modifiedUser"": "" "",
+    ""deletedUser"": "" "",
+    ""deletedDate"": null
+  }";
     public const string ROLUPDATEDATA = @" {
     ""roleId"": 1,
     ""roleName"": ""ADMIN"",

@@ -222,6 +222,7 @@ public class RoleRepo : IRoleRepo
     {
         var sets = new List<string>();
         var parameters = new DynamicParameters();
+        
         using var connection = _context.CreateConnection();
         if (!string.IsNullOrWhiteSpace(entity.RoleName))
         {
@@ -240,8 +241,16 @@ public class RoleRepo : IRoleRepo
         }
         if (entity.ApplicationId != default)
         {
-            await connection.ExecuteAsync(new CommandDefinition("UPDATE PlanRoleProgramActionLink SET IsDeleted = 1, DeletedBy = @UpdatedBy, DeletedAt = SYSDATETIME() WHERE SysRoleId = @RoleId;", new { RoleId = entity.SysRoleId, UpdatedBy=entity.UpdatedBy },cancellationToken: cancellationToken));
-            sets.Add("ApplicationId = @ApplicationId");
+            
+            if (entity.ApplicationId != 2)
+            {
+                
+                    await connection.ExecuteAsync(new CommandDefinition("UPDATE PlanRoleLink SET IsActive = 0, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE SysRoleId = @SysRoleId;", new { SysRoleId = entity.SysRoleId, UpdatedBy = entity.UpdatedBy }, cancellationToken: cancellationToken));
+                
+            }
+
+
+                sets.Add("ApplicationId = @ApplicationId");
             parameters.Add("ApplicationId", entity.ApplicationId);
         }
       
@@ -344,9 +353,9 @@ public class RoleRepo : IRoleRepo
         return await connection.QueryFirstOrDefaultAsync<SysRoles>(new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken));
     }
 
-    public async Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, int planId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT spa.SysRoleId ,
+        const string sql = @"SELECT spa.SysRoleId ,spa.PlanId,pl.PlanName,
                 spa.PlanRoleLinkId ,
                 pra.PlanRoleProgramActionLinkId ,
                 pra.ProgramActionLinkId ,
@@ -361,12 +370,13 @@ public class RoleRepo : IRoleRepo
             Inner join PlanRoleProgramActionLink pra on pra.PlanRoleLinkId=spa.PlanRoleLinkId
             LEFT JOIN SysProgramActionsLink pal ON pal.SysProgramActionLinkId = pra.ProgramActionLinkId
             LEFT JOIN SysProgramActions pa ON pa.SysProgramActionId = pal.ProgramActionId
+            LEFT JOIN dbo.[Plan] pl ON pl.PlanId = spa.PlanId
             INNER JOIN Users uC ON uC.UserId = pra.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = pra.UpdatedBy
-            WHERE spa.SysRoleId = @RoleId And spa.PlanId = @PlanId And spa.isActive=1 ";
+            WHERE spa.SysRoleId = @RoleId ";
 
         using var connection = _context.CreateConnection();
-        var items = await connection.QueryAsync<PlanRoleProgramActionLink>(new CommandDefinition(sql, new { RoleId = roleId , PlanId= planId }, cancellationToken: cancellationToken));
+        var items = await connection.QueryAsync<PlanRoleProgramActionLink>(new CommandDefinition(sql, new { RoleId = roleId}, cancellationToken: cancellationToken));
         return items.ToList();
     }
 

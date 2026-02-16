@@ -56,21 +56,21 @@ public class RoleController : ControllerBase
     {
         var item = await _service.GetByIdAsync(id, cancellationToken);
         if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound));
-        return Ok(ApiResponse<RoleDto>.Ok(item, Messages.RoleRetrieveSucessfully));
+        return Ok(ApiResponse<RoleDetailDto>.Ok(item, Messages.RoleRetrieveSucessfully));
     }
-    [HttpGet("plan-role-link")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<PlanRoleActionLinkDetailsDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    [SwaggerResponseDescription(StatusCodes.Status200OK, Description.PROGRAM_RETRIEVED, Messages.RoleRetrieveSucessfully, DataExamples.ROLGETALLDATA)]
-    [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.NotFound)]
-    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
-    public async Task<IActionResult> GetByPlanIdAsync([FromQuery] PlanRoleDto planRoleDto, CancellationToken cancellationToken)
-    {
-        var item = await _service.GetByPlanIdAsync(planRoleDto, cancellationToken);
-        if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound));
-        return Ok(ApiResponse<PlanRoleActionLinkDetailsDto>.Ok(item, Messages.RoleRetrieveSucessfully));
-    }
+    //[HttpGet("plan-role-link")]
+    //[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    //[ProducesResponseType(typeof(ApiResponse<PlanRoleActionLinkDetailsDto>), StatusCodes.Status200OK)]
+    //[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    //[SwaggerResponseDescription(StatusCodes.Status200OK, Description.PROGRAM_RETRIEVED, Messages.RoleRetrieveSucessfully, DataExamples.ROLGETALLDATA)]
+    //[SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.NotFound)]
+    //[SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
+    //public async Task<IActionResult> GetByPlanIdAsync([FromQuery] PlanRoleDto planRoleDto, CancellationToken cancellationToken)
+    //{
+    //    var item = await _service.GetByPlanIdAsync(planRoleDto, cancellationToken);
+    //    if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.NotFound));
+    //    return Ok(ApiResponse<PlanRoleActionLinkDetailsDto>.Ok(item, Messages.RoleRetrieveSucessfully));
+    //}
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
