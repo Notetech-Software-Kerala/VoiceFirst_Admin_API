@@ -245,7 +245,7 @@ public class RoleRepo : IRoleRepo
             if (entity.ApplicationId != 2)
             {
                 
-                    await connection.ExecuteAsync(new CommandDefinition("UPDATE PlanRoleLink SET IsDeleted = 1, DeletedBy = @UpdatedBy, DeletedAt = SYSDATETIME() WHERE SysRoleId = @SysRoleId;", new { SysRoleId = entity.SysRoleId, UpdatedBy = entity.UpdatedBy }, cancellationToken: cancellationToken));
+                    await connection.ExecuteAsync(new CommandDefinition("UPDATE PlanRoleLink SET IsActive = 0, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE SysRoleId = @SysRoleId;", new { SysRoleId = entity.SysRoleId, UpdatedBy = entity.UpdatedBy }, cancellationToken: cancellationToken));
                 
             }
 
@@ -353,9 +353,9 @@ public class RoleRepo : IRoleRepo
         return await connection.QueryFirstOrDefaultAsync<SysRoles>(new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken));
     }
 
-    public async Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, int planId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT spa.SysRoleId ,
+        const string sql = @"SELECT spa.SysRoleId ,spa.PlanId,
                 spa.PlanRoleLinkId ,
                 pra.PlanRoleProgramActionLinkId ,
                 pra.ProgramActionLinkId ,
@@ -372,10 +372,10 @@ public class RoleRepo : IRoleRepo
             LEFT JOIN SysProgramActions pa ON pa.SysProgramActionId = pal.ProgramActionId
             INNER JOIN Users uC ON uC.UserId = pra.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = pra.UpdatedBy
-            WHERE spa.SysRoleId = @RoleId And spa.PlanId = @PlanId And spa.isActive=1 ";
+            WHERE spa.SysRoleId = @RoleId ";
 
         using var connection = _context.CreateConnection();
-        var items = await connection.QueryAsync<PlanRoleProgramActionLink>(new CommandDefinition(sql, new { RoleId = roleId , PlanId= planId }, cancellationToken: cancellationToken));
+        var items = await connection.QueryAsync<PlanRoleProgramActionLink>(new CommandDefinition(sql, new { RoleId = roleId}, cancellationToken: cancellationToken));
         return items.ToList();
     }
 

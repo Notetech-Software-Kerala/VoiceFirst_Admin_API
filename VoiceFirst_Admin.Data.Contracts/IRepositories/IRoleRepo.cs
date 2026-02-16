@@ -23,7 +23,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<bool> DeleteAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<bool> RestoreAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<SysRoles> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
-        Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId,int planId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default);
         Task<BulkUpsertError?> AddRoleActionLinksAsync(
             int roleId,
             int applicationId,
