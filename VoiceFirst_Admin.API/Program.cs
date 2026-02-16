@@ -24,11 +24,20 @@ using VoiceFirst_Admin.Utilities.Middlewares;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
+using VoiceFirst_Admin.API.Security;
+using FluentValidation;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+using VoiceFirst_Admin.Utilities.Validators;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddScoped<IDapperContext, DapperContext>();
 builder.Services.AddAutoMapper(typeof(SysBusinessActivityProfile).Assembly);
+builder.Services.AddValidatorsFromAssemblyContaining<SysBusinessActivityCreateValidator>();
+builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

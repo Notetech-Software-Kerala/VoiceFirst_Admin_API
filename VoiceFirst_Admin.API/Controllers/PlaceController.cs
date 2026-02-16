@@ -125,6 +125,7 @@ namespace VoiceFirst_Admin.API.Controllers
 
 
 
+
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<PagedResultDto<PlaceDTO>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
@@ -255,7 +256,6 @@ namespace VoiceFirst_Admin.API.Controllers
         [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.PlaceAlreadyRecovered)]
         [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
         [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
-
         public async Task<IActionResult> RecoverAsync(
             int id,
             CancellationToken cancellationToken)

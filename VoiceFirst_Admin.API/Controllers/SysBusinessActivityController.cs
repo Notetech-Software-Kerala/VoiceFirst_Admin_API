@@ -14,11 +14,12 @@ using VoiceFirst_Admin.Utilities.Models.Common;
 public class SysBusinessActivityController : ControllerBase
 {
     private readonly ISysBusinessActivityService _service;
-    const int userId = 1;
+    private readonly IUserContext _userContext;
 
-    public SysBusinessActivityController(ISysBusinessActivityService service)
+    public SysBusinessActivityController(ISysBusinessActivityService service, IUserContext userContext)
     {
         _service = service;
+        _userContext = userContext;
     }
 
     /// <summary>
@@ -54,6 +55,7 @@ public class SysBusinessActivityController : ControllerBase
     /// <response code="500">
     /// Internal server error. An unexpected error occurred while processing the request.
     /// </response>
+    [Authorize]
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -71,23 +73,11 @@ public class SysBusinessActivityController : ControllerBase
         [FromBody] SysBusinessActivityCreateDTO model,
         CancellationToken cancellationToken)
     {
-        // 1️⃣ Null payload check
-        if (model == null)
-        {
-            return BadRequest(ApiResponse<object>.Fail(
-                message: Messages.PayloadRequired,
-                statusCode: StatusCodes.Status400BadRequest,
-                error: ErrorCodes.Payload
-            ));
-        }
-     
-        // 3️⃣ Delegate business logic to service
         var response = await _service.CreateAsync(
             model,
-            userId,
+            _userContext.UserId,
             cancellationToken);
 
-        // 4️⃣ Return standardized response
         return StatusCode(response.StatusCode, response);
     }
 
@@ -225,7 +215,7 @@ public class SysBusinessActivityController : ControllerBase
     [FromBody] SysBusinessActivityUpdateDTO model,
     CancellationToken cancellationToken)
     {
-        if (model == null || id <= 0)
+        if (id <= 0)
         {
             return BadRequest(ApiResponse<object>.Fail(
                 Messages.PayloadRequired,
@@ -235,7 +225,7 @@ public class SysBusinessActivityController : ControllerBase
         }
 
         var response = await _service.UpdateAsync(
-            model, id, userId, cancellationToken);
+            model, id, _userContext.UserId, cancellationToken);
         return StatusCode(response.StatusCode,response);
     }
 
@@ -269,7 +259,7 @@ public class SysBusinessActivityController : ControllerBase
             ));
         }
         var recoveredDto = await _service.RecoverBusinessActivityAsync
-            (id, userId, cancellationToken);
+            (id, _userContext.UserId, cancellationToken);
         return StatusCode(recoveredDto.StatusCode, recoveredDto);
     }
 
@@ -299,9 +289,13 @@ public class SysBusinessActivityController : ControllerBase
                 error: ErrorCodes.Payload
             ));
         }
-        var recoveredDto =  await _service.DeleteAsync(id, userId, cancellationToken);
+        var recoveredDto =  await _service.DeleteAsync(id, _userContext.UserId, cancellationToken);
         return StatusCode(recoveredDto.StatusCode, recoveredDto);
     }
+
+
+
+  
 
 
 }

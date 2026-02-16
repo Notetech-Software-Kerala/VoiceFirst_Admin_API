@@ -31,6 +31,7 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly ICountryRepo _countryRepo;
         private readonly IRoleRepo _roleRepo;
         private readonly IConfiguration _configuration;
+        private readonly ISessionService _sessionService;
         public UserService(
             IUserRepo repo,
             IUserRoleLinkRepo userRoleLinkRepo,
@@ -38,7 +39,8 @@ namespace VoiceFirst_Admin.Business.Services
             IDapperContext dapperContext,
             ICountryRepo countryRepo,
             IRoleRepo roleRepo,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ISessionService sessionService)
         {
             _repo = repo;
             _mapper = mapper;
@@ -47,6 +49,7 @@ namespace VoiceFirst_Admin.Business.Services
             _userRoleLinkRepo = userRoleLinkRepo;
             _roleRepo = roleRepo;
             _configuration = configuration;
+            _sessionService = sessionService;
         }
 
 
@@ -258,7 +261,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (rowAffect)
             {
-
+                await _sessionService.InvalidateAllUserSessionsAsync(id);
 
                 var dto =
                await GetByIdAsync
@@ -567,6 +570,11 @@ namespace VoiceFirst_Admin.Business.Services
                     connection, transaction, cancellationToken);
 
                 transaction.Commit();
+
+                if (dto.Active == false)
+                {
+                    await _sessionService.InvalidateAllUserSessionsAsync(updateUserId);
+                }
 
                 return ApiResponse<EmployeeDetailDto>.Ok(
                     dtoOut!,

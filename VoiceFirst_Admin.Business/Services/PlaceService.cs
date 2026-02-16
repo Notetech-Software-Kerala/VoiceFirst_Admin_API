@@ -83,7 +83,33 @@ namespace VoiceFirst_Admin.Business.Services
             {
                 if (existingEntity != null)
                 {
-                    // place name already exists – check if zip codes are already linked
+                    if (existingEntity.Deleted)
+                    {
+                        // Place exists but was soft-deleted — return recoverable
+                        transaction.Rollback();
+                        return ApiResponse<PlaceDetailDTO>.Fail(
+                            Messages.PlaceAlreadyExistsRecoverable,
+                            StatusCodes.Status422UnprocessableEntity,
+                            ErrorCodes.PlaceAlreadyExistsRecoverable,
+                            new PlaceDetailDTO
+                            {
+                                PlaceId = existingEntity.PlaceId
+                            });
+                    }
+
+                    // place name already exists and is not deleted
+                    // if inactive, reactivate it
+                    if (!existingEntity.Active)
+                    {
+                        await _repo.ActivatePlaceAsync(
+                            existingEntity.PlaceId,
+                            loginId,
+                            connection,
+                            transaction,
+                            cancellationToken);
+                    }
+
+                    // check if zip codes are already linked
                     if (dto.ZipCodeLinkIds != null && dto.ZipCodeLinkIds.Any())
                     {
                         var alreadyLinked =
@@ -131,7 +157,7 @@ namespace VoiceFirst_Admin.Business.Services
                     transaction.Commit();
                     return ApiResponse<PlaceDetailDTO>.Ok(
                         dtoOut!,
-                        Messages.PlaceCreated,
+                        Messages.PlaceWasAlreadyExistZipCodeLinked,
                         StatusCodes.Status201Created);
                 }
 
@@ -255,7 +281,13 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.PlaceNotFoundById);
             }
 
-
+            if (existDto.Deleted)
+            {
+                return ApiResponse<PlaceDetailDTO>.Fail(
+                   Messages.PlaceNotFound,
+                   StatusCodes.Status409Conflict,
+                    ErrorCodes.PlaceNotFound);
+            }
 
 
             // uniqueness check ONLY if name is patched
@@ -268,11 +300,23 @@ namespace VoiceFirst_Admin.Business.Services
 
                 if (existingEntity is not null)
                 {
-                    return ApiResponse<PlaceDetailDTO>.Fail
-                       (Messages.PlaceAlreadyExists,
-                       StatusCodes.Status409Conflict,
-                       ErrorCodes.PlaceAlreadyExists
-                       );
+                    if (!existingEntity.Deleted)
+                    {
+                        return ApiResponse<PlaceDetailDTO>.Fail
+                           (Messages.PlaceAlreadyExists,
+                           StatusCodes.Status409Conflict,
+                           ErrorCodes.PlaceAlreadyExists
+                           );
+                    }
+                    return ApiResponse<PlaceDetailDTO>.Fail(
+                         Messages.PlaceAlreadyExistsRecoverable,
+                         StatusCodes.Status422UnprocessableEntity,
+                          ErrorCodes.PlaceAlreadyExistsRecoverable,
+                          new PlaceDetailDTO
+                          {
+                              PlaceId = existingEntity.PlaceId
+                          }
+                     );
                 }
             }
             using var connection = _context.CreateConnection();
@@ -425,6 +469,14 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.PlaceNotFoundById);
             }
 
+            if (!existDto.Deleted)
+            {
+                return ApiResponse<PlaceDetailDTO>.Fail(
+                    Messages.PlaceAlreadyRecovered,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.PlaceAlreadyRecovered);
+            }
+
             using var connection = _context.CreateConnection();
             connection.Open();
             using var transaction = connection.BeginTransaction();
@@ -480,6 +532,14 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.PlaceNotFoundById);
             }
 
+            if (existDto.Deleted)
+            {
+                return ApiResponse<PlaceDetailDTO>.Fail(
+                    Messages.PlaceAlreadyDeleted,
+                    StatusCodes.Status409Conflict,
+                    ErrorCodes.PlaceAlreadyDeleted);
+            }
+
             using var connection = _context.CreateConnection();
             connection.Open();
             using var transaction = connection.BeginTransaction();
@@ -487,7 +547,11 @@ namespace VoiceFirst_Admin.Business.Services
             try
             {
                 var rowAffect = await _repo.DeleteAsync(
-                    id, loginId, connection, transaction, cancellationToken);
+                    id, 
+                    loginId,
+                    connection, 
+                    transaction, 
+                    cancellationToken);
 
                 if (!rowAffect)
                 {
@@ -499,7 +563,10 @@ namespace VoiceFirst_Admin.Business.Services
                 }
 
                 var dtoOut = await _repo.GetByIdAsync(
-                    id, connection, transaction, cancellationToken);
+                    id, 
+                    connection,
+                    transaction,
+                    cancellationToken);
 
                 transaction.Commit();
                 return ApiResponse<PlaceDetailDTO>.Ok(

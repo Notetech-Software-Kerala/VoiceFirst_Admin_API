@@ -114,6 +114,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string PlaceCreated =
            "Place  created successfully.";
 
+        public const string PlaceWasAlreadyExistZipCodeLinked =
+          "Place was already exist .so it was linked with zipcodes.";
+
         public const string PlanCreated =
            "Plan  created successfully.";
 
