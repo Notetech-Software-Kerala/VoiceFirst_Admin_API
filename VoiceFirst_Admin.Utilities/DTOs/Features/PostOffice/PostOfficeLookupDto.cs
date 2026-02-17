@@ -17,4 +17,10 @@ public class PostOfficeDetailLookupDto
     public string DivTwoName { get; set; } = string.Empty;
     public int DivThreeId { get; set; }
     public string DivThreeName { get; set; } = string.Empty;
+
+
+}
+public class PostOfficeZipCodeLookupDto : PostOfficeDetailLookupDto
+{
+    public ZipCodeLookUp? ZipCodes { get; set; }
 }

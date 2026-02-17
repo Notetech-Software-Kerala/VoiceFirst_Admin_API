@@ -48,6 +48,7 @@ public class PostOfficeMappingProfile : Profile
                 .ForMember(d => d.ModifiedDate, opt => opt.MapFrom(s => s.UpdatedAt));
 
         CreateMap<PostOffice, PostOfficeLookupDto>();
+        CreateMap<PostOffice, PostOfficeZipCodeLookupDto>();
 
         CreateMap<PostOfficeZipCode, ZipCodeDto>()
             .ForMember(d => d.ZipCodeLinkId, opt => opt.MapFrom(s => s.PostOfficeZipCodeLinkId))
