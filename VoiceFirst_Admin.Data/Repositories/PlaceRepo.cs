@@ -211,6 +211,47 @@ namespace VoiceFirst_Admin.Data.Repositories
             entity.PostOffices = (await GetPlaceZipCodeLinksByPlaceIdAsync(PlaceId, connection, transaction, cancellationToken)).ToList();
             return entity;
         }
+        public async Task<PlaceDetailDTO?> GetByPlaceIdAsync(
+          int PlaceId,      
+          CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT 
+                    s.PlaceId   ,
+                    s.PlaceName     ,
+                    s.IsActive          As Active,
+                    s.IsDeleted         As Deleted,
+                    s.CreatedAt             As CreatedDate    ,
+                    s.UpdatedAt             As   ModifiedDate  ,
+                    s.DeletedAt             As   DeletedDate  ,
+
+                    -- Created User
+                    CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
+
+                    -- Updated User
+                    CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS ModifiedUser,
+
+                    -- Deleted User
+                    CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
+
+                FROM dbo.Place s
+                INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
+                LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
+                LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
+                WHERE s.PlaceId = @PlaceId;
+                ";
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            var entity = await connection.QuerySingleOrDefaultAsync<PlaceDetailDTO>(
+                new CommandDefinition(sql, 
+                new { PlaceId = PlaceId },
+                cancellationToken: cancellationToken)
+            );
+            if(entity == null)
+                return null;
+            
+            return entity;
+        }
 
 
 

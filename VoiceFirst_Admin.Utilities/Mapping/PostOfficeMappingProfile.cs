@@ -79,6 +79,7 @@ public class PostOfficeMappingProfile : Profile
             .ForMember(d => d.CountryId, opt => opt.MapFrom(s => s.CountryId))
             .ForMember(d => d.DivOneId, opt => opt.MapFrom(s => s.DivOneId))
             .ForMember(d => d.DivThreeId, opt => opt.MapFrom(s => s.DivThreeId))
-            .ForMember(d => d.DivTwoId, opt => opt.MapFrom(s => s.DivTwoId));
+            .ForMember(d => d.DivTwoId, opt => opt.MapFrom(s => s.DivTwoId))
+            .ForMember(d => d.PlaceId, opt => opt.MapFrom(s => s.PlaceId));
     }
 }

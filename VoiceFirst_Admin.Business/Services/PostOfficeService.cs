@@ -20,12 +20,14 @@ public class PostOfficeService : IPostOfficeService
     private readonly IMapper _mapper;
     private readonly IPostOfficeRepo _repo;
     private readonly ICountryRepo _countryRepo;
+    private readonly IPlaceRepo _placeRepo;
 
-    public PostOfficeService(IMapper mapper, IPostOfficeRepo repo, ICountryRepo countryRepo)
+    public PostOfficeService(IMapper mapper, IPostOfficeRepo repo, ICountryRepo countryRepo, IPlaceRepo placeRepo)
     {
         _mapper = mapper;
         _repo = repo;
         _countryRepo = countryRepo;
+        _placeRepo = placeRepo;
     }
 
     public async Task<ApiResponse<PostOfficeDto>> CreateAsync(PostOfficeCreateDto dto, int loginId, CancellationToken cancellationToken = default)
@@ -182,11 +184,20 @@ public class PostOfficeService : IPostOfficeService
         // Division hierarchy checks
         if (filter.DivOneId.HasValue && !filter.CountryId.HasValue)
             return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.CountryRequiredForDivisionOne, StatusCodes.Status400BadRequest);
+        if (filter.PlaceId.HasValue && !filter.CountryId.HasValue)
+            return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.CountryRequiredForDPlace, StatusCodes.Status400BadRequest);
         if (filter.DivTwoId.HasValue && !filter.DivOneId.HasValue)
             return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.DivisionOneRequiredForDivisionTwo, StatusCodes.Status400BadRequest);
         if (filter.DivThreeId.HasValue && !filter.DivTwoId.HasValue)
             return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.DivisionTwoRequiredForDivisionThree, StatusCodes.Status400BadRequest);
-
+        if (filter.PlaceId.HasValue)
+        {
+            var placeDetails = await _placeRepo.GetByPlaceIdAsync(filter.PlaceId ?? 0, cancellationToken);
+            if (placeDetails == null)
+            {
+                return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.PlaceNotFound, StatusCodes.Status404NotFound);
+            }
+        }
         // check existence using country repo
         if (filter.CountryId.HasValue)
         {
@@ -199,6 +210,8 @@ public class PostOfficeService : IPostOfficeService
                 return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.DivisionTwoNotFound, StatusCodes.Status404NotFound);
             if (filter.DivThreeId.HasValue && !countryDivs.DivThreeExists)
                 return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.DivisionThreeNotFound, StatusCodes.Status404NotFound);
+
+            
         }
 
         PostOfficeLookUpWithZipCodeFilterDto filterInput = _mapper.Map<PostOfficeLookUpWithZipCodeFilterDto>(filter);
@@ -211,7 +224,12 @@ public class PostOfficeService : IPostOfficeService
             foreach(var d in dto)
             {
                 var zips = await _repo.GetZipCodesByPostOfficeIdAsync(d.PostOfficeId, null, cancellationToken);
-                d.ZipCodes = _mapper.Map<ZipCodeLookUp>(zips.FirstOrDefault());
+                var ZipCodes = _mapper.Map<IEnumerable<ZipCodeLookUp>>(zips);
+                if (ZipCodes.Count() > 0)
+                {
+                    d.ZipCodes = ZipCodes.ToList();
+                }
+                
             }
         }
         return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Ok(dto, Messages.PostOfficeRetrieveSucessfully, StatusCodes.Status200OK);

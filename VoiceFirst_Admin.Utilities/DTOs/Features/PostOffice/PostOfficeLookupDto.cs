@@ -22,5 +22,5 @@ public class PostOfficeDetailLookupDto
 }
 public class PostOfficeZipCodeLookupDto : PostOfficeLookupDto
 {
-    public ZipCodeLookUp? ZipCodes { get; set; }
+    public List<ZipCodeLookUp> ZipCodes { get; set; }
 }

@@ -514,7 +514,7 @@ public class PostOfficeRepo : IPostOfficeRepo
 
     public async Task<IEnumerable<PostOffice>> GetLookupAsync(PostOfficeLookUpWithZipCodeFilterDto filter, CancellationToken cancellationToken = default)
     {
-        var sql = new StringBuilder(@"
+        var sql = @"
         SELECT
             po.PostOfficeId,
             po.PostOfficeName,
@@ -530,27 +530,28 @@ public class PostOfficeRepo : IPostOfficeRepo
         LEFT JOIN DivisionTwo ON DivisionTwo.DivisionTwoId = po.DivisionTwoId
         LEFT JOIN DivisionOne ON DivisionOne.DivisionOneId = po.DivisionOneId
         LEFT JOIN DivisionThree ON DivisionThree.DivisionThreeId = po.DivisionThreeId
+        LEFT JOIN PostOfficeZipCodeLink ON PostOfficeZipCodeLink.PostOfficeId = po.PostOfficeId
         WHERE po.IsDeleted = 0
           AND po.IsActive = 1
-        ");
+        ";
 
         // Optional filters (only appended if provided)
         if (filter?.CountryId is not null)
-            sql.AppendLine("  AND po.CountryId = @CountryId");
+            sql+="  AND po.CountryId = @CountryId";
 
         if (filter?.DivOneId is not null)
-            sql.AppendLine("  AND po.DivisionOneId = @DivOneId");
+            sql += "  AND po.DivisionOneId = @DivOneId";
 
         if (filter?.DivTwoId is not null)
-            sql.AppendLine("  AND po.DivisionTwoId = @DivTwoId");
+            sql += "  AND po.DivisionTwoId = @DivTwoId";
 
         if (filter?.DivThreeId is not null)
-            sql.AppendLine("  AND po.DivisionThreeId = @DivThreeId");
+            sql += "  AND po.DivisionThreeId = @DivThreeId";
 
         // ZipCode filter via EXISTS (your requirement)
         if (!string.IsNullOrWhiteSpace(filter?.ZipCode))
         {
-            sql.AppendLine(@"
+            sql += @"
               AND EXISTS (
                   SELECT 1
                   FROM PostOfficeZipCodeLink l
@@ -559,10 +560,20 @@ public class PostOfficeRepo : IPostOfficeRepo
                     AND l.IsActive = 1
                     AND z.ZipCode LIKE @ZipCodeSearch
               )
-            ");
+            ";
         }
-
-        sql.AppendLine("ORDER BY po.PostOfficeName ASC;");
+        if (filter?.CountryId is not null)
+        {
+            sql += @"
+  AND NOT EXISTS (
+      SELECT 1
+      FROM PlaceZipCodeLink p
+      WHERE p.PlaceId = @PlaceId
+        AND p.PostOfficeZipCodeLinkId = PostOfficeZipCodeLink.PostOfficeZipCodeLinkId
+  )
+";
+        }
+        sql+="ORDER BY po.PostOfficeName ASC;";
 
         var param = new
         {
@@ -570,6 +581,7 @@ public class PostOfficeRepo : IPostOfficeRepo
             DivOneId = filter?.DivOneId,
             DivTwoId = filter?.DivTwoId,
             DivThreeId = filter?.DivThreeId,
+            PlaceId = filter?.PlaceId,
             ZipCodeSearch = !string.IsNullOrWhiteSpace(filter?.ZipCode)
                 ? $"%{filter!.ZipCode.Trim()}%"
                 : null
