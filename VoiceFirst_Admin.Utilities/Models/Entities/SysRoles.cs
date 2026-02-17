@@ -9,5 +9,6 @@ public class SysRoles : BaseModel
     public string RoleName { get; set; } = string.Empty;
     public bool IsMandatory { get; set; } = false;
     public string? RolePurpose { get; set; }
+    public string? ApplicationName { get; set; }
     public int ApplicationId { get; set; }
 }

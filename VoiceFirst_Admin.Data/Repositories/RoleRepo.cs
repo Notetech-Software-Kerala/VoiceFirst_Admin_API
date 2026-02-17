@@ -102,13 +102,14 @@ public class RoleRepo : IRoleRepo
     public async Task<SysRoles?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         const string sql = @"SELECT r.SysRoleId, r.RoleName, r.IsMandatory, r.RolePurpose, r.ApplicationId, r.IsActive, r.IsDeleted, r.CreatedAt, r.UpdatedAt, r.DeletedAt,
-        uC.UserId AS CreatedById, CONCAT(uC.FirstName,' ',uC.LastName) AS CreatedUserName,
+        uC.UserId AS CreatedById, CONCAT(uC.FirstName,' ',uC.LastName) AS CreatedUserName,ap.ApplicationName,
         uU.UserId AS UpdatedById, CONCAT(uU.FirstName,' ',uU.LastName) AS UpdatedUserName,
         uD.UserId AS DeletedById, CONCAT(uD.FirstName,' ',uD.LastName) AS DeletedUserName
         FROM SysRoles r
         INNER JOIN Users uC ON uC.UserId = r.CreatedBy
         LEFT JOIN Users uU ON uU.UserId = r.UpdatedBy
         LEFT JOIN Users uD ON uD.UserId = r.DeletedBy
+        LEFT JOIN Application ap ON ap.ApplicationId = r.ApplicationId
         WHERE r.SysRoleId = @Id;";
                 using var connection = _context.CreateConnection();
         var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
@@ -136,6 +137,7 @@ public class RoleRepo : IRoleRepo
         var baseSql = new StringBuilder(@"FROM SysRoles r
             INNER JOIN Users uC ON uC.UserId = r.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = r.UpdatedBy
+            LEFT JOIN Application ap ON ap.ApplicationId = r.ApplicationId
             LEFT JOIN Users uD ON uD.UserId = r.DeletedBy WHERE r.SysRoleId > 5 ");
 
         if (filter.Deleted.HasValue)
@@ -198,7 +200,7 @@ public class RoleRepo : IRoleRepo
 
         var countSql = "SELECT COUNT(1) " + baseSql;
         var itemsSql = $@"SELECT r.SysRoleId, r.RoleName, r.IsMandatory, r.RolePurpose, r.ApplicationId, r.CreatedAt, r.IsActive, r.UpdatedAt, r.IsDeleted, r.DeletedAt,
-        uC.UserId AS CreatedById, CONCAT(uC.FirstName,' ',uC.LastName) AS CreatedUserName,
+        uC.UserId AS CreatedById, CONCAT(uC.FirstName,' ',uC.LastName) AS CreatedUserName,ap.ApplicationName,
         uU.UserId AS UpdatedById, CONCAT(uU.FirstName,' ',uU.LastName) AS UpdatedUserName,
         uD.UserId AS DeletedById, CONCAT(uD.FirstName,' ',uD.LastName) AS DeletedUserName
         {baseSql}
