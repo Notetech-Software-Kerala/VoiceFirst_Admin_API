@@ -20,7 +20,7 @@ public class PostOfficeDetailLookupDto
 
 
 }
-public class PostOfficeZipCodeLookupDto : PostOfficeDetailLookupDto
+public class PostOfficeZipCodeLookupDto : PostOfficeLookupDto
 {
     public ZipCodeLookUp? ZipCodes { get; set; }
 }
