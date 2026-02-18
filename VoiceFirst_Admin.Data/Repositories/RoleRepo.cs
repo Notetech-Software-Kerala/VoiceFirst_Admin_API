@@ -325,6 +325,7 @@ public class RoleRepo : IRoleRepo
             }
 
         }
+        transaction.Commit();
         return null;
     }
 
@@ -410,7 +411,7 @@ public class RoleRepo : IRoleRepo
 
     public async Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT spa.SysRoleId ,spa.PlanId,pl.PlanName,
+        const string sql = @"SELECT spa.SysRoleId ,spa.PlanId,pl.PlanName,spa.IsActive as PlanRoleLinkActive,
                 spa.PlanRoleLinkId ,
                 pra.PlanRoleProgramActionLinkId ,
                 pra.ProgramActionLinkId ,

@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
@@ -684,6 +685,7 @@ public class PostOfficeRepo : IPostOfficeRepo
                 return result;
             }
         }
+        tx.Commit();
         return null;
     }
 
