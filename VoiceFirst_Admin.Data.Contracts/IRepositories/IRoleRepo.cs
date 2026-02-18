@@ -1,12 +1,13 @@
 using System.Collections.Generic;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Role;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
-using VoiceFirst_Admin.Utilities.Models.Entities;
 using VoiceFirst_Admin.Utilities.Models.Common;
-using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
+using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
@@ -19,19 +20,19 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<SysRoles?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysRoles>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysRoles>> GetLookUpAllAsync( CancellationToken cancellationToken = default);
-        Task<bool> UpdateAsync(SysRoles entity, CancellationToken cancellationToken = default); 
+        Task<bool> UpdateAsync(IDbConnection connection, IDbTransaction transaction, SysRoles entity, CancellationToken cancellationToken = default); 
         Task<bool> DeleteAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<bool> RestoreAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<SysRoles> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
         Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default);
-        Task<BulkUpsertError?> AddRoleActionLinksAsync(
+        Task<BulkUpsertError?> AddRoleActionLinksAsync(IDbConnection connection, IDbTransaction transaction,
             int roleId,
             int applicationId,
             List<PlanActionLinkCreateDto> planActionLink,
             int loginId,
             CancellationToken cancellationToken = default);
 
-        Task<BulkUpsertError?> UpdateRoleActionLinksAsync(
+        Task<BulkUpsertError?> UpdateRoleActionLinksAsync(IDbConnection connection, IDbTransaction transaction,
             int roleId,
             int applicationId,
              List<PlanRoleActionLinkUpdateDto>? UpdateActionLinks,

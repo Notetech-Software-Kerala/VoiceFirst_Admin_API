@@ -253,8 +253,14 @@ public class PostOfficeService : IPostOfficeService
     {
         if (dto == null)
             return ApiResponse<PostOfficeDto>.Fail(Messages.PayloadRequired, StatusCodes.Status400BadRequest);
+        var zipEntities = new List<PostOfficeZipCode>();
+        var entity = new PostOffice
+        {
+            PostOfficeId = id,
+            UpdatedBy = loginId
+        };
         // validate divisions and country when any of those fields are present
-        if (dto.PostOfficeName != null || dto.Active!=null || dto.CountryId!=null || dto.DivOneId.HasValue || dto.DivTwoId.HasValue || dto.DivThreeId.HasValue)
+        if (dto.PostOfficeName != null || dto.Active != null || dto.CountryId != null || dto.DivOneId.HasValue || dto.DivTwoId.HasValue || dto.DivThreeId.HasValue)
         {
 
             // when updating divisions, ensure hierarchy rules
@@ -287,63 +293,83 @@ public class PostOfficeService : IPostOfficeService
 
                 return ApiResponse<PostOfficeDto>.Fail(Messages.PostOfficeNameAlreadyExists, StatusCodes.Status409Conflict);
             }
-            var entity = new PostOffice
+            entity = new PostOffice
             {
                 PostOfficeId = id,
                 PostOfficeName = dto.PostOfficeName ?? string.Empty,
-                CountryId = dto.CountryId??0,
+                CountryId = dto.CountryId ?? 0,
                 DivisionOneId = dto.DivOneId,
                 DivisionTwoId = dto.DivTwoId,
                 DivisionThreeId = dto.DivThreeId,
                 IsActive = dto.Active,
                 UpdatedBy = loginId
             };
-
-            var ok = await _repo.UpdateAsync(entity, cancellationToken);
-            if (!ok)
-                return ApiResponse<PostOfficeDto>.Fail(Messages.NotFound, StatusCodes.Status404NotFound);
-        }
-        if (dto.UpdateZipCodes.Count() > 0)
-        {
-            var zipEntities = new List<PostOfficeZipCode>();
-            foreach (var z in dto.UpdateZipCodes)
-            {
-                
-                zipEntities.Add(new PostOfficeZipCode
-                {
-                    PostOfficeZipCodeLinkId = z.ZipCodeLinkId ?? 0,
-                    PostOfficeId = id,
-                    IsActive = z.Active,
-                    ZipCode = z.ZipCode.Trim()?? "",
-                    UpdatedBy = loginId,
-                });
-            }
-
-            var result=await _repo.BulkUpdateZipCodesAsync(id, zipEntities, cancellationToken);
-            if (result != null)
-            {
-                return ApiResponse<PostOfficeDto>.Fail(result.Message, result.StatuaCode);
-            }
-        }
-        if (dto.AddZipCodes.Count() > 0)
-        {
             
-
-            var result = await _repo.BulkInsertZipCodesAsync(id, dto.AddZipCodes, loginId, cancellationToken);
-            if (result != null)
-            {
-                return ApiResponse<PostOfficeDto>.Fail(result.Message, result.StatuaCode);
-            }
+            
         }
+        foreach (var z in dto.UpdateZipCodes)
+        {
 
-        var updatedEntity = await _repo.GetByIdAsync(id, cancellationToken);
-        if (updatedEntity == null)
-            return ApiResponse<PostOfficeDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
-        // sync zip codes: add new, update existing, remove missing
+            zipEntities.Add(new PostOfficeZipCode
+            {
+                PostOfficeZipCodeLinkId = z.ZipCodeLinkId ?? 0,
+                PostOfficeId = id,
+                IsActive = z.Active,
+                ZipCode = z.ZipCode.Trim() ?? "",
+                UpdatedBy = loginId,
+            });
+        }
+        var error = await _repo.UpdateAsync(entity, dto.AddZipCodes, zipEntities, cancellationToken);
+
+
+        //if (dto.UpdateZipCodes.Count() > 0)
+        //{
+        //    var zipEntities = new List<PostOfficeZipCode>();
+        //    foreach (var z in dto.UpdateZipCodes)
+        //    {
+
+        //        zipEntities.Add(new PostOfficeZipCode
+        //        {
+        //            PostOfficeZipCodeLinkId = z.ZipCodeLinkId ?? 0,
+        //            PostOfficeId = id,
+        //            IsActive = z.Active,
+        //            ZipCode = z.ZipCode.Trim()?? "",
+        //            UpdatedBy = loginId,
+        //        });
+        //    }
+
+        //    var result=await _repo.BulkUpdateZipCodesAsync(id, zipEntities, cancellationToken);
+        //    if (result != null)
+        //    {
+        //        return ApiResponse<PostOfficeDto>.Fail(result.Message, result.StatuaCode);
+        //    }
+        //}
+        //if (dto.AddZipCodes.Count() > 0)
+        //{
+
+
+        //    var result = await _repo.BulkInsertZipCodesAsync(id, dto.AddZipCodes, loginId, cancellationToken);
+        //    if (result != null)
+        //    {
+        //        return ApiResponse<PostOfficeDto>.Fail(result.Message, result.StatuaCode);
+        //    }
+        //}
+        if (error == null)
+        {
+            var updatedEntity = await _repo.GetByIdAsync(id, cancellationToken);
+            if (updatedEntity == null)
+                return ApiResponse<PostOfficeDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
+            // sync zip codes: add new, update existing, remove missing
+
+
+            var updatedDto = await MapWithZipCodesAsync(updatedEntity, cancellationToken);
+            return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status200OK);
+        }
+        else
+        {
+            return ApiResponse<PostOfficeDto>.Fail(error.Message, error.StatuaCode);
+        }
         
-
-        var updatedDto = await MapWithZipCodesAsync(updatedEntity, cancellationToken);
-        return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status200OK);
     }
 
     public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)

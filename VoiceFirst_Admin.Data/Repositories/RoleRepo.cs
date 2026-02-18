@@ -220,12 +220,11 @@ public class RoleRepo : IRoleRepo
         };
     }
 
-    public async Task<bool> UpdateAsync(SysRoles entity, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(IDbConnection connection, IDbTransaction transaction, SysRoles entity, CancellationToken cancellationToken = default)
     {
         var sets = new List<string>();
         var parameters = new DynamicParameters();
         
-        using var connection = _context.CreateConnection();
         if (!string.IsNullOrWhiteSpace(entity.RoleName))
         {
             sets.Add("RoleName = @RoleName");
@@ -269,7 +268,7 @@ public class RoleRepo : IRoleRepo
         sql.Append(string.Join(", ", sets));
         sql.Append(" WHERE SysRoleId = @SysRoleId AND IsDeleted = 0;");
 
-        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
+        var cmd = new CommandDefinition(sql.ToString(), parameters,transaction, cancellationToken: cancellationToken);
         
         var affected = await connection.ExecuteAsync(cmd);
         return affected > 0;
@@ -382,7 +381,7 @@ public class RoleRepo : IRoleRepo
         return items.ToList();
     }
 
-    public async Task<BulkUpsertError?> AddRoleActionLinksAsync(
+    public async Task<BulkUpsertError?> AddRoleActionLinksAsync(IDbConnection connection, IDbTransaction transaction,
         int roleId,
         int applicationId,
         List<PlanActionLinkCreateDto> planActionLink,
@@ -400,9 +399,7 @@ public class RoleRepo : IRoleRepo
             WHERE spa.SysRoleId = @RoleId And spa.PlanId = @PlanId ";
 
 
-            using var connection = _context.CreateConnection();
-                connection.Open();
-                using var tx = connection.BeginTransaction();
+            
 
             try
             {
@@ -411,11 +408,11 @@ public class RoleRepo : IRoleRepo
                 foreach (var item in planActionLink)
                 {
                     
-                    var existingLinks = (await connection.QueryAsync<PlanRoleProgramActionLink>(new CommandDefinition(sql, new { RoleId = roleId, PlanId = item.PlanId }, transaction: tx, cancellationToken: cancellationToken))).ToList();
+                    var existingLinks = (await connection.QueryAsync<PlanRoleProgramActionLink>(new CommandDefinition(sql, new { RoleId = roleId, PlanId = item.PlanId }, transaction: transaction, cancellationToken: cancellationToken))).ToList();
                 var planRoleId = 0;
                     if (existingLinks.Count() == 0)
                     {
-                        planRoleId =await InsertRolePlanLinksAsync(connection, tx, roleId, item.PlanId, loginId, cancellationToken);
+                        planRoleId =await InsertRolePlanLinksAsync(connection, transaction, roleId, item.PlanId, loginId, cancellationToken);
                     }
                     else
                     {
@@ -432,23 +429,23 @@ public class RoleRepo : IRoleRepo
                             {
                                 return new BulkUpsertError { Message = Messages.AlreadyExist, StatuaCode = StatusCodes.Status409Conflict };
                             }
-                            await BulkInsertPlanRoleActionLinksAsync(connection, tx, planRoleId, item.ActionLinkIds, loginId, cancellationToken);
+                            await BulkInsertPlanRoleActionLinksAsync(connection, transaction, planRoleId, item.ActionLinkIds, loginId, cancellationToken);
                         }
                     } 
 
                 }
 
 
-                tx.Commit();
+                transaction.Commit();
                 return null;
             }
             catch (SqlException ex) when (ex.Number == 50001)
             {
-                tx.Rollback();
+                transaction.Rollback();
                 return new BulkUpsertError { Message = ex.Message, StatuaCode = StatusCodes.Status400BadRequest };
             }
         }
-        public async Task<BulkUpsertError?> UpdateRoleActionLinksAsync(
+        public async Task<BulkUpsertError?> UpdateRoleActionLinksAsync(IDbConnection connection, IDbTransaction transaction,
         int roleId,
         int applicationId,
          List<PlanRoleActionLinkUpdateDto>? UpdateActionLinks,
@@ -467,9 +464,7 @@ public class RoleRepo : IRoleRepo
                 LEFT JOIN Users uU ON uU.UserId = spa.UpdatedBy
                 WHERE spa.PlanRoleLinkId = @PlanRoleLinkId ";
 
-             using var connection = _context.CreateConnection();
-             connection.Open();
-             using var tx = connection.BeginTransaction();
+           
 
             try
             {
@@ -480,7 +475,7 @@ public class RoleRepo : IRoleRepo
                 {
                     var existingLinks = (await connection.QueryAsync<PlanRoleProgramActionLink>(
                         new CommandDefinition(sql,
-                        new { RoleId = roleId, PlanRoleLinkId = item.RolePlanLinkId }, transaction: tx, cancellationToken: cancellationToken))).ToList();
+                        new { RoleId = roleId, PlanRoleLinkId = item.RolePlanLinkId }, transaction: transaction, cancellationToken: cancellationToken))).ToList();
 
                     var existingMap = existingLinks.ToDictionary(x => x.ProgramActionLinkId, x => x);
 
@@ -495,7 +490,7 @@ public class RoleRepo : IRoleRepo
                             // if current IsActive is not true, update it
 
                             const string updateSql = "UPDATE PlanRoleProgramActionLink SET IsActive = @IsActive, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE PlanRoleLinkId = @PlanRoleLinkId AND ProgramActionLinkId = @ProgramActionLinkId;";
-                            await connection.ExecuteAsync(new CommandDefinition(updateSql, new { UpdatedBy = loginId, PlanRoleLinkId = item.RolePlanLinkId, ProgramActionLinkId = aid.ActionLinkId, IsActive = aid.Active }, transaction: tx, cancellationToken: cancellationToken));
+                            await connection.ExecuteAsync(new CommandDefinition(updateSql, new { UpdatedBy = loginId, PlanRoleLinkId = item.RolePlanLinkId, ProgramActionLinkId = aid.ActionLinkId, IsActive = aid.Active }, transaction: transaction, cancellationToken: cancellationToken));
 
                         }
                         else
@@ -508,12 +503,12 @@ public class RoleRepo : IRoleRepo
                 // load existing role->action links
 
 
-                tx.Commit();
+                transaction.Commit();
                 return null;
         }
         catch (SqlException ex) when (ex.Number == 50001 || ex.Number == 50002)
         {
-             tx.Rollback();
+             transaction.Rollback();
             return new BulkUpsertError { Message = ex.Message, StatuaCode = StatusCodes.Status400BadRequest };
         }
     }
