@@ -128,7 +128,7 @@ public class RoleService : IRoleService
         PlanId = g.Key.PlanId,
         PlanRoleLinkId = g.Key.PlanRoleLinkId,
         PlanName = g.FirstOrDefault()?.PlanName,
-        PlanRoleLinkActive = g.FirstOrDefault()?.PlanRoleLinkActive??true,
+        Active = g.FirstOrDefault()?.PlanRoleLinkActive??true,
         PlanActionLink = _mapper.Map<List<PlanRoleActionLinkDto>>(g.ToList())
     })
     .ToList()
