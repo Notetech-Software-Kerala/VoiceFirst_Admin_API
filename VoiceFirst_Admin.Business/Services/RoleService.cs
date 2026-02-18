@@ -222,7 +222,37 @@ public class RoleService : IRoleService
             }
 
         }
+        if (dto.UpdatePlanActionLinks != null && dto.UpdatePlanActionLinks.Count() > 0)
+        {
+            foreach (var item in dto.UpdatePlanActionLinks)
+            {
+                
+                var planRoleLink = await _repo.GetRolePlanLinkAsync(item.RolePlanLinkId, cancellationToken);
+                if (planRoleLink == null)
+                {
+                    return ApiResponse<RoleDto>.Fail(Messages.PlanRoleLinkNotFound,
+                        StatusCodes.Status404NotFound);
+                }
+                if (item.Active.HasValue)
+                {
+                    if (planRoleLink.IsActive == true && item.Active == true)
+                    {
+                        return ApiResponse<RoleDto>.Fail(Messages.PlanAlreadyLinked,
+                        StatusCodes.Status409Conflict);
+                    }
+                    if (planRoleLink.IsActive == false && item.Active == false)
+                    {
+                        return ApiResponse<RoleDto>.Fail(Messages.PlanAlreadyRemoved,
+                            StatusCodes.Status409Conflict);
+                    }
+                }
+                
 
+
+
+            }
+
+        }
         var ok = await _repo.UpdateAsync( entity, dto.CreatePlanActionLink, dto.UpdatePlanActionLinks, cancellationToken);
         if (ok!=null)
         {

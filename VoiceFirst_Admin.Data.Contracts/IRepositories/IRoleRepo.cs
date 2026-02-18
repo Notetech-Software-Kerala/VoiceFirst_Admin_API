@@ -23,6 +23,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<BulkUpsertError> UpdateAsync( SysRoles entity, List<PlanActionLinkCreateDto>? CreatePlanActionLink, List<PlanRoleActionLinkUpdateDto>? UpdatePlanActionLinks, CancellationToken cancellationToken = default); 
         Task<bool> DeleteAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<bool> RestoreAsync(SysRoles entity, CancellationToken cancellationToken = default);
+        Task<PlanRoleLink> GetRolePlanLinkAsync(int planRoleLinkId, CancellationToken cancellationToken = default);
+
+
         Task<SysRoles> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
         Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default);
         Task<BulkUpsertError?> AddRoleActionLinksAsync(IDbConnection connection, IDbTransaction transaction,

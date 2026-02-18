@@ -378,12 +378,15 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string RoleUpdatedSucessfully = "Role updated sucessfully.";
         public const string RoleDeleteSucessfully = "Role deleted sucessfully.";
         public const string RoleRestoreSucessfully = "Role restored sucessfully.";
+        public const string PlanAlreadyRemoved = "Plan already removed.";
+        public const string PlanAlreadyLinked = "Plan already linked.";
         public const string RoleNameAlreadyExists = "Role name already exists.";
         public const string RoleNameExistsInTrash = "This role name exists in trash. Restore it to use again.";
         public const string RoleNameDefault = "This is a system default role and cannot be created..";
         public const string RoleAlreadyDeleted = "Role already deleted.";
         public const string RoleAlreadyRestored = "Role already restored.";
         public const string RolesNotFound = "Roles Not found .";
+        public const string PlanRoleLinkNotFound = "Plan role link id Not found .";
         public const string CountryRetrieveSucessfully = "Country retrieve sucessfully.";
         public const string DivisionOneRetrieveSucessfully = "Division one retrieve sucessfully.";
         public const string DivisionTwoRetrieveSucessfully = "Division two retrieve sucessfully.";

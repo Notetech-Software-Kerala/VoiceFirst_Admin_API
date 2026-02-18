@@ -645,48 +645,58 @@ public class PostOfficeRepo : IPostOfficeRepo
         using var connection = _context.CreateConnection();
         connection.Open();
         using var tx = connection.BeginTransaction();
-        if (sets.Count != 0)
+        try
         {
-            sets.Add("UpdatedBy = @UpdatedBy");
-            sets.Add("UpdatedAt = SYSDATETIME()");
-            parameters.Add("UpdatedBy", entity.UpdatedBy);
-            parameters.Add("Id", entity.PostOfficeId);
 
-            var sql = new StringBuilder();
-            sql.Append("UPDATE PostOffice SET ");
-            sql.Append(string.Join(", ", sets));
-            sql.Append(" WHERE PostOfficeId = @Id AND IsDeleted = 0;");
+        
+            if (sets.Count != 0)
+            {
+                sets.Add("UpdatedBy = @UpdatedBy");
+                sets.Add("UpdatedAt = SYSDATETIME()");
+                parameters.Add("UpdatedBy", entity.UpdatedBy);
+                parameters.Add("Id", entity.PostOfficeId);
 
-            var cmd = new CommandDefinition(sql.ToString(), parameters,transaction:tx, cancellationToken: cancellationToken);
+                var sql = new StringBuilder();
+                sql.Append("UPDATE PostOffice SET ");
+                sql.Append(string.Join(", ", sets));
+                sql.Append(" WHERE PostOfficeId = @Id AND IsDeleted = 0;");
+
+                var cmd = new CommandDefinition(sql.ToString(), parameters,transaction:tx, cancellationToken: cancellationToken);
            
-            affected = await connection.ExecuteAsync(cmd);
-            if(affected <= 0)
-            {
-                return new BulkUpsertError
+                affected = await connection.ExecuteAsync(cmd);
+                if(affected <= 0)
                 {
-                    StatuaCode = StatusCodes.Status500InternalServerError,
-                    Message = Messages.SomethingWentWrong
-                };
+                    return new BulkUpsertError
+                    {
+                        StatuaCode = StatusCodes.Status500InternalServerError,
+                        Message = Messages.SomethingWentWrong
+                    };
+                }
             }
-        }
-        if (zipEntities.Count() > 0)
-        {
-            var result = await BulkUpdateZipCodesAsync(connection, tx,entity.PostOfficeId, zipEntities, cancellationToken);
-            if (result != null)
+            if (zipEntities.Count() > 0)
             {
-                return result;
+                var result = await BulkUpdateZipCodesAsync(connection, tx,entity.PostOfficeId, zipEntities, cancellationToken);
+                if (result != null)
+                {
+                    return result;
+                }
             }
-        }
-        if(zipCodes.Count() > 0)
-        {
-            var result = await BulkInsertZipCodesAsync(connection, tx, entity.PostOfficeId,  zipCodes, entity.UpdatedBy??0, cancellationToken);
-            if (result != null)
+            if(zipCodes.Count() > 0)
             {
-                return result;
+                var result = await BulkInsertZipCodesAsync(connection, tx, entity.PostOfficeId,  zipCodes, entity.UpdatedBy??0, cancellationToken);
+                if (result != null)
+                {
+                    return result;
+                }
             }
+            tx.Commit();
+            return null;
         }
-        tx.Commit();
-        return null;
+        catch (SqlException ex) when(ex.Number == 50001 || ex.Number == 50002)
+        {
+            tx.Rollback();
+            return new BulkUpsertError { Message = ex.Message, StatuaCode = StatusCodes.Status400BadRequest };
+        }
     }
 
     public async Task<bool> DeleteAsync(PostOffice entity, CancellationToken cancellationToken = default)
