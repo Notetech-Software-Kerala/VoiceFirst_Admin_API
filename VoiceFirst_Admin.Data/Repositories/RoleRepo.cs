@@ -26,10 +26,12 @@ namespace VoiceFirst_Admin.Data.Repositories;
 public class RoleRepo : IRoleRepo
 {
     private readonly IDapperContext _context;
+    private readonly ISysProgramRepo _sysProgramRepo;
 
-    public RoleRepo(IDapperContext context)
+    public RoleRepo(IDapperContext context, ISysProgramRepo sysProgramRepo)
     {
         _context = context;
+        _sysProgramRepo = sysProgramRepo;
     }
 
     public async Task<SysRoles> CreateAsync(SysRoles entity, List<PlanActionLinkCreateDto> PlanActionLinkCreateDto,  CancellationToken cancellationToken = default)
@@ -220,8 +222,9 @@ public class RoleRepo : IRoleRepo
         };
     }
 
-    public async Task<bool> UpdateAsync(IDbConnection connection, IDbTransaction transaction, SysRoles entity, CancellationToken cancellationToken = default)
+    public async Task<BulkUpsertError> UpdateAsync(SysRoles entity, List<PlanActionLinkCreateDto>? CreatePlanActionLink, List<PlanRoleActionLinkUpdateDto>? UpdatePlanActionLinks, CancellationToken cancellationToken = default)
     {
+        var roleDetails = await GetByIdAsync(entity.SysRoleId, cancellationToken);
         var sets = new List<string>();
         var parameters = new DynamicParameters();
         
@@ -240,38 +243,89 @@ public class RoleRepo : IRoleRepo
             sets.Add("RolePurpose = @RolePurpose");
             parameters.Add("RolePurpose", entity.RolePurpose);
         }
+        using var connection = _context.CreateConnection();
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
         if (entity.ApplicationId != default)
         {
             
             if (entity.ApplicationId != 2)
             {
                 
-                    await connection.ExecuteAsync(new CommandDefinition("UPDATE PlanRoleLink SET IsActive = 0, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE SysRoleId = @SysRoleId;", new { SysRoleId = entity.SysRoleId, UpdatedBy = entity.UpdatedBy }, cancellationToken: cancellationToken));
+                    await connection.ExecuteAsync(new CommandDefinition("UPDATE PlanRoleLink SET IsActive = 0, UpdatedBy = @UpdatedBy, UpdatedAt = SYSDATETIME() WHERE SysRoleId = @SysRoleId;", new { SysRoleId = entity.SysRoleId, UpdatedBy = entity.UpdatedBy },transaction, cancellationToken: cancellationToken));
                 
             }
 
 
-                sets.Add("ApplicationId = @ApplicationId");
+            sets.Add("ApplicationId = @ApplicationId");
             parameters.Add("ApplicationId", entity.ApplicationId);
         }
-      
-        if (sets.Count == 0)
-            return false;
-
-        sets.Add("UpdatedBy = @UpdatedBy");
-        sets.Add("UpdatedAt = SYSDATETIME()");
-        parameters.Add("UpdatedBy", entity.UpdatedBy);
-        parameters.Add("SysRoleId", entity.SysRoleId);
-
-        var sql = new StringBuilder();
-        sql.Append("UPDATE SysRoles SET ");
-        sql.Append(string.Join(", ", sets));
-        sql.Append(" WHERE SysRoleId = @SysRoleId AND IsDeleted = 0;");
-
-        var cmd = new CommandDefinition(sql.ToString(), parameters,transaction, cancellationToken: cancellationToken);
         
-        var affected = await connection.ExecuteAsync(cmd);
-        return affected > 0;
+        if (sets.Count != 0)
+        {
+            sets.Add("UpdatedBy = @UpdatedBy");
+            sets.Add("UpdatedAt = SYSDATETIME()");
+            parameters.Add("UpdatedBy", entity.UpdatedBy);
+            parameters.Add("SysRoleId", entity.SysRoleId);
+
+            var sql = new StringBuilder();
+            sql.Append("UPDATE SysRoles SET ");
+            sql.Append(string.Join(", ", sets));
+            sql.Append(" WHERE SysRoleId = @SysRoleId AND IsDeleted = 0;");
+
+            var cmd = new CommandDefinition(sql.ToString(), parameters, transaction, cancellationToken: cancellationToken);
+
+            var affected = await connection.ExecuteAsync(cmd);
+            if(affected <= 0)
+            {
+                transaction.Rollback();
+                return new BulkUpsertError
+                {
+                    StatuaCode = StatusCodes.Status500InternalServerError,
+                    Message = Messages.SomethingWentWrong
+                };
+            }
+        }
+        if (CreatePlanActionLink != null && CreatePlanActionLink.Count() > 0)
+        {
+            foreach (var item in CreatePlanActionLink)
+            {
+                
+                var addError = await AddRoleActionLinksAsync(connection, transaction,
+                    entity.SysRoleId,
+                    roleDetails.ApplicationId,
+                    CreatePlanActionLink,
+                    entity.UpdatedBy??0,
+                    cancellationToken);
+
+                if (addError != null)
+                {
+                    transaction.Rollback();
+                    return new BulkUpsertError
+                            { Message = addError.Message, StatuaCode = addError.StatuaCode };
+                }
+            }
+        }
+
+        if (UpdatePlanActionLinks != null)
+        {
+            
+            var updateError = await UpdateRoleActionLinksAsync(connection, transaction,
+               entity.SysRoleId,
+               entity.ApplicationId ,
+               UpdatePlanActionLinks,
+               entity.UpdatedBy??0,
+               cancellationToken);
+
+            if (updateError != null)
+            {
+                transaction.Rollback();
+                return new BulkUpsertError
+                { Message = updateError.Message, StatuaCode = updateError.StatuaCode };
+            }
+
+        }
+        return null;
     }
 
 

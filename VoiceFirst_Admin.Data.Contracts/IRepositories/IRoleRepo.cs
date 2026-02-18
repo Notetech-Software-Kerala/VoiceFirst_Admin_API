@@ -20,7 +20,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<SysRoles?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysRoles>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysRoles>> GetLookUpAllAsync( CancellationToken cancellationToken = default);
-        Task<bool> UpdateAsync(IDbConnection connection, IDbTransaction transaction, SysRoles entity, CancellationToken cancellationToken = default); 
+        Task<BulkUpsertError> UpdateAsync( SysRoles entity, List<PlanActionLinkCreateDto>? CreatePlanActionLink, List<PlanRoleActionLinkUpdateDto>? UpdatePlanActionLinks, CancellationToken cancellationToken = default); 
         Task<bool> DeleteAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<bool> RestoreAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<SysRoles> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);

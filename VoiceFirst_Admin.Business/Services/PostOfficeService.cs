@@ -366,11 +366,6 @@ public class PostOfficeService : IPostOfficeService
         if (error == null)
         {
             var updatedEntity = await _repo.GetByIdAsync(id, cancellationToken);
-            if (updatedEntity == null)
-                return ApiResponse<PostOfficeDto>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError);
-            // sync zip codes: add new, update existing, remove missing
-
-
             var updatedDto = await MapWithZipCodesAsync(updatedEntity, cancellationToken);
             return ApiResponse<PostOfficeDto>.Ok(updatedDto, Messages.PostOfficeUpdatedSucessfully, StatusCodes.Status200OK);
         }
