@@ -458,7 +458,7 @@ public class RoleRepo : IRoleRepo
         CancellationToken cancellationToken = default)
         {
 
-        const string sql = @"SELECT 
+        const string sql = @"SELECT  DISTINCT
                 pra.ProgramActionLinkId ,
                 spa.PlanRoleLinkId 
             FROM PlanRoleLink spa 
@@ -496,7 +496,7 @@ public class RoleRepo : IRoleRepo
                         {
                             if (existingMap.TryGetValue(aid, out var existingLink))
                             {
-                                return new BulkUpsertError { Message = Messages.AlreadyExist, StatuaCode = StatusCodes.Status409Conflict };
+                                return new BulkUpsertError { Message = Messages.ProgramActionAlreadyLinked, StatuaCode = StatusCodes.Status409Conflict };
                             }
                             await BulkInsertPlanRoleActionLinksAsync(connection, transaction, planRoleId, item.ActionLinkIds, loginId, cancellationToken);
                         }
@@ -586,7 +586,7 @@ public class RoleRepo : IRoleRepo
                             }
                             else
                             {
-                                return new BulkUpsertError { Message = Messages.NotFound, StatuaCode = StatusCodes.Status404NotFound };
+                                return new BulkUpsertError { Message = Messages.ProgramActionLinkNotFound, StatuaCode = StatusCodes.Status404NotFound };
                             }
                         }
                     }
