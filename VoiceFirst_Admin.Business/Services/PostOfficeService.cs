@@ -223,7 +223,16 @@ public class PostOfficeService : IPostOfficeService
         {
             foreach(var d in dto)
             {
-                var zips = await _repo.GetZipCodesByPostOfficeIdAsync(d.PostOfficeId, null, cancellationToken);
+                IEnumerable<PostOfficeZipCode> zips ;
+                if (filter.PlaceId.HasValue)
+                {
+                     zips = await _repo.GetZipCodesByPostOfficeIdAsync(d.PostOfficeId, filter.PlaceId, cancellationToken);
+                }
+                else
+                {
+                     zips = await _repo.GetZipCodesByPostOfficeIdAsync(d.PostOfficeId,null, cancellationToken);
+                }
+
                 var ZipCodes = _mapper.Map<IEnumerable<ZipCodeLookUp>>(zips);
                 if (ZipCodes.Count() > 0)
                 {
