@@ -12,4 +12,8 @@ public class PlanRoleProgramActionLink : BaseModel
     public int PlanRoleLinkId { get; set; }
     public int ProgramActionLinkId { get; set; }
     public string ProgramActionName { get; set; }
+    public string PlanRoleLinkCreatedUserName { get; set; }
+    public DateTime PlanRoleLinkCreatedAt { get; set; }
+    public string? PlanRoleLinkUpdatedUserName { get; set; }
+    public DateTime? PlanRoleLinkUpdatedAt { get; set; }
 }

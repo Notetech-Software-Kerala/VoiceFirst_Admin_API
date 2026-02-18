@@ -421,7 +421,7 @@ public class RoleRepo : IRoleRepo
 
     public async Task<IEnumerable<PlanRoleProgramActionLink>> GetActionIdsByRoleIdAsync(int roleId, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT spa.SysRoleId ,spa.PlanId,pl.PlanName,spa.IsActive as PlanRoleLinkActive,
+        const string sql = @"SELECT spa.SysRoleId ,spa.PlanId,pl.PlanName,spa.IsActive as PlanRoleLinkActive,spa.CreatedAt AS PlanRoleLinkCreatedAt,spa.UpdatedAt AS PlanRoleLinkUpdatedAt,
                 spa.PlanRoleLinkId ,
                 pra.PlanRoleProgramActionLinkId ,
                 pra.ProgramActionLinkId ,
@@ -429,9 +429,11 @@ public class RoleRepo : IRoleRepo
                 pa.ProgramActionName,
                 pra.IsActive,
                 CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
-                pra.CreatedAt AS CreatedAt,
+                CONCAT(uCP.FirstName, ' ', uCP.LastName) AS PlanRoleLinkCreatedUserName,
+                pra.CreatedAt,
+                CONCAT(uUP.FirstName, ' ', uUP.LastName) AS PlanRoleLinkUpdatedUserName,
                 CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
-                pra.UpdatedAt AS UpdatedAt
+                pra.UpdatedAt
             FROM PlanRoleLink spa 
             Inner join PlanRoleProgramActionLink pra on pra.PlanRoleLinkId=spa.PlanRoleLinkId
             LEFT JOIN SysProgramActionsLink pal ON pal.SysProgramActionLinkId = pra.ProgramActionLinkId
@@ -439,6 +441,8 @@ public class RoleRepo : IRoleRepo
             LEFT JOIN dbo.[Plan] pl ON pl.PlanId = spa.PlanId
             INNER JOIN Users uC ON uC.UserId = pra.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = pra.UpdatedBy
+            INNER JOIN Users uCP ON uCP.UserId = spa.CreatedBy
+            LEFT JOIN Users uUP ON uUP.UserId = spa.UpdatedBy
             WHERE spa.SysRoleId = @RoleId ";
 
         using var connection = _context.CreateConnection();

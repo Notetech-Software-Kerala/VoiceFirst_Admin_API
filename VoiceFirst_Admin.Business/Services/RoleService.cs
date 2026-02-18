@@ -120,18 +120,27 @@ public class RoleService : IRoleService
         if (entity == null) return null;
         var dto = _mapper.Map<RoleDetailDto>(entity);
         var links = await _repo.GetActionIdsByRoleIdAsync(id, cancellationToken);
-        List<PlanRoleActionLinkDetailsDto> planRoleActionLinkDetails =
+        var planRoleActionLinkDetails =
     links?
-    .GroupBy(x => new { x.PlanId, x.PlanRoleLinkId })
-    .Select(g => new PlanRoleActionLinkDetailsDto
-    {
-        PlanId = g.Key.PlanId,
-        PlanRoleLinkId = g.Key.PlanRoleLinkId,
-        PlanName = g.FirstOrDefault()?.PlanName,
-        Active = g.FirstOrDefault()?.PlanRoleLinkActive??true,
-        PlanActionLink = _mapper.Map<List<PlanRoleActionLinkDto>>(g.ToList())
-    })
-    .ToList()
+        .GroupBy(x => new { x.PlanId, x.PlanRoleLinkId })
+        .Select(g =>
+        {
+            var first = g.FirstOrDefault();
+
+            return new PlanRoleActionLinkDetailsDto
+            {
+                PlanId = g.Key.PlanId,
+                PlanRoleLinkId = g.Key.PlanRoleLinkId,
+                PlanName = first?.PlanName,
+                Active = first?.PlanRoleLinkActive ?? false,
+                CreatedDate = first?.PlanRoleLinkCreatedAt?? DateTime.UtcNow,
+                ModifiedDate = first?.PlanRoleLinkUpdatedAt?? DateTime.UtcNow,
+                CreatedUser = first?.PlanRoleLinkCreatedUserName,
+                ModifiedUser = first?.PlanRoleLinkUpdatedUserName ?? "",
+                PlanActionLink = _mapper.Map<List<PlanRoleActionLinkDto>>(g) // no ToList()
+            };
+        })
+        .ToList()
     ?? new List<PlanRoleActionLinkDetailsDto>();
         dto.PlanRoleActionLink = planRoleActionLinkDetails;
         return dto;
