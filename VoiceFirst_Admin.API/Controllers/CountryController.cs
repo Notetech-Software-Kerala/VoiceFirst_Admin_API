@@ -41,6 +41,15 @@ public class CountryController : ControllerBase
         return Ok(ApiResponse<object>.Ok(items, Messages.CountryRetrieveSucessfully));
     }
 
+
+    [HttpGet]
+    [Route("api/dialCode/lookup")]
+    public async Task<IActionResult> GetDialCodesLookUpAsync(CancellationToken cancellationToken)
+    {
+        var response = await _service.GetDialCodesLookUpAsync(cancellationToken);
+        return StatusCode(response.StatusCode, response);
+    }
+
     [HttpGet]
     [Route("api/division/one")]
     public async Task<IActionResult> GetDivisionOneAll([FromQuery] DivisionOneFilterDto filter, CancellationToken cancellationToken)

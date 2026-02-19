@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
+using VoiceFirst_Admin.API.Security;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Plan;
@@ -159,6 +160,7 @@ namespace VoiceFirst_Admin.API.Controllers
 
 
 
+        [AuthorizeAdmin]
         [HttpDelete("{id:int}")]
         [ProducesResponseType(typeof(ApiResponse<PlanDetailDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
@@ -188,6 +190,7 @@ namespace VoiceFirst_Admin.API.Controllers
         }
 
 
+        [AuthorizeAdmin]
         [HttpPatch("recover/{id:int}")]
         [ProducesResponseType(typeof(ApiResponse<PlanDetailDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]

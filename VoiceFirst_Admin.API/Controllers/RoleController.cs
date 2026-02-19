@@ -82,6 +82,8 @@ public class RoleController : ControllerBase
         var items = await _service.GetAllAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.RoleRetrieveSucessfully));
     }
+
+
     [HttpGet("lookup")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
@@ -89,9 +91,11 @@ public class RoleController : ControllerBase
     [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
     public async Task<IActionResult> GetLookupAsync(CancellationToken cancellationToken)
     {
-        var items = await _service.GetLookUpAllAsync(cancellationToken);
+        var items = await _service.GetLookUpAllAsync(1,cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.RoleRetrieveSucessfully));
     }
+
+
     [HttpPatch("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
@@ -99,7 +103,6 @@ public class RoleController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
-
     [SwaggerResponseDescription(StatusCodes.Status200OK, Description.ROLE_UPDATED, Messages.RoleCreated, DataExamples.ROLUPDATEDATA)]
     [SwaggerResponseDescription(StatusCodes.Status403Forbidden, Description.SYSTEM_ROLE_403, Messages.RoleNameDefault)]
     [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.ROLE_FAILD, Messages.RoleFailed)]
@@ -111,6 +114,7 @@ public class RoleController : ControllerBase
         var res = await _service.UpdateAsync(model, id, userId, cancellationToken);
         return StatusCode(res.StatusCode, res);
     }
+
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]

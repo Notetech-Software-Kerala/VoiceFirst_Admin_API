@@ -27,7 +27,7 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IUserRepo _repo;
         private readonly IUserRoleLinkRepo _userRoleLinkRepo;
         private readonly IMapper _mapper;
-        private readonly IDapperContext _dapperContext;
+        private readonly IUnitOfWork _uow;
         private readonly ICountryRepo _countryRepo;
         private readonly IRoleRepo _roleRepo;
         private readonly IConfiguration _configuration;
@@ -36,7 +36,7 @@ namespace VoiceFirst_Admin.Business.Services
             IUserRepo repo,
             IUserRoleLinkRepo userRoleLinkRepo,
             IMapper mapper,
-            IDapperContext dapperContext,
+            IUnitOfWork uow,
             ICountryRepo countryRepo,
             IRoleRepo roleRepo,
             IConfiguration configuration,
@@ -44,7 +44,7 @@ namespace VoiceFirst_Admin.Business.Services
         {
             _repo = repo;
             _mapper = mapper;
-            _dapperContext = dapperContext;
+            _uow = uow;
             _countryRepo = countryRepo;
             _userRoleLinkRepo = userRoleLinkRepo;
             _roleRepo = roleRepo;
@@ -64,7 +64,7 @@ namespace VoiceFirst_Admin.Business.Services
 
 
             var country = await _countryRepo.
-                IsIdExistAsync(employee.MobileCountryCodeId,
+                IsIdExistAsync(employee.DialCodeId,
                 cancellationToken);
 
 
@@ -174,19 +174,17 @@ namespace VoiceFirst_Admin.Business.Services
 
          
 
-            using var connection = _dapperContext.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             try
             {
 
 
-             
+
                 var createdId = await _repo.CreateAsync
                    (entity,
-                   connection,
-                   transaction,
+                   _uow.Connection,
+                   _uow.Transaction,
                    cancellationToken);
 
                 await _userRoleLinkRepo.BulkInsertUserRoleLinksAsync
@@ -194,17 +192,17 @@ namespace VoiceFirst_Admin.Business.Services
                     createdId,
                     employee.RoleIds,
                     loginId,
-                    connection,
-                    transaction,
+                    _uow.Connection,
+                    _uow.Transaction,
                     cancellationToken);
 
                 var dtoOut = await _repo.GetByIdAsync
                     (createdId,
-                     connection,
-                    transaction,
+                     _uow.Connection,
+                    _uow.Transaction,
                     cancellationToken);
 
-                transaction.Commit();
+                await _uow.CommitAsync();
                 // Send welcome email with temporary password
                 EmailHelper.SendMail(new EmailDTO
                 {
@@ -222,7 +220,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
             catch
             {
-                transaction.Rollback();
+                await _uow.RollbackAsync();
                 throw;
             }
         }
@@ -384,12 +382,12 @@ namespace VoiceFirst_Admin.Business.Services
                         ErrorCodes.EmployeeNotAvaliable
                         );
 
-            if (employee.MobileCountryCodeId != dto.MobileCountryCodeId
-                && (dto.MobileCountryCodeId != null || dto.MobileCountryCodeId >= 0))
+            if (employee.DialCodeId != dto.DialCodeId
+                && (dto.DialCodeId != null || dto.DialCodeId >= 0))
             {
 
                 var country = await _countryRepo.
-              IsIdExistAsync(employee.MobileCountryCodeId,
+              IsIdExistAsync(employee.DialCodeId,
               cancellationToken);
 
 
@@ -460,17 +458,15 @@ namespace VoiceFirst_Admin.Business.Services
 
        
 
-            using var connection = _dapperContext.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
 
             try
             {
                 var employeeUpdation = await _repo.UpdateAsync
               (_mapper.Map<Users>((dto, updateUserId, loginId)),
-                connection,
-                transaction,
+                _uow.Connection,
+                _uow.Transaction,
                 cancellationToken);
 
 
@@ -485,12 +481,12 @@ namespace VoiceFirst_Admin.Business.Services
                              .Select(x => x.RoleId)
                              .ToList(),
                          true,
-                         connection,
-                         transaction,
+                         _uow.Connection,
+                         _uow.Transaction,
                          cancellationToken);
                     if (!updationRolesFound)
                     {
-                        transaction.Rollback();
+                        await _uow.RollbackAsync();
                         return ApiResponse<EmployeeDetailDto>.Fail(
                           Messages.RolesNotFound,
                           StatusCodes.Status404NotFound,
@@ -502,8 +498,8 @@ namespace VoiceFirst_Admin.Business.Services
                              updateUserId,
                              dto.UpdateRoles,
                              loginId,
-                             connection,
-                             transaction,
+                             _uow.Connection,
+                             _uow.Transaction,
                              cancellationToken);
                 }
 
@@ -516,12 +512,12 @@ namespace VoiceFirst_Admin.Business.Services
                         updateUserId,
                         dto.InsertRoles,
                         false,
-                        connection,
-                        transaction,
+                        _uow.Connection,
+                        _uow.Transaction,
                         cancellationToken);
                     if (linkedRolesFound)
                     {
-                        transaction.Rollback();
+                        await _uow.RollbackAsync();
                         return ApiResponse<EmployeeDetailDto>.Fail(
                           Messages.RolesNotFound,
                           StatusCodes.Status404NotFound,
@@ -552,8 +548,8 @@ namespace VoiceFirst_Admin.Business.Services
                                updateUserId,
                                dto.InsertRoles,
                                loginId,
-                               connection,
-                               transaction,
+                               _uow.Connection,
+                               _uow.Transaction,
                                cancellationToken);
                 }
 
@@ -567,9 +563,9 @@ namespace VoiceFirst_Admin.Business.Services
                 }
 
                 var dtoOut = await _repo.GetByIdAsync(updateUserId,
-                    connection, transaction, cancellationToken);
+                    _uow.Connection, _uow.Transaction, cancellationToken);
 
-                transaction.Commit();
+                await _uow.CommitAsync();
 
                 if (dto.Active == false)
                 {
@@ -583,7 +579,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
             catch
             {
-                transaction.Rollback();
+                await _uow.RollbackAsync();
                 throw;
             }
         }
@@ -594,15 +590,15 @@ namespace VoiceFirst_Admin.Business.Services
            GetByIdAsync(int id,
            CancellationToken cancellationToken = default)
         {
-            using var connection = _dapperContext.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             var dto = await _repo.GetByIdAsync
                 (id,
-                connection,
-                transaction,
+                _uow.Connection,
+                _uow.Transaction,
                 cancellationToken);
+
+            await _uow.CommitAsync();
 
             if (dto == null)
             {

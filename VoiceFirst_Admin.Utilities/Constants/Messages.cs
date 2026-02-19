@@ -184,6 +184,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string NoActivePlaces =
         "No active  places available.";
 
+        public const string NoActiveDialCodes =
+   "No active  Dial codes available.";
+
         public const string NoActivePrograms =
        "No active  programs available.";
 
@@ -196,6 +199,11 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string PlacesRetrieved =
        "Places retrieved successfully.";
+
+
+
+        public const string DialCodesRetrieved =
+       "Dial Codes retrieved successfully.";
 
 
         public const string ApplicationRetrieved =

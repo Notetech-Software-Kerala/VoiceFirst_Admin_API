@@ -25,17 +25,17 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IPlaceRepo _repo;
         private readonly IPostOfficeRepo _postOfficeRepo;
         private readonly IMapper _mapper;
-        private readonly IDapperContext _context;
+        private readonly IUnitOfWork _uow;
         public PlaceService(
             IPlaceRepo repository,
             IMapper mapper,
             IPostOfficeRepo postOfficeRepo,
-            IDapperContext dapperContext)
+            IUnitOfWork uow)
         {
             _repo = repository;
             _mapper = mapper;
             _postOfficeRepo = postOfficeRepo;
-            _context = dapperContext;
+            _uow = uow;
         }
 
 
@@ -75,9 +75,7 @@ namespace VoiceFirst_Admin.Business.Services
                 null,
                 cancellationToken);
 
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             try
             {
@@ -86,7 +84,7 @@ namespace VoiceFirst_Admin.Business.Services
                     if (existingEntity.Deleted)
                     {
                         // Place exists but was soft-deleted — return recoverable
-                        transaction.Rollback();
+                        await _uow.RollbackAsync();
                         return ApiResponse<PlaceDetailDTO>.Fail(
                             Messages.PlaceAlreadyExistsRecoverable,
                             StatusCodes.Status422UnprocessableEntity,
@@ -104,8 +102,8 @@ namespace VoiceFirst_Admin.Business.Services
                         await _repo.ActivatePlaceAsync(
                             existingEntity.PlaceId,
                             loginId,
-                            connection,
-                            transaction,
+                            _uow.Connection,
+                            _uow.Transaction,
                             cancellationToken);
                     }
 
@@ -116,13 +114,13 @@ namespace VoiceFirst_Admin.Business.Services
                             await _repo.CheckAlreadyPlaceZipCodeLinkedAsync(
                                 existingEntity.PlaceId,
                                 dto.ZipCodeLinkIds,
-                                connection,
-                                transaction,
+                                _uow.Connection,
+                                _uow.Transaction,
                                 cancellationToken);
 
                         if (alreadyLinked)
                         {
-                            transaction.Rollback();
+                            await _uow.RollbackAsync();
                             return ApiResponse<PlaceDetailDTO>.Fail(
                                 Messages.ZipCodesAlreadyLinkedWithPlace,
                                 StatusCodes.Status409Conflict,
@@ -134,14 +132,14 @@ namespace VoiceFirst_Admin.Business.Services
                             existingEntity.PlaceId,
                             dto.ZipCodeLinkIds,
                             loginId,
-                            connection,
-                            transaction,
+                            _uow.Connection,
+                            _uow.Transaction,
                             cancellationToken);
                     }
                     else
                     {
                         // no zip codes sent and name already exists
-                        transaction.Rollback();
+                        await _uow.RollbackAsync();
                         return ApiResponse<PlaceDetailDTO>.Fail(
                             Messages.PlaceAlreadyExists,
                             StatusCodes.Status409Conflict,
@@ -150,11 +148,11 @@ namespace VoiceFirst_Admin.Business.Services
 
                     var dtoOut = await _repo.GetByIdAsync(
                         existingEntity.PlaceId,
-                        connection,
-                        transaction,
+                        _uow.Connection,
+                        _uow.Transaction,
                         cancellationToken);
 
-                    transaction.Commit();
+                    await _uow.CommitAsync();
                     return ApiResponse<PlaceDetailDTO>.Ok(
                         dtoOut!,
                         Messages.PlaceWasAlreadyExistZipCodeLinked,
@@ -167,23 +165,23 @@ namespace VoiceFirst_Admin.Business.Services
 
                 entity.PlaceId =
                     await _repo.CreateAsync(
-                        entity, connection, transaction, cancellationToken);
+                        entity, _uow.Connection, _uow.Transaction, cancellationToken);
 
                 await _repo.BulkInsertPlaceZipCodeLinksAsync(
                     entity.PlaceId,
                     dto.ZipCodeLinkIds,
                     loginId,
-                    connection,
-                    transaction,
+                    _uow.Connection,
+                    _uow.Transaction,
                     cancellationToken);
 
                 var result = await _repo.GetByIdAsync(
                     entity.PlaceId,
-                    connection,
-                    transaction,
+                    _uow.Connection,
+                    _uow.Transaction,
                     cancellationToken);
 
-                transaction.Commit();
+                await _uow.CommitAsync();
                 return ApiResponse<PlaceDetailDTO>.Ok(
                     result!,
                     Messages.PlaceCreated,
@@ -191,7 +189,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
             catch
             {
-                transaction.Rollback();
+                await _uow.RollbackAsync();
                 throw;
             }
         }
@@ -201,12 +199,12 @@ namespace VoiceFirst_Admin.Business.Services
           int id,
           CancellationToken cancellationToken = default)
         {
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             var dto = await _repo.GetByIdAsync
-                (id, connection,transaction, cancellationToken);
+                (id, _uow.Connection, _uow.Transaction, cancellationToken);
+
+            await _uow.CommitAsync();
 
             if (dto == null)
             {
@@ -319,17 +317,15 @@ namespace VoiceFirst_Admin.Business.Services
                      );
                 }
             }
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             var entity = _mapper.Map<Place>((dto, placeId, loginId));
             try
             {
-              
-               
-                var placeUpdation = await _repo.UpdateAsync(entity, connection,
-                transaction, cancellationToken);
+
+
+                var placeUpdation = await _repo.UpdateAsync(entity, _uow.Connection,
+                _uow.Transaction, cancellationToken);
 
 
 
@@ -343,12 +339,12 @@ namespace VoiceFirst_Admin.Business.Services
                              .Select(x => x.ZipCodeLinkId)
                              .ToList(),
                          true,
-                         connection,
-                         transaction,
+                         _uow.Connection,
+                         _uow.Transaction,
                          cancellationToken);
                     if (!isPostOfficeLinked)
                     {
-                        transaction.Rollback();
+                        await _uow.RollbackAsync();
                         return ApiResponse<PlaceDetailDTO>.Fail(
                           Messages.ZipCodesNotFound,
                           StatusCodes.Status404NotFound,
@@ -360,8 +356,8 @@ namespace VoiceFirst_Admin.Business.Services
                              placeId,
                              dto.UpdateZipCodeLinkIds,
                              loginId,
-                             connection,
-                             transaction,
+                             _uow.Connection,
+                             _uow.Transaction,
                              cancellationToken);
                 }
 
@@ -374,12 +370,12 @@ namespace VoiceFirst_Admin.Business.Services
                         placeId,
                         dto.InsertZipCodeLinkIds,
                         false,
-                        connection,
-                        transaction,
+                        _uow.Connection,
+                        _uow.Transaction,
                         cancellationToken);
                     if (linkedPostOfficeFound)
                     {
-                        transaction.Rollback();
+                        await _uow.RollbackAsync();
                         return ApiResponse<PlaceDetailDTO>.Fail(
                           Messages.ZipCodesAreAlreadyLinked,
                           StatusCodes.Status409Conflict,
@@ -410,8 +406,8 @@ namespace VoiceFirst_Admin.Business.Services
                                placeId,
                                dto.InsertZipCodeLinkIds,
                                loginId,
-                               connection,
-                               transaction,
+                               _uow.Connection,
+                               _uow.Transaction,
                                cancellationToken);
                 }
 
@@ -425,9 +421,9 @@ namespace VoiceFirst_Admin.Business.Services
                 }
 
                 var dtoOut = await _repo.GetByIdAsync(placeId,
-                    connection, transaction, cancellationToken);
+                    _uow.Connection, _uow.Transaction, cancellationToken);
 
-                transaction.Commit();
+                await _uow.CommitAsync();
 
                 return ApiResponse<PlaceDetailDTO>.Ok(
                     dtoOut!,
@@ -436,7 +432,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
             catch
             {
-                transaction.Rollback();
+                await _uow.RollbackAsync();
                 throw;
             }
 
@@ -477,18 +473,16 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.PlaceAlreadyRecovered);
             }
 
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             try
             {
                 var rowAffect = await _repo.RecoverAsync(
-                    id, loginId, connection, transaction, cancellationToken);
+                    id, loginId, _uow.Connection, _uow.Transaction, cancellationToken);
 
                 if (!rowAffect)
                 {
-                    transaction.Rollback();
+                    await _uow.RollbackAsync();
                     return ApiResponse<PlaceDetailDTO>.Fail(
                          Messages.PlaceAlreadyRecovered,
                          StatusCodes.Status409Conflict,
@@ -496,9 +490,9 @@ namespace VoiceFirst_Admin.Business.Services
                 }
 
                 var dtoOut = await _repo.GetByIdAsync(
-                    id, connection, transaction, cancellationToken);
+                    id, _uow.Connection, _uow.Transaction, cancellationToken);
 
-                transaction.Commit();
+                await _uow.CommitAsync();
                 return ApiResponse<PlaceDetailDTO>.Ok(
                     dtoOut!,
                     Messages.PlaceRecovered,
@@ -506,7 +500,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
             catch
             {
-                transaction.Rollback();
+                await _uow.RollbackAsync();
                 throw;
             }
         }
@@ -540,22 +534,20 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.PlaceAlreadyDeleted);
             }
 
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             try
             {
                 var rowAffect = await _repo.DeleteAsync(
                     id, 
                     loginId,
-                    connection, 
-                    transaction, 
+                    _uow.Connection, 
+                    _uow.Transaction, 
                     cancellationToken);
 
                 if (!rowAffect)
                 {
-                    transaction.Rollback();
+                    await _uow.RollbackAsync();
                     return ApiResponse<PlaceDetailDTO>.Fail(
                          Messages.PlaceAlreadyDeleted,
                          StatusCodes.Status409Conflict,
@@ -564,11 +556,11 @@ namespace VoiceFirst_Admin.Business.Services
 
                 var dtoOut = await _repo.GetByIdAsync(
                     id, 
-                    connection,
-                    transaction,
+                    _uow.Connection,
+                    _uow.Transaction,
                     cancellationToken);
 
-                transaction.Commit();
+                await _uow.CommitAsync();
                 return ApiResponse<PlaceDetailDTO>.Ok(
                     dtoOut!,
                     Messages.PlaceDeleted,
@@ -576,7 +568,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
             catch
             {
-                transaction.Rollback();
+                await _uow.RollbackAsync();
                 throw;
             }
         }

@@ -18,8 +18,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<SysRoles> CreateAsync(SysRoles entity, List<PlanActionLinkCreateDto> PlanActionLinkCreateDto, CancellationToken cancellationToken = default);
         Task<SysRoles?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysRoles>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default);
-        Task<IEnumerable<SysRoles>> GetLookUpAllAsync( CancellationToken cancellationToken = default);
-        Task<bool> UpdateAsync(SysRoles entity, CancellationToken cancellationToken = default); 
+        Task<IEnumerable<RoleLookUpDto>>
+                GetLookUpAllAsync(int ApplicationId, CancellationToken cancellationToken = default);        Task<bool> UpdateAsync(SysRoles entity, CancellationToken cancellationToken = default); 
         Task<bool> DeleteAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<bool> RestoreAsync(SysRoles entity, CancellationToken cancellationToken = default);
         Task<SysRoles> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);

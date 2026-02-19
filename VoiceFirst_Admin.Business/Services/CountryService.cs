@@ -1,13 +1,17 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Country;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Division;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Place;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
+using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.Business.Services;
 
@@ -42,6 +46,21 @@ public class CountryService : ICountryService
         var list = _mapper.Map<IEnumerable<CountryDto>>(entities);
         return list;
     }
+
+    public async Task<ApiResponse<List<DialCodeLookUpDto>>> GetDialCodesLookUpAsync(CancellationToken cancellationToken = default)
+    {
+        var dtos = await _repo.GetDialCodesLookUpAsync(cancellationToken);
+        return ApiResponse<List<DialCodeLookUpDto>>.Ok(
+                dtos.ToList(),
+                dtos.ToList().Count == 0
+                    ? Messages.NoActiveDialCodes
+                    : Messages.DialCodesRetrieved,
+                statusCode: StatusCodes.Status200OK
+            );
+    }
+
+
+    
 
     // Division One Methods
 

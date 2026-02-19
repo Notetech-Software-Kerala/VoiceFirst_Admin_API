@@ -15,6 +15,8 @@ public interface ICountryRepo
           CancellationToken cancellationToken = default);
     Task<PagedResultDto<Country>> GetAllAsync(CountryFilterDto filter, CancellationToken cancellationToken = default);
     Task<IEnumerable<Country>> GetActiveAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<DialCodeLookUpDto>> GetDialCodesLookUpAsync(CancellationToken cancellationToken = default);
+
     Task<Country> GetByCountryIdAsync(int id, CancellationToken cancellationToken = default);
     Task<PagedResultDto<DivisionOne>> GetAllDivisionOneAsync(DivisionOneFilterDto filter, CancellationToken cancellationToken = default);
     Task<IEnumerable<DivisionOne>> GetDivisionOneActiveByCountryIdAsync(int countryId, CancellationToken cancellationToken = default);

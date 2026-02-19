@@ -114,15 +114,22 @@ public class RoleRepo : IRoleRepo
         var cmd = new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken);
         return await connection.QuerySingleOrDefaultAsync<SysRoles>(cmd);
     }
-    public async Task<IEnumerable<SysRoles>> GetLookUpAllAsync(CancellationToken cancellationToken = default)
+
+
+    public async Task<IEnumerable<RoleLookUpDto>> 
+        GetLookUpAllAsync(int ApplicationId,CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT r.SysRoleId, r.RoleName
+        const string sql = @"SELECT r.SysRoleId AS RoleId, r.RoleName AS RoleName
         FROM SysRoles r
-        WHERE r.IsActive = 1 And r.IsDeleted=0 AND r.SysRoleId > 5;;";
+        WHERE r.IsActive = 1 And r.IsDeleted=0 AND r.SysRoleId >2
+        And ApplicationId =@ApplicationId;";
         using var connection = _context.CreateConnection();
-        var cmd = new CommandDefinition(sql, cancellationToken: cancellationToken);
-        return await connection.QueryAsync<SysRoles>(cmd);
+        var cmd = new CommandDefinition(sql,new { ApplicationId = ApplicationId },
+            cancellationToken: cancellationToken);
+        return await connection.QueryAsync<RoleLookUpDto>(cmd);
     }
+
+
     public async Task<PagedResultDto<SysRoles>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default)
     {
         var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;

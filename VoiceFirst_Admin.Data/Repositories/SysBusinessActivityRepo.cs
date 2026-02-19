@@ -9,6 +9,7 @@ using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
+using VoiceFirst_Admin.Utilities.Enums;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 using static Dapper.SqlMapper;
 
@@ -376,7 +377,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<bool> DeleteAsync
-            (int id, int deletedBy, 
+            (int id, int deletedBy,
             CancellationToken cancellationToken = default)
         {
             const string sql = @"UPDATE SysBusinessActivity SET IsDeleted = 1, DeletedAt = SYSDATETIME(),DeletedBy = @deletedBy  WHERE SysBusinessActivityId = @ActivityId And IsDeleted = 0;";
@@ -392,6 +393,84 @@ namespace VoiceFirst_Admin.Data.Repositories
             return affectedRows > 0;
         }
 
+       // public async Task<SysBusinessActivityDTO> DeleteAsync(
+       //int id,
+       //int deletedBy,
+       //CancellationToken cancellationToken = default)
+       // {
+       //     const string sql = @"
+       //       DECLARE @Result TABLE (Status INT);
+
+       //     UPDATE dbo.SysBusinessActivity
+       //     SET IsDeleted = 1,
+       //         DeletedAt = SYSUTCDATETIME(),
+       //         DeletedBy = @deletedBy
+       //     OUTPUT 
+       //         INSERTED.SysBusinessActivityId,
+       //         INSERTED.Name,
+       //         INSERTED.IsDeleted,
+       //         INSERTED.DeletedAt,
+       //         U.UserName AS DeletedByName
+
+
+       //             s.SysBusinessActivityId    As ActivityId    ,
+       //             s.BusinessActivityName      As ActivityName   ,
+       //             s.IsActive             As Active        ,
+       //             s.IsDeleted            As Deleted      ,
+       //             s.CreatedAt             As CreatedDate    ,
+       //             s.UpdatedAt             As   ModifiedDate  ,
+       //             s.DeletedAt              As   DeletedDate  ,
+
+       //             -- Created User
+       //             CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUser,
+
+       //             -- Updated User
+       //             CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS ModifiedUser,
+
+       //             -- Deleted User
+       //             CONCAT(du.FirstName, ' ', ISNULL(du.LastName, '')) AS DeletedUser
+
+       //         FROM dbo.SysBusinessActivity s
+       //         INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
+       //         LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
+       //         LEFT JOIN dbo.Users du ON du.UserId = s.DeletedBy
+
+
+       //     FROM dbo.SysBusinessActivity SBA
+       //     JOIN dbo.Users U
+       //         ON U.UserId = @deletedBy
+       //     WHERE SysBusinessActivityId = @ActivityId
+       //         AND IsDeleted = 0;
+
+       //     IF NOT EXISTS (SELECT 1 FROM @Result)
+       //     BEGIN
+       //         INSERT INTO @Result
+       //         SELECT CASE 
+       //             WHEN EXISTS (
+       //                 SELECT 1 
+       //                 FROM dbo.SysBusinessActivity 
+       //                 WHERE SysBusinessActivityId = @ActivityId
+       //             )
+       //             THEN 1
+       //             ELSE 0
+       //         END
+       //     END
+
+       //     SELECT TOP 1 Status FROM @Result;
+
+       //         ";
+
+       //     using var connection = _context.CreateConnection();
+
+
+       //     var sysBusinessActivityDTO = await connection.QuerySingleAsync<DeleteResult>(
+       //         new CommandDefinition(
+       //             sql,
+       //             new { ActivityId = id, deletedBy },
+       //             cancellationToken: cancellationToken));
+
+       //     return result;
+       // }
 
 
 

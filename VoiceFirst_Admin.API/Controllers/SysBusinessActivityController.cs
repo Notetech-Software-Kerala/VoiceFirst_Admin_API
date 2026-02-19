@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
+using VoiceFirst_Admin.API.Security;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.Constants.Swagger;
@@ -75,7 +76,7 @@ public class SysBusinessActivityController : ControllerBase
     {
         var response = await _service.CreateAsync(
             model,
-            _userContext.UserId,
+            1,
             cancellationToken);
 
         return StatusCode(response.StatusCode, response);
@@ -225,13 +226,13 @@ public class SysBusinessActivityController : ControllerBase
         }
 
         var response = await _service.UpdateAsync(
-            model, id, _userContext.UserId, cancellationToken);
+            model, id, 1, cancellationToken);
         return StatusCode(response.StatusCode,response);
     }
 
 
 
-    [Authorize(Roles = "Admin")]
+    //[AuthorizeAdmin]
     [HttpPatch("recover/{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
@@ -259,12 +260,14 @@ public class SysBusinessActivityController : ControllerBase
             ));
         }
         var recoveredDto = await _service.RecoverBusinessActivityAsync
-            (id, _userContext.UserId, cancellationToken);
+           (id, 1, cancellationToken);
+        //var recoveredDto = await _service.RecoverBusinessActivityAsync
+        //    (id, _userContext.UserId, cancellationToken);
         return StatusCode(recoveredDto.StatusCode, recoveredDto);
     }
 
 
-    [Authorize(Roles = "Notetech Superadmin")]
+    //[AuthorizeAdmin]
     [HttpDelete("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
@@ -289,8 +292,8 @@ public class SysBusinessActivityController : ControllerBase
                 error: ErrorCodes.Payload
             ));
         }
-        var recoveredDto =  await _service.DeleteAsync(id, _userContext.UserId, cancellationToken);
-        return StatusCode(recoveredDto.StatusCode, recoveredDto);
+        var deleteDto =  await _service.DeleteAsync(id, 1, cancellationToken);        
+        return StatusCode(deleteDto.StatusCode, deleteDto);
     }
 
 

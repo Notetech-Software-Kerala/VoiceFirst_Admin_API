@@ -25,6 +25,7 @@ using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 using VoiceFirst_Admin.API.Security;
+using VoiceFirst_Admin.Utilities.Constants;
 using FluentValidation;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using VoiceFirst_Admin.Utilities.Validators;
@@ -35,6 +36,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddScoped<IDapperContext, DapperContext>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(SysBusinessActivityProfile).Assembly);
 builder.Services.AddValidatorsFromAssemblyContaining<SysBusinessActivityCreateValidator>();
 builder.Services.AddFluentValidationAutoValidation();
@@ -254,6 +256,15 @@ builder.Services
             }
         }
     };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthPolicies.SuperAdmin, policy =>
+        policy.RequireRole(AuthPolicies.Roles.NotetechSuperAdmin));
+
+    options.AddPolicy(AuthPolicies.Admin, policy =>
+        policy.RequireRole(AuthPolicies.Roles.Admin, AuthPolicies.Roles.NotetechSuperAdmin));
 });
 
 var app = builder.Build();

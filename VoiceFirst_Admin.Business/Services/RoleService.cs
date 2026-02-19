@@ -144,10 +144,12 @@ public class RoleService : IRoleService
             PageSize = filter.Limit
         };
     }
-    public async Task<IEnumerable<RoleLookUpDto>> GetLookUpAllAsync( CancellationToken cancellationToken = default)
+
+    public async Task<IEnumerable<RoleLookUpDto>> GetLookUpAllAsync( 
+        int AppplicationId,
+        CancellationToken cancellationToken = default)
     {
-        var entities = await _repo.GetLookUpAllAsync( cancellationToken);
-        var dto = _mapper.Map<IEnumerable<RoleLookUpDto>>(entities);
+        var dto = await _repo.GetLookUpAllAsync(AppplicationId, cancellationToken);
         return dto;
     }
 

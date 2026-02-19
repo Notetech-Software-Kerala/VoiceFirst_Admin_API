@@ -32,20 +32,20 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IApplicationRepo _applicationRepo;
         private readonly IProgramActionRepo _programActionRepo;
         private readonly IMapper _mapper;
-        private readonly IDapperContext _context;
+        private readonly IUnitOfWork _uow;
 
 
         public SysProgramService(
             ISysProgramRepo repo,
             IApplicationRepo applicationRepo,
             IProgramActionRepo programActionRepo,
-            IMapper mapper, IDapperContext _context)
+            IMapper mapper, IUnitOfWork uow)
         {
             _repo = repo;
             _applicationRepo = applicationRepo;
             _programActionRepo = programActionRepo;
             _mapper = mapper;
-            this._context = _context;
+            _uow = uow;
         }
 
 
@@ -178,36 +178,34 @@ namespace VoiceFirst_Admin.Business.Services
             var entity = _mapper.Map<SysProgram>(dto);
             entity.CreatedBy = loginId;
 
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             try
             {
                 var createdId = await _repo.CreateAsync
                    (entity,                   
-                   connection,
-                   transaction, 
+                   _uow.Connection,
+                   _uow.Transaction, 
                    cancellationToken);
 
-               
+
 
                 await _repo.BulkInsertActionLinksAsync
                     (
                     createdId,
                     dto.ActionIds,
                     loginId,
-                    connection,
-                    transaction,
+                    _uow.Connection,
+                    _uow.Transaction,
                     cancellationToken);
 
                 var dtoOut = await _repo.GetByIdAsync
                     (createdId,
-                     connection,
-                    transaction,
+                     _uow.Connection,
+                    _uow.Transaction,
                     cancellationToken);
 
-                transaction.Commit();
+                await _uow.CommitAsync();
                 return ApiResponse<SysProgramDto>.Ok(
                     dtoOut!,
                     Messages.ProgramCreated,
@@ -215,7 +213,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
             catch
             {
-                transaction.Rollback();
+                await _uow.RollbackAsync();
                 throw;
             }
         }
@@ -225,15 +223,15 @@ namespace VoiceFirst_Admin.Business.Services
             GetByIdAsync(int id,
             CancellationToken cancellationToken = default)
         {
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             var dto = await _repo.GetByIdAsync
                 (id, 
-                connection, 
-                transaction, 
+                _uow.Connection, 
+                _uow.Transaction, 
                 cancellationToken);
+
+            await _uow.CommitAsync();
 
             if (dto == null)
             {
@@ -643,17 +641,15 @@ namespace VoiceFirst_Admin.Business.Services
 
 
            
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
 
             try
             {
                  var programUpdation = await _repo.UpdateAsync
                (_mapper.Map<SysProgram>((dto, programId, loginId)),
-                 connection,
-                 transaction,
+                 _uow.Connection,
+                 _uow.Transaction,
                  cancellationToken);
 
 
@@ -668,12 +664,12 @@ namespace VoiceFirst_Admin.Business.Services
                              .Select(x => x.ActionId)
                              .ToList(),
                          true,
-                         connection,
-                         transaction,
+                         _uow.Connection,
+                         _uow.Transaction,
                          cancellationToken);
                     if (!updationActionsFound)
                     {
-                        transaction.Rollback();
+                        await _uow.RollbackAsync();
                         return ApiResponse<SysProgramDto>.Fail(
                           Messages.NotFound,
                           StatusCodes.Status404NotFound,
@@ -685,8 +681,8 @@ namespace VoiceFirst_Admin.Business.Services
                              programId,
                              dto.UpdateActions,
                              loginId,
-                             connection,
-                             transaction,
+                             _uow.Connection,
+                             _uow.Transaction,
                              cancellationToken);
                 }
 
@@ -699,12 +695,12 @@ namespace VoiceFirst_Admin.Business.Services
                         programId,
                         dto.InsertActions,
                         false,
-                        connection,
-                        transaction,
+                        _uow.Connection,
+                        _uow.Transaction,
                         cancellationToken);
                     if (linkedActionsFound)
                     {
-                        transaction.Rollback();
+                        await _uow.RollbackAsync();
                         return ApiResponse<SysProgramDto>.Fail(
                           Messages.ActionsAreAlreadyLinked,
                           StatusCodes.Status409Conflict,
@@ -735,12 +731,12 @@ namespace VoiceFirst_Admin.Business.Services
                                programId,
                                dto.InsertActions,
                                loginId,
-                               connection,
-                               transaction,
+                               _uow.Connection,
+                               _uow.Transaction,
                                cancellationToken);
                 }
 
-                                                                                                
+
                 if (!actionUpdation && !programUpdation)
                 {
                     return ApiResponse<SysProgramDto>.Fail(
@@ -748,11 +744,11 @@ namespace VoiceFirst_Admin.Business.Services
                     StatusCodes.Status204NoContent,
                     ErrorCodes.NoRowAffected);
                 }
-                
-                var dtoOut = await _repo.GetByIdAsync(programId,
-                    connection,transaction, cancellationToken);
 
-                transaction.Commit();
+                var dtoOut = await _repo.GetByIdAsync(programId,
+                    _uow.Connection, _uow.Transaction, cancellationToken);
+
+                await _uow.CommitAsync();
 
                 return ApiResponse<SysProgramDto>.Ok(
                     dtoOut!,
@@ -761,7 +757,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
             catch
             {
-                transaction.Rollback();
+                await _uow.RollbackAsync();
                 throw;  
             }
         }

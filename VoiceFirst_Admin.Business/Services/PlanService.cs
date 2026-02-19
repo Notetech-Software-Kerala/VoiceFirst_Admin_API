@@ -16,19 +16,19 @@ namespace VoiceFirst_Admin.Business.Services
     public class PlanService:IPlanService
     {
         private readonly IPlanRepo _planRepository;
-        private readonly IDapperContext _context;
+        private readonly IUnitOfWork _uow;
         private readonly IProgramActionRepo _programActionRepo;
         private readonly ISysProgramRepo _sysProgramRepo;
         private readonly VoiceFirst_Admin.Data.Contracts.IRepositories.IRoleRepo _roleRepository;
 
         public PlanService(IPlanRepo planRepository,
-            IDapperContext _context, 
+            IUnitOfWork uow, 
             IProgramActionRepo programActionRepo, 
             IRoleRepo roleRepository
             , ISysProgramRepo sysProgramRepo)
         {
             _planRepository = planRepository;
-            this._context = _context;
+            _uow = uow;
             _programActionRepo = programActionRepo;
             _roleRepository = roleRepository;
             _sysProgramRepo = sysProgramRepo;
@@ -40,15 +40,15 @@ namespace VoiceFirst_Admin.Business.Services
          GetByIdAsync(int id,
          CancellationToken cancellationToken = default)
         {
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             var dto = await _planRepository.GetByIdAsync
                 (id,
-                connection,
-                transaction,
+                _uow.Connection,
+                _uow.Transaction,
                 cancellationToken);
+
+            await _uow.CommitAsync();
 
             if (dto == null)
             {
@@ -121,9 +121,7 @@ namespace VoiceFirst_Admin.Business.Services
                 CreatedBy = loginId
             };
 
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             try
             {
@@ -131,8 +129,8 @@ namespace VoiceFirst_Admin.Business.Services
 
                 var createdId = await _planRepository.CreatePlanAsync(
                     entity,
-                    connection,
-                    transaction,
+                    _uow.Connection,
+                    _uow.Transaction,
                     cancellationToken);
 
 
@@ -143,15 +141,15 @@ namespace VoiceFirst_Admin.Business.Services
                     createdId,
                     dto.ProgramActionLinkIds,
                     loginId,
-                    connection,
-                    transaction,
+                    _uow.Connection,
+                    _uow.Transaction,
                     cancellationToken);
 
 
 
                 var outdto = await _planRepository.GetByIdAsync
-                    (createdId, connection, transaction, cancellationToken);
-                transaction.Commit();
+                    (createdId, _uow.Connection, _uow.Transaction, cancellationToken);
+                await _uow.CommitAsync();
                 return ApiResponse<PlanDetailDto>.Ok(
                     outdto!,
                     Messages.PlanCreated,
@@ -159,7 +157,7 @@ namespace VoiceFirst_Admin.Business.Services
             }
             catch
             {
-                transaction.Rollback(); // 🔥 FULL ROLLBACK (Plan + Links)
+                await _uow.RollbackAsync();
                 throw;
             }
         }
@@ -198,13 +196,11 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.PlanNotFoundById);
             }
           
-            using var connection = _context.CreateConnection();
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            await _uow.BeginAsync();
 
             var list = await _planRepository.
-                GetProgramDetailsByPlanIdAsync(planId, connection,transaction, cancellationToken);
-            transaction.Commit();
+                GetProgramDetailsByPlanIdAsync(planId, _uow.Connection, _uow.Transaction, cancellationToken);
+            await _uow.CommitAsync();
             return ApiResponse<IEnumerable<ProgramPlanDetailDto>>.Ok(list, Messages.PlanRetrieved);
         }
 

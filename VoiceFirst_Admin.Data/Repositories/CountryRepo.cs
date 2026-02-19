@@ -181,6 +181,17 @@ public class CountryRepo : ICountryRepo
         return dto;
     }
 
+    public async Task<IEnumerable<DialCodeLookUpDto>> GetDialCodesLookUpAsync(CancellationToken cancellationToken = default)
+    {
+        const string sql = @"SELECT CountryId AS DialCodeId, CountryDialCode As DialCode
+                             FROM Country
+                             WHERE IsActive = 1 AND IsDeleted = 0
+                             ORDER BY CountryDialCode ASC;";
+
+        using var connection = _context.CreateConnection();
+        var items = await connection.QueryAsync<DialCodeLookUpDto>(sql);
+        return items;
+    }
 
 
     public async Task<IEnumerable<Country>> GetActiveAsync(CancellationToken cancellationToken = default)

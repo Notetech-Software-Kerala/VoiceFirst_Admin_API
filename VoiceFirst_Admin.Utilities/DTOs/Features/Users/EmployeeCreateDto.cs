@@ -12,7 +12,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Users
         public string Gender { get; set; }
         public string? MobileNo { get; set; }
         public short? BirthYear { get; set; }
-        public int MobileCountryCodeId { get; set; }
+        public int DialCodeId { get; set; }
 
         private List<int> _roleIds = new();
 

@@ -5,6 +5,7 @@ using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
+using VoiceFirst_Admin.Utilities.Enums;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -267,9 +268,44 @@ namespace VoiceFirst_Admin.Business.Services
                Ok(dto, Messages.BusinessActivityRecovered, statusCode: StatusCodes.Status200OK);
         }
 
-            
-        
-         public async Task<ApiResponse<SysBusinessActivityDTO>> 
+
+        //public async Task<ApiResponse<SysBusinessActivityDTO>>
+        //  DeleteAsync(
+        //   int id,
+        //   int loginId,
+        //   CancellationToken cancellationToken = default)
+        //{
+
+        //    var deletedResult =
+        //        await _repo.DeleteAsync(id, loginId, cancellationToken);
+
+        //    switch (deletedResult)
+        //    {
+        //        case DeleteResult.NotFound:
+        //            return ApiResponse<SysBusinessActivityDTO>.Fail(
+        //                Messages.BusinessActivityNotFoundById,
+        //                StatusCodes.Status404NotFound,
+        //                ErrorCodes.BusinessActivityNotFoundById);
+
+        //        case DeleteResult.AlreadyDeleted:
+        //            return ApiResponse<SysBusinessActivityDTO>.Fail(
+        //                Messages.BusinessActivityAlreadyDeleted,
+        //                StatusCodes.Status409Conflict,
+        //                ErrorCodes.BusinessActivityAlreadyDeleted);
+        //    }
+
+        //    var dto =
+        //       await _repo.GetByIdAsync
+        //       (id,
+        //       cancellationToken);
+
+        //    return ApiResponse<SysBusinessActivityDTO>.
+        //       Ok(dto,
+        //       Messages.BusinessActivityDeleted,
+        //       statusCode: StatusCodes.Status200OK);
+        //}
+
+        public async Task<ApiResponse<SysBusinessActivityDTO>> 
             DeleteAsync(
              int id, 
              int loginId, 

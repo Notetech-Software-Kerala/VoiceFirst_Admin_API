@@ -673,11 +673,11 @@ namespace VoiceFirst_Admin.Data.Repositories
                 return false;
 
             const string sql = @"
-        SELECT 1
-        FROM PlaceZipCodeLink
-        WHERE PlaceId = @placeId
-          AND PostOfficeZipCodeLinkId IN @PostOfficeZipCodeLinkId
-    ";
+            SELECT 1
+            FROM PlaceZipCodeLink
+            WHERE PlaceId = @placeId
+            AND PostOfficeZipCodeLinkId IN @PostOfficeZipCodeLinkId
+             ";
 
             var exists = await connection.ExecuteScalarAsync<int?>(
                 new CommandDefinition(
