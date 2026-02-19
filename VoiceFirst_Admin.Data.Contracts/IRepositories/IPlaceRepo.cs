@@ -61,6 +61,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             IDbConnection connection,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default);
+        Task<PlaceDetailDTO?> GetByPlaceIdAsync(
+            int PlaceId, 
+            CancellationToken cancellationToken = default);
 
         Task<IEnumerable<PlaceZipCodeLinkDetailDTO>>
             GetPlaceZipCodeLinksByPlaceIdAsync(

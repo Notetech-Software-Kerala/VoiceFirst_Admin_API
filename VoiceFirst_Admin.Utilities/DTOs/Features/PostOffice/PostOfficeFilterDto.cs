@@ -19,6 +19,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice
         public int? DivOneId { get; set; }
         public int? DivTwoId { get; set; }
         public int? DivThreeId { get; set; }
+        public int? PlaceId { get; set; }
         
     }
     public class PostOfficeLookUpWithZipCodeFilterDto : PostOfficeLookUpFilterDto

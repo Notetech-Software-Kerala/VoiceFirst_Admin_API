@@ -10,6 +10,7 @@ public class RoleDto : CommonDto
     public bool IsMandatory { get; set; }
     public string? RolePurpose { get; set; }
     public int PlatformId { get; set; }
+    public string? Platform { get; set; }
 }
 public class RoleDetailDto : RoleDto
 {

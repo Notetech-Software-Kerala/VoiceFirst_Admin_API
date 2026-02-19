@@ -25,14 +25,12 @@ public interface IPostOfficeRepo
     Task<PagedResultDto<PostOffice>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOffice>> GetLookupAsync(PostOfficeLookUpWithZipCodeFilterDto filter, CancellationToken cancellationToken = default);
     Task<PostOffice?> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
-    Task<bool> UpdateAsync(PostOffice entity, CancellationToken cancellationToken = default);
+    Task<BulkUpsertError> UpdateAsync(PostOffice entity, List<string> zipCodes, List<PostOfficeZipCode> zipEntities, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(PostOffice entity, CancellationToken cancellationToken = default);
     Task<bool> RestoreAsync(PostOffice entity, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdAsync(int postOfficeId,
     int? placeId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdsAsync(List<int> postOfficeIds,
     int? placeId = null, CancellationToken cancellationToken = default);
-    Task<BulkUpsertError?> BulkUpdateZipCodesAsync(int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default);
-    Task<BulkUpsertError?> BulkInsertZipCodesAsync(int postOfficeId, List<string> zipCodes,int loginId, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOfficeZipCode>> GetAllZipCodesAsync(string SearchText, CancellationToken cancellationToken = default);
 }

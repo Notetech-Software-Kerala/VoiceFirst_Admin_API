@@ -21,7 +21,7 @@ public class DataExamples
     ""deletedUser"": "" "",
     ""deletedDate"": null
   }";
-    public const string ROLCBYIDDATA = @" {
+    public const string ROLEBYIDDATA = @" {
 ""planRoleActionLink"": [
       {
         ""planRoleLinkId"": 14,

@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
@@ -514,8 +515,8 @@ public class PostOfficeRepo : IPostOfficeRepo
 
     public async Task<IEnumerable<PostOffice>> GetLookupAsync(PostOfficeLookUpWithZipCodeFilterDto filter, CancellationToken cancellationToken = default)
     {
-        var sql = new StringBuilder(@"
-        SELECT
+        var sql = @"
+        SELECT DISTINCT
             po.PostOfficeId,
             po.PostOfficeName,
             po.CountryId,
@@ -530,27 +531,28 @@ public class PostOfficeRepo : IPostOfficeRepo
         LEFT JOIN DivisionTwo ON DivisionTwo.DivisionTwoId = po.DivisionTwoId
         LEFT JOIN DivisionOne ON DivisionOne.DivisionOneId = po.DivisionOneId
         LEFT JOIN DivisionThree ON DivisionThree.DivisionThreeId = po.DivisionThreeId
+        LEFT JOIN PostOfficeZipCodeLink ON PostOfficeZipCodeLink.PostOfficeId = po.PostOfficeId
         WHERE po.IsDeleted = 0
           AND po.IsActive = 1
-        ");
+        ";
 
         // Optional filters (only appended if provided)
         if (filter?.CountryId is not null)
-            sql.AppendLine("  AND po.CountryId = @CountryId");
+            sql+="  AND po.CountryId = @CountryId";
 
         if (filter?.DivOneId is not null)
-            sql.AppendLine("  AND po.DivisionOneId = @DivOneId");
+            sql += "  AND po.DivisionOneId = @DivOneId";
 
         if (filter?.DivTwoId is not null)
-            sql.AppendLine("  AND po.DivisionTwoId = @DivTwoId");
+            sql += "  AND po.DivisionTwoId = @DivTwoId";
 
         if (filter?.DivThreeId is not null)
-            sql.AppendLine("  AND po.DivisionThreeId = @DivThreeId");
+            sql += "  AND po.DivisionThreeId = @DivThreeId";
 
         // ZipCode filter via EXISTS (your requirement)
         if (!string.IsNullOrWhiteSpace(filter?.ZipCode))
         {
-            sql.AppendLine(@"
+            sql += @"
               AND EXISTS (
                   SELECT 1
                   FROM PostOfficeZipCodeLink l
@@ -559,10 +561,23 @@ public class PostOfficeRepo : IPostOfficeRepo
                     AND l.IsActive = 1
                     AND z.ZipCode LIKE @ZipCodeSearch
               )
-            ");
+            ";
         }
-
-        sql.AppendLine("ORDER BY po.PostOfficeName ASC;");
+        if (filter?.CountryId is not null)
+        {
+            sql += @"
+  AND NOT EXISTS (
+      SELECT 1
+      FROM PlaceZipCodeLink p
+      INNER JOIN PostOfficeZipCodeLink l ON l.PostOfficeZipCodeLinkId = p.PostOfficeZipCodeLinkId
+          WHERE p.PlaceId = @PlaceId
+            AND p.IsActive = 1
+            AND l.IsActive = 1
+            AND l.PostOfficeId = po.PostOfficeId
+  )
+";
+        }
+        sql+="ORDER BY po.PostOfficeName ASC;";
 
         var param = new
         {
@@ -570,6 +585,7 @@ public class PostOfficeRepo : IPostOfficeRepo
             DivOneId = filter?.DivOneId,
             DivTwoId = filter?.DivTwoId,
             DivThreeId = filter?.DivThreeId,
+            PlaceId = filter?.PlaceId,
             ZipCodeSearch = !string.IsNullOrWhiteSpace(filter?.ZipCode)
                 ? $"%{filter!.ZipCode.Trim()}%"
                 : null
@@ -592,11 +608,11 @@ public class PostOfficeRepo : IPostOfficeRepo
         return await connection.QuerySingleOrDefaultAsync<PostOffice>(cmd);
     }
 
-    public async Task<bool> UpdateAsync(PostOffice entity, CancellationToken cancellationToken = default)
+    public async Task<BulkUpsertError> UpdateAsync(PostOffice entity, List<string> zipCodes, List<PostOfficeZipCode> zipEntities, CancellationToken cancellationToken = default)
     {
         var sets = new List<string>();
         var parameters = new DynamicParameters();
-
+        var affected = 0;
         if (!string.IsNullOrWhiteSpace(entity.PostOfficeName))
         {
             sets.Add("PostOfficeName = @PostOfficeName");
@@ -629,24 +645,61 @@ public class PostOfficeRepo : IPostOfficeRepo
             sets.Add("IsActive = @IsActive");
             parameters.Add("IsActive", entity.IsActive.Value ? 1 : 0);
         }
-
-        if (sets.Count == 0)
-            return false;
-
-        sets.Add("UpdatedBy = @UpdatedBy");
-        sets.Add("UpdatedAt = SYSDATETIME()");
-        parameters.Add("UpdatedBy", entity.UpdatedBy);
-        parameters.Add("Id", entity.PostOfficeId);
-
-        var sql = new StringBuilder();
-        sql.Append("UPDATE PostOffice SET ");
-        sql.Append(string.Join(", ", sets));
-        sql.Append(" WHERE PostOfficeId = @Id AND IsDeleted = 0;");
-
-        var cmd = new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken);
         using var connection = _context.CreateConnection();
-        var affected = await connection.ExecuteAsync(cmd);
-        return affected > 0;
+        connection.Open();
+        using var tx = connection.BeginTransaction();
+        try
+        {
+
+        
+            if (sets.Count != 0)
+            {
+                sets.Add("UpdatedBy = @UpdatedBy");
+                sets.Add("UpdatedAt = SYSDATETIME()");
+                parameters.Add("UpdatedBy", entity.UpdatedBy);
+                parameters.Add("Id", entity.PostOfficeId);
+
+                var sql = new StringBuilder();
+                sql.Append("UPDATE PostOffice SET ");
+                sql.Append(string.Join(", ", sets));
+                sql.Append(" WHERE PostOfficeId = @Id AND IsDeleted = 0;");
+
+                var cmd = new CommandDefinition(sql.ToString(), parameters,transaction:tx, cancellationToken: cancellationToken);
+           
+                affected = await connection.ExecuteAsync(cmd);
+                if(affected <= 0)
+                {
+                    return new BulkUpsertError
+                    {
+                        StatuaCode = StatusCodes.Status500InternalServerError,
+                        Message = Messages.SomethingWentWrong
+                    };
+                }
+            }
+            if (zipEntities.Count() > 0)
+            {
+                var result = await BulkUpdateZipCodesAsync(connection, tx,entity.PostOfficeId, zipEntities, cancellationToken);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+            if(zipCodes.Count() > 0)
+            {
+                var result = await BulkInsertZipCodesAsync(connection, tx, entity.PostOfficeId,  zipCodes, entity.UpdatedBy??0, cancellationToken);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+            tx.Commit();
+            return null;
+        }
+        catch (SqlException ex) when(ex.Number == 50001 || ex.Number == 50002)
+        {
+            tx.Rollback();
+            return new BulkUpsertError { Message = ex.Message, StatuaCode = StatusCodes.Status400BadRequest };
+        }
     }
 
     public async Task<bool> DeleteAsync(PostOffice entity, CancellationToken cancellationToken = default)
@@ -810,11 +863,9 @@ WHERE rn = 1;
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<PostOfficeZipCode>(cmd);
     }
-    public async Task<BulkUpsertError?> BulkUpdateZipCodesAsync(int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default)
+    private async Task<BulkUpsertError?> BulkUpdateZipCodesAsync(IDbConnection connection, IDbTransaction transaction, int postOfficeId, IEnumerable<PostOfficeZipCode> zipCodes, CancellationToken cancellationToken = default)
     {
-        using var connection = _context.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        
         string? currentZip = null;
         try
         {
@@ -929,7 +980,7 @@ WHERE rn = 1;
             throw new InvalidOperationException("Bulk upsert failed: " + ex.Message, ex);
         }
     }
-    public async Task<BulkUpsertError?> BulkCreateZipCodesAsync(IDbConnection connection, IDbTransaction transaction, int postOfficeId, List<string> zipCodes, int loginId, CancellationToken cancellationToken = default)
+    private async Task<BulkUpsertError?> BulkCreateZipCodesAsync(IDbConnection connection, IDbTransaction transaction, int postOfficeId, List<string> zipCodes, int loginId, CancellationToken cancellationToken = default)
     {
         
         string? currentZip = null;
@@ -1010,11 +1061,9 @@ WHERE rn = 1;
             throw new InvalidOperationException("Bulk upsert failed: " + ex.Message, ex);
         }
     }
-    public async Task<BulkUpsertError?> BulkInsertZipCodesAsync(int postOfficeId, List<string> zipCodes, int loginId, CancellationToken cancellationToken = default)
+    private async Task<BulkUpsertError?> BulkInsertZipCodesAsync(IDbConnection connection, IDbTransaction transaction, int postOfficeId, List<string> zipCodes, int loginId, CancellationToken cancellationToken = default)
     {
-        using var connection = _context.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+
         string? currentZip = null;
         try
         {
