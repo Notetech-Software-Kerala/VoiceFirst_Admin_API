@@ -478,7 +478,7 @@ public class RoleRepo : IRoleRepo
                 {
                     
                     var existingLinks = (await connection.QueryAsync<PlanRoleProgramActionLink>(new CommandDefinition(sql, new { RoleId = roleId, PlanId = item.PlanId }, transaction: transaction, cancellationToken: cancellationToken))).ToList();
-                var planRoleId = 0;
+                    var planRoleId = 0;
                     if (existingLinks.Count() == 0)
                     {
                         planRoleId =await InsertRolePlanLinksAsync(connection, transaction, roleId, item.PlanId, loginId, cancellationToken);

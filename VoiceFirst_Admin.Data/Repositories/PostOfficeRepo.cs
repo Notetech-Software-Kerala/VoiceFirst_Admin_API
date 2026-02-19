@@ -569,8 +569,11 @@ public class PostOfficeRepo : IPostOfficeRepo
   AND NOT EXISTS (
       SELECT 1
       FROM PlaceZipCodeLink p
-      WHERE p.PlaceId = @PlaceId
-        AND p.PostOfficeZipCodeLinkId = PostOfficeZipCodeLink.PostOfficeZipCodeLinkId
+      INNER JOIN PostOfficeZipCodeLink l ON l.PostOfficeZipCodeLinkId = p.PostOfficeZipCodeLinkId
+          WHERE p.PlaceId = @PlaceId
+            AND p.IsActive = 1
+            AND l.IsActive = 1
+            AND l.PostOfficeId = po.PostOfficeId
   )
 ";
         }
