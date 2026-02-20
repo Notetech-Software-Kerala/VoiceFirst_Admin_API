@@ -10,10 +10,12 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
     public interface IUserService
     {
         Task<ApiResponse<EmployeeDetailDto>> UpdateAsync(
-            int updateUserId,
-            EmployeeUpdateDto dto,
-            int loginId,
-            CancellationToken cancellationToken = default);
+             int updateUserId,
+             int ApplicationId,
+             EmployeeUpdateDto dto,
+             int loginId,
+             CancellationToken cancellationToken = default);
+
         Task<ApiResponse<PagedResultDto<EmployeeDto>>> GetAllAsync(
             EmployeeFilterDto filter, int loginUserId,
             CancellationToken cancellationToken = default);
@@ -24,7 +26,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
            CancellationToken cancellationToken = default);
 
         Task<ApiResponse<EmployeeDetailDto>> CreateAsync(
-        EmployeeCreateDto employee,
+        EmployeeCreateDto employee, int ApplicationId,
         int loginId,
         CancellationToken cancellationToken);
 

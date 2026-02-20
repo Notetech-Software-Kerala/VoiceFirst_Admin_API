@@ -57,7 +57,7 @@ namespace VoiceFirst_Admin.Business.Services
 
 
         public async Task<ApiResponse<EmployeeDetailDto>> CreateAsync(
-        EmployeeCreateDto employee,
+        EmployeeCreateDto employee,int ApplicationId,
         int loginId,
         CancellationToken cancellationToken)
         {
@@ -71,17 +71,17 @@ namespace VoiceFirst_Admin.Business.Services
             if (country == null)
             {
                 return ApiResponse<EmployeeDetailDto>.Fail(
-                  Messages.MobileCountryCodeNotFound,
+                  Messages.DialCodeNotFound,
                   StatusCodes.Status404NotFound,
-                  ErrorCodes.MobileCountryCodeNotFound
+                  ErrorCodes.DialCodeNotFound
                   );
             }
             if (country.Deleted == true || country.Active == false)
             {
                 return ApiResponse<EmployeeDetailDto>.Fail
-                   (Messages.MobileCountryCodeNotAvailable,
+                   (Messages.DialCodeNotAvailable,
                    StatusCodes.Status409Conflict,
-                   ErrorCodes.MobileCountryCodeNotAvaliable);
+                   ErrorCodes.DialCodeNotAvailable);
             }
 
 
@@ -136,8 +136,18 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (employee.RoleIds != null && employee.RoleIds.Any())
             {
+
+                if (employee.RoleIds.Any(x => x == 1 || x == 2))
+                {
+                    return ApiResponse<EmployeeDetailDto>.Fail(
+                        Messages.SomeRolesAreNotAllowed,
+                        StatusCodes.Status403Forbidden,
+                        ErrorCodes.SomeRolesAreNotAllowed
+                    );
+                }
                 var exist = await _roleRepo.
                     IsBulkIdsExistAsync(employee.RoleIds,
+                    ApplicationId,
                cancellationToken);
                 if (exist["idNotFound"] == true)
                 {
@@ -358,6 +368,7 @@ namespace VoiceFirst_Admin.Business.Services
 
         public async Task<ApiResponse<EmployeeDetailDto>> UpdateAsync(
             int updateUserId,
+            int ApplicationId,
             EmployeeUpdateDto dto,
             int loginId,
             CancellationToken cancellationToken = default)
@@ -379,7 +390,7 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<EmployeeDetailDto>.Fail(
                         Messages.EmployeeNotAvailable,
                         StatusCodes.Status409Conflict,
-                        ErrorCodes.EmployeeNotAvaliable
+                        ErrorCodes.EmployeeNotAvailable
                         );
 
             if (employee.DialCodeId != dto.DialCodeId
@@ -394,17 +405,17 @@ namespace VoiceFirst_Admin.Business.Services
                 if (country == null)
                 {
                     return ApiResponse<EmployeeDetailDto>.Fail(
-                      Messages.MobileCountryCodeNotFound,
+                      Messages.DialCodeNotFound,
                       StatusCodes.Status404NotFound,
-                      ErrorCodes.MobileCountryCodeNotFound
+                      ErrorCodes.DialCodeNotFound
                       );
                 }
                 if (country.Deleted == true || country.Active == false)
                 {
                     return ApiResponse<EmployeeDetailDto>.Fail
-                       (Messages.MobileCountryCodeNotAvailable,
+                       (Messages.DialCodeNotAvailable,
                        StatusCodes.Status409Conflict,
-                       ErrorCodes.MobileCountryCodeNotAvaliable);
+                       ErrorCodes.DialCodeNotAvailable);
                 }
             }
 
@@ -474,6 +485,14 @@ namespace VoiceFirst_Admin.Business.Services
 
                 if (dto.UpdateRoles != null)
                 {
+                    if (dto.UpdateRoles.Any(x => x.RoleId == 1 || x.RoleId == 2))
+                    {
+                        return ApiResponse<EmployeeDetailDto>.Fail(
+                            Messages.SomeRolesAreNotAllowed,
+                            StatusCodes.Status403Forbidden,
+                            ErrorCodes.SomeRolesAreNotAllowed
+                        );
+                    }
                     var updationRolesFound =
                      await _userRoleLinkRepo.CheckUserRoleLinksExistAsync(
                          updateUserId,
@@ -507,6 +526,14 @@ namespace VoiceFirst_Admin.Business.Services
 
                 if (dto.InsertRoles != null)
                 {
+                    if (dto.InsertRoles.Any(x => x == 1 || x == 2))
+                    {
+                        return ApiResponse<EmployeeDetailDto>.Fail(
+                            Messages.SomeRolesAreNotAllowed,
+                            StatusCodes.Status403Forbidden,
+                            ErrorCodes.SomeRolesAreNotAllowed
+                        );
+                    }
                     var linkedRolesFound =
                     await _userRoleLinkRepo.CheckUserRoleLinksExistAsync(
                         updateUserId,
@@ -527,6 +554,7 @@ namespace VoiceFirst_Admin.Business.Services
 
                     var exist = await _roleRepo.
                      IsBulkIdsExistAsync(dto.InsertRoles,
+                     ApplicationId,
                       cancellationToken);
                     if (exist["idNotFound"] == true)
                     {

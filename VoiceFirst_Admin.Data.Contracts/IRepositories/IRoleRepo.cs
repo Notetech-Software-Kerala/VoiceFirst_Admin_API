@@ -15,6 +15,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
     {
         Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
            List<int> roleIds,
+           int ApplicationId,
            CancellationToken cancellationToken = default);
         Task<SysRoles> CreateAsync(SysRoles entity, List<PlanActionLinkCreateDto> PlanActionLinkCreateDto, CancellationToken cancellationToken = default);
         Task<SysRoles?> GetByIdAsync(int id, CancellationToken cancellationToken = default);

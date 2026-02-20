@@ -356,6 +356,7 @@ public class RoleRepo : IRoleRepo
 
     public async Task<Dictionary<string, bool>> IsBulkIdsExistAsync(
    List<int> roleIds,
+    int ApplicationId,
    CancellationToken cancellationToken = default)
     {
         var result = new Dictionary<string, bool>
@@ -375,15 +376,17 @@ public class RoleRepo : IRoleRepo
             IsActive,
             IsDeleted
         FROM SysRoles
-        WHERE SysRoleId IN @Ids;
+        WHERE SysRoleId > 2 And  SysRoleId IN @Ids
+        AND (@ApplicationId IS NULL OR ApplicationId = @ApplicationId);
         ";
+
 
         using var connection = _context.CreateConnection();
 
-        var entities = (await connection.QueryAsync<SysProgramActions>(
+        var entities = (await connection.QueryAsync<SysRoles>(
             new CommandDefinition(
                 sql,
-                new { Ids = roleIds },
+                new { Ids = roleIds, ApplicationId = ApplicationId },
                 cancellationToken: cancellationToken)))
             .ToList();
 

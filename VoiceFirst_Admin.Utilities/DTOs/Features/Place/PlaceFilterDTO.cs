@@ -8,12 +8,12 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Place
     public class PlaceFilterDTO : CommonFilterDto
     {
         public PlaceSearchBy? SearchBy { get; set; }
-        public List<int>? CountryIds { get; set; }
-        public List<int>? DivisionOneIds { get; set; }
-        public List<int>? DivisionTwoIds { get; set; }
-        public List<int>? DivisionThreeIds { get; set; }
-        public List<int>? PostOfficeIds { get; set; }
-        public List<int>? ZipCodeLinkIds { get; set; }
+        public int? CountryId { get; set; }
+        public int? DivisionOneId { get; set; }
+        public int? DivisionTwoId { get; set; }
+        public int? DivisionThreeId { get; set; }
+        public int? PostOfficeId { get; set; }
+        public int? ZipCodeLinkId { get; set; }
     }
 }
 public enum PlaceSearchBy

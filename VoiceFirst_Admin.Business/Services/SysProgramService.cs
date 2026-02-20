@@ -73,7 +73,7 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<SysProgramDto>.Fail(
                         Messages.PlatformNotFound,
                         StatusCodes.Status409Conflict,
-                        ErrorCodes.PlatFormNotActive
+                        ErrorCodes.PlatformNotActive
                         );
             }
 
@@ -81,7 +81,7 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<SysProgramDto>.Fail(
                         Messages.PlatformNotFound,
                         StatusCodes.Status409Conflict,
-                        ErrorCodes.PlatFormNotActive
+                        ErrorCodes.PlatformNotActive
                         );
 
 
@@ -386,14 +386,14 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<List<SysProgramLookUp>>.Fail(
                     Messages.ApplicationNotFoundById,
                     StatusCodes.Status404NotFound,
-                    ErrorCodes.PlatFormNotFound
+                    ErrorCodes.PlatformNotFound
                     );
 
             if (app.IsActive == false)
                 return ApiResponse<List<SysProgramLookUp>>.Fail(
                         Messages.PlatformNotFound,
                         StatusCodes.Status409Conflict,
-                        ErrorCodes.PlatFormNotActive
+                        ErrorCodes.PlatformNotActive
                         );
 
             var items = await _repo.GetProgramLookupAsync(
@@ -421,7 +421,7 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<List<SysProgramLookUp>>.Fail(
                     Messages.ApplicationNotFoundById,
                     StatusCodes.Status204NoContent,
-                    ErrorCodes.PlatFormNotFound
+                    ErrorCodes.PlatformNotFound
                     );
 
           
@@ -449,14 +449,14 @@ namespace VoiceFirst_Admin.Business.Services
                 return ApiResponse<List<ProgramLookUp>>.Fail(
                     Messages.ApplicationNotFoundById,
                     StatusCodes.Status404NotFound,
-                    ErrorCodes.PlatFormNotFound
+                    ErrorCodes.PlatformNotFound
                     );
 
             if (app.IsActive == false)
                 return ApiResponse<List<ProgramLookUp>>.Fail(
                         Messages.PlatformNotFound,
                         StatusCodes.Status409Conflict,
-                        ErrorCodes.PlatFormNotActive
+                        ErrorCodes.PlatformNotActive
                         );
 
             var items = await _repo.GetActiveProgramLookupAsync(
@@ -559,14 +559,14 @@ namespace VoiceFirst_Admin.Business.Services
                     return ApiResponse<SysProgramDto>.Fail(
                         Messages.ApplicationNotFoundById,
                         StatusCodes.Status404NotFound,
-                        ErrorCodes.PlatFormNotFound
+                        ErrorCodes.PlatformNotFound
                         );
 
                 if (app.IsActive == false)
                     return ApiResponse<SysProgramDto>.Fail(
                             Messages.PlatformNotFound,
                             StatusCodes.Status409Conflict,
-                            ErrorCodes.PlatFormNotActive
+                            ErrorCodes.PlatformNotActive
                             );
             }
 

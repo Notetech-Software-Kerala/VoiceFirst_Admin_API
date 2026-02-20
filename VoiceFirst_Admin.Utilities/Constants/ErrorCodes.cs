@@ -6,17 +6,17 @@
         public const string ValidationFailed = "VALIDATION_FAILED";
         public const string NotFound = "NOT_FOUND";
         public const string RolesNotFound = "ROLES_NOT_FOUND";
-        public const string RolesNotAvailable= "ROLES_NOT_AVAILABEL";
+        public const string RolesNotAvailable= "ROLES_NOT_AVAILABLE";
         public const string ActionNotFound = "ACTION_NOT_FOUND";
         public const string PostOfficeNotFound = "POST_OFFICE_NOT_FOUND";
         public const string ZipCodesNotFound = "ZIP_CODES_NOT_FOUND";
-        public const string ZipCodesNotAvaliable = "ZIP_CODES_NOT_AVALIABLE";
-        public const string MobileCountryCodeNotAvaliable = "MOBILE_COUNTRY_CODE_NOT_AVALIABLE";
-        public const string MobileCountryCodeNotFound = "MOBILE_COUNTRY_CODE_NOT_FOUND";
+        public const string ZipCodesNotAvailable = "ZIP_CODES_NOT_AVAILABLE";
+        public const string DialCodeNotAvailable = "DIAL_CODE_NOT_AVAILABLE";
+        public const string DialCodeNotFound = "DIAL_CODE_NOT_FOUND";
         public const string Conflict = "CONFLICT";
         public const string PlanAlreadyExists = "PLAN_NAME_EXISTS";
         public const string EmployeeNotFoundById = "EMPLOYEE_NOT_FOUND";
-
+        public const string SomeRolesAreNotAllowed = "ROLES_ARE_NOT_ALLOWED";
         public const string Unauthorized = "UNAUTHORIZED";
         public const string Forbidden = "FORBIDDEN";
         public const string Payload = "PAYLOAD_REQUIRED";
@@ -60,17 +60,17 @@
         public const string EmployeeAlreadyDeleted =
 "EMPLOYEE_ALREADY_DELETED";
 
-        public const string PlatFormAlreadyExists = "PLATFORM_EXISTS";
-        public const string PlatFormAlreadyExistsRecoverable = "PLATFORM_EXISTS_RECOVERABLE";
-        public const string PlatFormNotFound = "PLATFORM_NOT_FOUND";
-        public const string PlatFormNotActive = "PLATFORM_NOT_ACTIVE";
+        public const string PlatformAlreadyExists = "PLATFORM_EXISTS";
+        public const string PlatformAlreadyExistsRecoverable = "PLATFORM_EXISTS_RECOVERABLE";
+        public const string PlatformNotFound = "PLATFORM_NOT_FOUND";
+        public const string PlatformNotActive = "PLATFORM_NOT_ACTIVE";
 
         public const string ProgramActionAlreadyExists = "PROGRAM_ACTION_EXISTS";
         public const string ProgramActionAlreadyExistsRecoverable = "PROGRAM_ACTION_EXISTS_RECOVERABLE";
         public const string ProgramActionNotFound = "PROGRAM_ACTION_NOT_FOUND";
        
         public const string ProgramNotFoundById = "PROGRAM_NOT_FOUND";
-        public const string EmployeeNotAvaliable = "EMPLOYEE_NOT_AVAILABLE";
+        public const string EmployeeNotAvailable = "EMPLOYEE_NOT_AVAILABLE";
         public const string ProgramAlreadyExistsRecoverable = "PROGRAM_EXISTS_RECOVERABLE";
         public const string ProgramNameAlreadyExists = "PROGRAM_NAME_EXISTS";
         public const string EmployeeEmailAlreadyExists = "EMPLOYEE_EMAIL_EXISTS";

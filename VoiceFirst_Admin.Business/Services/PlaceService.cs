@@ -63,9 +63,9 @@ namespace VoiceFirst_Admin.Business.Services
                 if (exist["deletedOrInactive"] == true)
                 {
                     return ApiResponse<PlaceDetailDTO>.Fail
-                       (Messages.ZipCodesNotAvaliable,
+                       (Messages.ZipCodesNotAvailable,
                        StatusCodes.Status409Conflict,
-                       ErrorCodes.ZipCodesNotAvaliable);
+                       ErrorCodes.ZipCodesNotAvailable);
                 }
             }
 
@@ -397,9 +397,9 @@ namespace VoiceFirst_Admin.Business.Services
                     if (exist["deletedOrInactive"] == true)
                     {
                         return ApiResponse<PlaceDetailDTO>.Fail
-                           (Messages.ZipCodesNotAvaliable,
+                           (Messages.ZipCodesNotAvailable,
                            StatusCodes.Status409Conflict,
-                           ErrorCodes.ZipCodesNotAvaliable);
+                           ErrorCodes.ZipCodesNotAvailable);
                     }
 
                     postOfficeLink = await _repo.BulkInsertPlaceZipCodeLinksAsync(

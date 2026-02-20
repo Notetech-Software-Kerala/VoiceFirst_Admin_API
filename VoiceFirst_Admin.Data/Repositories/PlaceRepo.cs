@@ -378,40 +378,40 @@ namespace VoiceFirst_Admin.Data.Repositories
                 parameters.Add("IsActive", filter.Active.Value);
             }
 
-            if (filter.CountryIds is { Count: > 0 })
+            if (filter.CountryId.HasValue)
             {
-                baseSql.Append(" AND c.CountryId IN @CountryIds");
-                parameters.Add("CountryIds", filter.CountryIds);
+                baseSql.Append(" AND c.CountryId = @CountryId");
+                parameters.Add("CountryId", filter.CountryId.Value);
             }
 
-            if (filter.DivisionOneIds is { Count: > 0 })
+            if (filter.DivisionOneId.HasValue)
             {
-                baseSql.Append(" AND d1.DivisionOneId IN @DivisionOneIds");
-                parameters.Add("DivisionOneIds", filter.DivisionOneIds);
+                baseSql.Append(" AND d1.DivisionOneId = @DivisionOneId");
+                parameters.Add("DivisionOneId", filter.DivisionOneId.Value);
             }
 
-            if (filter.DivisionTwoIds is { Count: > 0 })
+            if (filter.DivisionTwoId.HasValue)
             {
-                baseSql.Append(" AND d2.DivisionTwoId IN @DivisionTwoIds");
-                parameters.Add("DivisionTwoIds", filter.DivisionTwoIds);
+                baseSql.Append(" AND d2.DivisionTwoId = @DivisionTwoId");
+                parameters.Add("DivisionTwoId", filter.DivisionTwoId.Value);
             }
 
-            if (filter.DivisionThreeIds is { Count: > 0 })
+            if (filter.DivisionThreeId.HasValue)
             {
-                baseSql.Append(" AND d3.DivisionThreeId IN @DivisionThreeIds");
-                parameters.Add("DivisionThreeIds", filter.DivisionThreeIds);
+                baseSql.Append(" AND d3.DivisionThreeId = @DivisionThreeId");
+                parameters.Add("DivisionThreeId", filter.DivisionThreeId.Value);
             }
 
-            if (filter.PostOfficeIds is { Count: > 0 })
+            if (filter.PostOfficeId.HasValue)
             {
-                baseSql.Append(" AND po.PostOfficeId IN @PostOfficeIds");
-                parameters.Add("PostOfficeIds", filter.PostOfficeIds);
+                baseSql.Append(" AND po.PostOfficeId = @PostOfficeId");
+                parameters.Add("PostOfficeId", filter.PostOfficeId.Value);
             }
 
-            if (filter.ZipCodeLinkIds is { Count: > 0 })
+            if (filter.ZipCodeLinkId.HasValue)
             {
-                baseSql.Append(" AND pzl.PostOfficeZipCodeLinkId IN @ZipCodeLinkIds");
-                parameters.Add("ZipCodeLinkIds", filter.ZipCodeLinkIds);
+                baseSql.Append(" AND pzl.PostOfficeZipCodeLinkId = @ZipCodeLinkId");
+                parameters.Add("ZipCodeLinkId", filter.ZipCodeLinkId.Value);
             }
 
             // ── Date filters ──

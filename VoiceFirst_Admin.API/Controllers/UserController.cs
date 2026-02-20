@@ -34,7 +34,7 @@ namespace VoiceFirst_Admin.API.Controllers
         [SwaggerResponseDescription(StatusCodes.Status201Created, Description.USER_CREATED, Messages.EmployeeCreated)]
         [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
         [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
-        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.MobileCountryCodeNotFound)]
+        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.DialCodeNotFound)]
         [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.EmployeeEmailAlreadyExists)]
         [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.EmployeeMobileNoAlreadyExists)]
         [SwaggerResponseDescription(StatusCodes.Status422UnprocessableEntity, Description.UNPROCESSABLE_422, Messages.EmployeeEmailAlreadyExistsRecoverable)]
@@ -55,6 +55,7 @@ namespace VoiceFirst_Admin.API.Controllers
 
             var apiResponse = await _service.CreateAsync(
                 model,
+                1, // ApplicationId
                 userId,
                 cancellationToken
             );
@@ -206,7 +207,7 @@ namespace VoiceFirst_Admin.API.Controllers
                    ));
 
             var result = await _service.UpdateAsync
-                (id, model, userId, cancellationToken);
+                (id,1, model, userId, cancellationToken);
 
             return StatusCode(result.StatusCode, result);
         }

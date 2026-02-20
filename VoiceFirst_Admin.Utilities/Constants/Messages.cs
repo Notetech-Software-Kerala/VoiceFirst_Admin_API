@@ -7,6 +7,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
 {
     public class Messages
     {
+        public const string SomeRolesAreNotAllowed =
+            "One or more selected roles cannot be assigned.";
         // General
         public const string Success = "Success.";
         public const string Failed = "Failed.";
@@ -32,10 +34,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         public const string ActionsAreAlreadyLinked = "Some actions are already linked.Please refresh again.";
         public const string Updated = "Updated.";
-        public const string ActionsNotFound = "Actions Not found.";
-        public const string PostOfficesNotFound = "Post offices Not found.";
-        public const string ZipCodesNotFound = "ZipCodes Not found.";
-        public const string MobileCountryCodeNotFound = "Mobile country code Not found.";
+        public const string ActionsNotFound = "Actions not found.";
+        public const string PostOfficesNotFound = "Post offices not found.";
+        public const string ZipCodesNotFound = "Zip codes not found.";
+        public const string DialCodeNotFound = "Dial code not found.";
         // Auth
         public const string InvalidCredentials = "Invalid credentials.";
         public const string UserNotFound = "User not found.";
@@ -207,17 +209,17 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
 
         public const string ApplicationRetrieved =
-            "Platform retrieve sucessfully.";
+            "Platform retrieved successfully.";
 
         public const string PlanRetrieved =
-           "Plan retrieve sucessfully.";
+           "Plan retrieved successfully.";
 
         public const string PlanUpdated =
-           "Plan updated sucessfully.";
+           "Plan updated successfully.";
 
         // ===== SYS Program  =====
         public const string InvalidActionLinksForApplication =
-            "Invalid ActionLinks For selected Application.";
+            "Invalid action links for selected application.";
         public const string ProgramNameAlreadyExists =
             "Program name already exists in this application.";
 
@@ -327,11 +329,11 @@ namespace VoiceFirst_Admin.Utilities.Constants
        "Some selected post office are no longer available." + BaseRefreshMessage;
 
 
-        public const string ZipCodesNotAvaliable =
-       "Some selected zipCodes are no longer available." + BaseRefreshMessage;
+        public const string ZipCodesNotAvailable =
+       "Some selected zip codes are no longer available." + BaseRefreshMessage;
 
-        public const string MobileCountryCodeNotAvailable =
-      "Some selected  country code  are no longer available." + BaseRefreshMessage;
+        public const string DialCodeNotAvailable =
+      "Some selected  dial code  are no longer available." + BaseRefreshMessage;
 
         public const string EmployeeNotAvailable =
     "Some selected  employee  are no longer available." + BaseRefreshMessage;
