@@ -226,11 +226,11 @@ public class PostOfficeService : IPostOfficeService
                 IEnumerable<PostOfficeZipCode> zips ;
                 if (filter.PlaceId.HasValue)
                 {
-                     zips = await _repo.GetZipCodesByPostOfficeIdAsync(d.PostOfficeId, filter.PlaceId, cancellationToken);
+                     zips = await _repo.GetActiveZipCodesByPostOfficeIdAsync(d.PostOfficeId, filter.PlaceId, cancellationToken);
                 }
                 else
                 {
-                     zips = await _repo.GetZipCodesByPostOfficeIdAsync(d.PostOfficeId,null, cancellationToken);
+                     zips = await _repo.GetActiveZipCodesByPostOfficeIdAsync(d.PostOfficeId,null, cancellationToken);
                 }
 
                 var ZipCodes = _mapper.Map<IEnumerable<ZipCodeLookUp>>(zips);
