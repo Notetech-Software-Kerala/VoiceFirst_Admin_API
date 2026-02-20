@@ -89,9 +89,9 @@ public class RoleController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
     [SwaggerResponseDescription(StatusCodes.Status200OK, Description.USERS_RETRIEVED, Messages.RoleRetrieveSucessfully, DataExamples.ROLLOOKUPATA)]
     [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.SomethingWentWrong)]
-    public async Task<IActionResult> GetLookupAsync(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetRoleLookUpAsync(CancellationToken cancellationToken)
     {
-        var items = await _service.GetLookUpAllAsync(1,cancellationToken);
+        var items = await _service.GetRoleLookUpAsync(1,cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.RoleRetrieveSucessfully));
     }
 

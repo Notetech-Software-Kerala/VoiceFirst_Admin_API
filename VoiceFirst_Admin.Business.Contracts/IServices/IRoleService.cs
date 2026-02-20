@@ -12,7 +12,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
         Task<ApiResponse<RoleDto>> CreateAsync(RoleCreateDto dto, int loginId, CancellationToken cancellationToken = default);
         Task<RoleDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PlanRoleActionLinkDetailsDto?> GetByPlanIdAsync(PlanRoleDto planRoleDto, CancellationToken cancellationToken = default);
-        Task<IEnumerable<RoleLookUpDto>> GetLookUpAllAsync(int ApplicationId,CancellationToken cancellationToken = default);
+        Task<IEnumerable<RoleLookUpDto>> GetRoleLookUpAsync(int ApplicationId,CancellationToken cancellationToken = default);
         Task<PagedResultDto<RoleDto>> GetAllAsync(RoleFilterDto filter, CancellationToken cancellationToken = default);
         Task<ApiResponse<RoleDto>> UpdateAsync(RoleUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default);
         Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);

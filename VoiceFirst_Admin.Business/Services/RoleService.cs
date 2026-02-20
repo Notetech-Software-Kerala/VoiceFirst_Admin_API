@@ -160,11 +160,11 @@ public class RoleService : IRoleService
         };
     }
 
-    public async Task<IEnumerable<RoleLookUpDto>> GetLookUpAllAsync( 
+    public async Task<IEnumerable<RoleLookUpDto>> GetRoleLookUpAsync( 
         int AppplicationId,
         CancellationToken cancellationToken = default)
     {
-        var dto = await _repo.GetLookUpAllAsync(AppplicationId, cancellationToken);
+        var dto = await _repo.GetRoleLookUpAsync(AppplicationId, cancellationToken);
         return dto;
     }
 
