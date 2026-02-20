@@ -17,5 +17,5 @@ public class ZipCodeLookUp
 {
     public int? ZipCodeLinkId { get; set; }
     public string ZipCode { get; set; }
-
+    public bool Active { get; set; }
 }

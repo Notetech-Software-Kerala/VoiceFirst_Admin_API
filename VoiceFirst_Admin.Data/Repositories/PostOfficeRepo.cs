@@ -538,16 +538,16 @@ public class PostOfficeRepo : IPostOfficeRepo
 
         // Optional filters (only appended if provided)
         if (filter?.CountryId is not null)
-            sql+="  AND po.CountryId = @CountryId";
+            sql+="  AND po.CountryId = @CountryId ";
 
         if (filter?.DivOneId is not null)
-            sql += "  AND po.DivisionOneId = @DivOneId";
+            sql += "  AND po.DivisionOneId = @DivOneId ";
 
         if (filter?.DivTwoId is not null)
-            sql += "  AND po.DivisionTwoId = @DivTwoId";
+            sql += "  AND po.DivisionTwoId = @DivTwoId ";
 
         if (filter?.DivThreeId is not null)
-            sql += "  AND po.DivisionThreeId = @DivThreeId";
+            sql += "  AND po.DivisionThreeId = @DivThreeId ";
 
         // ZipCode filter via EXISTS (your requirement)
         if (!string.IsNullOrWhiteSpace(filter?.ZipCode))
@@ -563,21 +563,21 @@ public class PostOfficeRepo : IPostOfficeRepo
               )
             ";
         }
-        if (filter?.CountryId is not null)
-        {
-            sql += @"
-  AND NOT EXISTS (
-      SELECT 1
-      FROM PlaceZipCodeLink p
-      INNER JOIN PostOfficeZipCodeLink l ON l.PostOfficeZipCodeLinkId = p.PostOfficeZipCodeLinkId
-          WHERE p.PlaceId = @PlaceId
-            AND p.IsActive = 1
-            AND l.IsActive = 1
-            AND l.PostOfficeId = po.PostOfficeId
-  )
-";
-        }
-        sql+="ORDER BY po.PostOfficeName ASC;";
+//        if (filter?.PlaceId is not null)
+//        {
+//            sql += @"
+//  AND NOT EXISTS (
+//      SELECT 1
+//      FROM PlaceZipCodeLink p
+//      INNER JOIN PostOfficeZipCodeLink l ON l.PostOfficeZipCodeLinkId = p.PostOfficeZipCodeLinkId
+//          WHERE p.PlaceId = @PlaceId
+//            AND p.IsActive = 1
+//            AND l.IsActive = 1
+//            AND l.PostOfficeId = po.PostOfficeId 
+//  )
+//";
+//        }
+        sql+=" ORDER BY po.PostOfficeName ASC;";
 
         var param = new
         {
@@ -744,7 +744,47 @@ public class PostOfficeRepo : IPostOfficeRepo
             INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
             INNER JOIN Users uC ON uC.UserId = l.CreatedBy
             LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
-            WHERE l.PostOfficeId = @PostOfficeId  ";
+            WHERE l.PostOfficeId = @PostOfficeId ";
+
+        var parameters = new DynamicParameters();
+        parameters.Add("PostOfficeId", postOfficeId);
+
+        // ✅ Only add this filter + parameter when PlaceId is provided
+//        if (placeId > 0)
+//        {
+//            sql += @"
+//              AND NOT EXISTS (
+//              SELECT 1
+//              FROM PlaceZipCodeLink p
+//              WHERE p.PlaceId = @PlaceId
+//                AND p.PostOfficeZipCodeLinkId = l.PostOfficeZipCodeLinkId
+//           )";
+//            parameters.Add("PlaceId", placeId.Value);
+//        }
+
+        var cmd = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
+
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<PostOfficeZipCode>(cmd);
+    }
+    public async Task<IEnumerable<PostOfficeZipCode>> GetActiveZipCodesByPostOfficeIdAsync(int postOfficeId, int? placeId, CancellationToken cancellationToken = default)
+    {
+        var sql = @"SELECT
+                l.PostOfficeZipCodeLinkId,
+                l.PostOfficeId,
+                z.ZipCode,
+                l.CreatedAt,
+                l.IsActive,
+                l.UpdatedAt,
+                uC.UserId AS CreatedById,
+                CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+                uU.UserId AS UpdatedById,
+                CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName
+            FROM PostOfficeZipCodeLink l
+            INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
+            INNER JOIN Users uC ON uC.UserId = l.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
+            WHERE l.PostOfficeId = @PostOfficeId and l.IsActive=1 ";
 
         var parameters = new DynamicParameters();
         parameters.Add("PostOfficeId", postOfficeId);
@@ -753,15 +793,61 @@ public class PostOfficeRepo : IPostOfficeRepo
         if (placeId > 0)
         {
             sql += @"
-  AND NOT EXISTS (
-      SELECT 1
-      FROM PlaceZipCodeLink p
-      WHERE p.PlaceId = @PlaceId
-        AND p.PostOfficeZipCodeLinkId = l.PostOfficeZipCodeLinkId
-  )
-";
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM PlaceZipCodeLink p
+                  WHERE p.PlaceId = @PlaceId
+                    AND p.PostOfficeZipCodeLinkId = l.PostOfficeZipCodeLinkId
+              )
+            ";
             parameters.Add("PlaceId", placeId.Value);
         }
+
+        var cmd = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
+
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<PostOfficeZipCode>(cmd);
+    }
+    public async Task<IEnumerable<PostOfficeZipCode>> GetActiveZipCodesByPostOfficeIdAndPlaceIdAsync(
+    int postOfficeId,
+    int placeId,
+    CancellationToken cancellationToken = default)
+    {
+        var sql = @"
+SELECT
+    l.PostOfficeZipCodeLinkId,
+    l.PostOfficeId,
+    z.ZipCode,
+    l.CreatedAt,
+    l.IsActive,
+    l.UpdatedAt,
+
+    uC.UserId AS CreatedById,
+    CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+    uU.UserId AS UpdatedById,
+    CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
+
+    -- ✅ Place linked status (true only when p.IsActive = 1)
+    CASE WHEN p.PlaceZipCodeLinkId IS NOT NULL AND p.IsActive = 1 THEN 1 ELSE 0 END AS IsLinkedActive,
+    p.PlaceZipCodeLinkId AS PlaceZipCodeLinkId
+
+FROM PostOfficeZipCodeLink l
+INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
+INNER JOIN Users uC ON uC.UserId = l.CreatedBy
+LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
+
+-- ✅ Join place mapping only if placeId is given (still safe if null)
+LEFT JOIN PlaceZipCodeLink p
+    ON p.PostOfficeZipCodeLinkId = l.PostOfficeZipCodeLinkId
+   AND p.PlaceId = @PlaceId
+
+WHERE l.PostOfficeId = @PostOfficeId
+  AND l.IsActive = 1;
+";
+
+        var parameters = new DynamicParameters();
+        parameters.Add("PostOfficeId", postOfficeId);
+        parameters.Add("PlaceId", placeId ); // ok even if 0, join won't match real placeIds
 
         var cmd = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
 
@@ -796,7 +882,7 @@ public class PostOfficeRepo : IPostOfficeRepo
     INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
     INNER JOIN Users uC ON uC.UserId = l.CreatedBy
     LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
-    WHERE l.PostOfficeId IN @PostOfficeIds
+    WHERE l.PostOfficeId IN @PostOfficeIds and l.IsActive=1
 ";
 
         var parameters = new DynamicParameters();

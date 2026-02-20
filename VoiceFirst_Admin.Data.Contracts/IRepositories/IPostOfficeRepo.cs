@@ -30,6 +30,11 @@ public interface IPostOfficeRepo
     Task<bool> RestoreAsync(PostOffice entity, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdAsync(int postOfficeId,
     int? placeId = null, CancellationToken cancellationToken = default);
+    Task<IEnumerable<PostOfficeZipCode>> GetActiveZipCodesByPostOfficeIdAsync(int postOfficeId, int? placeId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<PostOfficeZipCode>> GetActiveZipCodesByPostOfficeIdAndPlaceIdAsync(
+    int postOfficeId,
+    int placeId,
+    CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOfficeZipCode>> GetZipCodesByPostOfficeIdsAsync(List<int> postOfficeIds,
     int? placeId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<PostOfficeZipCode>> GetAllZipCodesAsync(string SearchText, CancellationToken cancellationToken = default);

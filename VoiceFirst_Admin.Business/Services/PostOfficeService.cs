@@ -128,8 +128,6 @@ public class PostOfficeService : IPostOfficeService
                 return ApiResponse<IEnumerable<ZipCodeLookUp>?>.Fail(Messages.PostOfficeNotFound, StatusCodes.Status404NotFound);
         }
         
-        
-
         var entity = await _repo.GetZipCodesByPostOfficeIdsAsync(ids, placeId, cancellationToken);
         if (entity == null) return null;
         var dto = _mapper.Map<IEnumerable<ZipCodeLookUp>>(entity);
@@ -211,7 +209,6 @@ public class PostOfficeService : IPostOfficeService
             if (filter.DivThreeId.HasValue && !countryDivs.DivThreeExists)
                 return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.DivisionThreeNotFound, StatusCodes.Status404NotFound);
 
-            
         }
 
         PostOfficeLookUpWithZipCodeFilterDto filterInput = _mapper.Map<PostOfficeLookUpWithZipCodeFilterDto>(filter);
@@ -226,11 +223,11 @@ public class PostOfficeService : IPostOfficeService
                 IEnumerable<PostOfficeZipCode> zips ;
                 if (filter.PlaceId.HasValue)
                 {
-                     zips = await _repo.GetZipCodesByPostOfficeIdAsync(d.PostOfficeId, filter.PlaceId, cancellationToken);
+                     zips = await _repo.GetActiveZipCodesByPostOfficeIdAndPlaceIdAsync(d.PostOfficeId, filter.PlaceId.Value, cancellationToken);
                 }
                 else
                 {
-                     zips = await _repo.GetZipCodesByPostOfficeIdAsync(d.PostOfficeId,null, cancellationToken);
+                     zips = await _repo.GetActiveZipCodesByPostOfficeIdAsync(d.PostOfficeId,null, cancellationToken);
                 }
 
                 var ZipCodes = _mapper.Map<IEnumerable<ZipCodeLookUp>>(zips);

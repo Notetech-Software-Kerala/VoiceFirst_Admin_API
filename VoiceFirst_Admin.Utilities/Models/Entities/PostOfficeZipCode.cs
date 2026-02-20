@@ -8,6 +8,7 @@ public class PostOfficeZipCode : BaseModel
     public int PostOfficeZipCodeLinkId { get; set; }
     public int PostOfficeId { get; set; }
     public int ZipCodeIdId { get; set; }
+    public bool IsLinkedActive { get; set; }
     // ZipCode now comes from master ZipCode table via PostOfficeZipCodeLink
     public string? ZipCode { get; set; }
 }
