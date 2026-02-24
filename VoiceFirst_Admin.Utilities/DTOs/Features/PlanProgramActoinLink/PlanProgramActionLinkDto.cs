@@ -20,6 +20,6 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.PlanProgramActoinLink
         public string DeletedUser { get; set; } = string.Empty;
         public DateTime? DeletedDate { get; set; }
 
-        public List<SysProgramLookUp> Programs { get; set; } = new List<SysProgramLookUp>();
+        public List<SysProgramLookUpDTO> Programs { get; set; } = new List<SysProgramLookUpDTO>();
     }
 }

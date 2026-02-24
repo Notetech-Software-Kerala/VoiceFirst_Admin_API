@@ -166,6 +166,9 @@ namespace VoiceFirst_Admin.Business.Services
         GetAllAsync(IssueTypeFilterDTO filter,
             CancellationToken cancellationToken = default)
         {
+            filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+            filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
+            filter.Limit = Math.Min(filter.Limit, 60);
             var result = await _repo.GetAllAsync(filter, cancellationToken);
 
             return ApiResponse<PagedResultDto<SysIssueTypeDTO>>.Ok(

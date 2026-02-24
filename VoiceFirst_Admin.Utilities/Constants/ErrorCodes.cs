@@ -99,7 +99,7 @@
         public const string PlaceNotFoundById = "PLACE_NOT_FOUND";
         public const string PlaceNotFound = "PLACE_NOT_FOUND_DELETED_TRUE";
         public const string PlanNotFoundById = "PLAN_NOT_FOUND";
-
+        public const string ProgramsNotFound = "PROGRAMS_NOT_FOUND";
         // ===== USER =====
         public const string UserNotFound = "USER_NOT_FOUND";
         public const string UserEmailInvalid = "USER_EMAIL_INVALID";

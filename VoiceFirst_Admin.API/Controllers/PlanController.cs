@@ -112,6 +112,8 @@ namespace VoiceFirst_Admin.API.Controllers
             return StatusCode(result.StatusCode,result);
         }
 
+
+
         [HttpGet("program-details/{id:int}")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<ProgramPlanDetailDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]

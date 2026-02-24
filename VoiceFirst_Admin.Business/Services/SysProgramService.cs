@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,7 +16,9 @@ using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.Configuration;
 using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Place;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
@@ -33,18 +36,20 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IProgramActionRepo _programActionRepo;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _uow;
-
+        private readonly ApplicationSettings _applicationSettings;
 
         public SysProgramService(
             ISysProgramRepo repo,
             IApplicationRepo applicationRepo,
             IProgramActionRepo programActionRepo,
-            IMapper mapper, IUnitOfWork uow)
+            IMapper mapper, IUnitOfWork uow,
+            IOptions<ApplicationSettings> applicationSettings)
         {
             _repo = repo;
             _applicationRepo = applicationRepo;
             _programActionRepo = programActionRepo;
             _mapper = mapper;
+            _applicationSettings = applicationSettings.Value;
             _uow = uow;
         }
 
@@ -356,7 +361,9 @@ namespace VoiceFirst_Admin.Business.Services
             SysProgramFilterDTO filter,
             CancellationToken cancellationToken = default)
         {
-            
+            filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+            filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
+            filter.Limit = Math.Min(filter.Limit, 60);
             var result = await _repo.GetAllAsync(filter, cancellationToken);
 
             return ApiResponse<PagedResultDto<SysProgramDto>>.Ok(
@@ -369,69 +376,45 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<ApiResponse<List<SysProgramLookUp>>>
-            GetAllActiveByApplicationIdAsync(
-            int applicationId,
-            CancellationToken cancellationToken = default)
-        {
+        //public async Task<ApiResponse<List<SysProgramLookUpDTO>>>
+        //    GetAllActiveByApplicationIdAsync(
+        //    int applicationId,
+        //    CancellationToken cancellationToken = default)
+        //{
 
 
-            // Platform check (Application)
-            var app = await _applicationRepo.
-                IsIdExistAsync(applicationId,
-                cancellationToken);
+        //    // Platform check (Application)
+        //    var app = await _applicationRepo.
+        //        IsIdExistAsync(applicationId,
+        //        cancellationToken);
 
-            if (app == null)
-                return ApiResponse<List<SysProgramLookUp>>.Fail(
-                    Messages.ApplicationNotFoundById,
-                    StatusCodes.Status404NotFound,
-                    ErrorCodes.PlatformNotFound
-                    );
+        //    if (app == null)
+        //        return ApiResponse<List<SysProgramLookUpDTO>>.Fail(
+        //            Messages.ApplicationNotFoundById,
+        //            StatusCodes.Status404NotFound,
+        //            ErrorCodes.PlatformNotFound
+        //            );
 
-            if (app.IsActive == false)
-                return ApiResponse<List<SysProgramLookUp>>.Fail(
-                        Messages.PlatformNotFound,
-                        StatusCodes.Status409Conflict,
-                        ErrorCodes.PlatformNotActive
-                        );
+        //    if (app.IsActive == false)
+        //        return ApiResponse<List<SysProgramLookUpDTO>>.Fail(
+        //                Messages.PlatformNotFound,
+        //                StatusCodes.Status409Conflict,
+        //                ErrorCodes.PlatformNotActive
+        //                );
 
-            var items = await _repo.GetProgramLookupAsync(
-                applicationId, cancellationToken);
+        //    var items = await _repo.GetProgramLookupAsync(
+        //        applicationId, cancellationToken);
 
-            return ApiResponse<List<SysProgramLookUp>>.Ok(
-                items,
-                Messages.ProgramRetrieved,
-                StatusCodes.Status200OK);                    
-        }
-
-
-        public async Task<ApiResponse<List<SysProgramLookUp>>>
-          GetAllActiveForPlanAsync(
-          CancellationToken cancellationToken = default)
-        {
+        //    return ApiResponse<List<SysProgramLookUpDTO>>.Ok(
+        //        items,
+        //        Messages.ProgramRetrieved,
+        //        StatusCodes.Status200OK);                    
+        //}
 
 
-            // Platform check (Application)
-            var app = await _applicationRepo.
-                IsIdExistAsync(2,
-                cancellationToken);
+    
 
-            if (app == null || app.IsActive == false)
-                return ApiResponse<List<SysProgramLookUp>>.Fail(
-                    Messages.ApplicationNotFoundById,
-                    StatusCodes.Status204NoContent,
-                    ErrorCodes.PlatformNotFound
-                    );
 
-          
-            var items = await _repo.GetProgramLookupAsync(
-                2, cancellationToken);
-
-            return ApiResponse<List<SysProgramLookUp>>.Ok(
-                items,
-                Messages.ProgramRetrieved,
-                StatusCodes.Status200OK);
-        }
         public async Task<ApiResponse<List<ProgramLookUp>>>
             GetLookUpAllActiveByApplicationIdAsync(
             int applicationId,
@@ -468,23 +451,77 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<ApiResponse<List<SysProgramLookUp>>>
-            GetProgramLookupAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<PagedResultDto<SysProgramLookUpDTO>>>
+      GetProgramLookupAsync(
+          BasicFilterDto basicFilterDto ,
+          int applicationId,
+          CancellationToken cancellationToken = default)
         {
-            var result = await _repo.GetProgramLookupAsync(null,cancellationToken)
-                        ?? new List<SysProgramLookUp>();
+            // 🔹 Validate Application (Only when applicationId > 0)
+            if (applicationId > 0)
+            {
+                var app = await _applicationRepo
+                    .IsIdExistAsync(applicationId, cancellationToken);
 
-            return ApiResponse<List<SysProgramLookUp>>.Ok(
-                result,
-                result.Count == 0
-                    ? Messages.NoActivePrograms
-                    : Messages.ProgramRetrieved,
-                statusCode: StatusCodes.Status200OK
-            );
+                if (app == null || app.IsActive == false)
+                {
+                    return ApiResponse<PagedResultDto<SysProgramLookUpDTO>>
+                        .Fail(
+                            Messages.ProgramsNotFound,
+                            StatusCodes.Status204NoContent,
+                            ErrorCodes.PlatformNotActive
+                        );
+                }
+            }
+
+            // 🔹 Pagination Safety Defaults
+            basicFilterDto.PageNumber = basicFilterDto.PageNumber <= 0 ? 1 : basicFilterDto.PageNumber;
+            basicFilterDto.Limit = basicFilterDto.Limit <= 0 ? 10 : basicFilterDto.Limit;
+
+            // 🔹 Max Limit Protection (avoid heavy load)
+            basicFilterDto.Limit = Math.Min(basicFilterDto.Limit, 60);
+
+            // 🔹 Call Repository
+            var (items, totalCount) = await _repo
+                .GetProgramLookupAsync(basicFilterDto, applicationId, cancellationToken);
+
+            // 🔹 If No Data
+            if (items == null || items.Count == 0)
+            {
+                return ApiResponse<PagedResultDto<SysProgramLookUpDTO>>
+                    .Fail(
+                        Messages.ProgramsNotFound,
+                        StatusCodes.Status204NoContent,
+                        ErrorCodes.ProgramsNotFound
+                    );
+            }
+
+            // 🔹 Attach Actions (N+1 – can optimize later)
+            foreach (var item in items)
+            {
+                var actions = await _repo
+                    .GetActionLookupByProgramIdAsync(item.ProgramId, cancellationToken);
+
+                item.Action = actions;
+            }
+
+            // 🔹 Prepare Paged Result
+            var pagedResult = new PagedResultDto<SysProgramLookUpDTO>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = basicFilterDto.PageNumber,
+                PageSize = basicFilterDto.Limit
+            };
+
+            return ApiResponse<PagedResultDto<SysProgramLookUpDTO>>
+                .Ok(pagedResult, Messages.ProgramRetrieved);
         }
 
 
-   
+
+
+     
 
 
         public async Task<ApiResponse<List<SysProgramActionLinkLookUp>>>

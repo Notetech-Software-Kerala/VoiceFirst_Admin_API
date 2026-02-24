@@ -113,9 +113,11 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             CancellationToken cancellationToken = default);
 
 
-        Task<List<SysProgramLookUp>> 
-            GetProgramLookupAsync(int? applicationId = null,
-            CancellationToken cancellationToken = default);
+        Task<(List<SysProgramLookUpDTO> Items, int TotalCount)>
+       GetProgramLookupAsync(
+           BasicFilterDto basicFilterDto,
+           int? applicationId = null,
+           CancellationToken cancellationToken = default);
 
 
         Task<bool> UpdateAsync(

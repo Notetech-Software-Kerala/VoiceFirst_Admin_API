@@ -22,7 +22,15 @@ namespace VoiceFirst_Admin.Business.Services
         { var d = await _repo.GetByIdAsync(id, ct); if (d == null) return ApiResponse<SysIssueMediaTypeDTO>.Fail(Messages.IssueMediaTypeNotFoundById, StatusCodes.Status404NotFound, ErrorCodes.IssueMediaTypeNotFoundById); return ApiResponse<SysIssueMediaTypeDTO>.Ok(d, Messages.IssueMediaTypeRetrieved, StatusCodes.Status200OK); }
 
         public async Task<ApiResponse<PagedResultDto<SysIssueMediaTypeDTO>>> GetAllAsync(IssueMediaTypeFilterDTO filter, CancellationToken ct = default)
-        { var r = await _repo.GetAllAsync(filter, ct); return ApiResponse<PagedResultDto<SysIssueMediaTypeDTO>>.Ok(r, r.TotalCount == 0 ? Messages.IssueMediaTypesNotFound : Messages.IssueMediaTypesRetrieved, statusCode: StatusCodes.Status200OK); }
+        {
+            filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+            filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
+            filter.Limit = Math.Min(filter.Limit, 60);
+            var r = await _repo.GetAllAsync(filter, ct); 
+            return ApiResponse<PagedResultDto<SysIssueMediaTypeDTO>>.Ok
+                (r, r.TotalCount == 0 ? Messages.IssueMediaTypesNotFound :
+                Messages.IssueMediaTypesRetrieved, statusCode: StatusCodes.Status200OK); 
+        }
 
         public async Task<ApiResponse<List<SysIssueMediaTypeActiveDTO>>> GetActiveAsync(CancellationToken ct)
         { var r = await _repo.GetActiveAsync(ct) ?? new List<SysIssueMediaTypeActiveDTO>(); return ApiResponse<List<SysIssueMediaTypeActiveDTO>>.Ok(r, r.Count == 0 ? Messages.NoActiveIssueMediaTypes : Messages.IssueMediaTypesRetrieved, statusCode: StatusCodes.Status200OK); }

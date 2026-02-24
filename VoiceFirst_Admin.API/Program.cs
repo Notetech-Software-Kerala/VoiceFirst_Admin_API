@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,27 +8,26 @@ using Microsoft.OpenApi;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json;
+using VoiceFirst_Admin.API.Security;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Business.Services;
 using VoiceFirst_Admin.Data.Context;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Data.Repositories;
+using VoiceFirst_Admin.Utilities.Configuration;
+using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Auth;
 using VoiceFirst_Admin.Utilities.Mapping;
 using VoiceFirst_Admin.Utilities.Middlewares;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
-
-using VoiceFirst_Admin.API.Security;
-using VoiceFirst_Admin.Utilities.Constants;
-using FluentValidation;
-using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using VoiceFirst_Admin.Utilities.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -100,7 +100,8 @@ builder.Services.AddAutoMapper(
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-
+builder.Services.Configure<ApplicationSettings>(
+    builder.Configuration.GetSection("ApplicationSettings"));
 
 builder.Host.UseSerilog((ctx, lc) =>
     lc.ReadFrom.Configuration(ctx.Configuration));

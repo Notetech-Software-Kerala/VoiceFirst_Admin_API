@@ -5,13 +5,8 @@ using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgramActionLink;
 
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram
 {
-    public class SysProgramLookUp : ProgramLookUp
-    {
-       
-        //public string Label { get; set; } = string.Empty;
-        //public string Route { get; set; } = string.Empty;
-        //public string PlatformName { get; set; } = string.Empty;
-        //public string CompanyName { get; set; } = string.Empty;        
+    public class SysProgramLookUpDTO : ProgramLookUp
+    {          
         public List<SysProgramActionLinkLookUp> Action { get; set; } = new();
     }
     public class ProgramLookUp

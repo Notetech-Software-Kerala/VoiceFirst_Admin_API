@@ -32,6 +32,8 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IRoleRepo _roleRepo;
         private readonly IConfiguration _configuration;
         private readonly ISessionService _sessionService;
+
+
         public UserService(
             IUserRepo repo,
             IUserRoleLinkRepo userRoleLinkRepo,
@@ -352,6 +354,9 @@ namespace VoiceFirst_Admin.Business.Services
             EmployeeFilterDto filter,int loginUserId,
             CancellationToken cancellationToken = default)
         {
+            filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+            filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
+            filter.Limit = Math.Min(filter.Limit, 60);
 
             var result = await _repo.GetAllAsync(filter, loginUserId, cancellationToken);
 

@@ -48,6 +48,9 @@ namespace VoiceFirst_Admin.Business.Services
 
         public async Task<ApiResponse<PagedResultDto<SysIssueStatusDTO>>> GetAllAsync(IssueStatusFilterDTO filter, CancellationToken cancellationToken = default)
         {
+            filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+            filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
+            filter.Limit = Math.Min(filter.Limit, 60);
             var result = await _repo.GetAllAsync(filter, cancellationToken);
             return ApiResponse<PagedResultDto<SysIssueStatusDTO>>.Ok(result, result.TotalCount == 0 ? Messages.IssueStatusesNotFound : Messages.IssueStatusesRetrieved, statusCode: StatusCodes.Status200OK);
         }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -225,6 +226,9 @@ namespace VoiceFirst_Admin.Business.Services
         GetAllAsync(PlaceFilterDTO filter,
             CancellationToken cancellationToken = default)
         {
+            filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+            filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
+            filter.Limit = Math.Min(filter.Limit, 60);
             var result = await _repo.GetAllAsync(filter, cancellationToken);
 
             return ApiResponse<PagedResultDto<PlaceDTO>>.Ok(
@@ -248,7 +252,7 @@ namespace VoiceFirst_Admin.Business.Services
                     .Fail(Messages.BadRequest, StatusCodes.Status400BadRequest, ErrorCodes.InvalidRequest);
 
             query.PageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
-            query.Limit = query.Limit <= 0 ? 20 : query.Limit;
+            query.Limit = query.Limit <= 0 ? 10 : query.Limit;
             query.Limit = Math.Min(query.Limit, 60);
 
             var (items, totalCount) = await _repo.GetLookUpAsync(
