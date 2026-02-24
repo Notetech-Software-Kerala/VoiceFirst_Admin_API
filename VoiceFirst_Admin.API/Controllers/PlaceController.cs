@@ -147,20 +147,21 @@ namespace VoiceFirst_Admin.API.Controllers
 
 
         [HttpGet("lookup")]
-        [ProducesResponseType(typeof(ApiResponse<List<PlaceLookUpDTO?>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<PagedResultDto<PlaceLookUpDTO>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [SwaggerResponseDescription(StatusCodes.Status200OK, Description.PLACES_RETRIEVED, Messages.PlacesRetrieved)]
         [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
         [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
         public async Task<IActionResult> GetLookUpAsync(
-          [FromQuery] int zipCodeId,
-          CancellationToken cancellationToken)
+            [FromQuery] PlaceLookupQueryDto query,
+            CancellationToken cancellationToken)
         {
-            var response = await _service.GetLookUpAsync(zipCodeId, cancellationToken);
+            var response = await _service.GetLookUpAsync(query, cancellationToken);
             return StatusCode(response.StatusCode, response);
         }
 
+     
 
 
 

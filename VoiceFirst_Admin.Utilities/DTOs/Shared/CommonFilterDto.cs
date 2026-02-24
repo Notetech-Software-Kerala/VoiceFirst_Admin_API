@@ -19,16 +19,21 @@ public class CommonFilterDto : CommonBasicFilterDto
 }
 
 
-public class CommonBasicFilterDto
+public class CommonBasicFilterDto: BasicFilterDto
 {
 
     public string? SortBy { get; set; }                     // e.g. "UserId", "FirstName", "CreatedAt"
     public SortOrder SortOrder { get; set; } = SortOrder.Asc;    // "asc" or "desc"
 
+
+    public bool? Active { get; set; }               // null=both, false=0, true=1
+    public bool? Deleted { get; set; }              // null=both, false=0, true=1
+}
+
+public class BasicFilterDto
+{
     public string? SearchText { get; set; }
     public int PageNumber { get; set; } = 1;        // default
     public int Limit { get; set; } = 10;            // default
 
-    public bool? Active { get; set; }               // null=both, false=0, true=1
-    public bool? Deleted { get; set; }              // null=both, false=0, true=1
 }

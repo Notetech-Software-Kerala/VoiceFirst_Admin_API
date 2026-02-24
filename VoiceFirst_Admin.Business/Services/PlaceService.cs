@@ -238,21 +238,34 @@ namespace VoiceFirst_Admin.Business.Services
 
 
 
-        public async Task<ApiResponse<List<PlaceLookUpDTO>>>
-        GetLookUpAsync(int zipCodeId, CancellationToken cancellationToken)
+      
+        public async Task<ApiResponse<PagedResultDto<PlaceLookUpDTO>>> GetLookUpAsync(
+            PlaceLookupQueryDto query,
+            CancellationToken cancellationToken)
         {
-            var result = await _repo.GetActiveAsync(zipCodeId, cancellationToken)
-                         ?? new List<PlaceLookUpDTO>();
+            if (query.ZipCodeId <= 0)
+                return ApiResponse<PagedResultDto<PlaceLookUpDTO>>
+                    .Fail(Messages.BadRequest, StatusCodes.Status400BadRequest, ErrorCodes.InvalidRequest);
 
-            return ApiResponse<List<PlaceLookUpDTO>>.Ok(
-                result,
-                result.Count == 0
-                    ? Messages.NoActivePlaces
-                    : Messages.PlacesRetrieved,
-                statusCode: StatusCodes.Status200OK
-            );
+            query.PageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
+            query.Limit = query.Limit <= 0 ? 20 : query.Limit;
+            query.Limit = Math.Min(query.Limit, 60);
+
+            var (items, totalCount) = await _repo.GetLookUpAsync(
+                query,
+                cancellationToken);
+
+            var result = new PagedResultDto<PlaceLookUpDTO>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = query.PageNumber,
+                PageSize = query.Limit
+            };
+
+            return ApiResponse<PagedResultDto<PlaceLookUpDTO>>
+                .Ok(result, Messages.PlacesRetrieved);
         }
-
 
 
 

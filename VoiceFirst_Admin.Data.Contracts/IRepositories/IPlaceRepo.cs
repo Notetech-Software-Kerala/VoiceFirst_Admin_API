@@ -20,13 +20,17 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
                 IDbTransaction transaction,
                 CancellationToken cancellationToken = default);
 
-         //Task<bool>
-         //   CheckPlacePostOfficeLinksExistAsync(
-         //               int placeId,
-         //       IEnumerable<int> postOfficeIds,
-         //       IDbConnection connection,
-         //       IDbTransaction transaction,
-         //       CancellationToken cancellationToken = default);
+        //Task<bool>
+        //   CheckPlacePostOfficeLinksExistAsync(
+        //               int placeId,
+        //       IEnumerable<int> postOfficeIds,
+        //       IDbConnection connection,
+        //       IDbTransaction transaction,
+        //       CancellationToken cancellationToken = default);
+
+        Task<(List<PlaceLookUpDTO> Items, int TotalCount)> GetLookUpAsync(
+           PlaceLookupQueryDto placeLookupQueryDto,
+            CancellationToken cancellationToken = default);
 
 
         Task<bool> BulkUpdatePlaceZipCodeLinksAsync(
@@ -84,10 +88,6 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             IDbTransaction transaction,
             CancellationToken cancellationToken = default);
 
-        Task<List<PlaceLookUpDTO?>> 
-            GetActiveAsync(
-            int zipCodeId, 
-            CancellationToken cancellationToken = default);
 
         Task<bool> RecoverAsync(
             int placeId,

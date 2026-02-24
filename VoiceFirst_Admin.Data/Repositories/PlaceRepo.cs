@@ -334,7 +334,57 @@ namespace VoiceFirst_Admin.Data.Repositories
             return lookup.Values;
         }
 
+        public async Task<(List<PlaceLookUpDTO> Items, int TotalCount)> GetLookUpAsync(
+      PlaceLookupQueryDto query,
+      CancellationToken cancellationToken = default)
+        {
+            var offset = (query.PageNumber - 1) * query.Limit;
+            const string sql = @"
+    SELECT DISTINCT
+        p.PlaceId,
+        p.PlaceName
+    FROM dbo.Place p
+    INNER JOIN dbo.PlaceZipCodeLink pzl
+        ON pzl.PlaceId = p.PlaceId
+        AND pzl.IsActive = 1
+    WHERE p.IsDeleted = 0
+      AND p.IsActive = 1
+      AND pzl.PostOfficeZipCodeLinkId = @ZipCodeId
+      AND (@Search IS NULL OR p.PlaceName LIKE '%' + @Search + '%')
+    ORDER BY p.PlaceName
+    OFFSET @Offset ROWS
+    FETCH NEXT @PageSize ROWS ONLY;
 
+    SELECT COUNT(DISTINCT p.PlaceId)
+    FROM dbo.Place p
+    INNER JOIN dbo.PlaceZipCodeLink pzl
+        ON pzl.PlaceId = p.PlaceId
+        AND pzl.IsActive = 1
+    WHERE p.IsDeleted = 0
+      AND p.IsActive = 1
+      AND pzl.PostOfficeZipCodeLinkId = @ZipCodeId
+      AND (@Search IS NULL OR p.PlaceName LIKE '%' + @Search + '%');
+";
+
+            using var connection = _context.CreateConnection();
+
+            using var multi = await connection.QueryMultipleAsync(
+                new CommandDefinition(
+                    sql,
+                    new
+                    {
+                        ZipCodeId = query.ZipCodeId,
+                        Search = query.SearchText,
+                        Offset = offset,
+                        PageSize = query.Limit
+                    },
+                    cancellationToken: cancellationToken));
+
+            var items = (await multi.ReadAsync<PlaceLookUpDTO>()).ToList();
+            var totalCount = await multi.ReadSingleAsync<int>();
+
+            return (items, totalCount);
+        }
 
 
         public async Task<PagedResultDto<PlaceDTO>>

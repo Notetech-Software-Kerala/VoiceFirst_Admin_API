@@ -66,6 +66,11 @@ builder.Services.AddScoped<IAuthRepo, AuthRepo>();
 builder.Services.AddScoped<IUserRoleLinkRepo,UserRoleLinkRepo>();
 
 builder.Services.AddScoped<IPlaceRepo, PlaceRepo>();
+builder.Services.AddScoped<ISysIssueTypeRepo, SysIssueTypeRepo>();
+builder.Services.AddScoped<ISysIssueStatusRepo, SysIssueStatusRepo>();
+builder.Services.AddScoped<ISysIssueCharacterTypeRepo, SysIssueCharacterTypeRepo>();
+builder.Services.AddScoped<ISysIssueMediaTypeRepo, SysIssueMediaTypeRepo>();
+builder.Services.AddScoped<ISysIssueMediaFormatRepo, SysIssueMediaFormatRepo>();
 // Services
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -79,6 +84,11 @@ builder.Services.AddScoped<ISysProgramService, SysProgramService>();
 builder.Services.AddScoped<ICountryService, CountryService>();
 builder.Services.AddScoped<IPlanService, PlanService>();
 builder.Services.AddScoped<IPlaceService, PlaceService>();
+builder.Services.AddScoped<ISysIssueTypeService, SysIssueTypeService>();
+builder.Services.AddScoped<ISysIssueStatusService, SysIssueStatusService>();
+builder.Services.AddScoped<ISysIssueCharacterTypeService, SysIssueCharacterTypeService>();
+builder.Services.AddScoped<ISysIssueMediaTypeService, SysIssueMediaTypeService>();
+builder.Services.AddScoped<ISysIssueMediaFormatService, SysIssueMediaFormatService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
 // AutoMapper

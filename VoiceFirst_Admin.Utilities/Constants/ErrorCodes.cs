@@ -10,6 +10,7 @@
         public const string ActionNotFound = "ACTION_NOT_FOUND";
         public const string PostOfficeNotFound = "POST_OFFICE_NOT_FOUND";
         public const string ZipCodesNotFound = "ZIP_CODES_NOT_FOUND";
+        public const string InvalidRequest = "INVALID_REQUEST";
         public const string ZipCodesNotAvailable = "ZIP_CODES_NOT_AVAILABLE";
         public const string DialCodeNotAvailable = "DIAL_CODE_NOT_AVAILABLE";
         public const string DialCodeNotFound = "DIAL_CODE_NOT_FOUND";
@@ -24,6 +25,9 @@
         public const string NoRowAffected = "NO_ROW_AFFECTED";
         public const string BusinessActivityAlreadyRecovered =
        "BUSINESS_ACTIVITY_ALREADY_RECOVERED";
+
+        public const string MediaFormatNotLinked = "MEDIA_FORMAT_NOT_LINKED_WITH_THIS_ISSUE_TYPE";
+        public const string MediaTypeNotLinked = "MEDIA_TYPE_NOT_LINKED_WITH_THIS_MEDIA_FORMAT";
 
         public const string PlanAlreadyRecovered =
         "PLAN_ALREADY_RECOVERED";
@@ -124,5 +128,45 @@
         public const string OldPasswordIncorrect = "OLD_PASSWORD_INCORRECT";
         public const string NewPasswordSameAsOld = "NEW_PASSWORD_SAME_AS_OLD";
         public const string ChangePasswordFailed = "CHANGE_PASSWORD_FAILED";
+
+        // ===== SYS ISSUE TYPE =====
+        public const string IssueTypeAlreadyExists = "ISSUE_TYPE_EXISTS";
+        public const string IssueTypeAlreadyExistsRecoverable = "ISSUE_TYPE_EXISTS_RECOVERABLE";
+        public const string IssueTypeNotFoundById = "ISSUE_TYPE_NOT_FOUND";
+        public const string IssueTypeNotAvailable = "ISSUE_TYPE_NOT_FOUND_DELETED_TRUE";
+        public const string IssueTypeAlreadyRecovered = "ISSUE_TYPE_ALREADY_RECOVERED";
+        public const string IssueTypeAlreadyDeleted = "ISSUE_TYPE_ALREADY_DELETED";
+
+        // ===== SYS ISSUE STATUS =====
+        public const string IssueStatusAlreadyExists = "ISSUE_STATUS_EXISTS";
+        public const string IssueStatusAlreadyExistsRecoverable = "ISSUE_STATUS_EXISTS_RECOVERABLE";
+        public const string IssueStatusNotFoundById = "ISSUE_STATUS_NOT_FOUND";
+        public const string IssueStatusNotFound = "ISSUE_STATUS_NOT_FOUND_DELETED_TRUE";
+        public const string IssueStatusAlreadyRecovered = "ISSUE_STATUS_ALREADY_RECOVERED";
+        public const string IssueStatusAlreadyDeleted = "ISSUE_STATUS_ALREADY_DELETED";
+
+        // ===== SYS ISSUE CHARACTER TYPE =====
+        public const string IssueCharacterTypeAlreadyExists = "ISSUE_CHARACTER_TYPE_EXISTS";
+        public const string IssueCharacterTypeAlreadyExistsRecoverable = "ISSUE_CHARACTER_TYPE_EXISTS_RECOVERABLE";
+        public const string IssueCharacterTypeNotFoundById = "ISSUE_CHARACTER_TYPE_NOT_FOUND";
+        public const string IssueCharacterTypeNotFound = "ISSUE_CHARACTER_TYPE_NOT_FOUND_DELETED_TRUE";
+        public const string IssueCharacterTypeAlreadyRecovered = "ISSUE_CHARACTER_TYPE_ALREADY_RECOVERED";
+        public const string IssueCharacterTypeAlreadyDeleted = "ISSUE_CHARACTER_TYPE_ALREADY_DELETED";
+
+        // ===== SYS ISSUE MEDIA TYPE =====
+        public const string IssueMediaTypeAlreadyExists = "ISSUE_MEDIA_TYPE_EXISTS";
+        public const string IssueMediaTypeAlreadyExistsRecoverable = "ISSUE_MEDIA_TYPE_EXISTS_RECOVERABLE";
+        public const string IssueMediaTypeNotFoundById = "ISSUE_MEDIA_TYPE_NOT_FOUND";
+        public const string IssueMediaTypeNotFound = "ISSUE_MEDIA_TYPE_NOT_FOUND_DELETED_TRUE";
+        public const string IssueMediaTypeAlreadyRecovered = "ISSUE_MEDIA_TYPE_ALREADY_RECOVERED";
+        public const string IssueMediaTypeAlreadyDeleted = "ISSUE_MEDIA_TYPE_ALREADY_DELETED";
+
+        // ===== SYS ISSUE MEDIA FORMAT =====
+        public const string IssueMediaFormatAlreadyExists = "ISSUE_MEDIA_FORMAT_EXISTS";
+        public const string IssueMediaFormatAlreadyExistsRecoverable = "ISSUE_MEDIA_FORMAT_EXISTS_RECOVERABLE";
+        public const string IssueMediaFormatNotFoundById = "ISSUE_MEDIA_FORMAT_NOT_FOUND";
+        public const string IssueMediaFormatNotFound = "ISSUE_MEDIA_FORMAT_NOT_FOUND_DELETED_TRUE";
+        public const string IssueMediaFormatAlreadyRecovered = "ISSUE_MEDIA_FORMAT_ALREADY_RECOVERED";
+        public const string IssueMediaFormatAlreadyDeleted = "ISSUE_MEDIA_FORMAT_ALREADY_DELETED";
     }
 }

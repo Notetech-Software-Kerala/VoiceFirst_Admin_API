@@ -12,6 +12,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
         // General
         public const string Success = "Success.";
         public const string Failed = "Failed.";
+        public const string MediaFormatIsNotFound = "Media format is not found.";
+        public const string MediaTypeIsNotFound = "Media type is not found.";
         public const string ValidationFailed = "Validation failed.";
         public const string SomethingWentWrong = "Something went wrong. Please try again.";
         public const string ContactAdmin = "Contact admin.";
@@ -465,6 +467,100 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ResetPasswordSuccess = "Password has been reset successfully.";
         public const string InvalidOrExpiredToken = "The OTP is invalid or has expired.";
         public const string PasswordResetFailed = "Password reset failed. Please try again.";
+
+        // ===== SYS ISSUE TYPE =====
+        public const string IssueTypeAlreadyExists =
+            "Issue type name already exists. Please add another name.";
+        public const string IssueTypeAlreadyExistsRecoverable =
+            "Issue type already exists but was deleted. You can recover it.";
+        public const string IssueTypeCreated =
+            "Issue type created successfully.";
+        public const string IssueTypeRecovered =
+            "Issue type recovered successfully.";
+        public const string IssueTypeNotFoundById =
+            "Issue type not found.";
+        public const string IssueTypesNotFound =
+            "Issue types not found.";
+        public const string IssueTypeDeleted =
+            "Issue type deleted successfully.";
+        public const string IssueTypeRetrieved =
+            "Issue type retrieved successfully.";
+        public const string IssueTypesRetrieved =
+            "Issue types retrieved successfully.";
+        public const string IssueTypeUpdated =
+            "Issue type updated successfully.";
+        public const string NoActiveIssueTypes =
+            "No active issue types available.";
+        public const string IssueTypeAlreadyRecovered =
+            "Issue type is already recovered. Please refresh again.";
+        public const string IssueTypeAlreadyDeleted =
+            "Issue type is already deleted. Please refresh again.";
+        public const string IssueTypeNotAvailable =
+            "Selected issue type is not available." + BaseRefreshMessage;
+
+        // ===== SYS ISSUE STATUS =====
+        public const string IssueStatusAlreadyExists = "Issue status already exists. Please add another name.";
+        public const string IssueStatusAlreadyExistsRecoverable = "Issue status already exists but was deleted. You can recover it.";
+        public const string IssueStatusCreated = "Issue status created successfully.";
+        public const string IssueStatusRecovered = "Issue status recovered successfully.";
+        public const string IssueStatusNotFoundById = "Issue status not found.";
+        public const string IssueStatusesNotFound = "Issue statuses not found.";
+        public const string IssueStatusDeleted = "Issue status deleted successfully.";
+        public const string IssueStatusRetrieved = "Issue status retrieved successfully.";
+        public const string IssueStatusesRetrieved = "Issue statuses retrieved successfully.";
+        public const string IssueStatusUpdated = "Issue status updated successfully.";
+        public const string NoActiveIssueStatuses = "No active issue statuses available.";
+        public const string IssueStatusAlreadyRecovered = "Issue status is already recovered. Please refresh again.";
+        public const string IssueStatusAlreadyDeleted = "Issue status is already deleted. Please refresh again.";
+        public const string IssueStatusNotFound = "Selected issue status is not available." + BaseRefreshMessage;
+
+        // ===== SYS ISSUE CHARACTER TYPE =====
+        public const string IssueCharacterTypeAlreadyExists = "Issue character type already exists. Please add another name.";
+        public const string IssueCharacterTypeAlreadyExistsRecoverable = "Issue character type already exists but was deleted. You can recover it.";
+        public const string IssueCharacterTypeCreated = "Issue character type created successfully.";
+        public const string IssueCharacterTypeRecovered = "Issue character type recovered successfully.";
+        public const string IssueCharacterTypeNotFoundById = "Issue character type not found.";
+        public const string IssueCharacterTypesNotFound = "Issue character types not found.";
+        public const string IssueCharacterTypeDeleted = "Issue character type deleted successfully.";
+        public const string IssueCharacterTypeRetrieved = "Issue character type retrieved successfully.";
+        public const string IssueCharacterTypesRetrieved = "Issue character types retrieved successfully.";
+        public const string IssueCharacterTypeUpdated = "Issue character type updated successfully.";
+        public const string NoActiveIssueCharacterTypes = "No active issue character types available.";
+        public const string IssueCharacterTypeAlreadyRecovered = "Issue character type is already recovered. Please refresh again.";
+        public const string IssueCharacterTypeAlreadyDeleted = "Issue character type is already deleted. Please refresh again.";
+        public const string IssueCharacterTypeNotFound = "Selected issue character type is not available." + BaseRefreshMessage;
+
+        // ===== SYS ISSUE MEDIA TYPE =====
+        public const string IssueMediaTypeAlreadyExists = "Issue media type already exists. Please add another name.";
+        public const string IssueMediaTypeAlreadyExistsRecoverable = "Issue media type already exists but was deleted. You can recover it.";
+        public const string IssueMediaTypeCreated = "Issue media type created successfully.";
+        public const string IssueMediaTypeRecovered = "Issue media type recovered successfully.";
+        public const string IssueMediaTypeNotFoundById = "Issue media type not found.";
+        public const string IssueMediaTypesNotFound = "Issue media types not found.";
+        public const string IssueMediaTypeDeleted = "Issue media type deleted successfully.";
+        public const string IssueMediaTypeRetrieved = "Issue media type retrieved successfully.";
+        public const string IssueMediaTypesRetrieved = "Issue media types retrieved successfully.";
+        public const string IssueMediaTypeUpdated = "Issue media type updated successfully.";
+        public const string NoActiveIssueMediaTypes = "No active issue media types available.";
+        public const string IssueMediaTypeAlreadyRecovered = "Issue media type is already recovered. Please refresh again.";
+        public const string IssueMediaTypeAlreadyDeleted = "Issue media type is already deleted. Please refresh again.";
+        public const string IssueMediaTypeNotFound = "Selected issue media type is not available." + BaseRefreshMessage;
+
+        // ===== SYS ISSUE MEDIA FORMAT =====
+        public const string IssueMediaFormatAlreadyExists = "Issue media format already exists. Please add another name.";
+        public const string IssueMediaFormatAlreadyExistsRecoverable = "Issue media format already exists but was deleted. You can recover it.";
+        public const string IssueMediaFormatCreated = "Issue media format created successfully.";
+        public const string IssueMediaFormatRecovered = "Issue media format recovered successfully.";
+        public const string IssueMediaFormatNotFoundById = "Issue media format not found.";
+        public const string IssueMediaFormatsNotFound = "Issue media formats not found.";
+        public const string IssueMediaFormatDeleted = "Issue media format deleted successfully.";
+        public const string IssueMediaFormatRetrieved = "Issue media format retrieved successfully.";
+        public const string IssueMediaFormatsRetrieved = "Issue media formats retrieved successfully.";
+        public const string IssueMediaFormatUpdated = "Issue media format updated successfully.";
+        public const string NoActiveIssueMediaFormats = "No active issue media formats available.";
+        public const string IssueMediaFormatAlreadyRecovered = "Issue media format is already recovered. Please refresh again.";
+        public const string IssueMediaFormatAlreadyDeleted = "Issue media format is already deleted. Please refresh again.";
+        public const string IssueMediaFormatNotFound = "Selected issue media format is not available." + BaseRefreshMessage;
 
     }
 }

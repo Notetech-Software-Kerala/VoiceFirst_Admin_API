@@ -87,7 +87,6 @@ namespace VoiceFirst_Admin.Business.Services
 
           
 
-
             // Uniqueness checks scoped to Application
             var existingByName =
                 await _repo.ExistsByNameAsync

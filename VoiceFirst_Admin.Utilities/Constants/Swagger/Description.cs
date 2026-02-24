@@ -67,7 +67,49 @@ namespace VoiceFirst_Admin.Utilities.Constants.Swagger
         public const string PLACE_RECOVERED = "Recovers a previously deleted place.";
         public const string PLACE_DELETED = "Deletes the specified place.";
 
+        // Success / operation (issue type)
+        public const string ISSUE_TYPE_CREATED = "Creates a new issue type.";
+        public const string ISSUE_TYPE_RETRIEVED = "Returns the requested issue type.";
+        public const string ISSUE_TYPES_RETRIEVED = "Returns a list of issue types.";
+        public const string ISSUE_TYPE_UPDATED = "Updates the specified issue type.";
+        public const string ISSUE_TYPE_RECOVERED = "Recovers a previously deleted issue type.";
+        public const string ISSUE_TYPE_DELETED = "Deletes the specified issue type.";
+        public const string ISSUE_TYPE_ALREADY_RECOVERED_409 = "Conflict. The issue type is already recovered.";
+        public const string ISSUE_TYPE_ALREADY_DELETED_409 = "Conflict. The issue type is already deleted.";
 
+        // Success / operation (issue status)
+        public const string ISSUE_STATUS_CREATED = "Creates a new issue status.";
+        public const string ISSUE_STATUS_RETRIEVED = "Returns the requested issue status.";
+        public const string ISSUE_STATUSES_RETRIEVED = "Returns a list of issue statuses.";
+        public const string ISSUE_STATUS_UPDATED = "Updates the specified issue status.";
+        public const string ISSUE_STATUS_RECOVERED = "Recovers a previously deleted issue status.";
+        public const string ISSUE_STATUS_DELETED = "Deletes the specified issue status.";
+        public const string ISSUE_STATUS_ALREADY_RECOVERED_409 = "Conflict. The issue status is already recovered.";
+        public const string ISSUE_STATUS_ALREADY_DELETED_409 = "Conflict. The issue status is already deleted.";
+
+        // Success / operation (issue character type)
+        public const string ISSUE_CHARACTER_TYPE_CREATED = "Creates a new issue character type.";
+        public const string ISSUE_CHARACTER_TYPE_RETRIEVED = "Returns the requested issue character type.";
+        public const string ISSUE_CHARACTER_TYPES_RETRIEVED = "Returns a list of issue character types.";
+        public const string ISSUE_CHARACTER_TYPE_UPDATED = "Updates the specified issue character type.";
+        public const string ISSUE_CHARACTER_TYPE_RECOVERED = "Recovers a previously deleted issue character type.";
+        public const string ISSUE_CHARACTER_TYPE_DELETED = "Deletes the specified issue character type.";
+
+        // Success / operation (issue media type)
+        public const string ISSUE_MEDIA_TYPE_CREATED = "Creates a new issue media type.";
+        public const string ISSUE_MEDIA_TYPE_RETRIEVED = "Returns the requested issue media type.";
+        public const string ISSUE_MEDIA_TYPES_RETRIEVED = "Returns a list of issue media types.";
+        public const string ISSUE_MEDIA_TYPE_UPDATED = "Updates the specified issue media type.";
+        public const string ISSUE_MEDIA_TYPE_RECOVERED = "Recovers a previously deleted issue media type.";
+        public const string ISSUE_MEDIA_TYPE_DELETED = "Deletes the specified issue media type.";
+
+        // Success / operation (issue media format)
+        public const string ISSUE_MEDIA_FORMAT_CREATED = "Creates a new issue media format.";
+        public const string ISSUE_MEDIA_FORMAT_RETRIEVED = "Returns the requested issue media format.";
+        public const string ISSUE_MEDIA_FORMATS_RETRIEVED = "Returns a list of issue media formats.";
+        public const string ISSUE_MEDIA_FORMAT_UPDATED = "Updates the specified issue media format.";
+        public const string ISSUE_MEDIA_FORMAT_RECOVERED = "Recovers a previously deleted issue media format.";
+        public const string ISSUE_MEDIA_FORMAT_DELETED = "Deletes the specified issue media format.";
 
 
     }
