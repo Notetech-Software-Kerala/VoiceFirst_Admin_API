@@ -14,15 +14,31 @@ public class IssueCharacterTypeController : ControllerBase
     private readonly ISysIssueCharacterTypeService _service;
     public IssueCharacterTypeController(ISysIssueCharacterTypeService service) => _service = service;
 
+
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<SysIssueCharacterTypeDTO>), StatusCodes.Status201Created)]
     [SwaggerResponseDescription(StatusCodes.Status201Created, Description.ISSUE_CHARACTER_TYPE_CREATED, Messages.IssueCharacterTypeCreated)]
-    public async Task<IActionResult> CreateAsync([FromBody] SysIssueCharacterTypeCreateDTO model, CancellationToken ct) { var r = await _service.CreateAsync(model, 1, ct); return StatusCode(r.StatusCode, r); }
+    public async Task<IActionResult> CreateAsync
+        ([FromBody] SysIssueCharacterTypeCreateDTO model, CancellationToken ct)
+    { 
+        var r = await _service.CreateAsync(model, 1, ct); 
+        return StatusCode(r.StatusCode, r); 
+    }
+
+
 
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<SysIssueCharacterTypeDTO>), StatusCodes.Status200OK)]
     [SwaggerResponseDescription(StatusCodes.Status200OK, Description.ISSUE_CHARACTER_TYPE_RETRIEVED, Messages.IssueCharacterTypeRetrieved)]
-    public async Task<IActionResult> GetByIdAsync(int id, CancellationToken ct) { if (id <= 0) return BadRequest(ApiResponse<object>.Fail(Messages.PayloadRequired, StatusCodes.Status400BadRequest, ErrorCodes.Payload)); var r = await _service.GetByIdAsync(id, ct); return StatusCode(r.StatusCode, r); }
+    public async Task<IActionResult> GetByIdAsync(int id, CancellationToken ct) 
+    {
+        if (id <= 0) 
+            return BadRequest(ApiResponse<object>.Fail
+                (Messages.PayloadRequired, StatusCodes.Status400BadRequest, ErrorCodes.Payload));
+        var r = await _service.GetByIdAsync(id, ct); return StatusCode(r.StatusCode, r); 
+    }
+
+
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<PagedResultDto<SysIssueCharacterTypeDTO>>), StatusCodes.Status200OK)]

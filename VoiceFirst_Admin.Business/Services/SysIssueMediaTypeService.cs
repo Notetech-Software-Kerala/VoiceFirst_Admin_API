@@ -25,7 +25,7 @@ namespace VoiceFirst_Admin.Business.Services
         {
             filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
-            filter.Limit = Math.Min(filter.Limit, 60);
+            filter.Limit = Math.Min(filter.Limit, 30);
             var r = await _repo.GetAllAsync(filter, ct); 
             return ApiResponse<PagedResultDto<SysIssueMediaTypeDTO>>.Ok
                 (r, r.TotalCount == 0 ? Messages.IssueMediaTypesNotFound :

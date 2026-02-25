@@ -8,9 +8,10 @@ namespace VoiceFirst_Admin.Utilities.Mapping
     {
         public SysIssueCharacterTypeProfile()
         {
-            CreateMap<SysIssueCharacterTypeCreateDTO, SysIssueCharacterType>()
-                .ForMember(d => d.IssueCharacterType, o => o.MapFrom(s => s.IssueCharacterType))
-                .ForMember(d => d.IsActive, o => o.MapFrom(s => true));
+            CreateMap<(SysIssueCharacterTypeCreateDTO,int createdUserId), SysIssueCharacterType>()
+                .ForMember(d => d.IssueCharacterType, o => o.MapFrom(s => s.Item1.IssueCharacterType))
+                .ForMember(d => d.IsActive, o => o.MapFrom(s => true))
+                .ForMember(d => d.CreatedBy, o => o.MapFrom(s => s.createdUserId));
 
             CreateMap<(SysIssueCharacterTypeUpdateDTO, int Id, int UserId), SysIssueCharacterType>()
                 .ForMember(d => d.IssueCharacterType, o => o.MapFrom(s => s.Item1.IssueCharacterType))

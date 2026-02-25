@@ -228,7 +228,7 @@ namespace VoiceFirst_Admin.Business.Services
         {
             filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
-            filter.Limit = Math.Min(filter.Limit, 60);
+            filter.Limit = Math.Min(filter.Limit, 30);
             var result = await _repo.GetAllAsync(filter, cancellationToken);
 
             return ApiResponse<PagedResultDto<PlaceDTO>>.Ok(
@@ -253,7 +253,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             query.PageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
             query.Limit = query.Limit <= 0 ? 10 : query.Limit;
-            query.Limit = Math.Min(query.Limit, 60);
+            query.Limit = Math.Min(query.Limit, 30);
 
             var (items, totalCount) = await _repo.GetLookUpAsync(
                 query,
