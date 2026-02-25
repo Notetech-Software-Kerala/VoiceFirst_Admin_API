@@ -7,6 +7,10 @@ public class DivisionOneFilterDto : CommonBasicFilterDto
     public int? CountryId { get; set; }
     public DivOneSearchBy? SearchBy { get; set; }
 }
+public class DivisionOneLookUpFilterDto : BasicFilterDto
+{
+    public int CountryId { get; set; }
+}
 public enum DivOneSearchBy
 {
     CountryName,

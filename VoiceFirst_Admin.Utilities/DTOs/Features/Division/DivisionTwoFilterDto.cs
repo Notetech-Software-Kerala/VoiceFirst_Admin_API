@@ -7,6 +7,10 @@ public class DivisionTwoFilterDto : CommonBasicFilterDto
     public int? DivisionOneId { get; set; }
     public DivTwoSearchBy? SearchBy { get; set; }
 }
+public class DivisionTwoLookUpFilterDto : BasicFilterDto
+{
+    public int DivisionOneId { get; set; }
+}
 public enum DivTwoSearchBy
 {
     DivTwoName,

@@ -18,5 +18,11 @@ public class CountryMappingProfile : Profile
                 .ForMember(d => d.DivisionThree, opt => opt.MapFrom(s => s.DivisionThreeName))
                 .ForMember(d => d.DialCode, opt => opt.MapFrom(s => s.CountryDialCode))
                 .ForMember(d => d.IsoAlphaTwo, opt => opt.MapFrom(s => s.CountryIsoAlphaTwo));
+        CreateMap<Country, CountryLookUpDto>()
+            .ForMember(d => d.CountryId, opt => opt.MapFrom(s => s.CountryId))
+                .ForMember(d => d.CountryName, opt => opt.MapFrom(s => s.CountryName))
+                .ForMember(d => d.DivisionOne, opt => opt.MapFrom(s => s.DivisionOneName))
+                .ForMember(d => d.DivisionTwo, opt => opt.MapFrom(s => s.DivisionTwoName))
+                .ForMember(d => d.DivisionThree, opt => opt.MapFrom(s => s.DivisionThreeName));
     }
 }
