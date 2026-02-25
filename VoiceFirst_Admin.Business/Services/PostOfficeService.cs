@@ -182,20 +182,20 @@ public class PostOfficeService : IPostOfficeService
         // Division hierarchy checks
         if (filter.DivOneId.HasValue && !filter.CountryId.HasValue)
             return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.CountryRequiredForDivisionOne, StatusCodes.Status400BadRequest);
-        if (filter.PlaceId.HasValue && !filter.CountryId.HasValue)
-            return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.CountryRequiredForDPlace, StatusCodes.Status400BadRequest);
+        //if (filter.PlaceId.HasValue && !filter.CountryId.HasValue)
+        //    return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.CountryRequiredForDPlace, StatusCodes.Status400BadRequest);
         if (filter.DivTwoId.HasValue && !filter.DivOneId.HasValue)
             return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.DivisionOneRequiredForDivisionTwo, StatusCodes.Status400BadRequest);
         if (filter.DivThreeId.HasValue && !filter.DivTwoId.HasValue)
             return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.DivisionTwoRequiredForDivisionThree, StatusCodes.Status400BadRequest);
-        if (filter.PlaceId.HasValue)
-        {
-            var placeDetails = await _placeRepo.GetByPlaceIdAsync(filter.PlaceId ?? 0, cancellationToken);
-            if (placeDetails == null)
-            {
-                return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.PlaceNotFound, StatusCodes.Status404NotFound);
-            }
-        }
+        //if (filter.PlaceId.HasValue)
+        //{
+        //    var placeDetails = await _placeRepo.GetByPlaceIdAsync(filter.PlaceId ?? 0, cancellationToken);
+        //    if (placeDetails == null)
+        //    {
+        //        return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Fail(Messages.PlaceNotFound, StatusCodes.Status404NotFound);
+        //    }
+        //}
         // check existence using country repo
         if (filter.CountryId.HasValue)
         {
@@ -216,28 +216,28 @@ public class PostOfficeService : IPostOfficeService
         var entities = await _repo.GetLookupAsync(filterInput, cancellationToken);
         if (entities == null) return null;
         var dto = _mapper.Map<IEnumerable<PostOfficeZipCodeLookupDto>>(entities);
-        if(dto != null )
-        {
-            foreach(var d in dto)
-            {
-                IEnumerable<PostOfficeZipCode> zips ;
-                if (filter.PlaceId.HasValue)
-                {
-                     zips = await _repo.GetActiveZipCodesByPostOfficeIdAndPlaceIdAsync(d.PostOfficeId, filter.PlaceId.Value, cancellationToken);
-                }
-                else
-                {
-                     zips = await _repo.GetActiveZipCodesByPostOfficeIdAsync(d.PostOfficeId,null, cancellationToken);
-                }
+        //if(dto != null )
+        //{
+        //    foreach(var d in dto)
+        //    {
+        //        IEnumerable<PostOfficeZipCode> zips ;
+        //        //if (filter.PlaceId.HasValue)
+        //        //{
+        //        //     zips = await _repo.GetActiveZipCodesByPostOfficeIdAndPlaceIdAsync(d.PostOfficeId, filter.PlaceId.Value, cancellationToken);
+        //        //}
+        //        //else
+        //        //{
+        //             zips = await _repo.GetActiveZipCodesByPostOfficeIdAsync(d.PostOfficeId,null, cancellationToken);
+        //        //}
 
-                var ZipCodes = _mapper.Map<IEnumerable<ZipCodeLookUp>>(zips);
-                if (ZipCodes.Count() > 0)
-                {
-                    d.ZipCodes = ZipCodes.ToList();
-                }
+        //        var ZipCodes = _mapper.Map<IEnumerable<ZipCodeLookUp>>(zips);
+        //        if (ZipCodes.Count() > 0)
+        //        {
+        //            d.ZipCodes = ZipCodes.ToList();
+        //        }
                 
-            }
-        }
+        //    }
+        //}
         return ApiResponse<IEnumerable<PostOfficeZipCodeLookupDto>>.Ok(dto, Messages.PostOfficeRetrieveSucessfully, StatusCodes.Status200OK);
        
     }
