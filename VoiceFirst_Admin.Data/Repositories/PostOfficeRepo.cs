@@ -513,90 +513,86 @@ public class PostOfficeRepo : IPostOfficeRepo
 
 
 
-    public async Task<IEnumerable<PostOffice>> GetLookupAsync(PostOfficeLookUpWithZipCodeFilterDto filter, CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<PostOffice>> GetLookupAsync(PostOfficeLookUpWithZipCodeFilterDto filter, CancellationToken cancellationToken = default)
     {
-        var sql = @"
-        SELECT DISTINCT
-            po.PostOfficeId,
-            po.PostOfficeName,
-            po.CountryId,
-            po.DivisionOneId,
-            po.DivisionThreeId,
-            DivisionOne.DivisionOneName,
-            DivisionTwo.DivisionTwoName,
-            DivisionThree.DivisionThreeName,
-        po.DivisionTwoId
-        FROM PostOffice po
-        INNER JOIN Country ON Country.CountryId = po.CountryId
-        LEFT JOIN DivisionTwo ON DivisionTwo.DivisionTwoId = po.DivisionTwoId
-        LEFT JOIN DivisionOne ON DivisionOne.DivisionOneId = po.DivisionOneId
-        LEFT JOIN DivisionThree ON DivisionThree.DivisionThreeId = po.DivisionThreeId
-        LEFT JOIN PostOfficeZipCodeLink ON PostOfficeZipCodeLink.PostOfficeId = po.PostOfficeId
-        WHERE po.IsDeleted = 0
-          AND po.IsActive = 1
-        ";
+        var where = @"
+    WHERE po.IsDeleted = 0
+      AND po.IsActive = 1
+    ";
 
-        // Optional filters (only appended if provided)
         if (filter?.CountryId is not null)
-            sql+="  AND po.CountryId = @CountryId ";
+            where += " AND po.CountryId = @CountryId ";
 
         if (filter?.DivOneId is not null)
-            sql += "  AND po.DivisionOneId = @DivOneId ";
+            where += " AND po.DivisionOneId = @DivOneId ";
 
         if (filter?.DivTwoId is not null)
-            sql += "  AND po.DivisionTwoId = @DivTwoId ";
+            where += " AND po.DivisionTwoId = @DivTwoId ";
 
         if (filter?.DivThreeId is not null)
-            sql += "  AND po.DivisionThreeId = @DivThreeId ";
-        if (filter.SearchText is not null)
-        
+            where += " AND po.DivisionThreeId = @DivThreeId ";
+
+        if (!string.IsNullOrWhiteSpace(filter?.SearchText))
         {
-            // Default: search across everything (name + users + zipcode)
-            sql += @"
-            AND (
-                   po.PostOfficeName LIKE @Search
-                OR EXISTS (
-                    SELECT 1
+            where += @"
+        AND (
+               po.PostOfficeName LIKE @Search
+            OR EXISTS (
+                SELECT 1
                 FROM PostOfficeZipCodeLink l
                 INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
                 WHERE l.PostOfficeId = po.PostOfficeId
                   AND l.IsActive = 1
                   AND z.ZipCode LIKE @Search
-                )
-            )";
+            )
+        )";
         }
-        // ZipCode filter via EXISTS (your requirement)
+
         if (!string.IsNullOrWhiteSpace(filter?.ZipCode))
         {
-            sql += @"
-              AND EXISTS (
-                  SELECT 1
-                  FROM PostOfficeZipCodeLink l
-                  INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
-                  WHERE l.PostOfficeId = po.PostOfficeId
-                    AND l.IsActive = 1
-                    AND z.ZipCode LIKE @ZipCodeSearch
-              )
-            ";
+            where += @"
+        AND EXISTS (
+            SELECT 1
+            FROM PostOfficeZipCodeLink l
+            INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
+            WHERE l.PostOfficeId = po.PostOfficeId
+              AND l.IsActive = 1
+              AND z.ZipCode LIKE @ZipCodeSearch
+        )";
         }
-        //        if (filter?.PlaceId is not null)
-        //        {
-        //            sql += @"
-        //  AND NOT EXISTS (
-        //      SELECT 1
-        //      FROM PlaceZipCodeLink p
-        //      INNER JOIN PostOfficeZipCodeLink l ON l.PostOfficeZipCodeLinkId = p.PostOfficeZipCodeLinkId
-        //          WHERE p.PlaceId = @PlaceId
-        //            AND p.IsActive = 1
-        //            AND l.IsActive = 1
-        //            AND l.PostOfficeId = po.PostOfficeId 
-        //  )
-        //";
-        //        }
-        sql += @"
-        ORDER BY po.PostOfficeName ASC
-        OFFSET ((@PageNumber - 1) * @Limit) ROWS
-        FETCH NEXT @Limit ROWS ONLY;";
+
+        // DATA query
+        var sql = $@"
+    SELECT DISTINCT
+        po.PostOfficeId,
+        po.PostOfficeName,
+        po.CountryId,
+        po.DivisionOneId,
+        po.DivisionTwoId,
+        po.DivisionThreeId,
+        DivisionOne.DivisionOneName,
+        DivisionTwo.DivisionTwoName,
+        DivisionThree.DivisionThreeName
+    FROM PostOffice po
+    INNER JOIN Country ON Country.CountryId = po.CountryId
+    LEFT JOIN DivisionTwo ON DivisionTwo.DivisionTwoId = po.DivisionTwoId
+    LEFT JOIN DivisionOne ON DivisionOne.DivisionOneId = po.DivisionOneId
+    LEFT JOIN DivisionThree ON DivisionThree.DivisionThreeId = po.DivisionThreeId
+    {where}
+    ORDER BY po.PostOfficeName ASC
+    OFFSET ((@PageNumber - 1) * @Limit) ROWS
+    FETCH NEXT @Limit ROWS ONLY;";
+
+        // COUNT query (same filters; no paging)
+        // Important: COUNT DISTINCT because your joins/EXISTS can create duplicates
+        var countSql = $@"
+    SELECT COUNT(DISTINCT po.PostOfficeId)
+    FROM PostOffice po
+    INNER JOIN Country ON Country.CountryId = po.CountryId
+    LEFT JOIN DivisionTwo ON DivisionTwo.DivisionTwoId = po.DivisionTwoId
+    LEFT JOIN DivisionOne ON DivisionOne.DivisionOneId = po.DivisionOneId
+    LEFT JOIN DivisionThree ON DivisionThree.DivisionThreeId = po.DivisionThreeId
+    {where};";
 
         var param = new
         {
@@ -604,20 +600,27 @@ public class PostOfficeRepo : IPostOfficeRepo
             DivOneId = filter?.DivOneId,
             DivTwoId = filter?.DivTwoId,
             DivThreeId = filter?.DivThreeId,
-            //PlaceId = filter?.PlaceId,
-            Search = string.IsNullOrWhiteSpace(filter?.SearchText)
-    ? null
-    : $"%{filter!.SearchText.Trim()}%",
-            PageNumber = filter?.PageNumber,
-            Limit = filter?.Limit,
-            ZipCodeSearch = !string.IsNullOrWhiteSpace(filter?.ZipCode)
-                ? $"%{filter!.ZipCode.Trim()}%"
-                : null
+            Search = string.IsNullOrWhiteSpace(filter?.SearchText) ? null : $"%{filter!.SearchText.Trim()}%",
+            PageNumber = filter?.PageNumber ?? 1,
+            Limit = filter?.Limit ?? 10,
+            ZipCodeSearch = string.IsNullOrWhiteSpace(filter?.ZipCode) ? null : $"%{filter!.ZipCode.Trim()}%"
         };
 
         using var connection = _context.CreateConnection();
-        return await connection.QueryAsync<PostOffice>(
-            new CommandDefinition(sql.ToString(), param, cancellationToken: cancellationToken));
+
+        var totalCount = await connection.ExecuteScalarAsync<int>(
+            new CommandDefinition(countSql, param, cancellationToken: cancellationToken));
+
+        var items = (await connection.QueryAsync<PostOffice>(
+            new CommandDefinition(sql, param, cancellationToken: cancellationToken))).ToList();
+
+        return new PagedResultDto<PostOffice>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = param.PageNumber,
+            PageSize = param.Limit
+        };
     }
 
 

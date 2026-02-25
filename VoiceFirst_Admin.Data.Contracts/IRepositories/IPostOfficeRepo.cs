@@ -23,7 +23,7 @@ public interface IPostOfficeRepo
     Task<PostOffice?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<PostOfficeZipCode?> GetZipCodeByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<PagedResultDto<PostOffice>> GetAllAsync(PostOfficeFilterDto filter, CancellationToken cancellationToken = default);
-    Task<IEnumerable<PostOffice>> GetLookupAsync(PostOfficeLookUpWithZipCodeFilterDto filter, CancellationToken cancellationToken = default);
+    Task<PagedResultDto<PostOffice>> GetLookupAsync(PostOfficeLookUpWithZipCodeFilterDto filter, CancellationToken cancellationToken = default);
     Task<PostOffice?> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
     Task<BulkUpsertError> UpdateAsync(PostOffice entity, List<string> zipCodes, List<PostOfficeZipCode> zipEntities, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(PostOffice entity, CancellationToken cancellationToken = default);
