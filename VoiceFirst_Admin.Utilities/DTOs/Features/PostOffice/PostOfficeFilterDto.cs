@@ -13,13 +13,13 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.PostOffice
         public int? DivThreeId { get; set; }
         public PostOfficeSearchBy? SearchBy { get; set; }
     }
-    public class PostOfficeLookUpFilterDto 
+    public class PostOfficeLookUpFilterDto : BasicFilterDto
     {
         public int? CountryId { get; set; }
         public int? DivOneId { get; set; }
         public int? DivTwoId { get; set; }
         public int? DivThreeId { get; set; }
-        public int? PlaceId { get; set; }
+        //public int? PlaceId { get; set; }
         
     }
     public class PostOfficeLookUpWithZipCodeFilterDto : PostOfficeLookUpFilterDto

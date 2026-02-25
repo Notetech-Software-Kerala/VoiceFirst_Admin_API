@@ -548,7 +548,23 @@ public class PostOfficeRepo : IPostOfficeRepo
 
         if (filter?.DivThreeId is not null)
             sql += "  AND po.DivisionThreeId = @DivThreeId ";
-
+        if (filter.SearchText is not null)
+        
+        {
+            // Default: search across everything (name + users + zipcode)
+            sql += @"
+            AND (
+                   po.PostOfficeName LIKE @Search
+                OR EXISTS (
+                    SELECT 1
+                FROM PostOfficeZipCodeLink l
+                INNER JOIN ZipCode z ON z.ZipCodeId = l.ZipCodeId
+                WHERE l.PostOfficeId = po.PostOfficeId
+                  AND l.IsActive = 1
+                  AND z.ZipCode LIKE @Search
+                )
+            )";
+        }
         // ZipCode filter via EXISTS (your requirement)
         if (!string.IsNullOrWhiteSpace(filter?.ZipCode))
         {
@@ -563,21 +579,24 @@ public class PostOfficeRepo : IPostOfficeRepo
               )
             ";
         }
-//        if (filter?.PlaceId is not null)
-//        {
-//            sql += @"
-//  AND NOT EXISTS (
-//      SELECT 1
-//      FROM PlaceZipCodeLink p
-//      INNER JOIN PostOfficeZipCodeLink l ON l.PostOfficeZipCodeLinkId = p.PostOfficeZipCodeLinkId
-//          WHERE p.PlaceId = @PlaceId
-//            AND p.IsActive = 1
-//            AND l.IsActive = 1
-//            AND l.PostOfficeId = po.PostOfficeId 
-//  )
-//";
-//        }
-        sql+=" ORDER BY po.PostOfficeName ASC;";
+        //        if (filter?.PlaceId is not null)
+        //        {
+        //            sql += @"
+        //  AND NOT EXISTS (
+        //      SELECT 1
+        //      FROM PlaceZipCodeLink p
+        //      INNER JOIN PostOfficeZipCodeLink l ON l.PostOfficeZipCodeLinkId = p.PostOfficeZipCodeLinkId
+        //          WHERE p.PlaceId = @PlaceId
+        //            AND p.IsActive = 1
+        //            AND l.IsActive = 1
+        //            AND l.PostOfficeId = po.PostOfficeId 
+        //  )
+        //";
+        //        }
+        sql += @"
+        ORDER BY po.PostOfficeName ASC
+        OFFSET ((@PageNumber - 1) * @Limit) ROWS
+        FETCH NEXT @Limit ROWS ONLY;";
 
         var param = new
         {
@@ -585,7 +604,12 @@ public class PostOfficeRepo : IPostOfficeRepo
             DivOneId = filter?.DivOneId,
             DivTwoId = filter?.DivTwoId,
             DivThreeId = filter?.DivThreeId,
-            PlaceId = filter?.PlaceId,
+            //PlaceId = filter?.PlaceId,
+            Search = string.IsNullOrWhiteSpace(filter?.SearchText)
+    ? null
+    : $"%{filter!.SearchText.Trim()}%",
+            PageNumber = filter?.PageNumber,
+            Limit = filter?.Limit,
             ZipCodeSearch = !string.IsNullOrWhiteSpace(filter?.ZipCode)
                 ? $"%{filter!.ZipCode.Trim()}%"
                 : null
