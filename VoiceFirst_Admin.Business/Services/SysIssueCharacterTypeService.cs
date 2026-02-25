@@ -18,17 +18,42 @@ namespace VoiceFirst_Admin.Business.Services
 
         public async Task<ApiResponse<SysIssueCharacterTypeDTO>> CreateAsync(SysIssueCharacterTypeCreateDTO dto, int loginId, CancellationToken cancellationToken)
         {
-            var existing = await _repo.ExistsAsync(dto.IssueCharacterType, null, cancellationToken);
+            var existing = await _repo.ExistsAsync
+                (dto.IssueCharacterType, null, cancellationToken);
+
             if (existing != null)
             {
-                if (!existing.Deleted) return ApiResponse<SysIssueCharacterTypeDTO>.Fail(Messages.IssueCharacterTypeAlreadyExists, StatusCodes.Status409Conflict, ErrorCodes.IssueCharacterTypeAlreadyExists);
-                return ApiResponse<SysIssueCharacterTypeDTO>.Fail(Messages.IssueCharacterTypeAlreadyExistsRecoverable, StatusCodes.Status422UnprocessableEntity, ErrorCodes.IssueCharacterTypeAlreadyExistsRecoverable, new SysIssueCharacterTypeDTO { IssueCharacterTypeId = existing.IssueCharacterTypeId });
+                if (!existing.Deleted) 
+                    return ApiResponse<SysIssueCharacterTypeDTO>.Fail
+                        (Messages.IssueCharacterTypeAlreadyExists, 
+                        StatusCodes.Status409Conflict, 
+                        ErrorCodes.IssueCharacterTypeAlreadyExists);
+
+                return ApiResponse<SysIssueCharacterTypeDTO>.Fail
+                    (
+                    Messages.IssueCharacterTypeAlreadyExistsRecoverable, 
+                    StatusCodes.Status422UnprocessableEntity,
+                    ErrorCodes.IssueCharacterTypeAlreadyExistsRecoverable,
+                    new SysIssueCharacterTypeDTO 
+                    { IssueCharacterTypeId = existing.IssueCharacterTypeId });
             }
-            var entity = _mapper.Map<SysIssueCharacterType>(dto); entity.CreatedBy = loginId;
+            var entity = _mapper.Map<SysIssueCharacterType>((dto, loginId)); 
+      
+
             entity.SysIssueCharacterTypeId = await _repo.CreateAsync(entity, cancellationToken);
-            if (entity.SysIssueCharacterTypeId <= 0) return ApiResponse<SysIssueCharacterTypeDTO>.Fail(Messages.SomethingWentWrong, StatusCodes.Status500InternalServerError, ErrorCodes.InternalServerError);
-            var createdDto = await _repo.GetByIdAsync(entity.SysIssueCharacterTypeId, cancellationToken);
-            return ApiResponse<SysIssueCharacterTypeDTO>.Ok(createdDto, Messages.IssueCharacterTypeCreated, StatusCodes.Status201Created);
+            if (entity.SysIssueCharacterTypeId <= 0) 
+                return ApiResponse<SysIssueCharacterTypeDTO>.
+                    Fail(Messages.SomethingWentWrong,
+                    StatusCodes.Status500InternalServerError, 
+                    ErrorCodes.InternalServerError);
+
+            var createdDto =
+                await _repo.GetByIdAsync(entity.SysIssueCharacterTypeId, cancellationToken);
+
+            return ApiResponse<SysIssueCharacterTypeDTO>.Ok
+                (createdDto,
+                Messages.IssueCharacterTypeCreated, 
+                StatusCodes.Status201Created);
         }
 
         public async Task<ApiResponse<SysIssueCharacterTypeDTO>?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -42,7 +67,7 @@ namespace VoiceFirst_Admin.Business.Services
         {
             filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
-            filter.Limit = Math.Min(filter.Limit, 60);
+            filter.Limit = Math.Min(filter.Limit, 30);
             var result = await _repo.GetAllAsync(filter, cancellationToken);
             return ApiResponse<PagedResultDto<SysIssueCharacterTypeDTO>>.Ok(result, result.TotalCount == 0 ? Messages.IssueCharacterTypesNotFound : Messages.IssueCharacterTypesRetrieved, statusCode: StatusCodes.Status200OK);
         }

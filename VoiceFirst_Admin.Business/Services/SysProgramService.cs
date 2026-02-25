@@ -363,7 +363,7 @@ namespace VoiceFirst_Admin.Business.Services
         {
             filter.PageNumber = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             filter.Limit = filter.Limit <= 0 ? 10 : filter.Limit;
-            filter.Limit = Math.Min(filter.Limit, 60);
+            filter.Limit = Math.Min(filter.Limit, 30);
             var result = await _repo.GetAllAsync(filter, cancellationToken);
 
             return ApiResponse<PagedResultDto<SysProgramDto>>.Ok(
@@ -479,7 +479,7 @@ namespace VoiceFirst_Admin.Business.Services
             basicFilterDto.Limit = basicFilterDto.Limit <= 0 ? 10 : basicFilterDto.Limit;
 
             // 🔹 Max Limit Protection (avoid heavy load)
-            basicFilterDto.Limit = Math.Min(basicFilterDto.Limit, 60);
+            basicFilterDto.Limit = Math.Min(basicFilterDto.Limit, 30);
 
             // 🔹 Call Repository
             var (items, totalCount) = await _repo
