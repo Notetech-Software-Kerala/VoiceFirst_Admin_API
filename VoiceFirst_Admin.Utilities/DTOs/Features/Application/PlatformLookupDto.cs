@@ -4,9 +4,9 @@ using System.Text;
 
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.Application
 {
-    public class ApplicationActiveDTO
+    public class PlatformLookupDto
     {
         public int PlatformId { get; set; }
-        public string PlatformName { get; set; }
+        public string PlatformName { get; set; } = string.Empty;
     }
 }

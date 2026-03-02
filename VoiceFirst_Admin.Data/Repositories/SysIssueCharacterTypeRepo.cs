@@ -25,11 +25,71 @@ namespace VoiceFirst_Admin.Data.Repositories
             return await connection.QueryFirstOrDefaultAsync<SysIssueCharacterTypeDTO>(new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken));
         }
 
-        public async Task<int> CreateAsync(SysIssueCharacterType entity, CancellationToken cancellationToken = default)
-        {
-            const string sql = @"INSERT INTO SysIssueCharacterType (IssueCharacterType, CreatedBy) VALUES (@IssueCharacterType, @CreatedBy); SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+        public async Task<SysIssueCharacterTypeDTO> CreateAsync(
+         SysIssueCharacterType entity,
+         CancellationToken cancellationToken = default)
+            {
+                const string sql = @"
+
+        DECLARE @Inserted TABLE
+        (
+            SysIssueCharacterTypeId INT,
+            IssueCharacterType NVARCHAR(200),
+            IsActive BIT,
+            IsDeleted BIT,
+            CreatedBy INT,
+            CreatedAt DATETIME,
+            UpdatedBy INT,
+            UpdatedAt DATETIME,
+            DeletedBy INT,
+            DeletedAt DATETIME
+        );
+
+        INSERT INTO SysIssueCharacterType
+        (
+            IssueCharacterType,
+            CreatedBy
+        )
+        OUTPUT
+            INSERTED.SysIssueCharacterTypeId,
+            INSERTED.IssueCharacterType,
+            INSERTED.IsActive,
+            INSERTED.IsDeleted,
+            INSERTED.CreatedBy,
+            INSERTED.CreatedAt,
+            INSERTED.UpdatedBy,
+            INSERTED.UpdatedAt,
+            INSERTED.DeletedBy,
+            INSERTED.DeletedAt
+        INTO @Inserted
+        VALUES
+        (
+            @IssueCharacterType,
+            @CreatedBy
+        );
+
+        SELECT 
+            i.SysIssueCharacterTypeId AS IssueCharacterTypeId,
+            i.IssueCharacterType,
+            i.IsActive AS Active,
+            i.IsDeleted AS Deleted,
+            (uc.FirstName + ' ' + uc.LastName) AS CreatedUser,
+            i.CreatedAt AS CreatedDate,
+            (uu.FirstName + ' ' + uu.LastName) AS ModifiedUser,
+            i.UpdatedAt AS ModifiedDate,
+            (ud.FirstName + ' ' + ud.LastName) AS DeletedUser,
+            i.DeletedAt AS DeletedDate
+        FROM @Inserted i
+        LEFT JOIN [Users] uc ON i.CreatedBy = uc.UserId
+        LEFT JOIN [Users] uu ON i.UpdatedBy = uu.UserId
+        LEFT JOIN [Users] ud ON i.DeletedBy = ud.UserId;
+        ";
+
             using var connection = _context.CreateConnection();
-            return await connection.ExecuteScalarAsync<int>(new CommandDefinition(sql, new { entity.IssueCharacterType, entity.CreatedBy }, cancellationToken: cancellationToken));
+
+            return await connection.QuerySingleAsync<SysIssueCharacterTypeDTO>(
+                new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
         }
 
         public async Task<SysIssueCharacterTypeDTO?> GetByIdAsync(int id, CancellationToken cancellationToken = default)

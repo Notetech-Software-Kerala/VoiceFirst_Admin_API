@@ -16,7 +16,10 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IMapper _mapper;
         public SysIssueCharacterTypeService(ISysIssueCharacterTypeRepo repository, IMapper mapper) { _repo = repository; _mapper = mapper; }
 
-        public async Task<ApiResponse<SysIssueCharacterTypeDTO>> CreateAsync(SysIssueCharacterTypeCreateDTO dto, int loginId, CancellationToken cancellationToken)
+
+        public async Task<ApiResponse<SysIssueCharacterTypeDTO>>
+            CreateAsync(SysIssueCharacterTypeCreateDTO dto,
+            int loginId, CancellationToken cancellationToken)
         {
             var existing = await _repo.ExistsAsync
                 (dto.IssueCharacterType, null, cancellationToken);
@@ -40,21 +43,19 @@ namespace VoiceFirst_Admin.Business.Services
             var entity = _mapper.Map<SysIssueCharacterType>((dto, loginId)); 
       
 
-            entity.SysIssueCharacterTypeId = await _repo.CreateAsync(entity, cancellationToken);
-            if (entity.SysIssueCharacterTypeId <= 0) 
+            var createdDto = await _repo.CreateAsync(entity, cancellationToken);
+            if (createdDto == null ) 
                 return ApiResponse<SysIssueCharacterTypeDTO>.
                     Fail(Messages.SomethingWentWrong,
                     StatusCodes.Status500InternalServerError, 
-                    ErrorCodes.InternalServerError);
-
-            var createdDto =
-                await _repo.GetByIdAsync(entity.SysIssueCharacterTypeId, cancellationToken);
-
+                    ErrorCodes.InternalServerError);          
             return ApiResponse<SysIssueCharacterTypeDTO>.Ok
                 (createdDto,
                 Messages.IssueCharacterTypeCreated, 
                 StatusCodes.Status201Created);
         }
+
+
 
         public async Task<ApiResponse<SysIssueCharacterTypeDTO>?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {

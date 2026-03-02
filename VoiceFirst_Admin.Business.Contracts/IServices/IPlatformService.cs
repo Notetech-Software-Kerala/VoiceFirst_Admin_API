@@ -6,9 +6,9 @@ using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.Business.Contracts.IServices
 {
-    public interface IApplicationService
+    public interface IPlatformService
     {
-        Task<ApiResponse<IEnumerable<ApplicationActiveDTO>>>
-            GetActiveAsync(CancellationToken cancellationToken);
+        Task<ApiResponse<IEnumerable<PlatformLookupDto>>>
+            GetActivePlatformsAsync(CancellationToken cancellationToken);
     }
 }

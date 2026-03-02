@@ -6,11 +6,10 @@ using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
-    public interface IApplicationRepo
+    public interface IApplicationRepository
     {
-        Task<Application> GetActiveByIdAsync
-             (int ApplicationId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<ApplicationActiveDTO>> GetActiveAsync(
+        
+        Task<IEnumerable<PlatformLookupDto>> GetActiveApplicationsAsync(
             CancellationToken cancellationToken = default);
         Task<Application> IsIdExistAsync
          (int ApplicationId, CancellationToken cancellationToken = default);

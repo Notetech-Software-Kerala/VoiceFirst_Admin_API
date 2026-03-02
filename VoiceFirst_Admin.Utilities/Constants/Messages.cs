@@ -143,6 +143,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ApplicationNotFoundById =
             "Platform  not found.";
 
+        public const string NoPlatformsFound =
+          "No platforms  found.";
+
         public const string BusinessActivitiesNotFound =
              "Activities  not found.";
 
@@ -210,8 +213,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
        "Dial Codes retrieved successfully.";
 
 
-        public const string ApplicationRetrieved =
-            "Platform retrieved successfully.";
+        public const string PlatformsRetrieved =
+            "Platforms retrieved successfully";
 
         public const string PlanRetrieved =
            "Plan retrieved successfully.";

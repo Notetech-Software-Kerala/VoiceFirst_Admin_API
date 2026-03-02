@@ -32,7 +32,7 @@ namespace VoiceFirst_Admin.Business.Services
     public class SysProgramService : ISysProgramService
     {
         private readonly ISysProgramRepo _repo;
-        private readonly IApplicationRepo _applicationRepo;
+        private readonly IApplicationRepository _applicationRepo;
         private readonly IProgramActionRepo _programActionRepo;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _uow;
@@ -40,7 +40,7 @@ namespace VoiceFirst_Admin.Business.Services
 
         public SysProgramService(
             ISysProgramRepo repo,
-            IApplicationRepo applicationRepo,
+            IApplicationRepository applicationRepo,
             IProgramActionRepo programActionRepo,
             IMapper mapper, IUnitOfWork uow,
             IOptions<ApplicationSettings> applicationSettings)
