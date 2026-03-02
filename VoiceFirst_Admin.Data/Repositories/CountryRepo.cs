@@ -181,33 +181,129 @@ public class CountryRepo : ICountryRepo
         return dto;
     }
 
-    public async Task<IEnumerable<DialCodeLookUpDto>> GetDialCodesLookUpAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<DialCodeLookUpDto>> GetDialCodesLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT CountryId AS DialCodeId, CountryDialCode As DialCode
-                             FROM Country
-                             WHERE IsActive = 1 AND IsDeleted = 0
-                             ORDER BY CountryDialCode ASC;";
+        
+
+        var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+        var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+        var offset = (page - 1) * limit;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("Offset", offset);
+        parameters.Add("Limit", limit);
+
+        var baseSql = new StringBuilder(@"FROM Country WHERE IsActive = 1 AND IsDeleted = 0");
+
+        var searchByMap = new Dictionary<CountrySearchBy, string>
+        {
+            [CountrySearchBy.CountryName] = "CountryName",
+            [CountrySearchBy.DivisionOne] = "DivisionOneName",
+            [CountrySearchBy.DivisionTwo] = "DivisionTwoName",
+            [CountrySearchBy.DivisionThree] = "DivisionThreeName",
+            [CountrySearchBy.DialCode] = "CountryDialCode",
+            [CountrySearchBy.IsoAlphaTwo] = "CountryIsoAlphaTwo",
+
+            // ZipCode cannot be a single column on po; handle separately (see below)
+        };
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+            // If SearchBy = ZipCode, use EXISTS on PostOfficeZipCode
+            
+                // Default: search across everything (name + users + zipcode)
+                baseSql.Append(@"
+                    AND (
+                          CountryName LIKE @Search
+                        OR CountryDialCode  LIKE @Search 
+                        OR CountryIsoAlphaTwo   LIKE @Search 
+                
+                    )");
+            
+
+            parameters.Add("Search", $"%{filter.SearchText}%");
+        }
+       
+
+        
+
+        var countSql = "SELECT COUNT(1) " + baseSql.ToString();
+
+        var itemsSql = $@"SELECT CountryId AS DialCodeId, CountryDialCode As DialCode
+                          {baseSql}
+                          ORDER BY CountryName
+                          OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
 
         using var connection = _context.CreateConnection();
-        var items = await connection.QueryAsync<DialCodeLookUpDto>(sql);
-        return items;
+
+        var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
+        var items = await connection.QueryAsync<DialCodeLookUpDto>(itemsSql, parameters);
+
+        return new PagedResultDto<DialCodeLookUpDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = limit
+        };
     }
 
 
-    public async Task<IEnumerable<Country>> GetActiveAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<Country>> GetActiveAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT CountryId, CountryName, DivisionOneName, DivisionTwoName, DivisionThreeName, CountryDialCode, CountryIsoAlphaTwo, IsActive, IsDeleted
-                             FROM Country
-                             WHERE IsActive = 1 AND IsDeleted = 0
-                             ORDER BY CountryName ASC;";
+
+        var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+        var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+        var offset = (page - 1) * limit;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("Offset", offset);
+        parameters.Add("Limit", limit);
+
+        var baseSql = new StringBuilder(@"FROM Country WHERE IsActive = 1 AND IsDeleted = 0");
+
+        
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+            // If SearchBy = ZipCode, use EXISTS on PostOfficeZipCode
+
+            // Default: search across everything (name + users + zipcode)
+            baseSql.Append(@"
+            AND (
+                  CountryName LIKE @Search
+                OR CountryDialCode  LIKE @Search 
+                
+            )");
+
+
+            parameters.Add("Search", $"%{filter.SearchText}%");
+        }
+
+
+
+
+        var countSql = "SELECT COUNT(1) " + baseSql.ToString();
+
+        var itemsSql = $@"SELECT CountryId, CountryName, DivisionOneName, DivisionTwoName, DivisionThreeName
+                          {baseSql}
+                          ORDER BY CountryName
+                          OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
 
         using var connection = _context.CreateConnection();
-        var items = await connection.QueryAsync<Country>(sql);
-        return items;
+
+        var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
+        var items = await connection.QueryAsync<Country>(itemsSql, parameters);
+
+        return new PagedResultDto<Country>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = limit
+        };
     }
     public async Task<Country> GetByCountryIdAsync(int id,CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT CountryId, CountryName, DivisionOneName, DivisionTwoName, DivisionThreeName, CountryDialCode, CountryIsoAlphaTwo, IsActive, IsDeleted
+        const string sql = @"SELECT CountryId, CountryName, DivisionOneName, DivisionTwoName, DivisionThreeName
                              FROM Country where CountryId=@CountryId";
 
         using var connection = _context.CreateConnection();
@@ -309,17 +405,58 @@ public class CountryRepo : ICountryRepo
         };
     }
 
-    public async Task<IEnumerable<DivisionOne>> GetDivisionOneActiveByCountryIdAsync(int countryId, CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<DivisionOne>> GetDivisionOneActiveByCountryIdAsync(DivisionOneLookUpFilterDto filter, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT po.DivisionOneId, po.DivisionOneName,Country.CountryName, po.CountryId, po.IsActive, po.IsDeleted
-                             FROM DivisionOne po
-                             INNER JOIN Country ON Country.CountryId = po.CountryId
-                             WHERE po.CountryId = @CountryId AND po.IsActive = 1 AND po.IsDeleted = 0
-                             ORDER BY po.DivisionOneName ASC;";
+        
+
+        var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+        var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+        var offset = (page - 1) * limit;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("Offset", offset);
+        parameters.Add("Limit", limit);
+
+        var baseSql = new StringBuilder(@"FROM DivisionOne d INNER JOIN Country ON Country.CountryId = d.CountryId WHERE d.IsActive = 1 AND d.IsDeleted = 0");
+
+        
+            baseSql.Append(" AND d.CountryId = @CountryId");
+            parameters.Add("CountryId", filter.CountryId);
+        
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+           
+                // Default: search across everything (name + users + zipcode)
+                baseSql.Append(@"
+            AND (
+                  d.DivisionOneName LIKE @Search
+                
+            )");
+            
+
+            parameters.Add("Search", $"%{filter.SearchText}%");
+        }
+        
+        var countSql = "SELECT COUNT(1) " + baseSql.ToString();
+
+        var itemsSql = $@"SELECT d.DivisionOneId, d.DivisionOneName,Country.CountryName, d.CountryId
+                          {baseSql}
+                          ORDER BY d.DivisionOneName
+                          OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
 
         using var connection = _context.CreateConnection();
-        var items = await connection.QueryAsync<DivisionOne>(sql, new { CountryId = countryId });
-        return items;
+
+        var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
+        var items = await connection.QueryAsync<DivisionOne>(itemsSql, parameters);
+
+        return new PagedResultDto<DivisionOne>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = limit
+        };
     }
 
     //  DivisionTwo
@@ -415,17 +552,57 @@ public class CountryRepo : ICountryRepo
             PageSize = limit
         };
     }
-    public async Task<IEnumerable<DivisionTwo>> GetDivisionTwoActiveByDivisionOneIdAsync(int divisionOneId, CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<DivisionTwo>> GetDivisionTwoActiveByDivisionOneIdAsync(DivisionTwoLookUpFilterDto filter, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT po.DivisionTwoId, po.DivisionTwoName, po.DivisionOneId,DivisionOne.DivisionOneName,po.IsActive, po.IsDeleted
-                             FROM DivisionTwo po
-                             INNER JOIN DivisionOne ON DivisionOne.DivisionOneId = po.DivisionOneId
-                             WHERE po.DivisionOneId = @DivisionOneId AND po.IsActive = 1 AND po.IsDeleted = 0
-                             ORDER BY po.DivisionTwoName ASC;";
+        var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+        var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+        var offset = (page - 1) * limit;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("Offset", offset);
+        parameters.Add("Limit", limit);
+
+        var baseSql = new StringBuilder(@"FROM DivisionTwo d INNER JOIN DivisionOne ON DivisionOne.DivisionOneId = d.DivisionOneId WHERE d.IsActive = 1 AND d.IsDeleted = 0");
+
+        
+            baseSql.Append(" AND d.DivisionOneId = @DivisionOneId");
+            parameters.Add("DivisionOneId", filter.DivisionOneId);
+        
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+            
+                // Default: search across everything (name + users + zipcode)
+                baseSql.Append(@"
+            AND (
+                  d.DivisionTwoName LIKE @Search
+                
+            )");
+            
+
+            parameters.Add("Search", $"%{filter.SearchText}%");
+        }
+
+
+        var countSql = "SELECT COUNT(1) " + baseSql.ToString();
+
+        var itemsSql = $@"SELECT d.DivisionTwoId, d.DivisionTwoName,DivisionOne.DivisionOneName, d.DivisionOneId
+                          {baseSql}
+                          ORDER BY d.DivisionTwoName
+                          OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
 
         using var connection = _context.CreateConnection();
-        var items = await connection.QueryAsync<DivisionTwo>(sql, new { DivisionOneId = divisionOneId });
-        return items;
+
+        var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
+        var items = await connection.QueryAsync<DivisionTwo>(itemsSql, parameters);
+
+        return new PagedResultDto<DivisionTwo>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = limit
+        };
     }
 
     // DivisionThree 
@@ -520,17 +697,60 @@ public class CountryRepo : ICountryRepo
         };
     }
 
-    public async Task<IEnumerable<DivisionThree>> GetDivisionThreeActiveByDivisionTwoIdAsync(int divisionTwoId, CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<DivisionThree>> GetDivisionThreeActiveByDivisionTwoIdAsync(DivisionThreeLookUpFilterDto filter, CancellationToken cancellationToken = default)
     {
-        const string sql = @"SELECT po.DivisionThreeId, po.DivisionThreeName,DivisionTwo.DivisionTwoName, po.DivisionTwoId, po.IsActive, po.IsDeleted
-                             FROM DivisionThree po
-                             INNER JOIN DivisionTwo ON DivisionTwo.DivisionTwoId = po.DivisionTwoId
-                             WHERE po.DivisionTwoId = @DivisionTwoId AND po.IsActive = 1 AND po.IsDeleted = 0
-                             ORDER BY po.DivisionThreeName ASC;";
+        var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+        var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+        var offset = (page - 1) * limit;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("Offset", offset);
+        parameters.Add("Limit", limit);
+
+        var baseSql = new StringBuilder(@"FROM DivisionThree d INNER JOIN DivisionTwo ON DivisionTwo.DivisionTwoId = d.DivisionTwoId WHERE d.IsActive = 1 AND d.IsDeleted = 0");
+
+        
+            baseSql.Append(" AND d.DivisionTwoId = @DivisionTwoId");
+            parameters.Add("DivisionTwoId", filter.DivisionTwoId);
+        
+
+        
+
+        
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+            
+                // Default: search across everything (name + users + zipcode)
+                baseSql.Append(@"
+            AND (
+                  d.DivisionThreeName LIKE @Search
+                
+            )");
+            
+
+            parameters.Add("Search", $"%{filter.SearchText}%");
+        }
+       
+
+        var countSql = "SELECT COUNT(1) " + baseSql.ToString();
+
+        var itemsSql = $@"SELECT d.DivisionThreeId, d.DivisionThreeName,DivisionTwo.DivisionTwoName, d.DivisionTwoId
+                          {baseSql}
+                          ORDER BY d.DivisionThreeName
+                          OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
 
         using var connection = _context.CreateConnection();
-        var items = await connection.QueryAsync<DivisionThree>(sql, new { DivisionTwoId = divisionTwoId });
-        return items;
+
+        var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
+        var items = await connection.QueryAsync<DivisionThree>(itemsSql, parameters);
+
+        return new PagedResultDto<DivisionThree>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = limit
+        };
     }
 }
 

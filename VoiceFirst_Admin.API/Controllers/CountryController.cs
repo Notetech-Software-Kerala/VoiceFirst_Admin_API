@@ -35,19 +35,20 @@ public class CountryController : ControllerBase
     // 2) Get active countries only (no paging)
     [HttpGet]
     [Route("api/country/lookup")]
-    public async Task<IActionResult> GetActive(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetActive([FromQuery] BasicFilterDto filter,CancellationToken cancellationToken)
     {
-        var items = await _service.GetActiveAsync(cancellationToken);
+        var items = await _service.GetActiveAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.CountryRetrieveSucessfully));
     }
 
 
     [HttpGet]
     [Route("api/dialCode/lookup")]
-    public async Task<IActionResult> GetDialCodesLookUpAsync(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDialCodesLookUpAsync([FromQuery] BasicFilterDto filter, CancellationToken cancellationToken)
     {
-        var response = await _service.GetDialCodesLookUpAsync(cancellationToken);
-        return StatusCode(response.StatusCode, response);
+        var response = await _service.GetDialCodesLookUpAsync(filter, cancellationToken);
+
+        return Ok(ApiResponse<object>.Ok(response, Messages.DialCodesRetrieved));
     }
 
     [HttpGet]
@@ -58,10 +59,10 @@ public class CountryController : ControllerBase
         return Ok(ApiResponse<object>.Ok(items, Messages.DivisionOneRetrieveSucessfully));
     }
     [HttpGet]
-    [Route("api/division/one/lookup/{countryId:int}")]
-    public async Task<IActionResult> GetDivisionOneActiveByCountry(int countryId, CancellationToken cancellationToken)
+    [Route("api/division/one/lookup")]
+    public async Task<IActionResult> GetDivisionOneActiveByCountry([FromQuery] DivisionOneLookUpFilterDto filter, CancellationToken cancellationToken)
     {
-        var items = await _service.GetDivisionOneActiveByCountryIdAsync(countryId, cancellationToken);
+        var items = await _service.GetDivisionOneActiveByCountryIdAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.DivisionOneRetrieveSucessfully));
     }
 
@@ -75,10 +76,10 @@ public class CountryController : ControllerBase
         return Ok(ApiResponse<object>.Ok(items, Messages.DivisionTwoRetrieveSucessfully));
     }
     [HttpGet]
-    [Route("api/division/two/lookup/{divisionOneId:int}")]
-    public async Task<IActionResult> GetDivisionTwoActiveByDivisionOne(int divisionOneId, CancellationToken cancellationToken)
+    [Route("api/division/two/lookup")]
+    public async Task<IActionResult> GetDivisionTwoActiveByDivisionOne([FromQuery] DivisionTwoLookUpFilterDto filter, CancellationToken cancellationToken)
     {
-        var items = await _service.GetDivisionTwoActiveByDivisionOneIdAsync(divisionOneId, cancellationToken);
+        var items = await _service.GetDivisionTwoActiveByDivisionOneIdAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.DivisionTwoRetrieveSucessfully));
     }
 
@@ -92,10 +93,10 @@ public class CountryController : ControllerBase
         return Ok(ApiResponse<object>.Ok(items, Messages.DivisionThreeRetrieveSucessfully));
     }
     [HttpGet]
-    [Route("api/division/three/lookup/{divisionTwoId:int}")]
-    public async Task<IActionResult> GetDivisionThreeActiveByDivisionTwo(int divisionTwoId, CancellationToken cancellationToken)
+    [Route("api/division/three/lookup")]
+    public async Task<IActionResult> GetDivisionThreeActiveByDivisionTwo([FromQuery] DivisionThreeLookUpFilterDto filter, CancellationToken cancellationToken)
     {
-        var items = await _service.GetDivisionThreeActiveByDivisionTwoIdAsync(divisionTwoId, cancellationToken);
+        var items = await _service.GetDivisionThreeActiveByDivisionTwoIdAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.DivisionThreeRetrieveSucessfully));
     }
 }
