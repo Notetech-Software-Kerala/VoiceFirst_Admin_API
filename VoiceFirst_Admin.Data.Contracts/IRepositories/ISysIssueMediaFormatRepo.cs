@@ -1,5 +1,6 @@
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysIssueMediaFormat;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
+using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Contracts.IRepositories
@@ -15,5 +16,6 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<List<SysIssueMediaFormatActiveDTO?>> GetActiveAsync(CancellationToken ct = default);
         Task<bool> RecoverAsync(int id, int loginId, CancellationToken ct = default);
         Task<SysIssueMediaFormatDTO> IsIdExistAsync(int id, CancellationToken ct = default);
+        Task<BulkValidationResult> IsBulkIdsExistAsync(IEnumerable<int> ids, CancellationToken ct = default);
     }
 }

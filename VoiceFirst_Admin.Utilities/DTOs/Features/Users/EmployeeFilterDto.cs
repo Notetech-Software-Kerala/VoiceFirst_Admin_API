@@ -18,7 +18,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.Users
         Email,
         MobileNo,
         BirthYear,
-        MobileCountryCode,
+        DialCode,
         CreatedUser,
         ModifiedUser,
         DeletedUser

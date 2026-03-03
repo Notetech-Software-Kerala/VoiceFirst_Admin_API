@@ -15,6 +15,14 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.IssueType, o => o.MapFrom(s => s.IssueType))
                 .ForMember(d => d.IsActive, o => o.MapFrom(s => true));
 
+            CreateMap<(IssueMediaRuleCreateDTO Dto, int IssueTypeId, int LoginId), SysIssueMediaRule>()
+                .ForMember(d => d.IssueTypeId, o => o.MapFrom(s => s.IssueTypeId))
+                .ForMember(d => d.IssueMediaFormatId, o => o.MapFrom(s => s.Dto.IssueMediaFormatId))
+                .ForMember(d => d.Min, o => o.MapFrom(s => s.Dto.Min))
+                .ForMember(d => d.Max, o => o.MapFrom(s => s.Dto.Max))
+                .ForMember(d => d.MaxSizeMB, o => o.MapFrom(s => s.Dto.MaxSizeMB))
+                .ForMember(d => d.CreatedBy, o => o.MapFrom(s => s.LoginId));
+
             CreateMap<(SysIssueTypeUpdateDTO, int Id, int UserId), SysIssueType>()
                 .ForMember(d => d.IssueType, o => o.MapFrom(s => s.Item1.IssueType))
                 .ForMember(d => d.SysIssueTypeId, o => o.MapFrom(s => s.Id))

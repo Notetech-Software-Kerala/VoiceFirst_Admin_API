@@ -548,6 +548,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string IssueMediaTypeAlreadyRecovered = "Issue media type is already recovered. Please refresh again.";
         public const string IssueMediaTypeAlreadyDeleted = "Issue media type is already deleted. Please refresh again.";
         public const string IssueMediaTypeNotFound = "Selected issue media type is not available." + BaseRefreshMessage;
+        public const string IssueMediaTypeNotActive = "Selected issue media type is inactive." + BaseRefreshMessage;
 
         // ===== SYS ISSUE MEDIA FORMAT =====
         public const string IssueMediaFormatAlreadyExists = "Issue media format already exists. Please add another name.";
@@ -564,6 +565,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string IssueMediaFormatAlreadyRecovered = "Issue media format is already recovered. Please refresh again.";
         public const string IssueMediaFormatAlreadyDeleted = "Issue media format is already deleted. Please refresh again.";
         public const string IssueMediaFormatNotFound = "Selected issue media format is not available." + BaseRefreshMessage;
+        public const string IssueMediaFormatNotActive = "Selected issue media format is inactive." + BaseRefreshMessage;
 
     }
 }

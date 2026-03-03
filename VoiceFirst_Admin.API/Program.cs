@@ -71,6 +71,8 @@ builder.Services.AddScoped<ISysIssueStatusRepo, SysIssueStatusRepo>();
 builder.Services.AddScoped<ISysIssueCharacterTypeRepo, SysIssueCharacterTypeRepo>();
 builder.Services.AddScoped<ISysIssueMediaTypeRepo, SysIssueMediaTypeRepo>();
 builder.Services.AddScoped<ISysIssueMediaFormatRepo, SysIssueMediaFormatRepo>();
+builder.Services.AddScoped<ISysIssueMediaRuleRepo, SysIssueMediaRuleRepo>();
+builder.Services.AddScoped<ISysIssueMediaRuleTypeRepo, SysIssueMediaRuleTypeRepo>();
 // Services
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
