@@ -1,10 +1,12 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysIssueCharacterType;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
+using VoiceFirst_Admin.Utilities.Exceptions;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -14,46 +16,87 @@ namespace VoiceFirst_Admin.Business.Services
     {
         private readonly ISysIssueCharacterTypeRepo _repo;
         private readonly IMapper _mapper;
-        public SysIssueCharacterTypeService(ISysIssueCharacterTypeRepo repository, IMapper mapper) { _repo = repository; _mapper = mapper; }
 
 
-        public async Task<ApiResponse<SysIssueCharacterTypeDTO>>
-            CreateAsync(SysIssueCharacterTypeCreateDTO dto,
-            int loginId, CancellationToken cancellationToken)
+        public SysIssueCharacterTypeService
+            (
+            ISysIssueCharacterTypeRepo repository, 
+            IMapper mapper)
+        { 
+            _repo = repository; _mapper = mapper;
+        }
+
+
+        public async Task<ApiResponse<SysIssueCharacterTypeDTO>> CreateAsync(
+            SysIssueCharacterTypeCreateDTO dto,
+            int loginId,
+            CancellationToken cancellationToken)
         {
-            var existing = await _repo.ExistsAsync
-                (dto.IssueCharacterType, null, cancellationToken);
+            if (dto == null || string.IsNullOrWhiteSpace(dto.IssueCharacterType))
+                return ApiResponse<SysIssueCharacterTypeDTO>.Fail(
+                    Messages.PayloadInvalid,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.InvalidRequest);
 
-            if (existing != null)
+            dto.IssueCharacterType = dto.IssueCharacterType.Trim();
+
+
+            var entity = _mapper.Map<SysIssueCharacterType>((dto, loginId));
+
+            try
             {
-                if (!existing.Deleted) 
-                    return ApiResponse<SysIssueCharacterTypeDTO>.Fail
-                        (Messages.IssueCharacterTypeAlreadyExists, 
-                        StatusCodes.Status409Conflict, 
-                        ErrorCodes.IssueCharacterTypeAlreadyExists);
+                var created = await _repo.CreateAsync(entity, cancellationToken);
 
-                return ApiResponse<SysIssueCharacterTypeDTO>.Fail
-                    (
-                    Messages.IssueCharacterTypeAlreadyExistsRecoverable, 
+                return ApiResponse<SysIssueCharacterTypeDTO>.Ok(
+                    created,
+                    Messages.IssueCharacterTypeCreated,
+                    StatusCodes.Status201Created);
+            }
+            catch (DuplicateIssueCharacterTypeException)
+            {
+                return await HandleDuplicateAsync(dto.IssueCharacterType, cancellationToken);
+            }
+        }
+
+
+        private async Task<ApiResponse<SysIssueCharacterTypeDTO>>
+            HandleDuplicateAsync(
+            string normalizedName,
+            CancellationToken cancellationToken)
+        {
+            var existing = await _repo.GetIdAndDeletedByNameAsync(
+                normalizedName,
+                cancellationToken);
+
+            if (existing == null)
+                throw new InvalidOperationException(
+                    "Duplicate detected but record not found.");
+
+            var minimalDto = new SysIssueCharacterTypeDTO
+            {
+                IssueCharacterTypeId = existing.IssueCharacterTypeId
+            };
+
+            if (existing.IsDeleted)
+            {
+                return ApiResponse<SysIssueCharacterTypeDTO>.Fail(
+                    Messages.IssueCharacterTypeAlreadyExistsRecoverable,
                     StatusCodes.Status422UnprocessableEntity,
                     ErrorCodes.IssueCharacterTypeAlreadyExistsRecoverable,
-                    new SysIssueCharacterTypeDTO 
-                    { IssueCharacterTypeId = existing.IssueCharacterTypeId });
+                    minimalDto);
             }
-            var entity = _mapper.Map<SysIssueCharacterType>((dto, loginId)); 
-      
 
-            var createdDto = await _repo.CreateAsync(entity, cancellationToken);
-            if (createdDto == null ) 
-                return ApiResponse<SysIssueCharacterTypeDTO>.
-                    Fail(Messages.SomethingWentWrong,
-                    StatusCodes.Status500InternalServerError, 
-                    ErrorCodes.InternalServerError);          
-            return ApiResponse<SysIssueCharacterTypeDTO>.Ok
-                (createdDto,
-                Messages.IssueCharacterTypeCreated, 
-                StatusCodes.Status201Created);
+            return ApiResponse<SysIssueCharacterTypeDTO>.Fail(
+                Messages.IssueCharacterTypeAlreadyExists,
+                StatusCodes.Status409Conflict,
+                ErrorCodes.IssueCharacterTypeAlreadyExists,
+                minimalDto);
         }
+           
+
+        
+
+
 
 
 

@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
@@ -23,6 +24,28 @@ namespace VoiceFirst_Admin.Data.Repositories
             if (excludeId.HasValue) sql += " AND SysIssueCharacterTypeId <> @ExcludeId";
             using var connection = _context.CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<SysIssueCharacterTypeDTO>(new CommandDefinition(sql, new { Name = name, ExcludeId = excludeId }, cancellationToken: cancellationToken));
+        }
+
+
+        public async Task<IssueCharacterTypeStateDto?>
+        GetIdAndDeletedByNameAsync(
+        string name,
+        CancellationToken cancellationToken)
+        {
+            const string sql = @"
+                SELECT 
+                    SysIssueCharacterTypeId AS IssueCharacterTypeId,
+                    IsDeleted AS Deleted
+                FROM SysIssueCharacterType
+                WHERE IssueCharacterType = @Name;
+            ";
+
+            using var connection = _context.CreateConnection();
+
+            return await connection.QueryFirstOrDefaultAsync
+                <IssueCharacterTypeStateDto>(
+                    new CommandDefinition(sql, new { Name = name },
+                    cancellationToken: cancellationToken));
         }
 
 
@@ -85,12 +108,21 @@ namespace VoiceFirst_Admin.Data.Repositories
         LEFT JOIN [Users] uu ON i.UpdatedBy = uu.UserId
         LEFT JOIN [Users] ud ON i.DeletedBy = ud.UserId;
         ";
+            try
+            {
+                using var connection = _context.CreateConnection();
 
-            using var connection = _context.CreateConnection();
-
-            return await connection.QuerySingleAsync<SysIssueCharacterTypeDTO>(
-                new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+                return await connection.QuerySingleAsync<SysIssueCharacterTypeDTO>(
+                    new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+            }
+           
+            catch (SqlException ex) when(ex.Number == 2601 || ex.Number == 2627)
+{
+                throw new DuplicateIssueCharacterTypeException(entity.IssueCharacterType);
+            }
         }
+
+
 
         public async Task<SysIssueCharacterTypeDTO?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {

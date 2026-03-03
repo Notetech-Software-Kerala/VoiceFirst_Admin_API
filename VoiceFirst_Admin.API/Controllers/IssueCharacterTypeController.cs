@@ -14,7 +14,9 @@ public class IssueCharacterTypeController : ControllerBase
 {
     private readonly ISysIssueCharacterTypeService _service;
     private int userId = 1;
-    public IssueCharacterTypeController(ISysIssueCharacterTypeService service) => _service = service;
+    public IssueCharacterTypeController
+        (ISysIssueCharacterTypeService service)
+        => _service = service;
 
 
     [HttpPost]

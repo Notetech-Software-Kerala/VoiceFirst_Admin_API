@@ -9,7 +9,16 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface ISysIssueCharacterTypeRepo
     {
-        Task<SysIssueCharacterTypeDTO> CreateAsync(SysIssueCharacterType entity, CancellationToken cancellationToken = default);
+        Task<IssueCharacterTypeStateDto?>
+       GetIdAndDeletedByNameAsync(
+       string name,
+       CancellationToken cancellationToken);
+
+        Task<SysIssueCharacterTypeDTO> 
+            CreateAsync(
+            SysIssueCharacterType entity, 
+            CancellationToken cancellationToken = default);
+
         Task<SysIssueCharacterTypeDTO?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysIssueCharacterTypeDTO>> GetAllAsync(IssueCharacterTypeFilterDTO filter, CancellationToken cancellationToken = default);
         Task<bool> UpdateAsync(SysIssueCharacterType entity, CancellationToken cancellationToken = default);
