@@ -368,28 +368,28 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<PagedResultDto<EmployeeDto>> GetAllAsync(
-    EmployeeFilterDto filter,
-    int loginUserId,
-    CancellationToken cancellationToken = default)
-        {
-            var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
-            var limit = filter.Limit <= 0 ? 10 : filter.Limit;
-            var offset = (page - 1) * limit;
+        EmployeeFilterDto filter,
+        int loginUserId,
+        CancellationToken cancellationToken = default)
+            {
+                var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+                var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+                var offset = (page - 1) * limit;
 
-            var parameters = new DynamicParameters();
-            parameters.Add("Offset", offset);
-            parameters.Add("Limit", limit);
-            parameters.Add("LoginUserId", loginUserId);
+                var parameters = new DynamicParameters();
+                parameters.Add("Offset", offset);
+                parameters.Add("Limit", limit);
+                parameters.Add("LoginUserId", loginUserId);
 
-            var baseSql = new StringBuilder(@"
-        FROM Users p
-        LEFT JOIN Country a ON a.CountryId = p.MobileCountryId            
-        INNER JOIN Users uC ON uC.UserId = p.CreatedBy
-        LEFT JOIN Users uU ON uU.UserId = p.UpdatedBy
-        LEFT JOIN Users uD ON uD.UserId = p.DeletedBy
-        WHERE 1=1
-        AND p.UserId != @LoginUserId
-    ");
+                var baseSql = new StringBuilder(@"
+            FROM Users p
+            LEFT JOIN Country a ON a.CountryId = p.MobileCountryId            
+            INNER JOIN Users uC ON uC.UserId = p.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = p.UpdatedBy
+            LEFT JOIN Users uD ON uD.UserId = p.DeletedBy
+            WHERE 1=1
+            AND p.UserId != @LoginUserId
+        ");
 
             // ✅ Filters
             if (filter.Deleted.HasValue)

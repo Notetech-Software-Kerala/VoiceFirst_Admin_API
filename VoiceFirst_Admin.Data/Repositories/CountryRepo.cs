@@ -156,7 +156,7 @@ public class CountryRepo : ICountryRepo
 
 
     public async Task<CountryDto> IsIdExistAsync(
-          int countryId,
+          int? countryId,
           CancellationToken cancellationToken = default)
     {
         const string sql = @"

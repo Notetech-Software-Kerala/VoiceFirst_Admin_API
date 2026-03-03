@@ -403,7 +403,7 @@ namespace VoiceFirst_Admin.Business.Services
             {
 
                 var country = await _countryRepo.
-              IsIdExistAsync(employee.DialCodeId,
+              IsIdExistAsync(dto.DialCodeId,
               cancellationToken);
 
 
