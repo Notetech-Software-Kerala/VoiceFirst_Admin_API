@@ -9,6 +9,7 @@ using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysIssueCharacterType;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
+using VoiceFirst_Admin.Utilities.Exceptions;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories
@@ -157,7 +158,9 @@ namespace VoiceFirst_Admin.Data.Repositories
             var searchByMap = new Dictionary<IssueCharacterTypeSearchBy, string> { [IssueCharacterTypeSearchBy.IssueCharacterType] = "sit.IssueCharacterType", [IssueCharacterTypeSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)", [IssueCharacterTypeSearchBy.ModifiedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)", [IssueCharacterTypeSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)" };
             if (!string.IsNullOrWhiteSpace(filter.SearchText)) { if (filter.SearchBy.HasValue && searchByMap.TryGetValue(filter.SearchBy.Value, out var col)) baseSql.Append($" AND {col} LIKE @Search"); else baseSql.Append(@" AND (sit.IssueCharacterType LIKE @Search OR uC.FirstName LIKE @Search OR uC.LastName LIKE @Search OR uU.FirstName LIKE @Search OR uU.LastName LIKE @Search OR uD.FirstName LIKE @Search OR uD.LastName LIKE @Search)"); parameters.Add("Search", $"%{filter.SearchText}%"); }
             var sortMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["IssueCharacterTypeId"] = "sit.SysIssueCharacterTypeId", ["IssueCharacterType"] = "sit.IssueCharacterType", ["Active"] = "sit.IsActive", ["Deleted"] = "sit.IsDeleted", ["CreatedDate"] = "sit.CreatedAt", ["ModifiedDate"] = "sit.UpdatedAt", ["DeletedDate"] = "sit.DeletedAt" };
-            var sortOrder = filter.SortOrder == SortOrder.Desc ? "DESC" : "ASC"; var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "IssueCharacterType" : filter.SortBy; if (!sortMap.TryGetValue(sortKey, out var sortColumn)) sortColumn = sortMap["IssueCharacterTypeId"];
+            var sortOrder = filter.SortOrder ==
+               VoiceFirst_Admin.Utilities.DTOs.Shared.SortOrder.Desc ? "DESC" : "ASC";
+            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "IssueCharacterType" : filter.SortBy; if (!sortMap.TryGetValue(sortKey, out var sortColumn)) sortColumn = sortMap["IssueCharacterTypeId"];
             var countSql = "SELECT COUNT(1) " + baseSql;
             var itemsSql = $@"SELECT sit.SysIssueCharacterTypeId AS IssueCharacterTypeId, sit.IssueCharacterType, sit.IsActive AS Active, sit.IsDeleted AS Deleted, sit.CreatedAt AS CreatedDate, sit.UpdatedAt AS ModifiedDate, sit.DeletedAt AS DeletedDate, CONCAT(uC.FirstName,' ',ISNULL(uC.LastName,'')) AS CreatedUser, ISNULL(CONCAT(uU.FirstName,' ',ISNULL(uU.LastName,'')),'') AS ModifiedUser, ISNULL(CONCAT(uD.FirstName,' ',ISNULL(uD.LastName,'')),'') AS DeletedUser {baseSql} ORDER BY {sortColumn} {sortOrder} OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
             using var connection = _context.CreateConnection();

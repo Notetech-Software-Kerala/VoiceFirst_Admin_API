@@ -271,10 +271,7 @@ namespace VoiceFirst_Admin.Business.Services
                 var updated = await _repo.UpdateAsync(entity, cancellationToken);
 
                 if (!updated)
-                    return ApiResponse<SysIssueTypeDTO>.Fail(
-                        Messages.IssueTypeUpdated,
-                        StatusCodes.Status204NoContent,
-                        ErrorCodes.NoRowAffected);
+                    throw new InvalidOperationException("No rows were affected during the update.");
 
                 var updatedEntity = await _repo.GetByIdAsync(sysIssueTypeId, cancellationToken);
 
