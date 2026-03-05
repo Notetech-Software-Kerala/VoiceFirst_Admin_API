@@ -6,8 +6,8 @@ namespace VoiceFirst_Admin.Utilities.Models.Entities;
 public class PostOffice : BaseModel
 {
     public int PostOfficeId { get; set; }
-    public string PostOfficeName { get; set; } = string.Empty;
-    public string? CountryName { get; set; } = string.Empty;
+    public string PostOfficeName { get; set; } 
+    public string? CountryName { get; set; } 
     public int? CountryId { get; set; }
     public int? DivisionOneId { get; set; }
     public int? DivisionTwoId { get; set; }

@@ -309,8 +309,8 @@ public class PostOfficeService : IPostOfficeService
             entity = new PostOffice
             {
                 PostOfficeId = id,
-                PostOfficeName = dto.PostOfficeName ?? string.Empty,
-                CountryId = dto.CountryId ?? 0,
+                PostOfficeName = dto.PostOfficeName,
+                CountryId = dto.CountryId,
                 DivisionOneId = dto.DivOneId,
                 DivisionTwoId = dto.DivTwoId,
                 DivisionThreeId = dto.DivThreeId,
