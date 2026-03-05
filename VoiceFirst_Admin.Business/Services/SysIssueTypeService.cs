@@ -4,8 +4,10 @@ using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysIssueCharacterType;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysIssueType;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
+using VoiceFirst_Admin.Utilities.Exceptions;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -43,22 +45,68 @@ namespace VoiceFirst_Admin.Business.Services
         // ───────────────────────── CREATE ─────────────────────────
 
         public async Task<ApiResponse<SysIssueTypeDTO>> CreateAsync(
-            SysIssueTypeCreateDTO dto,
-            int loginId,
-            CancellationToken cancellationToken)
+         SysIssueTypeCreateDTO dto,
+         int loginId,
+         CancellationToken cancellationToken)
         {
-            var existingCheck = await ValidateExistingAsync(dto.IssueType, cancellationToken);
-            if (existingCheck != null)
-                return existingCheck;
+            dto.IssueType = dto.IssueType.Trim();
+
+            var validationError = await ValidateExistingAsync(dto.IssueType, cancellationToken);
+            if (validationError != null)
+                return validationError;
 
             if (dto.MediaRules?.Count > 0)
             {
-                var mediaValidation = await ValidateMediaRulesAsync(dto, cancellationToken);
-                if (mediaValidation != null)
-                    return mediaValidation;
+                var mediaError = await ValidateMediaRulesAsync(dto, cancellationToken);
+                if (mediaError != null)
+                    return mediaError;
             }
 
-            return await CreateIssueTypeInternalAsync(dto, loginId, cancellationToken);
+            try
+            {
+                return await CreateIssueTypeInternalAsync(dto, loginId, cancellationToken);
+            }
+            catch (DuplicateException)
+            {
+                return await HandleDuplicateAsync(dto.IssueType, cancellationToken);
+            }
+        }
+
+
+
+        private async Task<ApiResponse<SysIssueTypeDTO>>
+            HandleDuplicateAsync(
+            string normalizedName,
+            CancellationToken cancellationToken)
+        {
+            var existing = await _repo.GetIdAndDeletedByNameAsync(
+                normalizedName,
+                null,
+                cancellationToken);
+
+            if (existing == null)
+                throw new InvalidOperationException(
+                    "Duplicate detected but record not found.");
+
+            var minimalDto = new SysIssueTypeDTO
+            {
+                IssueTypeId = existing.IssueTypeId
+            };
+
+            if (existing.Deleted)
+            {
+                return ApiResponse<SysIssueTypeDTO>.Fail(
+                    Messages.IssueTypeAlreadyExistsRecoverable,
+                    StatusCodes.Status422UnprocessableEntity,
+                    ErrorCodes.IssueTypeAlreadyExistsRecoverable,
+                    minimalDto);
+            }
+
+            return ApiResponse<SysIssueTypeDTO>.Fail(
+                Messages.IssueTypeAlreadyExists,
+                StatusCodes.Status409Conflict,
+                ErrorCodes.IssueTypeAlreadyExists,
+                minimalDto);
         }
 
 
@@ -128,49 +176,33 @@ namespace VoiceFirst_Admin.Business.Services
             int loginId,
             CancellationToken cancellationToken)
         {
-            var hasMediaRules = dto.MediaRules?.Count > 0;
-
-            if (!hasMediaRules)
-            {
-                var entity = _mapper.Map<SysIssueType>(dto);
-                entity.CreatedBy = loginId;
-
-                entity.SysIssueTypeId = await _repo.CreateAsync(entity, cancellationToken);
-
-                if (entity.SysIssueTypeId <= 0)
-                    return InternalError();
-
-                var createdDto = await _repo.GetByIdAsync(entity.SysIssueTypeId, cancellationToken);
-                return ApiResponse<SysIssueTypeDTO>.Ok(
-                    createdDto,
-                    Messages.IssueTypeCreated,
-                    StatusCodes.Status201Created);
-            }
-
+           
             await _uow.BeginAsync();
             try
             {
                 var entity = _mapper.Map<SysIssueType>(dto);
                 entity.CreatedBy = loginId;
 
+
                 entity.SysIssueTypeId = await _repo.CreateAsync(
-                    entity, _uow.Connection, _uow.Transaction, cancellationToken);
+                  entity, _uow.Connection, _uow.Transaction, cancellationToken);
 
                 if (entity.SysIssueTypeId <= 0)
-                {
-                    await _uow.RollbackAsync();
+
                     return InternalError();
+
+
+                var hasMediaRules = dto.MediaRules?.Count > 0;
+                if (hasMediaRules)
+                {
+                    await CreateMediaRulesAsync(entity.SysIssueTypeId, dto, loginId, cancellationToken);                                    
                 }
-
-                await CreateMediaRulesAsync(entity.SysIssueTypeId, dto, loginId, cancellationToken);
-
                 await _uow.CommitAsync();
-
                 var createdDto = await _repo.GetByIdAsync(entity.SysIssueTypeId, cancellationToken);
                 return ApiResponse<SysIssueTypeDTO>.Ok(
                     createdDto,
                     Messages.IssueTypeCreated,
-                    StatusCodes.Status201Created);
+                    StatusCodes.Status201Created);                                                        
             }
             catch
             {
@@ -178,6 +210,8 @@ namespace VoiceFirst_Admin.Business.Services
                 throw;
             }
         }
+
+
 
 
         private async Task CreateMediaRulesAsync(

@@ -155,7 +155,7 @@ var audience = jwtSettings.Audience;
         {
             Example = new OpenApiObject
             {
-                ["email"] = new OpenApiString("akhila@notetech.com"),
+                ["email"] = new OpenApiString("vineesh@notetech.com"),
                 ["password"] = new OpenApiString("123456"),
                 ["clientType"] = new OpenApiString("Web"),
                 ["device"] = new OpenApiObject

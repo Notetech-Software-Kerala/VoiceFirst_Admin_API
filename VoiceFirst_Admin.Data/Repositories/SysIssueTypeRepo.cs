@@ -19,6 +19,19 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
+        public async Task<SysIssueTypeDTO> GetIdAndDeletedByNameAsync
+           (string name, int? excludeId = null, CancellationToken cancellationToken = default)
+        {
+            var sql = "SELECT IsDeleted As Deleted, SysIssueTypeId As IssueTypeId FROM SysIssueType WHERE IssueType = @IssueTypeName";
+            if (excludeId.HasValue)
+                sql += " AND SysIssueTypeId <> @ExcludeId";
+
+            var cmd = new CommandDefinition(sql, new { IssueTypeName = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
+            using var connection = _context.CreateConnection();
+            var entity = await connection.QueryFirstOrDefaultAsync<SysIssueTypeDTO>(cmd);
+            return entity;
+        }
+
         public async Task<SysIssueTypeDTO> IssueTypeExistsAsync
             (string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
@@ -33,24 +46,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
-        public async Task<int> CreateAsync
-            (SysIssueType entity,
-            CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-                INSERT INTO SysIssueType (IssueType, CreatedBy)
-                VALUES (@IssueType, @CreatedBy);
-                SELECT CAST(SCOPE_IDENTITY() AS int);";
-
-            var cmd = new CommandDefinition(sql, new
-            {
-                entity.IssueType,
-                entity.CreatedBy,
-            }, cancellationToken: cancellationToken);
-            using var connection = _context.CreateConnection();
-            int id = await connection.ExecuteScalarAsync<int>(cmd);
-            return id;
-        }
+       
 
 
         public async Task<SysIssueTypeDTO?> GetByIdAsync(

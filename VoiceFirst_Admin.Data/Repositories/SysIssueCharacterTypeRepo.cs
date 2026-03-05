@@ -119,7 +119,7 @@ namespace VoiceFirst_Admin.Data.Repositories
            
             catch (SqlException ex) when(ex.Number == 2601 || ex.Number == 2627)
 {
-                throw new DuplicateIssueCharacterTypeException(entity.IssueCharacterType);
+                throw new DuplicateException(entity.IssueCharacterType);
             }
         }
 

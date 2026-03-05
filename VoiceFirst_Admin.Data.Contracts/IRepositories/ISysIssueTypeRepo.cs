@@ -7,7 +7,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface ISysIssueTypeRepo
     {
-        Task<int> CreateAsync(SysIssueType entity, CancellationToken cancellationToken = default);
+        Task<SysIssueTypeDTO> GetIdAndDeletedByNameAsync
+           (string name, int? excludeId = null, CancellationToken cancellationToken = default);
         Task<int> CreateAsync(SysIssueType entity, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default);
         Task<bool> UpdateAsync(SysIssueType entity, CancellationToken cancellationToken = default);
         Task<bool> UpdateAsync(SysIssueType entity, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default);

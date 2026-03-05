@@ -52,7 +52,7 @@ namespace VoiceFirst_Admin.Business.Services
                     Messages.IssueCharacterTypeCreated,
                     StatusCodes.Status201Created);
             }
-            catch (DuplicateIssueCharacterTypeException)
+            catch (DuplicateException)
             {
                 return await HandleDuplicateAsync(dto.IssueCharacterType, cancellationToken);
             }
