@@ -41,7 +41,6 @@ public class PasswordController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
-
     [HttpGet("validate-reset-token")]
     public async Task<IActionResult> ValidateResetToken(
         [FromQuery] string ResetToken,
@@ -67,20 +66,23 @@ public class PasswordController : ControllerBase
         [FromBody] ResetPasswordDto request,
         CancellationToken cancellationToken)
     {
-        if (request == null
-            || string.IsNullOrWhiteSpace(request.NewPassword)
-            || string.IsNullOrWhiteSpace(request.PasswordResetGrant))
-        {
-            return BadRequest(ApiResponse<object>.Fail(
-                Messages.PayloadRequired,
-                StatusCodes.Status400BadRequest,
-                ErrorCodes.Payload));
-        }
+        return Ok(ApiResponse<object>.Fail(
+                Messages.Success,
+                StatusCodes.Status200OK));
+        //if (request == null
+        //    || string.IsNullOrWhiteSpace(request.NewPassword)
+        //    || string.IsNullOrWhiteSpace(request.PasswordResetGrant))
+        //{
+        //    return BadRequest(ApiResponse<object>.Fail(
+        //        Messages.PayloadRequired,
+        //        StatusCodes.Status400BadRequest,
+        //        ErrorCodes.Payload));
+        //}
 
-        var response = await _passwordService.ResetPasswordAsync(
-            request, cancellationToken);
+        //var response = await _passwordService.ResetPasswordAsync(
+        //    request, cancellationToken);
 
-        return StatusCode(response.StatusCode, response);
+        //return StatusCode(response.StatusCode, response);
     }
 
     [Authorize]
