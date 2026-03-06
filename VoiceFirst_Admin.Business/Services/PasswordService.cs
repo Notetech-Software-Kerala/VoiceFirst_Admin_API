@@ -81,8 +81,8 @@ public class PasswordService : IPasswordService
             await db.KeyExpireAsync(rateLimitKey, RateLimitExpiry);
         }
 
-        // Generate HMAC-signed reset token (unforgeable, tied to email)
-        var resetToken = GenerateGrantToken(email);
+        // Generate opaque reset token (email is stored server-side in Redis)
+        var resetToken = GenerateResetToken();
 
         var user = await _userRepo.GetUserByEmailAsync(email, cancellationToken);
 
@@ -95,10 +95,9 @@ public class PasswordService : IPasswordService
                 StatusCodes.Status200OK);
         }
 
-        // 3. Store hashed token in Redis (single-use, 5-minute expiry)
-        var resetTokenHash = HashValue(resetToken);
-        var grantKey = $"{GrantKeyPrefix}{email}";
-        await db.StringSetAsync(grantKey, resetTokenHash, GrantExpiry);
+        // 3. Store token → email mapping in Redis (single-use, 5-minute expiry)
+        var grantKey = $"{GrantKeyPrefix}{HashValue(resetToken)}";
+        await db.StringSetAsync(grantKey, email, GrantExpiry);
 
         // Build reset link
         var resetLink =
@@ -219,30 +218,16 @@ public class PasswordService : IPasswordService
     {
         var resetToken = request.ResetToken;
 
-        // 1. Extract email and validate HMAC signature in one step
-        var email = ExtractEmailFromGrantToken(resetToken);
-        if (email is null)
-        {
-            return ApiResponse<object>.Fail(
-                Messages.InvalidOrExpiredResetLink,
-                StatusCodes.Status400BadRequest,
-                ErrorCodes.InvalidOrExpiredResetLink);
-        }
-
-        // 2. Check token hash exists in Redis (not consumed / not expired)
+        // Look up token in Redis (keyed by hash of token)
         var db = _redis.GetDatabase();
-        var grantKey = $"{GrantKeyPrefix}{email}";
-        var storedGrantHash = await db.StringGetAsync(grantKey);
-        var incomingGrantHash = HashValue(resetToken);
+        var grantKey = $"{GrantKeyPrefix}{HashValue(resetToken)}";
+        var storedEmail = await db.StringGetAsync(grantKey);
 
-        if (storedGrantHash.IsNullOrEmpty
-            || !CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(storedGrantHash!),
-                Encoding.UTF8.GetBytes(incomingGrantHash)))
+        if (storedEmail.IsNullOrEmpty)
         {
             return ApiResponse<object>.Fail(
                 Messages.InvalidOrExpiredResetLink,
-                StatusCodes.Status400BadRequest,
+                StatusCodes.Status410Gone,
                 ErrorCodes.InvalidOrExpiredResetLink);
         }
 
@@ -258,36 +243,23 @@ public class PasswordService : IPasswordService
     {
         var grantToken = request.PasswordResetGrant!;
 
-        // 1. Extract email and validate HMAC integrity in one step
-        var email = ExtractEmailFromGrantToken(grantToken);
-        if (email is null)
-        {
-            return ApiResponse<object>.Fail(
-                Messages.InvalidResetGrant,
-                StatusCodes.Status400BadRequest,
-                ErrorCodes.InvalidResetGrant);
-        }
-
-        // 2. Validate grant token hash in Redis (ensures single-use + expiry)
+        // 1. Look up token in Redis and retrieve the associated email
         var db = _redis.GetDatabase();
-        var grantKey = $"{GrantKeyPrefix}{email}";
-        var storedGrantHash = await db.StringGetAsync(grantKey);
-        var incomingGrantHash = HashValue(grantToken);
+        var grantKey = $"{GrantKeyPrefix}{HashValue(grantToken)}";
+        var storedEmail = await db.StringGetAsync(grantKey);
 
-        if (storedGrantHash.IsNullOrEmpty
-            || !CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(storedGrantHash!),
-                Encoding.UTF8.GetBytes(incomingGrantHash)))
+        if (storedEmail.IsNullOrEmpty)
         {
             return ApiResponse<object>.Fail(
                 Messages.InvalidResetGrant,
-                StatusCodes.Status400BadRequest,
+                StatusCodes.Status410Gone,
                 ErrorCodes.InvalidResetGrant);
         }
 
-        // 3. Consume the grant token (single-use)
+        // 2. Consume the grant token (single-use)
         await db.KeyDeleteAsync(grantKey);
 
+        var email = (string)storedEmail!;
         var user = await _userRepo.GetUserByEmailAsync(email, cancellationToken);
 
         if (user is null)
@@ -298,12 +270,12 @@ public class PasswordService : IPasswordService
                 ErrorCodes.InvalidResetGrant);
         }
 
-        // 4. Hash the new password
+        // 3. Hash the new password
         var hashResult = await PasswordHasher.HashPasswordAsync(request.NewPassword);
         var hashKey = Convert.FromBase64String(hashResult.Hash);
         var saltKey = Convert.FromBase64String(hashResult.Salt);
 
-        // 5. Update password in database
+        // 4. Update password in database
         var updated = await _authRepo.UpdatePasswordAsync(
             user.UserId, hashKey, saltKey, cancellationToken);
 
@@ -315,7 +287,7 @@ public class PasswordService : IPasswordService
                 ErrorCodes.PasswordResetFailed);
         }
 
-        // 6. Invalidate all active sessions for this user (force re-login)
+        // 5. Invalidate all active sessions for this user (force re-login)
         await _authRepo.InvalidateAllSessionsAsync(user.UserId, cancellationToken);
         await _sessionService.InvalidateAllUserSessionsAsync(user.UserId);
 
@@ -404,65 +376,12 @@ public class PasswordService : IPasswordService
     }
 
     /// <summary>
-    /// Generates an HMAC-SHA256 signed token with the email embedded in the payload.
-    /// Format: Base64(email|random_hex).Base64(HMAC-SHA256)
+    /// Generates a cryptographically random, opaque reset token.
+    /// The email is stored server-side in Redis, never embedded in the token.
     /// </summary>
-    private string GenerateGrantToken(string email)
+    private static string GenerateResetToken()
     {
-        var random = RandomNumberGenerator.GetBytes(32);
-        var payload = $"{email}|{Convert.ToHexString(random)}";
-        var payloadBytes = Encoding.UTF8.GetBytes(payload);
-
-        var hmacKey = GetHmacKey();
-        using var hmac = new HMACSHA256(hmacKey);
-        var signature = hmac.ComputeHash(payloadBytes);
-
-        return $"{Convert.ToBase64String(payloadBytes)}.{Convert.ToBase64String(signature)}";
-    }
-
-    /// <summary>
-    /// Validates the HMAC signature and extracts the email from the token.
-    /// Returns null if the token is malformed or the signature is invalid.
-    /// </summary>
-    private string? ExtractEmailFromGrantToken(string grantToken)
-    {
-        var parts = grantToken.Split('.');
-        if (parts.Length != 2)
-            return null;
-
-        byte[] payloadBytes;
-        byte[] signature;
-
-        try
-        {
-            payloadBytes = Convert.FromBase64String(parts[0]);
-            signature = Convert.FromBase64String(parts[1]);
-        }
-        catch (FormatException)
-        {
-            return null;
-        }
-
-        var hmacKey = GetHmacKey();
-        using var hmac = new HMACSHA256(hmacKey);
-        var expectedSignature = hmac.ComputeHash(payloadBytes);
-
-        if (!CryptographicOperations.FixedTimeEquals(signature, expectedSignature))
-            return null;
-
-        var payload = Encoding.UTF8.GetString(payloadBytes);
-        var separatorIndex = payload.IndexOf('|');
-        if (separatorIndex <= 0)
-            return null;
-
-        return payload[..separatorIndex];
-    }
-
-    private byte[] GetHmacKey()
-    {
-        var key = _configuration["Jwt:Key"]
-            ?? throw new InvalidOperationException("Jwt:Key is not configured.");
-
-        return Encoding.UTF8.GetBytes(key);
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        return Convert.ToHexString(bytes);
     }
 }
