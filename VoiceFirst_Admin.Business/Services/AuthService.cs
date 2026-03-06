@@ -171,9 +171,6 @@ namespace VoiceFirst_Admin.Business.Services
                 StatusCodes.Status200OK);
         }
 
-
-
-
         public async Task<ApiResponse<LoginResultDto>> RefreshTokenAsync(
             string refreshToken,
             string fingerprint,
@@ -324,7 +321,8 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
         private static Dictionary<string, object?> BuildClaims(
-            Users user, int sessionId, int deviceId, IEnumerable<string> roles, long tokenVersion, ClientType clientType)
+            Users user, int sessionId, int deviceId,
+            IEnumerable<string> roles, long tokenVersion, ClientType clientType)
         {
             return new Dictionary<string, object?>
             {

@@ -21,6 +21,7 @@
         public const string Unauthorized = "UNAUTHORIZED";
         public const string Forbidden = "FORBIDDEN";
         public const string Payload = "PAYLOAD_REQUIRED";
+        public const string InvalidMode = "INVALID_MODE";
         public const string InternalServerError = "INTERNAL_SERVER_ERROR";
         public const string NoRowAffected = "NO_ROW_AFFECTED";
         public const string BusinessActivityAlreadyRecovered =
@@ -115,9 +116,10 @@
 
         // ===== AUTH =====
         public const string InvalidOrExpiredToken = "INVALID_OR_EXPIRED_TOKEN";
+        public const string InvalidOrExpiredResetLink = "INVALID_OR_EXPIRED_RESET_LINK";
+        public const string InvalidResetGrant = "INVALID_RESET_GRANT";
         public const string PasswordResetFailed = "PASSWORD_RESET_FAILED";
         public const string ForgotPasswordLimitExceeded = "FORGOT_PASSWORD_LIMIT_EXCEEDED";
-        public const string OtpAttemptsExceeded = "OTP_ATTEMPTS_EXCEEDED";
         public const string ForgotPasswordCooldown = "FORGOT_PASSWORD_COOLDOWN";
         public const string InvalidCredentials = "INVALID_CREDENTIALS";
         public const string AccountLockedOut = "ACCOUNT_LOCKED_OUT";

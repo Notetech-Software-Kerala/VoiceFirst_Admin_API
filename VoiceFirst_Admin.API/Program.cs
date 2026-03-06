@@ -257,10 +257,8 @@ builder.Services
             }
 
             // Verify browser/client fingerprint matches the login origin
-            var userAgent = context.HttpContext.Request.Headers.UserAgent.ToString();
-            var fpBytes = System.Security.Cryptography.SHA256.HashData(
-                Encoding.UTF8.GetBytes(userAgent));
-            var fingerprint = Convert.ToBase64String(fpBytes);
+            var fingerprint = FingerprintHelper.Compute(
+                context.HttpContext.Request.Headers);
 
             if (!fields.TryGetValue("fingerprint", out var storedFp)
                 || storedFp != fingerprint)

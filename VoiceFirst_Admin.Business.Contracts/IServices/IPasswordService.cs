@@ -5,8 +5,12 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices;
 
 public interface IPasswordService
 {
-    Task<ApiResponse<object>> ForgotPasswordAsync(
+    Task<ApiResponse<ForgotPasswordResultDto>> ForgotPasswordAsync(
         ForgotPasswordDto request,
+        CancellationToken cancellationToken);
+
+    Task<ApiResponse<object>> ValidateResetTokenAsync(
+        ValidateResetTokenDto request,
         CancellationToken cancellationToken);
 
     Task<ApiResponse<object>> ResetPasswordAsync(

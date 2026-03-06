@@ -29,6 +29,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string EmployeeUpdated = "Employee updated successfully.";
         // New generic messages
         public const string PayloadRequired = "Payload is required.";
+        public const string InvalidMode = "The 'mode' query parameter is required and must be 'cookie' or 'token'.";
         public const string NotFound = "Not found.";
         public const string PostOfficesAreAlreadyLinked = "Some post offices are already linked.Please refresh again.";
         public const string ZipCodesAreAlreadyLinked = "Some Zip codes  are already linked.Please refresh again.";
@@ -59,7 +60,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         // OTP
         public const string InvalidOtp = "Invalid OTP.";
         public const string OtpExpired = "OTP expired.";
-        public const string ForgotPasswordLimitExceeded = "You have exceeded the maximum number of password reset requests for today. Please try again tomorrow.";
+        public const string ForgotPasswordLimitExceeded = "You have exceeded the maximum number of password reset requests. Please try again after 2 minutes.";
         public const string OtpAttemptsExceeded = "Too many invalid OTP attempts. Please request a new OTP.";
         public const string ForgotPasswordCooldown = "Please wait before requesting another OTP.";
 
@@ -466,9 +467,12 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string DivisionTwoRequiredForDivisionThree = "Division two is required when supplying division three.";
 
         // ===== FORGOT / RESET PASSWORD =====
-        public const string ForgotPasswordEmailSent = "If this email is registered, a password-reset OTP has been sent.";
+        public const string ForgotPasswordEmailSent = "If this email is registered, a password reset link has been sent.";
+        public const string ResetTokenValid = "Reset link is valid.";
         public const string ResetPasswordSuccess = "Password has been reset successfully.";
-        public const string InvalidOrExpiredToken = "The OTP is invalid or has expired.";
+        public const string InvalidOrExpiredToken = "The token is invalid or has expired.";
+        public const string InvalidOrExpiredResetLink = "The reset link is invalid or has expired.";
+        public const string InvalidResetGrant = "Invalid or expired password reset grant. Please restart the process.";
         public const string PasswordResetFailed = "Password reset failed. Please try again.";
 
         // ===== SYS ISSUE TYPE =====

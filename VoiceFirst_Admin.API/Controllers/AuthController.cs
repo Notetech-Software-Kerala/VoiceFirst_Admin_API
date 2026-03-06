@@ -1,8 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VoiceFirst_Admin.API.Security;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Auth;
@@ -161,15 +160,8 @@ namespace VoiceFirst_Admin.API.Controllers
             return StatusCode(clientResponse.StatusCode, clientResponse);
         }
 
-        /// <summary>
-        /// SHA256 hash of User-Agent header — binds the session to the originating browser/client.
-        /// </summary>
         private string ComputeFingerprint()
-        {
-            var userAgent = Request.Headers.UserAgent.ToString();
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(userAgent));
-            return Convert.ToBase64String(bytes);
-        }
+            => FingerprintHelper.Compute(Request.Headers);
 
         /// <summary>
         /// Peek at the clientType claim from the JWT without full validation.
