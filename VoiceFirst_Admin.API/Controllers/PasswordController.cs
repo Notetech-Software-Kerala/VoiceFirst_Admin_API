@@ -46,32 +46,12 @@ public class PasswordController : ControllerBase
         [FromQuery] string ResetToken,
         CancellationToken cancellationToken)
     {
-        if (ResetToken == null
-            || string.IsNullOrWhiteSpace(ResetToken))
-        {
-            return BadRequest(ApiResponse<object>.Fail(
-                Messages.PayloadRequired,
-                StatusCodes.Status400BadRequest,
-                ErrorCodes.Payload));
-        }
-
-        var response = await _passwordService.ValidateResetTokenAsync(
-            ResetToken, cancellationToken);
-
-        return StatusCode(response.StatusCode, response);
-    }
-
-    [HttpPost("reset")]
-    public async Task<IActionResult> ResetPassword(
-        [FromBody] ResetPasswordDto request,
-        CancellationToken cancellationToken)
-    {
-        return Ok(ApiResponse<object>.Fail(
-                Messages.Success,
-                StatusCodes.Status200OK));
-        //if (request == null
-        //    || string.IsNullOrWhiteSpace(request.NewPassword)
-        //    || string.IsNullOrWhiteSpace(request.PasswordResetGrant))
+        return Ok(ApiResponse<object>.Ok(
+                null,
+               Messages.Success,
+               StatusCodes.Status200OK));
+        //if (ResetToken == null
+        //    || string.IsNullOrWhiteSpace(ResetToken))
         //{
         //    return BadRequest(ApiResponse<object>.Fail(
         //        Messages.PayloadRequired,
@@ -79,10 +59,31 @@ public class PasswordController : ControllerBase
         //        ErrorCodes.Payload));
         //}
 
-        //var response = await _passwordService.ResetPasswordAsync(
-        //    request, cancellationToken);
+        //var response = await _passwordService.ValidateResetTokenAsync(
+        //    ResetToken, cancellationToken);
 
         //return StatusCode(response.StatusCode, response);
+    }
+
+    [HttpPost("reset")]
+    public async Task<IActionResult> ResetPassword(
+        [FromBody] ResetPasswordDto request,
+        CancellationToken cancellationToken)
+    {
+        if (request == null
+            || string.IsNullOrWhiteSpace(request.NewPassword)
+            || string.IsNullOrWhiteSpace(request.PasswordResetGrant))
+        {
+            return BadRequest(ApiResponse<object>.Fail(
+                Messages.PayloadRequired,
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.Payload));
+        }
+
+        var response = await _passwordService.ResetPasswordAsync(
+            request, cancellationToken);
+
+        return StatusCode(response.StatusCode, response);
     }
 
     [Authorize]
