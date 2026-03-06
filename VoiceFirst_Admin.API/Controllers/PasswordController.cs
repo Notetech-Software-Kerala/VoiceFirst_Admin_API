@@ -46,23 +46,19 @@ public class PasswordController : ControllerBase
         [FromQuery] string ResetToken,
         CancellationToken cancellationToken)
     {
-        return Ok(ApiResponse<object>.Ok(
-                null,
-               Messages.Success,
-               StatusCodes.Status200OK));
-        //if (ResetToken == null
-        //    || string.IsNullOrWhiteSpace(ResetToken))
-        //{
-        //    return BadRequest(ApiResponse<object>.Fail(
-        //        Messages.PayloadRequired,
-        //        StatusCodes.Status400BadRequest,
-        //        ErrorCodes.Payload));
-        //}
+        if (ResetToken == null
+            || string.IsNullOrWhiteSpace(ResetToken))
+        {
+            return BadRequest(ApiResponse<object>.Fail(
+                Messages.PayloadRequired,
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.Payload));
+        }
 
-        //var response = await _passwordService.ValidateResetTokenAsync(
-        //    ResetToken, cancellationToken);
+        var response = await _passwordService.ValidateResetTokenAsync(
+            ResetToken, cancellationToken);
 
-        //return StatusCode(response.StatusCode, response);
+        return StatusCode(response.StatusCode, response);
     }
 
     [HttpPost("reset")]

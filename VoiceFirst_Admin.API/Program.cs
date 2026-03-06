@@ -163,7 +163,7 @@ var audience = jwtSettings.Audience;
                 ["device"] = new OpenApiObject
                 {
                     ["deviceID"] = new OpenApiString("IMEI-867530912345678"),
-                    ["version"] = new OpenApiInteger(1),
+                    ["version"] = new OpenApiString("1"),
                     ["deviceName"] = new OpenApiString("Pixel 8 Pro"),
                     ["deviceType"] = new OpenApiString("Mobile"),
                     ["os"] = new OpenApiString("Android"),
