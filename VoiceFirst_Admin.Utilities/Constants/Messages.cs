@@ -446,7 +446,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string MenuRetrieveSucessfully = "Menu retrieve sucessfully.";
         public const string WebMenuRetrieveSucessfully = "Web menu retrieve sucessfully.";
         public const string AppMenuRetrieveSucessfully = "App Menu retrieve sucessfully.";
-        public const string MenuNameAlreadyExists = "Menu name already exists.";
+        public const string MenuNameAlreadyExists = "Menu name already exists in the plateform.";
         public const string MenuMasterAlreadyExistsInWeb = "Menu master already exists in web.";
         public const string MenuMasterAlreadyExistsInApp = "Menu master already exists in app.";
         public const string MenuNameExistsInTrash = "This menu name exists in trash. Restore it to use again.";
@@ -455,7 +455,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ParentMenuNotFound = "Parent menu not found..";
         public const string CannotAddOrUpdate = "Cannot add/reorder children under a parent that has a route.";
 
-        // Country / Division messages
+        // Country / Division messagesup
         public const string CountryRequired = "Country is required.";
         public const string CountryNotFound = "Selected country not found.";
         public const string DivisionOneNotFound = "Selected division one not found for the country.";

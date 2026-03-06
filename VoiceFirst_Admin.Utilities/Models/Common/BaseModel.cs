@@ -4,7 +4,16 @@ using System.Text;
 
 namespace VoiceFirst_Admin.Utilities.Models.Common;
 
-public class BaseModel
+public class BaseModel : PartialBaseModel
+{
+
+    public bool? IsDeleted { get; set; }
+    public int? DeletedBy { get; set; }
+    public string? DeletedUserName { get; set; }
+    public DateTime? DeletedAt { get; set; }
+}
+
+public class PartialBaseModel
 {
     public bool? IsActive { get; set; }
     public int CreatedBy { get; set; }
@@ -13,9 +22,6 @@ public class BaseModel
     public int? UpdatedBy { get; set; }
     public string? UpdatedUserName { get; set; }
     public DateTime? UpdatedAt { get; set; }
-    public bool? IsDeleted { get; set; }
-    public int? DeletedBy { get; set; }
-    public string? DeletedUserName { get; set; }
-    public DateTime? DeletedAt { get; set; }
 }
+
 
