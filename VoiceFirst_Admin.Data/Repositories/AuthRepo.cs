@@ -180,7 +180,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
         public async Task<int?> GetApplicationVersionIdAsync(
-            int version,
+            string version,
             CancellationToken cancellationToken = default)
         {
             const string sql = @"
