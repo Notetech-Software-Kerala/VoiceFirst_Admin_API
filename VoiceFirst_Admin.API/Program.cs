@@ -73,6 +73,7 @@ builder.Services.AddScoped<ISysIssueMediaTypeRepo, SysIssueMediaTypeRepo>();
 builder.Services.AddScoped<ISysIssueMediaFormatRepo, SysIssueMediaFormatRepo>();
 builder.Services.AddScoped<ISysIssueMediaRuleRepo, SysIssueMediaRuleRepo>();
 builder.Services.AddScoped<ISysIssueMediaRuleTypeRepo, SysIssueMediaRuleTypeRepo>();
+builder.Services.AddScoped<ISysUserCustomFieldRepo, SysUserCustomFieldRepo>();
 // Services
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -93,6 +94,7 @@ builder.Services.AddScoped<ISysIssueMediaTypeService, SysIssueMediaTypeService>(
 builder.Services.AddScoped<ISysIssueMediaFormatService, SysIssueMediaFormatService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
+builder.Services.AddScoped<ISysUserCustomFieldService, SysUserCustomFieldService>();
 // AutoMapper
 builder.Services.AddAutoMapper(
     typeof(ProgramActionMappingProfile).Assembly,

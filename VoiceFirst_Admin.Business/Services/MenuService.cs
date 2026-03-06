@@ -44,7 +44,13 @@ public class MenuService : IMenuService
     public async Task<ApiResponse<MenuMasterDto>> CreateAsync(MenuCreateDto dto, int loginId, CancellationToken cancellationToken = default)
     {
         if (dto == null) return ApiResponse<MenuMasterDto>.Fail(Messages.PayloadRequired);
+        
         // If Route is empty => this is a main menu. Main menus don't have program links.
+        var existingMenu = await _repo.ExistsByNameAsync(dto.MenuName, null, cancellationToken);
+        if (existingMenu != null && existingMenu.ApplicationId == dto.PlateFormId)
+        {
+            return ApiResponse<MenuMasterDto>.Fail(Messages.MenuNameAlreadyExists, StatusCodes.Status409Conflict);
+        }
         var isMainMenu = string.IsNullOrWhiteSpace(dto.Route);
         if (!isMainMenu && dto.ProgramIds != null && dto.ProgramIds.Any())
         {
