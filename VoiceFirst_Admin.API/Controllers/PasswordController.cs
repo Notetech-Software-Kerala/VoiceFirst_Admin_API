@@ -43,11 +43,11 @@ public class PasswordController : ControllerBase
 
     [HttpPost("validate-reset-token")]
     public async Task<IActionResult> ValidateResetToken(
-        [FromBody] ValidateResetTokenDto request,
+        [FromQuery] string ResetToken,
         CancellationToken cancellationToken)
     {
-        if (request == null
-            || string.IsNullOrWhiteSpace(request.ResetToken))
+        if (ResetToken == null
+            || string.IsNullOrWhiteSpace(ResetToken))
         {
             return BadRequest(ApiResponse<object>.Fail(
                 Messages.PayloadRequired,
@@ -56,7 +56,7 @@ public class PasswordController : ControllerBase
         }
 
         var response = await _passwordService.ValidateResetTokenAsync(
-            request, cancellationToken);
+            ResetToken, cancellationToken);
 
         return StatusCode(response.StatusCode, response);
     }

@@ -213,10 +213,10 @@ public class PasswordService : IPasswordService
     }
 
     public async Task<ApiResponse<object>> ValidateResetTokenAsync(
-        ValidateResetTokenDto request,
+ 
+        string resetToken,
         CancellationToken cancellationToken)
     {
-        var resetToken = request.ResetToken;
 
         // Look up token in Redis (keyed by hash of token)
         var db = _redis.GetDatabase();
