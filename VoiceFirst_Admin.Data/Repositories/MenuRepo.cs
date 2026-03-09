@@ -141,11 +141,11 @@ public class MenuRepo : IMenuRepo
                 ap.ApplicationName,
                 m.IsActive,
                 m.IsDeleted,
-                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUserName,
                 m.CreatedAt,
-                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
+                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUserName,
                 m.UpdatedAt,
-                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
+                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUserName,
                 m.DeletedAt  FROM dbo.MenuMaster m
             INNER JOIN dbo.Users uC ON uC.UserId = m.CreatedBy
             LEFT JOIN dbo.Users uU ON uU.UserId = m.UpdatedBy
@@ -305,11 +305,11 @@ public class MenuRepo : IMenuRepo
                 ap.ApplicationName,
                 m.IsActive,
                 m.IsDeleted,
-                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUserName,
                 m.CreatedAt,
-                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
+                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUserName,
                 m.UpdatedAt,
-                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
+                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUserName,
                 m.DeletedAt
             {baseSql}
             ORDER BY {sortColumn} {sortOrder}
