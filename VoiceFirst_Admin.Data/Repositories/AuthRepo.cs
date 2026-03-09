@@ -180,13 +180,15 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
         public async Task<int?> GetApplicationVersionIdAsync(
-            string version,
+            string version, int platformId,
+            string applicationType,
             CancellationToken cancellationToken = default)
         {
             const string sql = @"
                 SELECT ApplicationVersionId
                 FROM dbo.ApplicationVersion
-                WHERE Version   = @Version   AND IsActive  = 1;
+                WHERE Version   = @Version   AND IsActive  = 1
+                AND Type = @Type AND ApplicationId = @ApplicationId;
             ";
 
             using var connection = _context.CreateConnection();
@@ -194,7 +196,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             return await connection.QuerySingleOrDefaultAsync<int?>(
                 new CommandDefinition(
                     sql,
-                    new { Version = version },
+                    new { Version = version , Type= applicationType, ApplicationId = platformId },
                     cancellationToken: cancellationToken
                 )
             );
