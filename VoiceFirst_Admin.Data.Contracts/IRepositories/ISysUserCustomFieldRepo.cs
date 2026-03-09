@@ -18,5 +18,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<PagedResultDto<SysUserCustomField>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default);
         Task<BulkUpsertError?> UpdateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> addValidations, List<SysUserCustomFieldOptions> addOptions, IEnumerable<SysUserCustomFieldValidations> validations, IEnumerable<SysUserCustomFieldOptions> options, int updatedBy, CancellationToken cancellationToken = default);
         Task<bool> SoftDeleteAsync(int id, int deletedBy, CancellationToken cancellationToken = default);
+        Task<SysUserCustomField> ExistsByFieldKeyAsync(string fieldKey, int? excludeId = null, CancellationToken cancellationToken = default);
+        Task<SysUserCustomField> ExistsByFieldNameAndDataTypeAsync(string fieldName, string fieldDataType, int? excludeId = null, CancellationToken cancellationToken = default);
     }
 }

@@ -7,6 +7,6 @@ namespace VoiceFirst_Admin.Utilities.Models.Common
     public class BulkUpsertError
     {
         public string Message { get; set; } = "";
-        public int StatuaCode  { get; set; }      
+        public int StatusCode  { get; set; }      
     }
 }

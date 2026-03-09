@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
@@ -78,7 +79,23 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
         public DateTime? ModifiedDate { get; set; }
         public string DeletedUser { get; set; } = string.Empty;
         public DateTime? DeletedDate { get; set; }
-        public IEnumerable<SysUserCustomFieldValidations> Validations { get; set; }
-        public IEnumerable<SysUserCustomFieldOptions> Options { get; set; }
+        public IEnumerable<UserCustomFieldValidationsDto> Validations { get; set; }
+        public IEnumerable<UserCustomFieldOptionsDto> Options { get; set; }
     }
+    public class UserCustomFieldValidationsDto : PartialCommonDto
+    {
+        public int CustomFieldValidationId { get; set; }
+        public int CustomFieldId { get; set; }
+        public string RuleName { get; set; }
+        public string RuleValue { get; set; }
+        public string message { get; set; }
+    }
+    public class UserCustomFieldOptionsDto : PartialCommonDto
+    {
+        public int CustomFieldOptionsId { get; set; }
+        public int CustomFieldId { get; set; }
+        public string label { get; set; }
+        public string value { get; set; }
+    }
+
 }

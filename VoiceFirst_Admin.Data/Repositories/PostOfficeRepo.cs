@@ -698,7 +698,7 @@ public class PostOfficeRepo : IPostOfficeRepo
                 {
                     return new BulkUpsertError
                     {
-                        StatuaCode = StatusCodes.Status500InternalServerError,
+                        StatusCode = StatusCodes.Status500InternalServerError,
                         Message = Messages.SomethingWentWrong
                     };
                 }
@@ -725,7 +725,7 @@ public class PostOfficeRepo : IPostOfficeRepo
         catch (SqlException ex) when(ex.Number == 50001 || ex.Number == 50002)
         {
             tx.Rollback();
-            return new BulkUpsertError { Message = ex.Message, StatuaCode = StatusCodes.Status400BadRequest };
+            return new BulkUpsertError { Message = ex.Message, StatusCode = StatusCodes.Status400BadRequest };
         }
     }
 
@@ -1044,7 +1044,7 @@ WHERE rn = 1;
                     return new BulkUpsertError
                     {
                         Message = Messages.BadRequest,
-                        StatuaCode = StatusCodes.Status400BadRequest
+                        StatusCode = StatusCodes.Status400BadRequest
                     };
                 }
             }
@@ -1067,14 +1067,14 @@ WHERE rn = 1;
                 return new BulkUpsertError
                 {
                     Message = Messages.NotFound,
-                    StatuaCode = StatusCodes.Status404NotFound
+                    StatusCode = StatusCodes.Status404NotFound
                 };
             else if (item.IsDeleted == true)
             {
                 return new BulkUpsertError
                 {
                     Message = $"ZipCode '{currentZip ?? "(unknown)"}' exists in trash. Restore it to use again. ",
-                    StatuaCode = StatusCodes.Status422UnprocessableEntity
+                    StatusCode = StatusCodes.Status422UnprocessableEntity
                 };
             }
             else
@@ -1082,7 +1082,7 @@ WHERE rn = 1;
                 return new BulkUpsertError
                 {
                     Message = $"ZipCode '{currentZip ?? "(unknown)"}' already exists.",
-                    StatuaCode = StatusCodes.Status409Conflict
+                    StatusCode = StatusCodes.Status409Conflict
                 };
             }
                 
@@ -1148,14 +1148,14 @@ WHERE rn = 1;
                 return new BulkUpsertError
                 {
                     Message = Messages.NotFound,
-                    StatuaCode = StatusCodes.Status404NotFound
+                    StatusCode = StatusCodes.Status404NotFound
                 };
             else if (item.IsDeleted == true)
             {
                 return new BulkUpsertError
                 {
                     Message = $"ZipCode '{currentZip ?? "(unknown)"}' exists in trash. Restore it to use again. ",
-                    StatuaCode = StatusCodes.Status422UnprocessableEntity
+                    StatusCode = StatusCodes.Status422UnprocessableEntity
                 };
             }
             else
@@ -1163,7 +1163,7 @@ WHERE rn = 1;
                 return new BulkUpsertError
                 {
                     Message = $"ZipCode '{currentZip ?? "(unknown)"}' already exists.",
-                    StatuaCode = StatusCodes.Status409Conflict
+                    StatusCode = StatusCodes.Status409Conflict
                 };
             }
 
@@ -1230,14 +1230,14 @@ WHERE rn = 1;
                 return new BulkUpsertError
                 {
                     Message = Messages.NotFound,
-                    StatuaCode = StatusCodes.Status404NotFound
+                    StatusCode = StatusCodes.Status404NotFound
                 };
             else if (item.IsDeleted == true)
             {
                 return new BulkUpsertError
                 {
                     Message = $"ZipCode '{currentZip ?? "(unknown)"}' exists in trash. Restore it to use again. ",
-                    StatuaCode = StatusCodes.Status422UnprocessableEntity
+                    StatusCode = StatusCodes.Status422UnprocessableEntity
                 };
             }
             else
@@ -1245,7 +1245,7 @@ WHERE rn = 1;
                 return new BulkUpsertError
                 {
                     Message = $"ZipCode '{currentZip ?? "(unknown)"}' already exists.",
-                    StatuaCode = StatusCodes.Status409Conflict
+                    StatusCode = StatusCodes.Status409Conflict
                 };
             }
 

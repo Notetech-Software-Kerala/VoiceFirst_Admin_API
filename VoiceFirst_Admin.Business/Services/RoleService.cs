@@ -269,7 +269,7 @@ public class RoleService : IRoleService
         if (ok!=null)
         {
                     
-            return ApiResponse<RoleDto>.Fail(ok.Message, ok.StatuaCode);
+            return ApiResponse<RoleDto>.Fail(ok.Message, ok.StatusCode);
                     
         }
         var updated = await _repo.GetByIdAsync(id, cancellationToken);

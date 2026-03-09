@@ -9,14 +9,14 @@ namespace VoiceFirst_Admin.API.Controllers;
 
 [Consumes("application/json")]
 [Produces("application/json")]
-[Route("api/sys-user-custom-field")]
+[Route("api/user-custom-field")]
 [ApiController]
-public class SysUserCustomFieldController : ControllerBase
+public class CustomFieldController : ControllerBase
 {
     private readonly ISysUserCustomFieldService _service;
     private readonly static int userId = 1; // placeholder
 
-    public SysUserCustomFieldController(ISysUserCustomFieldService service)
+    public CustomFieldController(ISysUserCustomFieldService service)
     {
         _service = service;
     }

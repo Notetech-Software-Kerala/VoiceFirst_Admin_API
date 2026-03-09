@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Role;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
@@ -25,49 +26,113 @@ namespace VoiceFirst_Admin.Business.Services
             _mapper = mapper;
         }
 
-        public async Task<ApiResponse<object>> CreateAsync(UserCustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<SysUserCustomFieldDetailDto>> CreateAsync(UserCustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var entity = new SysUserCustomField
-                {
-                    FieldName = dto.FieldName,
-                    FieldKey = dto.FieldKey,
-                    FieldDataType = dto.FieldDataType,
-                };
-                List<SysUserCustomFieldValidations> userCustomFieldValidations = new List<SysUserCustomFieldValidations>();
-                foreach (var item in dto.AddValidations)
-                {
-                    var ValidationEntity = new SysUserCustomFieldValidations
-                    {
-                        RuleName = item.RuleName,
-                        RuleValue = item.RuleValue,
-                        message = item.message
-                    };
-                    userCustomFieldValidations.Add(ValidationEntity);
-                }
-                List<SysUserCustomFieldOptions> userCustomFieldOptions = new List<SysUserCustomFieldOptions>();
-                foreach (var item in dto.AddOptions)
-                {
-                    var OptionEntity = new SysUserCustomFieldOptions
-                    {
-                        label = item.label,
-                        value = item.value
-                    };
 
-                    userCustomFieldOptions.Add(OptionEntity);
+            var exsitFieldKey = await _repo.ExistsByFieldKeyAsync(dto.FieldKey,null, cancellationToken);
+            if (exsitFieldKey != null )
+            {
+                if(exsitFieldKey.IsDeleted==true)
+                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable,StatusCodes.Status409Conflict);
+                else
+                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldKeyAlreadyExists, StatusCodes.Status409Conflict);
+            }
+            var exsitFieldNameWithDataType = await _repo.ExistsByFieldNameAndDataTypeAsync(dto.FieldName,dto.FieldDataType, null, cancellationToken);
+            if (exsitFieldNameWithDataType != null )
+            {
+                if(exsitFieldKey.IsDeleted==true)
+                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable,StatusCodes.Status409Conflict);
+                else
+                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExists, StatusCodes.Status409Conflict);
+            }
+            if (dto.AddOptions != null && dto.AddOptions.Count() > 0)
+            {
+                foreach (var o in dto.AddOptions)
+                {
+                    if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldOptionRequired
+                        };
+                    }
+                    if (string.IsNullOrWhiteSpace(o.label))
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldOptionLabelRequired
+                        };
+                    }
+
+                    if (o.value == null)
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldOptionValueRequired
+                        };
+                    }
                 }
+            }
+            if (dto.AddValidations != null && dto.AddValidations.Count() > 0)
+            {
+                foreach (var v in dto.AddValidations)
+                {
+                    if (string.IsNullOrWhiteSpace(v.RuleName) &&
+                        v.RuleValue == null &&
+                        string.IsNullOrWhiteSpace(v.message))
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationRequired
+                        };
+                    }
+                    if (string.IsNullOrWhiteSpace(v.RuleName))
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationRuleNameRequired
+                        };
+                    }
+
+                    if (v.RuleValue == null)
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationRuleValueRequired
+                        };
+                    }
+
+                    if (string.IsNullOrWhiteSpace(v.message))
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationMessageRequired
+                        };
+                    }
+                }
+            }
+            
+            var entity = _mapper.Map<SysUserCustomField>(dto);
+
+            List<SysUserCustomFieldValidations> userCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.AddValidations);
                 
-                var upsertError = await _repo.CreateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, loginId, cancellationToken);
-                if (upsertError != null)
-                    return ApiResponse<object>.Fail(upsertError.Message,upsertError.StatuaCode);
+            List<SysUserCustomFieldOptions> userCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.AddOptions);
+                
+                
+            var upsertError = await _repo.CreateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, loginId, cancellationToken);
+            if (upsertError != null)
+                return ApiResponse<SysUserCustomFieldDetailDto>.Fail(upsertError.Message,upsertError.StatusCode);
+            var userCustomField = await GetByIdAsync(entity.SysUserCustomFieldId, cancellationToken);
 
-                return ApiResponse<object>.Ok(null, "Custom field created.");
-            }
-            catch (Exception ex)
-            {
-                return ApiResponse<object>.Fail("Something went wrong.", StatusCodes.Status500InternalServerError, ex.Message);
-            }
+            return ApiResponse<SysUserCustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldCreated);
+            
         }
 
         public async Task<SysUserCustomFieldDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -76,109 +141,182 @@ namespace VoiceFirst_Admin.Business.Services
             if (field == null) return null;
 
             var validations = await _repo.GetValidationsByFieldIdAsync(id, cancellationToken);
-            var options = await _repo.GetOptionsByFieldIdAsync(id, cancellationToken);
 
-            var dto = new SysUserCustomFieldDetailDto
-            {
-                CustomFieldId = field.SysUserCustomFieldId,
-                FieldName = field.FieldName,
-                FieldKey = field.FieldKey,
-                FieldDataType = field.FieldDataType,
-                Active = field.IsActive ?? false,
-                Deleted = field.IsDeleted ?? false,
-                Validations = validations ?? Enumerable.Empty<SysUserCustomFieldValidations>(),
-                Options = options ?? Enumerable.Empty<SysUserCustomFieldOptions>()
-            };
+            var options = await _repo.GetOptionsByFieldIdAsync(id, cancellationToken);
+            var dto = _mapper.Map<SysUserCustomFieldDetailDto>(field);
+            dto.Validations = _mapper.Map<List<UserCustomFieldValidationsDto>>(validations);
+            dto.Options = _mapper.Map<List<UserCustomFieldOptionsDto>>(options);
 
             return dto;
         }
 
-        public async Task<ApiResponse<object>> UpdateAsync(SysUserCustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<SysUserCustomFieldDetailDto>> UpdateAsync(SysUserCustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
         {
-            try
+            var exsitFieldKey = await _repo.ExistsByFieldKeyAsync(dto.FieldKey, null, cancellationToken);
+            if (exsitFieldKey != null)
             {
-                var entity = new SysUserCustomField
+                if (exsitFieldKey.IsDeleted == true)
+                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
+                else
+                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldKeyAlreadyExists, StatusCodes.Status409Conflict);
+            }
+            var exsitFieldNameWithDataType = await _repo.ExistsByFieldNameAndDataTypeAsync(dto.FieldName, dto.FieldDataType, null, cancellationToken);
+            if (exsitFieldNameWithDataType != null)
+            {
+                if (exsitFieldKey.IsDeleted == true)
+                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
+                else
+                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExists, StatusCodes.Status409Conflict);
+            }
+            if (dto.AddOptions != null && dto.AddOptions.Count() > 0)
+            {
+                foreach (var o in dto.AddOptions)
                 {
-                    SysUserCustomFieldId = id,
-                    FieldName = dto.FieldName,
-                    FieldKey = dto.FieldKey,
-                    FieldDataType = dto.FieldDataType,
-                    IsActive = dto.Active
-                };
-                List<SysUserCustomFieldValidations> userCustomFieldValidations = new List<SysUserCustomFieldValidations>();
-                foreach (var item in dto.AddValidations)
-                {
-                    var ValidationEntity = new SysUserCustomFieldValidations
+                    if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
                     {
-                        RuleName = item.RuleName,
-                        RuleValue = item.RuleValue,
-                        message = item.message
-                    };
-                    userCustomFieldValidations.Add(ValidationEntity);
-                }
-                List<SysUserCustomFieldOptions> userCustomFieldOptions = new List<SysUserCustomFieldOptions>();
-                foreach (var item in dto.AddOptions)
-                {
-                    var OptionEntity = new SysUserCustomFieldOptions
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldOptionRequired
+                        };
+                    }
+                    if (string.IsNullOrWhiteSpace(o.label))
                     {
-                        label = item.label,
-                        value = item.value
-                    };
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldOptionLabelRequired
+                        };
+                    }
 
-                    userCustomFieldOptions.Add(OptionEntity);
+                    if (o.value == null)
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldOptionValueRequired
+                        };
+                    }
                 }
-                List<SysUserCustomFieldValidations> updateCustomFieldValidations = new List<SysUserCustomFieldValidations>();
+            }
+            if (dto.AddValidations != null && dto.AddValidations.Count() > 0)
+            {
+                foreach (var v in dto.AddValidations)
+                {
+                    if (string.IsNullOrWhiteSpace(v.RuleName) &&
+                        v.RuleValue == null &&
+                        string.IsNullOrWhiteSpace(v.message))
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationRequired
+                        };
+                    }
+                    if (string.IsNullOrWhiteSpace(v.RuleName))
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationRuleNameRequired
+                        };
+                    }
+
+                    if (v.RuleValue == null)
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationRuleValueRequired
+                        };
+                    }
+
+                    if (string.IsNullOrWhiteSpace(v.message))
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationMessageRequired
+                        };
+                    }
+                }
+            }
+            if (dto.UpdateValidations != null && dto.UpdateValidations.Count() > 0)
+            {
                 foreach (var item in dto.UpdateValidations)
                 {
-                    var ValidationEntity = new SysUserCustomFieldValidations
+                    if (item.CustomFieldValidationId <= 0)
                     {
-                        SysUserCustomFieldValidationId = item.CustomFieldValidationId,
-                        RuleName = item.RuleName,
-                        RuleValue = item.RuleValue,
-                        message = item.message,
-                        IsActive = item.Active
-                    };
-                    updateCustomFieldValidations.Add(ValidationEntity);
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationIdRequired
+                        };
+                    }
+                    if (string.IsNullOrWhiteSpace(item.RuleName) && string.IsNullOrWhiteSpace(item.RuleValue) && string.IsNullOrWhiteSpace(item.message) && !item.Active.HasValue)
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldValidationAtLeastRequired
+                        };
+                    }
                 }
-                List<SysUserCustomFieldOptions> updateCustomFieldOptions = new List<SysUserCustomFieldOptions>();
+            }
+            if (dto.UpdateOptions != null && dto.UpdateOptions.Count() > 0)
+            {
                 foreach (var item in dto.UpdateOptions)
                 {
-                    var OptionEntity = new SysUserCustomFieldOptions
+                    if (item.CustomFieldOptionsId <= 0)
                     {
-                        SysUserCustomFieldOptionsId = item.CustomFieldOptionsId,
-                        label = item.label,
-                        value = item.value,
-                        IsActive = item.Active
-                    };
-
-                    updateCustomFieldOptions.Add(OptionEntity);
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldOptionIdRequired
+                        };
+                    }
+                    if (string.IsNullOrWhiteSpace(item.value) && string.IsNullOrWhiteSpace(item.label) && !item.Active.HasValue)
+                    {
+                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = Messages.CustomFieldOptionAtLeastRequired
+                        };
+                    }
                 }
-                var upsertError = await _repo.UpdateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, updateCustomFieldValidations, updateCustomFieldOptions, loginId, cancellationToken);
-                if (upsertError != null)
-                    return ApiResponse<object>.Fail(upsertError.Message, upsertError.StatuaCode);
+            }
+            var entity = _mapper.Map<SysUserCustomField>(dto);
+            entity.SysUserCustomFieldId = id;
+                
+            List<SysUserCustomFieldValidations> userCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.AddValidations);
 
-                return ApiResponse<object>.Ok(null, "Custom field updated.");
-            }
-            catch (Exception ex)
-            {
-                return ApiResponse<object>.Fail("Something went wrong.", StatusCodes.Status500InternalServerError, ex.Message);
-            }
+            List<SysUserCustomFieldOptions> userCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.AddOptions);
+            List<SysUserCustomFieldValidations> updateCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.UpdateValidations);
+            List<SysUserCustomFieldOptions> updateCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.UpdateOptions);
+           
+               
+            var upsertError = await _repo.UpdateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, updateCustomFieldValidations, updateCustomFieldOptions, loginId, cancellationToken);
+            if (upsertError != null)
+                return ApiResponse<SysUserCustomFieldDetailDto>.Fail(upsertError.Message, upsertError.StatusCode);
+
+            var userCustomField = await GetByIdAsync(entity.SysUserCustomFieldId, cancellationToken);
+            
+            return ApiResponse<SysUserCustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldUpdated);
+           
+              
+            
         }
 
         public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var ok = await _repo.SoftDeleteAsync(id, loginId, cancellationToken);
+
+           
+            var ok = await _repo.SoftDeleteAsync(id, loginId, cancellationToken);
                 if (!ok)
                     return ApiResponse<object>.Fail("Failed to delete custom field.");
 
                 return ApiResponse<object>.Ok(null, "Custom field deleted.");
-            }
-            catch (Exception ex)
-            {
-                return ApiResponse<object>.Fail("Something went wrong.", StatusCodes.Status500InternalServerError, ex.Message);
-            }
+            
         }
 
         public async Task<PagedResultDto<SysUserCustomFieldDetailDto>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default)
