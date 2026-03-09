@@ -262,6 +262,11 @@ public class RoleRepo : IRoleRepo
                 sets.Add("RolePurpose = @RolePurpose");
                 parameters.Add("RolePurpose", entity.RolePurpose);
             }
+            if (entity.IsActive.HasValue)
+            {
+                sets.Add("IsActive = @IsActive");
+                parameters.Add("IsActive", entity.IsActive);
+            }
 
             if (entity.ApplicationId != default)
             {

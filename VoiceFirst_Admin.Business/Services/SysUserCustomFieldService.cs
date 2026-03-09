@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading;
@@ -5,7 +6,9 @@ using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.DTOs.Features.Role;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -13,12 +16,14 @@ namespace VoiceFirst_Admin.Business.Services
 {
     public class SysUserCustomFieldService : ISysUserCustomFieldService
     {
-    private readonly ISysUserCustomFieldRepo _repo;
+        private readonly ISysUserCustomFieldRepo _repo;
+        private readonly IMapper _mapper;
 
-    public SysUserCustomFieldService(ISysUserCustomFieldRepo repo)
-    {
-        _repo = repo;
-    }
+        public SysUserCustomFieldService(ISysUserCustomFieldRepo repo, IMapper mapper)
+        {
+            _repo = repo;
+            _mapper = mapper;
+        }
 
         public async Task<ApiResponse<object>> CreateAsync(UserCustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default)
         {
@@ -70,6 +75,9 @@ namespace VoiceFirst_Admin.Business.Services
             var field = await _repo.GetByIdAsync(id, cancellationToken);
             if (field == null) return null;
 
+            var validations = await _repo.GetValidationsByFieldIdAsync(id, cancellationToken);
+            var options = await _repo.GetOptionsByFieldIdAsync(id, cancellationToken);
+
             var dto = new SysUserCustomFieldDetailDto
             {
                 CustomFieldId = field.SysUserCustomFieldId,
@@ -77,7 +85,9 @@ namespace VoiceFirst_Admin.Business.Services
                 FieldKey = field.FieldKey,
                 FieldDataType = field.FieldDataType,
                 Active = field.IsActive ?? false,
-                Deleted = field.IsDeleted ?? false
+                Deleted = field.IsDeleted ?? false,
+                Validations = validations ?? Enumerable.Empty<SysUserCustomFieldValidations>(),
+                Options = options ?? Enumerable.Empty<SysUserCustomFieldOptions>()
             };
 
             return dto;
@@ -128,7 +138,7 @@ namespace VoiceFirst_Admin.Business.Services
                         message = item.message,
                         IsActive = item.Active
                     };
-                    userCustomFieldValidations.Add(ValidationEntity);
+                    updateCustomFieldValidations.Add(ValidationEntity);
                 }
                 List<SysUserCustomFieldOptions> updateCustomFieldOptions = new List<SysUserCustomFieldOptions>();
                 foreach (var item in dto.UpdateOptions)
@@ -141,7 +151,7 @@ namespace VoiceFirst_Admin.Business.Services
                         IsActive = item.Active
                     };
 
-                    userCustomFieldOptions.Add(OptionEntity);
+                    updateCustomFieldOptions.Add(OptionEntity);
                 }
                 var upsertError = await _repo.UpdateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, updateCustomFieldValidations, updateCustomFieldOptions, loginId, cancellationToken);
                 if (upsertError != null)
@@ -169,6 +179,20 @@ namespace VoiceFirst_Admin.Business.Services
             {
                 return ApiResponse<object>.Fail("Something went wrong.", StatusCodes.Status500InternalServerError, ex.Message);
             }
+        }
+
+        public async Task<PagedResultDto<SysUserCustomFieldDetailDto>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default)
+        {
+            var entities = await _repo.GetAllAsync(filter, cancellationToken);
+            var list = _mapper.Map<IEnumerable<SysUserCustomFieldDetailDto>>(entities.Items);
+            // load actions for each? skip for performance
+            return new PagedResultDto<SysUserCustomFieldDetailDto>
+            {
+                Items = list,
+                TotalCount = entities.TotalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.Limit
+            };
         }
     }
 }

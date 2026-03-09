@@ -50,4 +50,11 @@ public class SysUserCustomFieldController : ControllerBase
         var res = await _service.DeleteAsync(id, userId, cancellationToken);
         return StatusCode(res.StatusCode, res);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken)
+    {
+        var items = await _service.GetAllAsync(filter, cancellationToken);
+        return Ok(ApiResponse<object>.Ok(items, "Custom fields retrieved."));
+    }
 }
