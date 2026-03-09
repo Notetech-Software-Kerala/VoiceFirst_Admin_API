@@ -74,11 +74,13 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (!isPasswordValid)
             {
-                var (lockedOut, remaining) = await _sessionService.RecordFailedLoginAsync(request.Email);
+                var (lockedOut, remaining) = await _sessionService.
+                    RecordFailedLoginAsync(request.Email);
 
                 if (lockedOut)
                 {
-                    var minutesLeft = await _sessionService.GetLockoutMinutesRemainingAsync(request.Email);
+                    var minutesLeft = await _sessionService.
+                        GetLockoutMinutesRemainingAsync(request.Email);
                     return ApiResponse<LoginResultDto>.Fail(
                         string.Format(Messages.AccountLockedOut, minutesLeft),
                         StatusCodes.Status429TooManyRequests,

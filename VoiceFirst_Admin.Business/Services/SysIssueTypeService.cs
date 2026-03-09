@@ -376,7 +376,7 @@ namespace VoiceFirst_Admin.Business.Services
             await _uow.BeginAsync();
             try
             {
-                if (dto.Active != null && dto.IssueType != null)
+                if (dto.Active != null || dto.IssueType != null)
                 {
                     var entity = _mapper.Map<SysIssueType>((dto, sysIssueTypeId, loginId));
                     var updated = await _repo.UpdateAsync(
@@ -386,7 +386,7 @@ namespace VoiceFirst_Admin.Business.Services
                     {
                         await _uow.RollbackAsync();
                         return ApiResponse<SysIssueTypeDTO>.Fail(
-                            Messages.IssueTypeUpdated,
+                            Messages.NoChangesDetected,
                             StatusCodes.Status204NoContent,
                             ErrorCodes.NoRowAffected);
                     }
@@ -435,39 +435,41 @@ namespace VoiceFirst_Admin.Business.Services
                                 StatusCodes.Status404NotFound,
                                 ErrorCodes.MediaTypeNotLinked);
                         }
-                    }
 
-                    var existingRules = (await _mediaRuleRepo.GetByIssueTypeAndFormatsAsync(
+                        var existingRules = (await _mediaRuleRepo.GetByIssueTypeAndFormatsAsync(
                         sysIssueTypeId, updateFormatIds,
                         _uow.Connection, _uow.Transaction, cancellationToken)).ToList();
 
-                    var ruleMap = existingRules.ToDictionary(
-                        r => r.IssueMediaFormatId, r => r.SysIssueMediaRuleId);
+                        var ruleMap = existingRules.ToDictionary(
+                            r => r.IssueMediaFormatId, r => r.SysIssueMediaRuleId);
 
-                    var updateRuleTypeDtos = new List<SysIssueMediaRuleType>();
-                    foreach (var ruleDto in dto.UpdateMediaRules)
-                    {
-                        if (ruleDto.MediaTypes == null) continue;
-                        var ruleId = ruleMap[ruleDto.IssueMediaFormatId];
-                        foreach (var mt in ruleDto.MediaTypes)
+                        var updateRuleTypeDtos = new List<SysIssueMediaRuleType>();
+                        foreach (var ruleDto in dto.UpdateMediaRules)
                         {
-                            updateRuleTypeDtos.Add(new SysIssueMediaRuleType
+                            if (ruleDto.MediaTypes == null) continue;
+                            var ruleId = ruleMap[ruleDto.IssueMediaFormatId];
+                            foreach (var mt in ruleDto.MediaTypes)
                             {
-                                IssueMediaRuleId = ruleId,
-                                IssueMediaTypeId = mt.IssueMediaTypeId,
-                                IsMandatory = mt.IsMandatory,
-                                IsActive = mt.Active ?? true,
-                                UpdatedBy = loginId
-                            });
+                                updateRuleTypeDtos.Add(new SysIssueMediaRuleType
+                                {
+                                    IssueMediaRuleId = ruleId,
+                                    IssueMediaTypeId = mt.IssueMediaTypeId,
+                                    IsMandatory = mt.IsMandatory,
+                                    IsActive = mt.Active ?? true,
+                                    UpdatedBy = loginId
+                                });
+                            }
+                        }
+
+                        if (updateRuleTypeDtos.Count > 0)
+                        {
+                            await _mediaRuleTypeRepo.BulkUpdateAsync(
+                                updateRuleTypeDtos,
+                                _uow.Connection, _uow.Transaction, cancellationToken);
                         }
                     }
 
-                    if (updateRuleTypeDtos.Count > 0)
-                    {
-                        await _mediaRuleTypeRepo.BulkUpdateAsync(
-                            updateRuleTypeDtos,
-                            _uow.Connection, _uow.Transaction, cancellationToken);
-                    }
+                    
                 }
 
                 if (hasInsertRules)
@@ -479,7 +481,7 @@ namespace VoiceFirst_Admin.Business.Services
                         sysIssueTypeId, insertFormatIds,
                         _uow.Connection, _uow.Transaction, cancellationToken);
 
-                    if (!checkExisting.IdNotFound && !checkExisting.IsInactive)
+                    if (!checkExisting.IdNotFound || !checkExisting.IsInactive)
                     {
                         var existing = await _mediaRuleRepo.GetByIssueTypeAndFormatsAsync(
                             sysIssueTypeId, insertFormatIds,
@@ -493,15 +495,23 @@ namespace VoiceFirst_Admin.Business.Services
                                 StatusCodes.Status409Conflict,
                                 ErrorCodes.ActionsAreAlreadyLinked);
                         }
+
+                        await _uow.RollbackAsync();
+                        return ApiResponse<SysIssueTypeDTO>.Fail(
+                            Messages.ActionsAreAlreadyLinked,
+                            StatusCodes.Status409Conflict,
+                            ErrorCodes.ActionsAreAlreadyLinked);
                     }
 
                     await _mediaRuleRepo.BulkInsertAsync(
                         sysIssueTypeId, dto.InsertMediaRules!, loginId,
                         _uow.Connection, _uow.Transaction, cancellationToken);
 
-                    var createdRules = (await _mediaRuleRepo.GetByIssueTypeAndFormatsAsync(
+                    var createdRules = (await _mediaRuleRepo.
+                        GetByIssueTypeAndFormatsAsync(
                         sysIssueTypeId, insertFormatIds,
-                        _uow.Connection, _uow.Transaction, cancellationToken)).ToList();
+                        _uow.Connection, _uow.Transaction, 
+                        cancellationToken)).ToList();
 
                     var createdRuleMap = createdRules.ToDictionary(
                         r => r.IssueMediaFormatId, r => r.SysIssueMediaRuleId);

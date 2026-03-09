@@ -112,96 +112,96 @@ public class PasswordService : IPasswordService
             to_email = user.Email,
             email_subject = "Reset your password",
             email_html_body = $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-  <meta charset=""utf-8"" />
-  <meta name=""viewport"" content=""width=device-width,initial-scale=1"" />
-  <title>Reset your password</title>
-</head>
-<body style=""margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111827;"">
-  <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" border=""0"" width=""100%"" style=""background:#ffffff;"">
-    <tr>
-      <td align=""center"" style=""padding:32px 16px;"">
-        <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" border=""0"" width=""680"" style=""max-width:680px;width:100%;"">
-          <tr>
-            <td style=""padding:0 0 18px 0;"">
-              <!-- Optional: your logo -->
-              <!-- <img src=""http://localhost:8090/logo-vf.png"" alt=""VoiceFirst"" height=""28"" style=""display:block;"" /> -->
-            </td>
-          </tr>
-
-          <tr>
-            <td style=""padding:0 0 12px 0;"">
-              <h2 style=""margin:0;font-size:24px;line-height:32px;font-weight:700;color:#111827;"">
-                Reset your password
-              </h2>
-            </td>
-          </tr>
-
-          <tr>
-            <td style=""padding:0 0 18px 0;font-size:14px;line-height:22px;color:#111827;"">
-              <p style=""margin:0 0 10px 0;"">Hi {System.Net.WebUtility.HtmlEncode(user.FirstName)},</p>
-              <p style=""margin:0;"">
-                Click on the button below within the next <strong>5 minutes</strong> to reset your password for your Account
-                <a href=""mailto:{System.Net.WebUtility.HtmlEncode(user.Email)}"" style=""color:#1d4ed8;text-decoration:underline;"">
-                  {System.Net.WebUtility.HtmlEncode(user.Email)}
-                </a>.
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style=""padding:12px 0 22px 0;"">
-              <!-- Button (email-client friendly) -->
-              <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" border=""0"">
+            <!DOCTYPE html>
+            <html lang=""en"">
+            <head>
+              <meta charset=""utf-8"" />
+              <meta name=""viewport"" content=""width=device-width,initial-scale=1"" />
+              <title>Reset your password</title>
+            </head>
+            <body style=""margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111827;"">
+              <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" border=""0"" width=""100%"" style=""background:#ffffff;"">
                 <tr>
-                  <td align=""center"" bgcolor=""#e11d48"" style=""border-radius:4px;"">
-                    <a href=""{resetLink}""
-                       style=""display:inline-block;padding:12px 18px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:4px;"">
-                      Reset your password
-                    </a>
+                  <td align=""center"" style=""padding:32px 16px;"">
+                    <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" border=""0"" width=""680"" style=""max-width:680px;width:100%;"">
+                      <tr>
+                        <td style=""padding:0 0 18px 0;"">
+                          <!-- Optional: your logo -->
+                          <!-- <img src=""http://localhost:8090/logo-vf.png"" alt=""VoiceFirst"" height=""28"" style=""display:block;"" /> -->
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style=""padding:0 0 12px 0;"">
+                          <h2 style=""margin:0;font-size:24px;line-height:32px;font-weight:700;color:#111827;"">
+                            Reset your password
+                          </h2>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style=""padding:0 0 18px 0;font-size:14px;line-height:22px;color:#111827;"">
+                          <p style=""margin:0 0 10px 0;"">Hi {System.Net.WebUtility.HtmlEncode(user.FirstName+" "+user.LastName)},</p>
+                          <p style=""margin:0;"">
+                            Click on the button below within the next <strong>5 minutes</strong> to reset your password for your Account
+                            <a href=""mailto:{System.Net.WebUtility.HtmlEncode(user.Email)}"" style=""color:#1d4ed8;text-decoration:underline;"">
+                              {System.Net.WebUtility.HtmlEncode(user.Email)}
+                            </a>.
+                          </p>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style=""padding:12px 0 22px 0;"">
+                          <!-- Button (email-client friendly) -->
+                          <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" border=""0"">
+                            <tr>
+                              <td align=""center"" bgcolor=""#e11d48"" style=""border-radius:4px;"">
+                                <a href=""{resetLink}""
+                                   style=""display:inline-block;padding:12px 18px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:4px;"">
+                                  Reset your password
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style=""padding:0 0 16px 0;"">
+                          <hr style=""border:0;border-top:1px solid #d1d5db;margin:0;"" />
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style=""font-size:13px;line-height:20px;color:#374151;"">
+                          <p style=""margin:0 0 10px 0;"">
+                            If you are having any issues with your account, check out our
+                            <a href=""{_configuration["Support:DocsUrl"] ?? "#"}"" style=""color:#1d4ed8;text-decoration:underline;"">support docs</a>.
+                          </p>
+                          <p style=""margin:0;"">
+                            If this was a mistake, please ignore this email and nothing will happen.
+                          </p>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style=""padding-top:18px;font-size:12px;line-height:18px;color:#6b7280;"">
+                          <p style=""margin:0;"">
+                            If the button doesn’t work, copy and paste this link into your browser:
+                          </p>
+                          <p style=""margin:6px 0 0 0;word-break:break-all;"">
+                            <a href=""{resetLink}"" style=""color:#1d4ed8;text-decoration:underline;"">{resetLink}</a>
+                          </p>
+                        </td>
+                      </tr>
+
+                    </table>
                   </td>
                 </tr>
               </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style=""padding:0 0 16px 0;"">
-              <hr style=""border:0;border-top:1px solid #d1d5db;margin:0;"" />
-            </td>
-          </tr>
-
-          <tr>
-            <td style=""font-size:13px;line-height:20px;color:#374151;"">
-              <p style=""margin:0 0 10px 0;"">
-                If you are having any issues with your account, check out our
-                <a href=""{_configuration["Support:DocsUrl"] ?? "#"}"" style=""color:#1d4ed8;text-decoration:underline;"">support docs</a>.
-              </p>
-              <p style=""margin:0;"">
-                If this was a mistake, please ignore this email and nothing will happen.
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style=""padding-top:18px;font-size:12px;line-height:18px;color:#6b7280;"">
-              <p style=""margin:0;"">
-                If the button doesn’t work, copy and paste this link into your browser:
-              </p>
-              <p style=""margin:6px 0 0 0;word-break:break-all;"">
-                <a href=""{resetLink}"" style=""color:#1d4ed8;text-decoration:underline;"">{resetLink}</a>
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>"
+            </body>
+            </html>"
         };
 
         EmailHelper.SendMail(emailDto);

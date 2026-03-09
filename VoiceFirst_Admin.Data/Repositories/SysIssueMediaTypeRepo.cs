@@ -66,6 +66,22 @@ namespace VoiceFirst_Admin.Data.Repositories
         { var result = new BulkValidationResult(); if (ids == null || !ids.Any()) return result; const string sql = "SELECT SysIssueMediaTypeId, IsActive, IsDeleted FROM SysIssueMediaType WHERE SysIssueMediaTypeId IN @Ids;"; using var c = _ctx.CreateConnection(); var entities = (await c.QueryAsync<dynamic>(new CommandDefinition(sql, new { Ids = ids }, cancellationToken: ct))).ToList(); return new BulkValidationResult { IdNotFound = entities.Count != ids.Distinct().Count(), IsDeleted = entities.Any(e => (bool)e.IsDeleted), IsInactive = entities.Any(e => !(bool)e.IsActive) }; }
 
         public async Task<BulkValidationResult> IsBulkIdsExistAsync(IEnumerable<int> ids, System.Data.IDbConnection connection, System.Data.IDbTransaction transaction, CancellationToken ct = default)
-        { var result = new BulkValidationResult(); if (ids == null || !ids.Any()) return result; const string sql = "SELECT SysIssueMediaTypeId, IsActive, IsDeleted FROM SysIssueMediaType WHERE SysIssueMediaTypeId IN @Ids;"; var entities = (await connection.QueryAsync<dynamic>(new CommandDefinition(sql, new { Ids = ids }, transaction: transaction, cancellationToken: ct))).ToList(); return new BulkValidationResult { IdNotFound = entities.Count != ids.Distinct().Count(), IsDeleted = entities.Any(e => (bool)e.IsDeleted), IsInactive = entities.Any(e => !(bool)e.IsActive) }; }
+        { 
+            var result = new BulkValidationResult();
+            if (ids == null || !ids.Any())
+                return result; 
+            const string sql = "SELECT SysIssueMediaTypeId, IsActive, IsDeleted FROM SysIssueMediaType WHERE SysIssueMediaTypeId IN @Ids;";
+           
+            var entities = (await connection.QueryAsync<dynamic>
+                (new CommandDefinition(sql, new { Ids = ids }, 
+                transaction: transaction, cancellationToken: ct))).ToList(); 
+
+            return new BulkValidationResult
+            { 
+                IdNotFound = entities.Count != ids.Distinct().Count(),
+                IsDeleted = entities.Any(e => (bool)e.IsDeleted),
+                IsInactive = entities.Any(e => !(bool)e.IsActive)
+            };
+        }
     }
 }
