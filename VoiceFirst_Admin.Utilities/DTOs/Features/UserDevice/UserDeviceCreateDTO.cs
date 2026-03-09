@@ -6,7 +6,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.UserDevice;
 public class UserDeviceCreateDto
 {
     public string DeviceID { get; set; } = string.Empty;
-    public int Version { get; set; } 
+    public string Version { get; set; } 
     public string? DeviceName { get; set; }
     public string DeviceType { get; set; } = string.Empty;
     public string OS { get; set; } = string.Empty;

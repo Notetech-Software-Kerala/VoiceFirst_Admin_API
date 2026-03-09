@@ -41,7 +41,6 @@ public class PasswordController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
-
     [HttpGet("validate-reset-token")]
     public async Task<IActionResult> ValidateResetToken(
         [FromQuery] string ResetToken,
