@@ -186,7 +186,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             const string sql = @"
                 SELECT ApplicationVersionId
                 FROM dbo.ApplicationVersion
-                WHERE ApplicationVersionId  = @ApplicationVersionId  AND IsActive  = 1;
+                WHERE Version   = @Version   AND IsActive  = 1;
             ";
 
             using var connection = _context.CreateConnection();
@@ -194,7 +194,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             return await connection.QuerySingleOrDefaultAsync<int?>(
                 new CommandDefinition(
                     sql,
-                    new { ApplicationVersionId = version },
+                    new { Version = version },
                     cancellationToken: cancellationToken
                 )
             );
