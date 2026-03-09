@@ -498,6 +498,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
             "Issue types retrieved successfully.";
         public const string IssueTypeUpdated =
             "Issue type updated successfully.";
+        public const string NoChangesDetected =
+            "No changes detected. Please modify at least one field and try again.";
         public const string NoActiveIssueTypes =
             "No active issue types available.";
         public const string IssueTypeAlreadyRecovered =

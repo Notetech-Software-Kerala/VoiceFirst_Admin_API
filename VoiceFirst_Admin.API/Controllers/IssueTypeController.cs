@@ -120,41 +120,41 @@ public class IssueTypeController : ControllerBase
     /// <summary>
     /// Updates an issue type.
     /// </summary>
-    //[HttpPatch("{id:int}")]
-    //[ProducesResponseType(typeof(ApiResponse<SysIssueTypeDTO>), StatusCodes.Status200OK)]
-    //[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status204NoContent)]
-    //[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    //[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    //[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
-    //[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
-    //[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    //[ProducesResponseType(typeof(ApiResponse<SysIssueTypeDTO>), StatusCodes.Status422UnprocessableEntity)]
-    //[SwaggerResponseDescription(StatusCodes.Status200OK, Description.ISSUE_TYPE_UPDATED, Messages.IssueTypeUpdated)]
-    //[SwaggerResponseDescription(StatusCodes.Status204NoContent, Description.ISSUE_TYPE_UPDATED, Messages.IssueTypeUpdated)]
-    //[SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
-    //[SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.IssueTypeNotFoundById)]
-    //[SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.IssueTypeAlreadyExists)]
-    //[SwaggerResponseDescription(StatusCodes.Status422UnprocessableEntity, Description.UNPROCESSABLE_422, Messages.IssueTypeAlreadyExistsRecoverable)]
-    //[SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
-    //[SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
-    //public async Task<IActionResult> UpdateAsync(
-    //int id,
-    //[FromBody] SysIssueTypeUpdateDTO model,
-    //CancellationToken cancellationToken)
-    //{
-    //    if (id <= 0)
-    //    {
-    //        return BadRequest(ApiResponse<object>.Fail(
-    //            Messages.PayloadRequired,
-    //            StatusCodes.Status400BadRequest,
-    //            ErrorCodes.Payload
-    //        ));
-    //    }
+    [HttpPatch("{id:int}")]
+    [ProducesResponseType(typeof(ApiResponse<SysIssueTypeDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiResponse<SysIssueTypeDTO>), StatusCodes.Status422UnprocessableEntity)]
+    [SwaggerResponseDescription(StatusCodes.Status200OK, Description.ISSUE_TYPE_UPDATED, Messages.IssueTypeUpdated)]
+    [SwaggerResponseDescription(StatusCodes.Status204NoContent, Description.ISSUE_TYPE_UPDATED, Messages.IssueTypeUpdated)]
+    [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
+    [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.IssueTypeNotFoundById)]
+    [SwaggerResponseDescription(StatusCodes.Status409Conflict, Description.CONFLICT_409, Messages.IssueTypeAlreadyExists)]
+    [SwaggerResponseDescription(StatusCodes.Status422UnprocessableEntity, Description.UNPROCESSABLE_422, Messages.IssueTypeAlreadyExistsRecoverable)]
+    [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+    [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
+    public async Task<IActionResult> UpdateAsync(
+    int id,
+    [FromBody] SysIssueTypeUpdateDTO model,
+    CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+        {
+            return BadRequest(ApiResponse<object>.Fail(
+                Messages.PayloadRequired,
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.Payload
+            ));
+        }
 
-    //    var response = await _service.UpdateAsync(
-    //        model, id, 1, cancellationToken);
-    //    return StatusCode(response.StatusCode, response);
-    //}
+        var response = await _service.UpdateAsync(
+            model, id, 1, cancellationToken);
+        return StatusCode(response.StatusCode, response);
+    }
 
 
 

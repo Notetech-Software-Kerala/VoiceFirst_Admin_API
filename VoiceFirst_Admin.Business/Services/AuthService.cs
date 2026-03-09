@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using VoiceFirst_Admin.Business.Contracts.IServices;
@@ -17,15 +18,18 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IAuthRepo _authRepo;
         private readonly ISessionService _sessionService;
         private readonly JwtSettings _jwtSettings;
+        private readonly IConfiguration _configuration;
 
         public AuthService(
             IAuthRepo authRepo,
             ISessionService sessionService,
+            IConfiguration configuration,
             JwtSettings jwtSettings)
         {
             _authRepo = authRepo;
             _sessionService = sessionService;
             _jwtSettings = jwtSettings;
+            _configuration = configuration;
         }
 
         public async Task<ApiResponse<LoginResultDto>> LoginAsync(
@@ -74,11 +78,13 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (!isPasswordValid)
             {
-                var (lockedOut, remaining) = await _sessionService.RecordFailedLoginAsync(request.Email);
+                var (lockedOut, remaining) = await _sessionService.
+                    RecordFailedLoginAsync(request.Email);
 
                 if (lockedOut)
                 {
-                    var minutesLeft = await _sessionService.GetLockoutMinutesRemainingAsync(request.Email);
+                    var minutesLeft = await _sessionService.
+                        GetLockoutMinutesRemainingAsync(request.Email);
                     return ApiResponse<LoginResultDto>.Fail(
                         string.Format(Messages.AccountLockedOut, minutesLeft),
                         StatusCodes.Status429TooManyRequests,
@@ -93,10 +99,24 @@ namespace VoiceFirst_Admin.Business.Services
 
             // 6. Login success — clear failed attempt counter
             await _sessionService.ClearLoginAttemptsAsync(request.Email);
+            var applicationType = string.Empty;
+            if (request.ClientType == ClientType.Web)
+            {
+                applicationType = "Web";
 
-            // 7. Resolve ApplicationVersionId
+            }
+            else if(request.ClientType == ClientType.Mobile)
+            {
+                applicationType = "IOS";
+            }
+
+            var appId = int.Parse(_configuration["ApplicationSettings:DefaultApplicationId"]);
+
             var appVersionId = await _authRepo.GetApplicationVersionIdAsync(
-                request.Device.Version, cancellationToken);
+                request.Device.Version,
+                appId,
+                applicationType,
+                cancellationToken);
 
             if (appVersionId is null)
             {

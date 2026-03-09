@@ -35,6 +35,8 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 
         Task<int?> GetApplicationVersionIdAsync(
             string version,
+            int platformId,
+            string applicationType,
             CancellationToken cancellationToken = default);
 
         Task<bool> UpdatePasswordAsync(
