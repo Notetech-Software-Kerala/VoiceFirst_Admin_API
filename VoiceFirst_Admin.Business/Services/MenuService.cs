@@ -46,11 +46,29 @@ public class MenuService : IMenuService
         if (dto == null) return ApiResponse<MenuMasterDto>.Fail(Messages.PayloadRequired);
         
         // If Route is empty => this is a main menu. Main menus don't have program links.
-        var existingMenu = await _repo.ExistsByNameAsync(dto.MenuName, null, cancellationToken);
-        if (existingMenu != null && existingMenu.ApplicationId == dto.PlateFormId)
+        var existingMenuByNmae = await _repo.ExistsByNameAsync(dto.MenuName, null, cancellationToken);
+        if (existingMenuByNmae != null && existingMenuByNmae.ApplicationId == dto.PlateFormId)
         {
             return ApiResponse<MenuMasterDto>.Fail(Messages.MenuNameAlreadyExists, StatusCodes.Status409Conflict);
         }
+        if (!string.IsNullOrEmpty(dto.Route)){
+            dto.Route = dto.Route.Trim();
+            var existingMenuByRoute = await _repo.ExistsByRountAsync(dto.Route, null, cancellationToken);
+            if (existingMenuByRoute != null && existingMenuByRoute.ApplicationId == dto.PlateFormId)
+            {
+                if (existingMenuByRoute.IsDeleted == true)
+                {
+                    return ApiResponse<MenuMasterDto>.Fail(Messages.MenuRountAlreadyExistsWithIsDelete, StatusCodes.Status409Conflict);
+                }
+                else
+                {
+                    return ApiResponse<MenuMasterDto>.Fail(Messages.MenuRountAlreadyExists, StatusCodes.Status409Conflict);
+                }
+
+            }
+        }
+
+       
         var isMainMenu = string.IsNullOrWhiteSpace(dto.Route);
         if (!isMainMenu && dto.ProgramIds != null && dto.ProgramIds.Any())
         {

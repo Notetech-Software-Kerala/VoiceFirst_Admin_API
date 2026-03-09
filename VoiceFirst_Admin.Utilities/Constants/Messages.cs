@@ -447,6 +447,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string WebMenuRetrieveSucessfully = "Web menu retrieve sucessfully.";
         public const string AppMenuRetrieveSucessfully = "App Menu retrieve sucessfully.";
         public const string MenuNameAlreadyExists = "Menu name already exists in the plateform.";
+        public const string MenuRountAlreadyExists = "Menu route already exists in the plateform.u can use it.";
+        public const string MenuRountAlreadyExistsWithIsDelete = "Menu route already exists in the plateform.u can use it.";
         public const string MenuMasterAlreadyExistsInWeb = "Menu master already exists in web.";
         public const string MenuMasterAlreadyExistsInApp = "Menu master already exists in app.";
         public const string MenuNameExistsInTrash = "This menu name exists in trash. Restore it to use again.";

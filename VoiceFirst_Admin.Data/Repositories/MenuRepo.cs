@@ -33,6 +33,16 @@ public class MenuRepo : IMenuRepo
         using var connection = _context.CreateConnection();
         return await connection.QuerySingleOrDefaultAsync<MenuMaster>(cmd);
     }
+    public async Task<MenuMaster?> ExistsByRountAsync(string rount, int? excludeId = null, CancellationToken cancellationToken = default)
+    {
+        var sql = "SELECT * FROM MenuMaster WHERE MenuRoute = @MenuRoute";
+        if (excludeId.HasValue)
+            sql += " AND MenuMasterId <> @ExcludeId";
+
+        var cmd = new CommandDefinition(sql, new { MenuRoute = rount, ExcludeId = excludeId }, cancellationToken: cancellationToken);
+        using var connection = _context.CreateConnection();
+        return await connection.QuerySingleOrDefaultAsync<MenuMaster>(cmd);
+    }
     public async Task<WebMenu?> ExistsMenuMasterByWebAsync(int menuMasterId, int? excludeId = null, CancellationToken cancellationToken = default)
     {
         var sql = "SELECT * FROM WebMenus WHERE MenuMasterId = @MenuMasterId";
