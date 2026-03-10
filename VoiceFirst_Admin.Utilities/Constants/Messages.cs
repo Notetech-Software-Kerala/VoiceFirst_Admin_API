@@ -555,10 +555,11 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string NoActiveIssueMediaTypes = "No active issue media types available.";
         public const string IssueMediaTypeAlreadyRecovered = "Issue media type is already recovered. Please refresh again.";
         public const string IssueMediaTypeAlreadyDeleted = "Issue media type is already deleted. Please refresh again.";
-        public const string IssueMediaTypeNotFound = "Selected issue media type is not available." + BaseRefreshMessage;
+        public const string IssueMediaTypeNotAvailable = "Selected issue media type is not available." + BaseRefreshMessage;
         public const string IssueMediaTypeNotActive = "Selected issue media type is inactive." + BaseRefreshMessage;
 
         // ===== SYS ISSUE MEDIA FORMAT =====
+        public const string IssueMediaFormatAlreadyLinked = "Issue media format is already linked.";
         public const string IssueMediaFormatAlreadyExists = "Issue media format already exists. Please add another name.";
         public const string IssueMediaFormatAlreadyExistsRecoverable = "Issue media format already exists but was deleted. You can recover it.";
         public const string IssueMediaFormatCreated = "Issue media format created successfully.";
@@ -607,5 +608,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string CustomFieldValidationAtLeastRequired = "At least one field must be provided for update";
         public const string CustomFieldOptionIdRequired = "Custom field Option id is required.";
         public const string CustomFieldOptionAtLeastRequired = "At least one field must be provided for update";
+        // ===== APPLICATION VERSION =====
+        public const string ApplicationVersionAlreadyExists = "This version already exists for the selected application and type.";
+        public const string ApplicationVersionCreated = "Application version created successfully.";
+
     }
 }

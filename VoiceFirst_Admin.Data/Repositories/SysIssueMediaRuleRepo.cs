@@ -121,6 +121,50 @@ public class SysIssueMediaRuleRepo : ISysIssueMediaRuleRepo
         return affected > 0;
     }
 
+
+
+        public async Task<bool>
+              CheckMediaFormatLinksExistAsync(
+                          int issueTypeId,
+                  IEnumerable<int> formatIds,
+                  bool update,
+                  IDbConnection connection,
+                  IDbTransaction transaction,
+                  CancellationToken cancellationToken = default)
+        {
+            // If no IDs are sent, treat as invalid
+            if (issueTypeId == null || !formatIds.Any())
+                return false;
+
+            const string sql = @"
+                        SELECT COUNT(1)
+                        FROM SysIssueMediaRule
+                        WHERE IssueTypeId = @IssueTypeId AND IssueMediaFormatId IN @Ids
+                    ";
+
+            var exists = await connection.ExecuteScalarAsync<int>(
+                new CommandDefinition(
+                    sql,
+                    new { IssueTypeId = issueTypeId, Ids = formatIds },
+                    transaction,
+                    cancellationToken: cancellationToken
+                ));
+            if (!update)
+            {
+                // INSERT case
+                // true  → already exists (block insert)
+                // false → safe to insert
+                return exists > 0;
+            }
+
+            // UPDATE case
+            // true  → all records exist
+            // false → some records missing
+            return exists == formatIds.Count();
+        }
+
+
+
     public async Task<BulkValidationResult> IsBulkExistAsync(
         int issueTypeId,
         IEnumerable<int> formatIds,

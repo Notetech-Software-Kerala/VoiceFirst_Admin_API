@@ -35,8 +35,56 @@ namespace VoiceFirst_Admin.Business.Services
         public async Task<ApiResponse<List<SysIssueMediaTypeActiveDTO>>> GetActiveAsync(CancellationToken ct)
         { var r = await _repo.GetActiveAsync(ct) ?? new List<SysIssueMediaTypeActiveDTO>(); return ApiResponse<List<SysIssueMediaTypeActiveDTO>>.Ok(r, r.Count == 0 ? Messages.NoActiveIssueMediaTypes : Messages.IssueMediaTypesRetrieved, statusCode: StatusCodes.Status200OK); }
 
-        public async Task<ApiResponse<SysIssueMediaTypeDTO>> UpdateAsync(SysIssueMediaTypeUpdateDTO dto, int id, int loginId, CancellationToken ct = default)
-        { var ed = await _repo.IsIdExistAsync(id, ct); if (ed == null) return ApiResponse<SysIssueMediaTypeDTO>.Fail(Messages.IssueMediaTypeNotFoundById, StatusCodes.Status404NotFound, ErrorCodes.IssueMediaTypeNotFoundById); if (ed.Deleted) return ApiResponse<SysIssueMediaTypeDTO>.Fail(Messages.IssueMediaTypeNotFound, StatusCodes.Status409Conflict, ErrorCodes.IssueMediaTypeNotFound); if (!string.IsNullOrWhiteSpace(dto.IssueMediaType)) { var ex = await _repo.ExistsAsync(dto.IssueMediaType, id, ct); if (ex is not null) { if (!ex.Deleted) return ApiResponse<SysIssueMediaTypeDTO>.Fail(Messages.IssueMediaTypeAlreadyExists, StatusCodes.Status409Conflict, ErrorCodes.IssueMediaTypeAlreadyExists); return ApiResponse<SysIssueMediaTypeDTO>.Fail(Messages.IssueMediaTypeAlreadyExistsRecoverable, StatusCodes.Status422UnprocessableEntity, ErrorCodes.IssueMediaTypeAlreadyExistsRecoverable, new SysIssueMediaTypeDTO { IssueMediaTypeId = ex.IssueMediaTypeId }); } } var e = _mapper.Map<SysIssueMediaType>((dto, id, loginId)); if (!await _repo.UpdateAsync(e, ct)) return ApiResponse<SysIssueMediaTypeDTO>.Fail(Messages.IssueMediaTypeUpdated, StatusCodes.Status204NoContent, ErrorCodes.NoRowAffected); return ApiResponse<SysIssueMediaTypeDTO>.Ok(await _repo.GetByIdAsync(id, ct), Messages.IssueMediaTypeUpdated, statusCode: StatusCodes.Status200OK); }
+
+        public async Task<ApiResponse<SysIssueMediaTypeDTO>> 
+            UpdateAsync(SysIssueMediaTypeUpdateDTO dto, 
+            int id, int loginId, CancellationToken ct = default)
+        { 
+            var ed = await _repo.IsIdExistAsync(id, ct); 
+
+            if (ed == null) 
+                return ApiResponse<SysIssueMediaTypeDTO>.Fail
+                    (Messages.IssueMediaTypeNotFoundById, 
+                    StatusCodes.Status404NotFound, 
+                    ErrorCodes.IssueMediaTypeNotFoundById);
+
+            if (ed.Deleted)
+                return ApiResponse<SysIssueMediaTypeDTO>.Fail
+                    (Messages.IssueMediaTypeNotAvailable, 
+                    StatusCodes.Status409Conflict, 
+                    ErrorCodes.IssueMediaTypeNotFound); 
+
+            if (!string.IsNullOrWhiteSpace(dto.IssueMediaType)) 
+            { 
+                var ex = await _repo.ExistsAsync(dto.IssueMediaType, id, ct); 
+                if (ex is not null) 
+                { 
+                    if (!ex.Deleted) 
+                        return ApiResponse<SysIssueMediaTypeDTO>.Fail
+                            (Messages.IssueMediaTypeAlreadyExists, 
+                            StatusCodes.Status409Conflict,
+                            ErrorCodes.IssueMediaTypeAlreadyExists);
+                    return ApiResponse<SysIssueMediaTypeDTO>.Fail
+                        (Messages.IssueMediaTypeAlreadyExistsRecoverable,
+                        StatusCodes.Status422UnprocessableEntity, 
+                        ErrorCodes.IssueMediaTypeAlreadyExistsRecoverable,
+                        new SysIssueMediaTypeDTO { IssueMediaTypeId = ex.IssueMediaTypeId }); 
+                } 
+            } 
+            var e = _mapper.Map<SysIssueMediaType>((dto, id, loginId));
+
+            if (!await _repo.UpdateAsync(e, ct))
+
+                return ApiResponse<SysIssueMediaTypeDTO>.Fail
+                    (Messages.IssueMediaTypeUpdated, 
+                    StatusCodes.Status204NoContent,
+                    ErrorCodes.NoRowAffected); 
+
+            return ApiResponse<SysIssueMediaTypeDTO>.Ok
+                (await _repo.GetByIdAsync(id, ct),
+                Messages.IssueMediaTypeUpdated, 
+                statusCode: StatusCodes.Status200OK);
+        }
 
         public async Task<ApiResponse<SysIssueMediaTypeDTO>> RecoverAsync(int id, int loginId, CancellationToken ct = default)
         { var ed = await _repo.IsIdExistAsync(id, ct); if (ed == null) return ApiResponse<SysIssueMediaTypeDTO>.Fail(Messages.IssueMediaTypeNotFoundById, StatusCodes.Status404NotFound, ErrorCodes.IssueMediaTypeNotFoundById); if (!ed.Deleted) return ApiResponse<SysIssueMediaTypeDTO>.Fail(Messages.IssueMediaTypeAlreadyRecovered, StatusCodes.Status409Conflict, ErrorCodes.IssueMediaTypeAlreadyRecovered); if (!await _repo.RecoverAsync(id, loginId, ct)) return ApiResponse<SysIssueMediaTypeDTO>.Fail(Messages.IssueMediaTypeAlreadyRecovered, StatusCodes.Status409Conflict, ErrorCodes.IssueMediaTypeAlreadyRecovered); return ApiResponse<SysIssueMediaTypeDTO>.Ok(await _repo.GetByIdAsync(id, ct), Messages.IssueMediaTypeRecovered, statusCode: StatusCodes.Status200OK); }

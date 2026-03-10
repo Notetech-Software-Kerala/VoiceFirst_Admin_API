@@ -1,11 +1,13 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using System.Data;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysIssueCharacterType;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysIssueType;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysProgram;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Exceptions;
 using VoiceFirst_Admin.Utilities.Models.Common;
@@ -18,7 +20,7 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly ISysIssueTypeRepo _repo;
         private readonly ISysIssueMediaFormatRepo _mediaFormatRepo;
         private readonly ISysIssueMediaTypeRepo _mediaTypeRepo;
-        private readonly ISysIssueMediaRuleRepo _mediaRuleRepo;
+        private readonly ISysIssueMediaRuleRepo  _mediaRuleRepo;
         private readonly ISysIssueMediaRuleTypeRepo _mediaRuleTypeRepo;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _uow;
@@ -45,39 +47,193 @@ namespace VoiceFirst_Admin.Business.Services
         // ───────────────────────── CREATE ─────────────────────────
 
         public async Task<ApiResponse<SysIssueTypeDTO>> CreateAsync(
-         SysIssueTypeCreateDTO dto,
-         int loginId,
-         CancellationToken cancellationToken)
+       SysIssueTypeCreateDTO dto,
+       int loginId,
+       CancellationToken cancellationToken)
         {
             dto.IssueType = dto.IssueType.Trim();
 
-            var validationError = await ValidateExistingAsync(dto.IssueType, cancellationToken);
+            // 1️⃣ Validate existing issue type
+            var validationError = await ValidateExistingAsync(
+                dto.IssueType,
+                cancellationToken);
+
             if (validationError != null)
                 return validationError;
 
+            // 2️⃣ Validate media rules
             if (dto.MediaRules?.Count > 0)
             {
-                var mediaError = await ValidateMediaRulesAsync(dto, cancellationToken);
+                var mediaError = await ValidateMediaRulesAsync(
+                    dto,
+                    cancellationToken);
+
                 if (mediaError != null)
                     return mediaError;
             }
 
+            await _uow.BeginAsync();
+
             try
             {
-                return await CreateIssueTypeInternalAsync(dto, loginId, cancellationToken);
+                var result = await CreateIssueTypeInternalAsync(
+                    dto,
+                    loginId,
+                    cancellationToken);
+
+                await _uow.CommitAsync();
+
+                return result;
             }
             catch (DuplicateException)
             {
+                await _uow.RollbackAsync();
                 return await HandleDuplicateAsync(dto.IssueType, cancellationToken);
+            }
+            catch
+            {
+                await _uow.RollbackAsync();
+                throw;
             }
         }
 
 
+        private async Task<ApiResponse<SysIssueTypeDTO>> CreateIssueTypeInternalAsync(
+    SysIssueTypeCreateDTO dto,
+    int loginId,
+    CancellationToken cancellationToken)
+        {
+            var entity = _mapper.Map<SysIssueType>(dto);
+            entity.CreatedBy = loginId;
 
-        private async Task<ApiResponse<SysIssueTypeDTO>>
-            HandleDuplicateAsync(
-            string normalizedName,
+            entity.SysIssueTypeId = await _repo.CreateAsync(
+                entity,
+                _uow.Connection,
+                _uow.Transaction,
+                cancellationToken);
+
+            if (entity.SysIssueTypeId <= 0)
+                return InternalError();
+
+            if (dto.MediaRules?.Count > 0)
+            {
+                await CreateMediaRulesAsync(
+                    entity.SysIssueTypeId,
+                    dto,
+                    loginId,
+                    cancellationToken);
+            }
+
+            var createdDto = await _repo.GetByIdAsync(
+                entity.SysIssueTypeId,
+                cancellationToken);
+
+            return ApiResponse<SysIssueTypeDTO>.Ok(
+                createdDto,
+                Messages.IssueTypeCreated,
+                StatusCodes.Status201Created);
+        }
+
+
+        private async Task<ApiResponse<SysIssueTypeDTO>?> ValidateExistingAsync(
+        string issueType,
+        CancellationToken cancellationToken)
+            {
+                var existing = await _repo.IssueTypeExistsAsync(
+                    issueType,
+                    null,
+                    cancellationToken);
+
+                if (existing == null)
+                    return null;
+
+                if (!existing.Deleted)
+                {
+                    return ApiResponse<SysIssueTypeDTO>.Fail(
+                        Messages.IssueTypeAlreadyExists,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.IssueTypeAlreadyExists);
+                }
+
+                return ApiResponse<SysIssueTypeDTO>.Fail(
+                    Messages.IssueTypeAlreadyExistsRecoverable,
+                    StatusCodes.Status422UnprocessableEntity,
+                    ErrorCodes.IssueTypeAlreadyExistsRecoverable,
+                    new SysIssueTypeDTO
+                    {
+                        IssueTypeId = existing.IssueTypeId
+                    });
+        }
+
+
+        private async Task<ApiResponse<SysIssueTypeDTO>?> ValidateMediaRulesAsync(
+    SysIssueTypeCreateDTO dto,
+    CancellationToken cancellationToken)
+        {
+            var formatIds = dto.MediaRules!
+                .Select(r => r.IssueMediaFormatId)
+                .Distinct()
+                .ToList();
+
+            var formatValidation = await _mediaFormatRepo
+                .IsBulkIdsExistAsync(formatIds, cancellationToken);
+
+            var formatError = HandleMediaFormatValidation(formatValidation);
+
+            if (formatError != null)
+                return formatError;
+
+            var typeIds = dto.MediaRules!
+                .Where(r => r.MediaTypes?.Count > 0)
+                .SelectMany(r => r.MediaTypes!)
+                .Select(mt => mt.IssueMediaTypeId)
+                .Distinct()
+                .ToList();
+
+            if (typeIds.Count == 0)
+                return null;
+
+            var typeValidation = await _mediaTypeRepo
+                .IsBulkIdsExistAsync(typeIds, cancellationToken);
+
+            return HandleMediaTypeValidation(typeValidation);
+        }
+
+        private async Task CreateMediaRulesAsync(
+            int issueTypeId,
+            SysIssueTypeCreateDTO dto,
+            int loginId,
             CancellationToken cancellationToken)
+        {
+            foreach (var ruleDto in dto.MediaRules!)
+            {
+                var rule = _mapper.Map<SysIssueMediaRule>((ruleDto, issueTypeId, loginId));
+
+                var ruleId = await _mediaRuleRepo.CreateAsync(
+                    rule,
+                    _uow.Connection,
+                    _uow.Transaction,
+                    cancellationToken);
+
+                if (ruleId <= 0)
+                    throw new InvalidOperationException("Media rule creation failed.");
+
+                if (ruleDto.MediaTypes?.Count > 0)
+                {
+                    await _mediaRuleTypeRepo.BulkInsertAsync(
+                        ruleId,
+                        ruleDto.MediaTypes,
+                        loginId,
+                        _uow.Connection,
+                        _uow.Transaction,
+                        cancellationToken);
+                }
+            }
+        }
+
+        private async Task<ApiResponse<SysIssueTypeDTO>> HandleDuplicateAsync(
+    string normalizedName,
+    CancellationToken cancellationToken)
         {
             var existing = await _repo.GetIdAndDeletedByNameAsync(
                 normalizedName,
@@ -107,140 +263,6 @@ namespace VoiceFirst_Admin.Business.Services
                 StatusCodes.Status409Conflict,
                 ErrorCodes.IssueTypeAlreadyExists,
                 minimalDto);
-        }
-
-
-        private async Task<ApiResponse<SysIssueTypeDTO>?> ValidateExistingAsync(
-            string issueType,
-            CancellationToken cancellationToken)
-        {
-            var existing = await _repo.IssueTypeExistsAsync(issueType, null, cancellationToken);
-
-            if (existing == null)
-                return null;
-
-            if (!existing.Deleted)
-            {
-                return ApiResponse<SysIssueTypeDTO>.Fail(
-                    Messages.IssueTypeAlreadyExists,
-                    StatusCodes.Status409Conflict,
-                    ErrorCodes.IssueTypeAlreadyExists);
-            }
-
-            return ApiResponse<SysIssueTypeDTO>.Fail(
-                Messages.IssueTypeAlreadyExistsRecoverable,
-                StatusCodes.Status422UnprocessableEntity,
-                ErrorCodes.IssueTypeAlreadyExistsRecoverable,
-                new SysIssueTypeDTO
-                {
-                    IssueTypeId = existing.IssueTypeId
-                });
-        }
-
-
-        private async Task<ApiResponse<SysIssueTypeDTO>?> ValidateMediaRulesAsync(
-            SysIssueTypeCreateDTO dto,
-            CancellationToken cancellationToken)
-        {
-            var formatIds = dto.MediaRules!
-                .Select(r => r.IssueMediaFormatId)
-                .Distinct()
-                .ToList();
-
-            var formatValidation = await _mediaFormatRepo
-                .IsBulkIdsExistAsync(formatIds, cancellationToken);
-
-            var formatError = HandleMediaFormatValidation(formatValidation);
-            if (formatError != null)
-                return formatError;
-
-            var typeIds = dto.MediaRules!
-                .Where(r => r.MediaTypes?.Count > 0)
-                .SelectMany(r => r.MediaTypes!)
-                .Select(mt => mt.IssueMediaTypeId)
-                .Distinct()
-                .ToList();
-
-            if (typeIds.Count == 0)
-                return null;
-
-            var typeValidation = await _mediaTypeRepo
-                .IsBulkIdsExistAsync(typeIds, cancellationToken);
-
-            return HandleMediaTypeValidation(typeValidation);
-        }
-
-
-        private async Task<ApiResponse<SysIssueTypeDTO>> CreateIssueTypeInternalAsync(
-            SysIssueTypeCreateDTO dto,
-            int loginId,
-            CancellationToken cancellationToken)
-        {
-           
-            await _uow.BeginAsync();
-            try
-            {
-                var entity = _mapper.Map<SysIssueType>(dto);
-                entity.CreatedBy = loginId;
-
-
-                entity.SysIssueTypeId = await _repo.CreateAsync(
-                  entity, _uow.Connection, _uow.Transaction, cancellationToken);
-
-                if (entity.SysIssueTypeId <= 0)
-
-                    return InternalError();
-
-
-                var hasMediaRules = dto.MediaRules?.Count > 0;
-                if (hasMediaRules)
-                {
-                    await CreateMediaRulesAsync(entity.SysIssueTypeId, dto, loginId, cancellationToken);                                    
-                }
-                await _uow.CommitAsync();
-                var createdDto = await _repo.GetByIdAsync(entity.SysIssueTypeId, cancellationToken);
-                return ApiResponse<SysIssueTypeDTO>.Ok(
-                    createdDto,
-                    Messages.IssueTypeCreated,
-                    StatusCodes.Status201Created);                                                        
-            }
-            catch
-            {
-                await _uow.RollbackAsync();
-                throw;
-            }
-        }
-
-
-
-
-        private async Task CreateMediaRulesAsync(
-            int issueTypeId,
-            SysIssueTypeCreateDTO dto,
-            int loginId,
-            CancellationToken cancellationToken)
-        {
-            foreach (var ruleDto in dto.MediaRules!)
-            {
-                var rule = _mapper.Map<SysIssueMediaRule>((ruleDto, issueTypeId, loginId));
-
-                var ruleId = await _mediaRuleRepo.CreateAsync(
-                    rule, _uow.Connection, _uow.Transaction, cancellationToken);
-
-                if (ruleId <= 0)
-                    throw new InvalidOperationException("Media rule creation failed.");
-
-                if (ruleDto.MediaTypes?.Count > 0)
-                {
-                    await _mediaRuleTypeRepo.BulkInsertAsync(
-                        ruleId,
-                        ruleDto.MediaTypes,
-                        loginId,
-                        _uow.Connection,
-                        _uow.Transaction,
-                        cancellationToken);
-                }
-            }
         }
 
 
@@ -308,6 +330,7 @@ namespace VoiceFirst_Admin.Business.Services
             int loginId,
             CancellationToken cancellationToken = default)
         {
+            bool changes = false;
             var existDto = await _repo.IsIdExistAsync(sysIssueTypeId, cancellationToken);
 
             if (existDto == null)
@@ -324,7 +347,7 @@ namespace VoiceFirst_Admin.Business.Services
                     StatusCodes.Status409Conflict,
                     ErrorCodes.IssueTypeNotAvailable);
             }
-
+             
             if (!string.IsNullOrWhiteSpace(dto.IssueType))
             {
                 var existingEntity = await _repo.IssueTypeExistsAsync(
@@ -364,7 +387,12 @@ namespace VoiceFirst_Admin.Business.Services
                 var updated = await _repo.UpdateAsync(entity, cancellationToken);
 
                 if (!updated)
-                    throw new InvalidOperationException("No rows were affected during the update.");
+                {
+                    return ApiResponse<SysIssueTypeDTO>.Fail(
+                        Messages.NoChangesDetected,
+                        StatusCodes.Status204NoContent,
+                        ErrorCodes.NoRowAffected);
+                }
 
                 var updatedEntity = await _repo.GetByIdAsync(sysIssueTypeId, cancellationToken);
                 return ApiResponse<SysIssueTypeDTO>.Ok(
@@ -390,6 +418,7 @@ namespace VoiceFirst_Admin.Business.Services
                             StatusCodes.Status204NoContent,
                             ErrorCodes.NoRowAffected);
                     }
+                    changes = true;
                 }
 
                 if (hasUpdateRules)
@@ -397,35 +426,55 @@ namespace VoiceFirst_Admin.Business.Services
                     var updateFormatIds = dto.UpdateMediaRules!
                         .Select(r => r.IssueMediaFormatId).Distinct().ToList();
 
-                    var checkRules = await _mediaRuleRepo.IsBulkExistAsync(
-                        sysIssueTypeId, updateFormatIds,
-                        _uow.Connection, _uow.Transaction, cancellationToken);
+                   
 
-                    if (checkRules.IdNotFound)
+                    var updationActionsFound =
+                        await _mediaRuleRepo.CheckMediaFormatLinksExistAsync(
+                        sysIssueTypeId,
+                        updateFormatIds,
+                        true,
+                       _uow.Connection,
+                       _uow.Transaction,
+                       cancellationToken);
+                    if (!updationActionsFound)
                     {
                         await _uow.RollbackAsync();
                         return ApiResponse<SysIssueTypeDTO>.Fail(
-                            Messages.MediaFormatIsNotFound,
-                            StatusCodes.Status404NotFound,
-                            ErrorCodes.MediaFormatNotLinked);
+                          Messages.MediaFormatIsNotFound,
+                          StatusCodes.Status404NotFound,
+                          ErrorCodes.MediaFormatNotLinked
+                          );
                     }
 
-                    var updateMediaRuleEntities = _mapper.Map<List<SysIssueMediaRule>>(
-                        dto.UpdateMediaRules.Select(r => (r, sysIssueTypeId, loginId)));
 
-                    await _mediaRuleRepo.BulkUpdateAsync(
-                        updateMediaRuleEntities,
-                        _uow.Connection, _uow.Transaction, cancellationToken);
+                    var updateMediaRuleEntities = _mapper.Map<List<SysIssueMediaRule>>(
+                        dto.UpdateMediaRules
+                            .Where(r => r.Min.HasValue || r.Max.HasValue || r.MaxSizeMB.HasValue || r.Active.HasValue)
+                            .Select(r => (r, sysIssueTypeId, loginId)));
+
+                    if (updateMediaRuleEntities.Count > 0)
+                    {
+                        bool rowEffected = await _mediaRuleRepo.BulkUpdateAsync(
+                            updateMediaRuleEntities,
+                            _uow.Connection, _uow.Transaction, cancellationToken);
+
+                        if (rowEffected)
+                        {
+                            changes = true;
+                        }
+                    }
 
                     var allTypeIdsToCheck = dto.UpdateMediaRules
-                        .SelectMany(r => r.MediaTypes ?? new List<IssueMediaRuleTypeUpdateDTO>())
+                        .SelectMany(r => r.MediaTypes ?? 
+                        new List<IssueMediaRuleTypeUpdateDTO>())
                         .Select(mt => mt.IssueMediaTypeId).Distinct().ToList();
 
                     if (allTypeIdsToCheck.Count > 0)
                     {
-                        var checkTypes = await _mediaTypeRepo.IsBulkIdsExistAsync(
-                            allTypeIdsToCheck,
-                            _uow.Connection, _uow.Transaction, cancellationToken);
+                        var checkTypes = 
+                                  await _mediaTypeRepo.IsBulkIdsExistAsync(
+                                  allTypeIdsToCheck,
+                                  _uow.Connection, _uow.Transaction, cancellationToken);
 
                         if (checkTypes.IdNotFound)
                         {
@@ -443,71 +492,177 @@ namespace VoiceFirst_Admin.Business.Services
                         var ruleMap = existingRules.ToDictionary(
                             r => r.IssueMediaFormatId, r => r.SysIssueMediaRuleId);
 
+                        var ruleIds = ruleMap.Values.ToList();
+                        var existingRuleTypes = (await _mediaRuleTypeRepo.GetByRuleIdsAsync(
+                            ruleIds, _uow.Connection, _uow.Transaction, cancellationToken)).ToList();
+
+                        var existingRuleTypeKeys = new HashSet<(int RuleId, int MediaTypeId)>(
+                            existingRuleTypes.Select(rt => (rt.IssueMediaRuleId, rt.IssueMediaTypeId)));
+
                         var updateRuleTypeDtos = new List<SysIssueMediaRuleType>();
+                        var insertRuleTypeDtos = new List<SysIssueMediaRuleType>();
+                        var allInsertTypeIds = new List<int>();
                         foreach (var ruleDto in dto.UpdateMediaRules)
                         {
                             if (ruleDto.MediaTypes == null) continue;
                             var ruleId = ruleMap[ruleDto.IssueMediaFormatId];
                             foreach (var mt in ruleDto.MediaTypes)
                             {
-                                updateRuleTypeDtos.Add(new SysIssueMediaRuleType
+                                if (existingRuleTypeKeys.Contains((ruleId, mt.IssueMediaTypeId)))
                                 {
-                                    IssueMediaRuleId = ruleId,
-                                    IssueMediaTypeId = mt.IssueMediaTypeId,
-                                    IsMandatory = mt.IsMandatory,
-                                    IsActive = mt.Active ?? true,
-                                    UpdatedBy = loginId
-                                });
+                                    updateRuleTypeDtos.Add(new SysIssueMediaRuleType
+                                    {
+                                        IssueMediaRuleId = ruleId,
+                                        IssueMediaTypeId = mt.IssueMediaTypeId,
+                                        IsMandatory = mt.IsMandatory,
+                                        IsActive = mt.Active ,
+                                        UpdatedBy = loginId
+                                    });
+                                }
+                                else
+                                {                                 
+                                    insertRuleTypeDtos.Add(new SysIssueMediaRuleType
+                                    {
+                                        IssueMediaRuleId = ruleId,
+                                        IssueMediaTypeId = mt.IssueMediaTypeId,
+                                        IsMandatory = mt.IsMandatory,
+                                        IsActive = true,
+                                        CreatedBy = loginId
+                                    });
+                                    allInsertTypeIds.Add(mt.IssueMediaTypeId);
+                                }
                             }
                         }
 
                         if (updateRuleTypeDtos.Count > 0)
                         {
-                            await _mediaRuleTypeRepo.BulkUpdateAsync(
+                            var roweffected = await _mediaRuleTypeRepo.BulkUpdateAsync(
                                 updateRuleTypeDtos,
                                 _uow.Connection, _uow.Transaction, cancellationToken);
-                        }
-                    }
 
-                    
+                            if (roweffected > 0)
+                            {
+                                changes = true;
+                            }
+                        }
+
+                        if (insertRuleTypeDtos.Count > 0)
+                        {
+                            var checkMediaTypes = await _mediaTypeRepo.IsBulkIdsExistAsync(
+                               allInsertTypeIds.Distinct(),
+                               _uow.Connection, _uow.Transaction, cancellationToken);
+
+                            if (checkMediaTypes.IdNotFound)
+                            {
+                                await _uow.RollbackAsync();
+                                return ApiResponse<SysIssueTypeDTO>.Fail(
+                                    Messages.IssueMediaTypeNotFoundById,
+                                    StatusCodes.Status404NotFound,
+                                    ErrorCodes.IssueMediaTypeNotFoundById);
+                            }
+                            if (checkMediaTypes.IsInactive)
+                            {
+                                await _uow.RollbackAsync();
+                                return ApiResponse<SysIssueTypeDTO>.Fail(
+                                    Messages.IssueMediaTypeNotAvailable,
+                                    StatusCodes.Status404NotFound,
+                                    ErrorCodes.IssueMediaTypeNotActive);
+                            }
+                            if(checkMediaTypes.IsDeleted)
+                            {
+                                await _uow.RollbackAsync();
+                                return ApiResponse<SysIssueTypeDTO>.Fail(
+                                    Messages.IssueMediaTypeNotAvailable,
+                                    StatusCodes.Status404NotFound,
+                                    ErrorCodes.IssueMediaTypeNotFound);
+                            }
+                            var rowCreated=await _mediaRuleTypeRepo.BulkInsertAsync(
+                                insertRuleTypeDtos,
+                                _uow.Connection, _uow.Transaction, cancellationToken);
+                            if (rowCreated)
+                            {
+                                 changes = true;
+                            }
+                        }
+                    }                   
                 }
 
                 if (hasInsertRules)
                 {
                     var insertFormatIds = dto.InsertMediaRules!
-                        .Select(r => r.IssueMediaFormatId).Distinct().ToList();
+                        .Select(r => r.IssueMediaFormatId)
+                        .Distinct()
+                        .ToList();
 
-                    var checkExisting = await _mediaRuleRepo.IsBulkExistAsync(
-                        sysIssueTypeId, insertFormatIds,
-                        _uow.Connection, _uow.Transaction, cancellationToken);
 
-                    if (!checkExisting.IdNotFound || !checkExisting.IsInactive)
+                    var linkedFormatsFound =
+                   await _mediaRuleRepo.CheckMediaFormatLinksExistAsync(
+                        sysIssueTypeId,
+                        insertFormatIds,
+                        false,
+                       _uow.Connection,
+                       _uow.Transaction,
+                       cancellationToken);
+
+                    if (linkedFormatsFound)
                     {
-                        var existing = await _mediaRuleRepo.GetByIssueTypeAndFormatsAsync(
-                            sysIssueTypeId, insertFormatIds,
-                            _uow.Connection, _uow.Transaction, cancellationToken);
-
-                        if (existing.Any())
-                        {
-                            await _uow.RollbackAsync();
-                            return ApiResponse<SysIssueTypeDTO>.Fail(
-                                Messages.ActionsAreAlreadyLinked,
-                                StatusCodes.Status409Conflict,
-                                ErrorCodes.ActionsAreAlreadyLinked);
-                        }
-
                         await _uow.RollbackAsync();
                         return ApiResponse<SysIssueTypeDTO>.Fail(
-                            Messages.ActionsAreAlreadyLinked,
-                            StatusCodes.Status409Conflict,
-                            ErrorCodes.ActionsAreAlreadyLinked);
+                          Messages.IssueMediaFormatAlreadyLinked,
+                          StatusCodes.Status409Conflict,
+                          ErrorCodes.IssueMediaFormatAlreadyLinked
+                          );
                     }
 
-                    await _mediaRuleRepo.BulkInsertAsync(
-                        sysIssueTypeId, dto.InsertMediaRules!, loginId,
-                        _uow.Connection, _uow.Transaction, cancellationToken);
 
-                    var createdRules = (await _mediaRuleRepo.
+                    var checkExisting = await _mediaFormatRepo.IsBulkIdsExistWithTransactionAsync(
+                        insertFormatIds,
+                        _uow.Connection,
+                        _uow.Transaction,
+                        cancellationToken);
+
+                    if (checkExisting.IdNotFound)
+                    {
+                        await _uow.RollbackAsync();
+                        return ApiResponse<SysIssueTypeDTO>.Fail(
+                            Messages.IssueMediaFormatNotFoundById,
+                            StatusCodes.Status404NotFound,
+                            ErrorCodes.IssueMediaFormatNotFoundById);
+                    }
+
+                    if (checkExisting.IsDeleted)
+                    {
+                        await _uow.RollbackAsync();
+                        return ApiResponse<SysIssueTypeDTO>.Fail(
+                            Messages.IssueMediaFormatNotFound,
+                            StatusCodes.Status409Conflict,
+                            ErrorCodes.IssueMediaFormatNotFound);
+                    }
+
+                    if (checkExisting.IsInactive)
+                    {
+                        await _uow.RollbackAsync();
+                        return ApiResponse<SysIssueTypeDTO>.Fail(
+                            Messages.IssueMediaFormatNotFound,
+                            StatusCodes.Status409Conflict,
+                            ErrorCodes.IssueMediaFormatNotActive);
+                    }
+
+                    bool rowEffected1 = await _mediaRuleRepo.BulkInsertAsync(
+                        sysIssueTypeId,
+                        dto.InsertMediaRules!,
+                        loginId,
+                        _uow.Connection,
+                        _uow.Transaction,
+                        cancellationToken);
+
+                    if (rowEffected1)
+                    {
+                        changes = true;
+                    }
+                
+
+                   var createdRules = (await _mediaRuleRepo.
                         GetByIssueTypeAndFormatsAsync(
                         sysIssueTypeId, insertFormatIds,
                         _uow.Connection, _uow.Transaction, 
@@ -534,8 +689,8 @@ namespace VoiceFirst_Admin.Business.Services
                             allInsertTypeIds.Add(mt.IssueMediaTypeId);
                         }
                     }
-
-                    if (allInsertTypeIds.Count > 0)
+                     
+                    if (insertTypeDtos.Count > 0)
                     {
                         var checkTypes = await _mediaTypeRepo.IsBulkIdsExistAsync(
                             allInsertTypeIds.Distinct(),
@@ -545,31 +700,46 @@ namespace VoiceFirst_Admin.Business.Services
                         {
                             await _uow.RollbackAsync();
                             return ApiResponse<SysIssueTypeDTO>.Fail(
-                                Messages.NotFound,
+                                Messages.IssueMediaTypeNotFoundById,
                                 StatusCodes.Status404NotFound,
-                                ErrorCodes.NotFound);
+                                ErrorCodes.IssueMediaTypeNotFoundById);
                         }
                         if (checkTypes.IsInactive)
                         {
                             await _uow.RollbackAsync();
                             return ApiResponse<SysIssueTypeDTO>.Fail(
-                                Messages.ProgramActionNotFound,
-                                StatusCodes.Status409Conflict,
-                                ErrorCodes.ProgramActionNotFound);
+                                Messages.IssueMediaTypeNotAvailable,
+                                StatusCodes.Status404NotFound,
+                                ErrorCodes.IssueMediaTypeNotActive);
                         }
-                    }
-
-                    if (insertTypeDtos.Count > 0)
-                    {
-                        await _mediaRuleTypeRepo.BulkInsertAsync(
+                        if (checkTypes.IsDeleted)
+                        {
+                            await _uow.RollbackAsync();
+                            return ApiResponse<SysIssueTypeDTO>.Fail(
+                                Messages.IssueMediaTypeNotAvailable,
+                                StatusCodes.Status404NotFound,
+                                ErrorCodes.IssueMediaTypeNotFound);
+                        }
+                        var rowEffected2=await _mediaRuleTypeRepo.BulkInsertAsync(
                             insertTypeDtos,
                             _uow.Connection, _uow.Transaction, cancellationToken);
+                        if (rowEffected2)
+                        {
+                            changes = true;
+                        }
                     }
                 }
-
+                if (!changes)
+                {
+                    await _uow.RollbackAsync();
+                    return ApiResponse<SysIssueTypeDTO>.Fail(
+                        Messages.NoChangesDetected,
+                        StatusCodes.Status204NoContent,
+                        ErrorCodes.NoRowAffected);
+                }                                      
                 await _uow.CommitAsync();
-
-                var updatedEntity = await _repo.GetByIdAsync(sysIssueTypeId, cancellationToken);
+                var updatedEntity = await _repo.
+                    GetByIdAsync(sysIssueTypeId, cancellationToken);
                 return ApiResponse<SysIssueTypeDTO>.Ok(
                     updatedEntity,
                     Messages.IssueTypeUpdated,
@@ -667,20 +837,24 @@ namespace VoiceFirst_Admin.Business.Services
             BulkValidationResult result)
         {
             if (result.IdNotFound)
+               
                 return ApiResponse<SysIssueTypeDTO>.Fail(
-                    Messages.IssueMediaFormatNotFoundById,
-                    StatusCodes.Status404NotFound,
-                    ErrorCodes.IssueMediaFormatNotFoundById);
+                        Messages.IssueMediaFormatNotFoundById,
+                        StatusCodes.Status404NotFound,
+                        ErrorCodes.IssueMediaFormatNotFoundById);
+                
             if (result.IsDeleted)
+                
                 return ApiResponse<SysIssueTypeDTO>.Fail(
-                    Messages.IssueMediaFormatNotFound,
-                    StatusCodes.Status409Conflict,
-                    ErrorCodes.IssueMediaFormatNotFound);
+                        Messages.IssueMediaFormatNotFound,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.IssueMediaFormatNotFound);
             if (result.IsInactive)
+                
                 return ApiResponse<SysIssueTypeDTO>.Fail(
-                    Messages.IssueMediaFormatNotActive,
-                    StatusCodes.Status409Conflict,
-                    ErrorCodes.IssueMediaFormatNotActive);
+                        Messages.IssueMediaFormatNotFound,
+                        StatusCodes.Status409Conflict,
+                        ErrorCodes.IssueMediaFormatNotActive);
             return null;
         }
 
@@ -694,12 +868,12 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.IssueMediaTypeNotFoundById);
             if (result.IsDeleted)
                 return ApiResponse<SysIssueTypeDTO>.Fail(
-                    Messages.IssueMediaTypeNotFound,
+                    Messages.IssueMediaTypeNotAvailable,
                     StatusCodes.Status409Conflict,
                     ErrorCodes.IssueMediaTypeNotFound);
             if (result.IsInactive)
                 return ApiResponse<SysIssueTypeDTO>.Fail(
-                    Messages.IssueMediaTypeNotActive,
+                    Messages.IssueMediaTypeNotAvailable,
                     StatusCodes.Status409Conflict,
                     ErrorCodes.IssueMediaTypeNotActive);
             return null;

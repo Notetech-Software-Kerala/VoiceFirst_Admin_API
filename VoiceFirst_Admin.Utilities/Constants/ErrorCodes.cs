@@ -165,6 +165,7 @@
         public const string IssueMediaTypeNotActive = "ISSUE_MEDIA_TYPE_NOT_ACTIVE";
 
         // ===== SYS ISSUE MEDIA FORMAT =====
+        public const string IssueMediaFormatAlreadyLinked = "ISSUE_MEDIA_FORMAT_LINKED";
         public const string IssueMediaFormatAlreadyExists = "ISSUE_MEDIA_FORMAT_EXISTS";
         public const string IssueMediaFormatAlreadyExistsRecoverable = "ISSUE_MEDIA_FORMAT_EXISTS_RECOVERABLE";
         public const string IssueMediaFormatNotFoundById = "ISSUE_MEDIA_FORMAT_NOT_FOUND";
@@ -172,5 +173,8 @@
         public const string IssueMediaFormatAlreadyRecovered = "ISSUE_MEDIA_FORMAT_ALREADY_RECOVERED";
         public const string IssueMediaFormatAlreadyDeleted = "ISSUE_MEDIA_FORMAT_ALREADY_DELETED";
         public const string IssueMediaFormatNotActive = "ISSUE_MEDIA_FORMAT_NOT_ACTIVE";
+
+        // ===== APPLICATION VERSION =====
+        public const string ApplicationVersionAlreadyExists = "APPLICATION_VERSION_EXISTS";
     }
 }

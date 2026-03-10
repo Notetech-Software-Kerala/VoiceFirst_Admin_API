@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
+using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
 using VoiceFirst_Admin.Business.Contracts.IServices;
@@ -48,13 +49,19 @@ public class PasswordService : IPasswordService
         CancellationToken cancellationToken)
     {
         var db = _redis.GetDatabase();
-        var email = request.Email!;
+        var email = request.Email!.Trim().ToLowerInvariant();
+        var emailHash = HashValue(email);
 
-        // 1. Rate limit: max 3 requests per 2 minutes per email
-        var rateLimitKey = $"{RateLimitKeyPrefix}{email}";
-        var currentCount = await db.StringGetAsync(rateLimitKey);
+        // 1. Rate limit: max 3 requests per 2 minutes per email (atomic increment-first)
+        var rateLimitKey = $"{RateLimitKeyPrefix}{emailHash}";
+        var newCount = await db.StringIncrementAsync(rateLimitKey);
 
-        if (currentCount.HasValue && (int)currentCount >= MaxForgotPasswordRequests)
+        if (newCount == 1)
+        {
+            await db.KeyExpireAsync(rateLimitKey, RateLimitExpiry);
+        }
+
+        if (newCount > MaxForgotPasswordRequests)
         {
             return ApiResponse<ForgotPasswordResultDto>.Fail(
                 Messages.ForgotPasswordLimitExceeded,
@@ -63,7 +70,7 @@ public class PasswordService : IPasswordService
         }
 
         // 2. Distributed lock: prevent OTP spam (1 OTP per 30 seconds)
-        var cooldownKey = $"{CooldownKeyPrefix}{email}";
+        var cooldownKey = $"{CooldownKeyPrefix}{emailHash}";
         var lockAcquired = await db.StringSetAsync(cooldownKey, "1", CooldownExpiry, When.NotExists);
 
         if (!lockAcquired)
@@ -72,13 +79,6 @@ public class PasswordService : IPasswordService
                 Messages.ForgotPasswordCooldown,
                 StatusCodes.Status429TooManyRequests,
                 ErrorCodes.ForgotPasswordCooldown);
-        }
-
-        // Increment rate limit counter (set expiry on first request)
-        var newCount = await db.StringIncrementAsync(rateLimitKey);
-        if (newCount == 1)
-        {
-            await db.KeyExpireAsync(rateLimitKey, RateLimitExpiry);
         }
 
         // Generate opaque reset token (email is stored server-side in Redis)
@@ -95,7 +95,7 @@ public class PasswordService : IPasswordService
                 StatusCodes.Status200OK);
         }
 
-        // 3. Store token → email mapping in Redis (single-use, 5-minute expiry)
+        // 3. Store token â†’ email mapping in Redis (single-use, 5-minute expiry)
         var grantKey = $"{GrantKeyPrefix}{HashValue(resetToken)}";
         await db.StringSetAsync(grantKey, email, GrantExpiry);
 
@@ -104,6 +104,14 @@ public class PasswordService : IPasswordService
             $"{_configuration["Frontend:BaseUrl"]?.TrimEnd('/')}/reset-password?" +
             $"reset-token={Uri.EscapeDataString(resetToken)}";
 
+        // Load email template and populate placeholders
+        var template = EmailTemplateHelper.GetTemplate("ResetPasswordEmail");
+        var emailBody = template
+            .Replace("{{UserFullName}}", System.Net.WebUtility.HtmlEncode(user.FirstName + " " + user.LastName))
+            .Replace("{{UserEmail}}", System.Net.WebUtility.HtmlEncode(user.Email))
+            .Replace("{{ResetLink}}", resetLink)
+            .Replace("{{SupportDocsUrl}}", _configuration["Support:DocsUrl"] ?? "#");
+
         // Send password reset link via email
         var emailDto = new EmailDTO
         {
@@ -111,97 +119,7 @@ public class PasswordService : IPasswordService
             from_email_password = _configuration["Email:FromPassword"],
             to_email = user.Email,
             email_subject = "Reset your password",
-            email_html_body = $@"
-            <!DOCTYPE html>
-            <html lang=""en"">
-            <head>
-              <meta charset=""utf-8"" />
-              <meta name=""viewport"" content=""width=device-width,initial-scale=1"" />
-              <title>Reset your password</title>
-            </head>
-            <body style=""margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111827;"">
-              <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" border=""0"" width=""100%"" style=""background:#ffffff;"">
-                <tr>
-                  <td align=""center"" style=""padding:32px 16px;"">
-                    <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" border=""0"" width=""680"" style=""max-width:680px;width:100%;"">
-                      <tr>
-                        <td style=""padding:0 0 18px 0;"">
-                          <!-- Optional: your logo -->
-                          <!-- <img src=""http://localhost:8090/logo-vf.png"" alt=""VoiceFirst"" height=""28"" style=""display:block;"" /> -->
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td style=""padding:0 0 12px 0;"">
-                          <h2 style=""margin:0;font-size:24px;line-height:32px;font-weight:700;color:#111827;"">
-                            Reset your password
-                          </h2>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td style=""padding:0 0 18px 0;font-size:14px;line-height:22px;color:#111827;"">
-                          <p style=""margin:0 0 10px 0;"">Hi {System.Net.WebUtility.HtmlEncode(user.FirstName+" "+user.LastName)},</p>
-                          <p style=""margin:0;"">
-                            Click on the button below within the next <strong>5 minutes</strong> to reset your password for your Account
-                            <a href=""mailto:{System.Net.WebUtility.HtmlEncode(user.Email)}"" style=""color:#1d4ed8;text-decoration:underline;"">
-                              {System.Net.WebUtility.HtmlEncode(user.Email)}
-                            </a>.
-                          </p>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td style=""padding:12px 0 22px 0;"">
-                          <!-- Button (email-client friendly) -->
-                          <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" border=""0"">
-                            <tr>
-                              <td align=""center"" bgcolor=""#e11d48"" style=""border-radius:4px;"">
-                                <a href=""{resetLink}""
-                                   style=""display:inline-block;padding:12px 18px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:4px;"">
-                                  Reset your password
-                                </a>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td style=""padding:0 0 16px 0;"">
-                          <hr style=""border:0;border-top:1px solid #d1d5db;margin:0;"" />
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td style=""font-size:13px;line-height:20px;color:#374151;"">
-                          <p style=""margin:0 0 10px 0;"">
-                            If you are having any issues with your account, check out our
-                            <a href=""{_configuration["Support:DocsUrl"] ?? "#"}"" style=""color:#1d4ed8;text-decoration:underline;"">support docs</a>.
-                          </p>
-                          <p style=""margin:0;"">
-                            If this was a mistake, please ignore this email and nothing will happen.
-                          </p>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td style=""padding-top:18px;font-size:12px;line-height:18px;color:#6b7280;"">
-                          <p style=""margin:0;"">
-                            If the button doesn’t work, copy and paste this link into your browser:
-                          </p>
-                          <p style=""margin:6px 0 0 0;word-break:break-all;"">
-                            <a href=""{resetLink}"" style=""color:#1d4ed8;text-decoration:underline;"">{resetLink}</a>
-                          </p>
-                        </td>
-                      </tr>
-
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </body>
-            </html>"
+            email_html_body = emailBody
         };
 
         EmailHelper.SendMail(emailDto);
@@ -243,10 +161,10 @@ public class PasswordService : IPasswordService
     {
         var grantToken = request.PasswordResetGrant!;
 
-        // 1. Look up token in Redis and retrieve the associated email
+        // 1. Atomically retrieve and consume the grant token (single-use, prevents replay)
         var db = _redis.GetDatabase();
         var grantKey = $"{GrantKeyPrefix}{HashValue(grantToken)}";
-        var storedEmail = await db.StringGetAsync(grantKey);
+        var storedEmail = await db.StringGetDeleteAsync(grantKey);
 
         if (storedEmail.IsNullOrEmpty)
         {
@@ -255,9 +173,6 @@ public class PasswordService : IPasswordService
                 StatusCodes.Status410Gone,
                 ErrorCodes.InvalidResetGrant);
         }
-
-        // 2. Consume the grant token (single-use)
-        await db.KeyDeleteAsync(grantKey);
 
         var email = (string)storedEmail!;
         var user = await _userRepo.GetUserByEmailAsync(email, cancellationToken);
@@ -270,12 +185,12 @@ public class PasswordService : IPasswordService
                 ErrorCodes.InvalidResetGrant);
         }
 
-        // 3. Hash the new password
+        // 2. Hash the new password
         var hashResult = await PasswordHasher.HashPasswordAsync(request.NewPassword);
         var hashKey = Convert.FromBase64String(hashResult.Hash);
         var saltKey = Convert.FromBase64String(hashResult.Salt);
 
-        // 4. Update password in database
+        // 3. Update password in database
         var updated = await _authRepo.UpdatePasswordAsync(
             user.UserId, hashKey, saltKey, cancellationToken);
 
@@ -287,14 +202,14 @@ public class PasswordService : IPasswordService
                 ErrorCodes.PasswordResetFailed);
         }
 
-        // 5. Invalidate all active sessions for this user (force re-login)
+        // 4. Invalidate all active sessions for this user (force re-login)
         await _authRepo.InvalidateAllSessionsAsync(user.UserId, cancellationToken);
         await _sessionService.InvalidateAllUserSessionsAsync(user.UserId);
 
         return ApiResponse<object>.Ok(
             null!,
             Messages.ResetPasswordSuccess,
-            StatusCodes.Status200OK);
+            StatusCodes.Status200OK); 
     }
 
     public async Task<ApiResponse<object>> ChangePasswordAsync(
@@ -382,6 +297,6 @@ public class PasswordService : IPasswordService
     private static string GenerateResetToken()
     {
         var bytes = RandomNumberGenerator.GetBytes(32);
-        return Convert.ToHexString(bytes);
+        return Base64Url.EncodeToString(bytes);
     }
 }
