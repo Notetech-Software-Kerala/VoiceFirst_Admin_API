@@ -81,10 +81,16 @@ namespace VoiceFirst_Admin.Business.Services
                     loginId,
                     cancellationToken);
 
+                if (result.StatusCode != StatusCodes.Status201Created)
+                {
+                    await _uow.RollbackAsync();
+                    return result;
+                }
+
                 await _uow.CommitAsync();
 
                 result.Data = await _repo.GetByIdAsync(
-                    result.Data.IssueTypeId,
+                    result.Data!.IssueTypeId,
                     cancellationToken);
 
                 return result;
