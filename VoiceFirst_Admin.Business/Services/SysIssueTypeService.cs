@@ -47,13 +47,12 @@ namespace VoiceFirst_Admin.Business.Services
         // ───────────────────────── CREATE ─────────────────────────
 
         public async Task<ApiResponse<SysIssueTypeDTO>> CreateAsync(
-       SysIssueTypeCreateDTO dto,
-       int loginId,
-       CancellationToken cancellationToken)
+      SysIssueTypeCreateDTO dto,
+      int loginId,
+      CancellationToken cancellationToken)
         {
             dto.IssueType = dto.IssueType.Trim();
 
-            // 1️⃣ Validate existing issue type
             var validationError = await ValidateExistingAsync(
                 dto.IssueType,
                 cancellationToken);
@@ -61,7 +60,6 @@ namespace VoiceFirst_Admin.Business.Services
             if (validationError != null)
                 return validationError;
 
-            // 2️⃣ Validate media rules
             if (dto.MediaRules?.Count > 0)
             {
                 var mediaError = await ValidateMediaRulesAsync(
@@ -78,10 +76,16 @@ namespace VoiceFirst_Admin.Business.Services
             {
                 var result = await CreateIssueTypeInternalAsync(
                     dto,
+                    _uow.Connection,
+                    _uow.Transaction,
                     loginId,
                     cancellationToken);
 
                 await _uow.CommitAsync();
+
+                result.Data = await _repo.GetByIdAsync(
+                    result.Data.IssueTypeId,
+                    cancellationToken);
 
                 return result;
             }
@@ -98,18 +102,22 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        private async Task<ApiResponse<SysIssueTypeDTO>> CreateIssueTypeInternalAsync(
-    SysIssueTypeCreateDTO dto,
-    int loginId,
-    CancellationToken cancellationToken)
+
+
+        public async Task<ApiResponse<SysIssueTypeDTO>> CreateIssueTypeInternalAsync(
+         SysIssueTypeCreateDTO dto,
+         IDbConnection connection,
+         IDbTransaction transaction,
+         int loginId,
+         CancellationToken cancellationToken)
         {
             var entity = _mapper.Map<SysIssueType>(dto);
             entity.CreatedBy = loginId;
 
             entity.SysIssueTypeId = await _repo.CreateAsync(
                 entity,
-                _uow.Connection,
-                _uow.Transaction,
+                connection,
+                transaction,
                 cancellationToken);
 
             if (entity.SysIssueTypeId <= 0)
@@ -121,21 +129,19 @@ namespace VoiceFirst_Admin.Business.Services
                     entity.SysIssueTypeId,
                     dto,
                     loginId,
+                    connection,
+                    transaction,
                     cancellationToken);
             }
 
-            var createdDto = await _repo.GetByIdAsync(
-                entity.SysIssueTypeId,
-                cancellationToken);
-
             return ApiResponse<SysIssueTypeDTO>.Ok(
-                createdDto,
+                new SysIssueTypeDTO { IssueTypeId = entity.SysIssueTypeId },
                 Messages.IssueTypeCreated,
                 StatusCodes.Status201Created);
         }
 
 
-        private async Task<ApiResponse<SysIssueTypeDTO>?> ValidateExistingAsync(
+        public async Task<ApiResponse<SysIssueTypeDTO>?> ValidateExistingAsync(
         string issueType,
         CancellationToken cancellationToken)
             {
@@ -166,9 +172,10 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        private async Task<ApiResponse<SysIssueTypeDTO>?> ValidateMediaRulesAsync(
-    SysIssueTypeCreateDTO dto,
-    CancellationToken cancellationToken)
+        public async Task<ApiResponse<SysIssueTypeDTO>?>
+            ValidateMediaRulesAsync(
+        SysIssueTypeCreateDTO dto,
+        CancellationToken cancellationToken)
         {
             var formatIds = dto.MediaRules!
                 .Select(r => r.IssueMediaFormatId)
@@ -199,11 +206,13 @@ namespace VoiceFirst_Admin.Business.Services
             return HandleMediaTypeValidation(typeValidation);
         }
 
-        private async Task CreateMediaRulesAsync(
-            int issueTypeId,
-            SysIssueTypeCreateDTO dto,
-            int loginId,
-            CancellationToken cancellationToken)
+        public async Task CreateMediaRulesAsync(
+     int issueTypeId,
+     SysIssueTypeCreateDTO dto,
+     int loginId,
+     IDbConnection connection,
+     IDbTransaction transaction,
+     CancellationToken cancellationToken)
         {
             foreach (var ruleDto in dto.MediaRules!)
             {
@@ -211,8 +220,8 @@ namespace VoiceFirst_Admin.Business.Services
 
                 var ruleId = await _mediaRuleRepo.CreateAsync(
                     rule,
-                    _uow.Connection,
-                    _uow.Transaction,
+                    connection,
+                    transaction,
                     cancellationToken);
 
                 if (ruleId <= 0)
@@ -224,14 +233,14 @@ namespace VoiceFirst_Admin.Business.Services
                         ruleId,
                         ruleDto.MediaTypes,
                         loginId,
-                        _uow.Connection,
-                        _uow.Transaction,
+                        connection,
+                        transaction,
                         cancellationToken);
                 }
             }
         }
 
-        private async Task<ApiResponse<SysIssueTypeDTO>> HandleDuplicateAsync(
+        public async Task<ApiResponse<SysIssueTypeDTO>> HandleDuplicateAsync(
     string normalizedName,
     CancellationToken cancellationToken)
         {
