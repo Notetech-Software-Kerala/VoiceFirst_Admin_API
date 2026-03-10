@@ -141,11 +141,11 @@ public class MenuRepo : IMenuRepo
                 ap.ApplicationName,
                 m.IsActive,
                 m.IsDeleted,
-                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUserName,
                 m.CreatedAt,
-                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
+                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUserName,
                 m.UpdatedAt,
-                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
+                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUserName,
                 m.DeletedAt  FROM dbo.MenuMaster m
             INNER JOIN dbo.Users uC ON uC.UserId = m.CreatedBy
             LEFT JOIN dbo.Users uU ON uU.UserId = m.UpdatedBy
@@ -305,11 +305,11 @@ public class MenuRepo : IMenuRepo
                 ap.ApplicationName,
                 m.IsActive,
                 m.IsDeleted,
-                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
+                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUserName,
                 m.CreatedAt,
-                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUser,
+                ISNULL(CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')), '') AS ModifiedUserName,
                 m.UpdatedAt,
-                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUser,
+                ISNULL(CONCAT(uD.FirstName, ' ', ISNULL(uD.LastName, '')), '') AS DeletedUserName,
                 m.DeletedAt
             {baseSql}
             ORDER BY {sortColumn} {sortOrder}
@@ -380,7 +380,7 @@ public class MenuRepo : IMenuRepo
 
             // optional: if not found / not updated
             if (affected == 0)
-                return new BulkUpsertError { Message = "Menu not found.", StatuaCode = StatusCodes.Status404NotFound };
+                return new BulkUpsertError { Message = "Menu not found.", StatusCode = StatusCodes.Status404NotFound };
 
             // 2) Read the current state inside same tx
             var current = await GetMenuMasterByIdAsync(connection, tx, entity.MenuMasterId, cancellationToken);
@@ -465,7 +465,7 @@ public class MenuRepo : IMenuRepo
 
             var MenuProgramLinkId = await connection.QueryFirstOrDefaultAsync<int>(query,new { MenuMasterId= MenuMasterId, ProgramId= item.ProgramId },transaction:tx);
             if(MenuProgramLinkId<=0)
-                return new BulkUpsertError { Message = Messages.MenuProgramLinkNotFound, StatuaCode = StatusCodes.Status404NotFound };
+                return new BulkUpsertError { Message = Messages.MenuProgramLinkNotFound, StatusCode = StatusCodes.Status404NotFound };
             var sets = new List<string>();
             var p = new DynamicParameters();
 
@@ -871,10 +871,10 @@ public class MenuRepo : IMenuRepo
             new CommandDefinition(parentSql, new { WebMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken));
 
         if (parent.WebMenuId == 0)
-            return new BulkUpsertError { Message = Messages.ParentMenuNotFound, StatuaCode = StatusCodes.Status404NotFound };
+            return new BulkUpsertError { Message = Messages.ParentMenuNotFound, StatusCode = StatusCodes.Status404NotFound };
 
         if (!string.IsNullOrWhiteSpace(parent.MenuRoute))
-            return new BulkUpsertError { Message = Messages.CannotAddOrUpdate, StatuaCode = StatusCodes.Status406NotAcceptable };
+            return new BulkUpsertError { Message = Messages.CannotAddOrUpdate, StatusCode = StatusCodes.Status406NotAcceptable };
 
         return null;
     }
@@ -1084,10 +1084,10 @@ public class MenuRepo : IMenuRepo
             new CommandDefinition(parentSql, new { AppMenuId = parentId }, transaction: tx, cancellationToken: cancellationToken));
 
         if (parent.AppMenuId == 0)
-            return new BulkUpsertError { Message = Messages.ParentMenuNotFound, StatuaCode = StatusCodes.Status404NotFound };
+            return new BulkUpsertError { Message = Messages.ParentMenuNotFound, StatusCode = StatusCodes.Status404NotFound };
 
         if (!string.IsNullOrWhiteSpace(parent.MenuRoute))
-            return new BulkUpsertError { Message = Messages.CannotAddOrUpdate, StatuaCode = StatusCodes.Status406NotAcceptable };
+            return new BulkUpsertError { Message = Messages.CannotAddOrUpdate, StatusCode = StatusCodes.Status406NotAcceptable };
 
         return null;
     }

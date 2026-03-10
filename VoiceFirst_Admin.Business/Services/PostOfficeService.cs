@@ -375,7 +375,7 @@ public class PostOfficeService : IPostOfficeService
         }
         else
         {
-            return ApiResponse<PostOfficeDto>.Fail(error.Message, error.StatuaCode);
+            return ApiResponse<PostOfficeDto>.Fail(error.Message, error.StatusCode);
         }
         
     }

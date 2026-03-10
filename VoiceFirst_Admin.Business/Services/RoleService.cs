@@ -177,7 +177,7 @@ public class RoleService : IRoleService
             UpdatedBy = loginId
         };
 
-        if (dto.RoleName!=null || dto.RolePurpose!=null || dto.PlatformId != null)
+        if (dto.RoleName!=null || dto.RolePurpose!=null || dto.PlatformId != null || dto.Active.HasValue)
         {
             if (dto.RoleName != null)
             {
@@ -201,13 +201,14 @@ public class RoleService : IRoleService
                 }
             }
 
-             entity = new SysRoles
+            entity = new SysRoles
             {
                 SysRoleId = id,
                 RoleName = dto.RoleName ?? string.Empty,
                 IsMandatory = false,
                 RolePurpose = dto.RolePurpose,
                 ApplicationId = dto.PlatformId ?? default,
+                IsActive = dto.Active,
                 UpdatedBy = loginId
             };
 
@@ -268,7 +269,7 @@ public class RoleService : IRoleService
         if (ok!=null)
         {
                     
-            return ApiResponse<RoleDto>.Fail(ok.Message, ok.StatuaCode);
+            return ApiResponse<RoleDto>.Fail(ok.Message, ok.StatusCode);
                     
         }
         var updated = await _repo.GetByIdAsync(id, cancellationToken);

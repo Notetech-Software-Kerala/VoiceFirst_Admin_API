@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
@@ -24,15 +26,15 @@ namespace VoiceFirst_Admin.Data.Repositories
             _context = context;
         }
 
-        public async Task<BulkUpsertError?> CreateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> validations, List<SysUserCustomFieldOptions> options, int createdBy, CancellationToken cancellationToken = default)
+        public async Task<BulkUpsertResult?> CreateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> validations, List<SysUserCustomFieldOptions> options, int createdBy, CancellationToken cancellationToken = default)
         {
             using var connection = _context.CreateConnection();
             connection.Open();
             using var tx = connection.BeginTransaction();
             try
             {
-                const string sql = @"INSERT INTO SysUserCustomField (CountryName, FieldKey, FieldDataType, CreatedBy)
-                                 VALUES (@CountryName, @FieldKey, @FieldDataType, @CreatedBy);
+                const string sql = @"INSERT INTO SysUserCustomField (FieldName, FieldKey, FieldDataType, CreatedBy)
+                                 VALUES (@FieldName, @FieldKey, @FieldDataType, @CreatedBy);
                                  SELECT CAST(SCOPE_IDENTITY() as int);";
 
                 var id = await connection.ExecuteScalarAsync<int>(new CommandDefinition(sql, new
@@ -46,24 +48,41 @@ namespace VoiceFirst_Admin.Data.Repositories
                 var rows = 0;
                 if (validations != null && validations.Any())
                 {
-                    var validationError = await InsertSysUserCustomFieldValidationsAsync(connection, tx, entity.SysUserCustomFieldId, validations, createdBy, cancellationToken);
+                    var validationError = await InsertSysUserCustomFieldValidationsAsync(connection, tx, id, validations, createdBy, cancellationToken);
                     if (validationError != null)
                     {
-                        return validationError;
+                        return new BulkUpsertResult
+                        {
+                            Success = false,
+                            StatusCode = validationError.StatusCode,
+                            Message = validationError.Message
+                        };
+                        
                     }
                 }
 
                 if (options != null && options.Any())
                 {
-                    var optionError = await InsertSysUserCustomFieldOptionsAsync(connection, tx, entity.SysUserCustomFieldId, options, createdBy, cancellationToken);
+                    var optionError = await InsertSysUserCustomFieldOptionsAsync(connection, tx, id, options, createdBy, cancellationToken);
                     if (optionError != null)
                     {
-                        return optionError;
+                        return new BulkUpsertResult
+                        {
+                            Success = false,
+                            StatusCode = optionError.StatusCode,
+                            Message = optionError.Message
+                        };
                     }
                 }
 
                 tx.Commit();
-                return null;
+                return new BulkUpsertResult
+                {
+                    Success = true,
+                    Id = id,
+                    StatusCode = StatusCodes.Status201Created,
+                    Message = Messages.CustomFieldCreated
+                };
             }
             catch
             {
@@ -74,10 +93,49 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<SysUserCustomField> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            const string sqlField = @"SELECT SysUserCustomFieldId, CountryName, FieldKey, FieldDataType, IsActive, IsDeleted, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt
-                                       FROM SysUserCustomField WHERE SysUserCustomFieldId = @Id;";
+             const string sqlField = @"
+        SELECT 
+            f.SysUserCustomFieldId,
+            f.FieldName,
+            f.FieldKey, 
+            f.FieldDataType,
+            f.IsActive,
+            f.IsDeleted,
+            f.CreatedBy,
+            f.CreatedAt,
+            f.UpdatedBy,
+            f.UpdatedAt,
+            f.DeletedBy,
+            f.DeletedAt,
+            uC.UserId AS CreatedById,
+            CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+            uU.UserId AS UpdatedById,
+            CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
+            uD.UserId AS DeletedById,
+            CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
+        FROM SysUserCustomField f
+        INNER JOIN Users uC ON uC.UserId = f.CreatedBy
+        LEFT JOIN Users uU ON uU.UserId = f.UpdatedBy
+        LEFT JOIN Users uD ON uD.UserId = f.DeletedBy
+        WHERE f.SysUserCustomFieldId = @Id;";
             using var conn = _context.CreateConnection();
             var field = await conn.QueryFirstOrDefaultAsync<SysUserCustomField>(new CommandDefinition(sqlField, new { Id = id }, cancellationToken: cancellationToken));
+            return field;
+        }
+        public async Task<SysUserCustomField> ExistsByFieldKeyAsync(string fieldKey, int? excludeId = null, CancellationToken cancellationToken = default)
+        {
+            const string sqlField = @"SELECT SysUserCustomFieldId, FieldName, FieldKey, FieldDataType, IsActive, IsDeleted, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt
+                                       FROM SysUserCustomField WHERE FieldKey = @FieldKey;";
+            using var conn = _context.CreateConnection();
+            var field = await conn.QueryFirstOrDefaultAsync<SysUserCustomField>(new CommandDefinition(sqlField, new { FieldKey = fieldKey }, cancellationToken: cancellationToken));
+            return field;
+        }
+        public async Task<SysUserCustomField> ExistsByFieldNameAndDataTypeAsync(string fieldName, string fieldDataType, int? excludeId = null, CancellationToken cancellationToken = default)
+        {
+            const string sqlField = @"SELECT SysUserCustomFieldId, FieldName, FieldKey, FieldDataType, IsActive, IsDeleted, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt
+                                       FROM SysUserCustomField WHERE FieldName = @fieldName And FieldDataType = @FieldDataType;";
+            using var conn = _context.CreateConnection();
+            var field = await conn.QueryFirstOrDefaultAsync<SysUserCustomField>(new CommandDefinition(sqlField, new { FieldName = fieldName, FieldDataType= fieldDataType }, cancellationToken: cancellationToken));
             return field;
         }
 
@@ -121,14 +179,14 @@ namespace VoiceFirst_Admin.Data.Repositories
                         var sql = new StringBuilder();
                         sql.Append("UPDATE SysUserCustomField SET ");
                         sql.Append(string.Join(", ", sets));
-                        sql.Append(" WHERESysUserCustomFieldId = @SysUserCustomFieldId AND IsDeleted = 0;");
+                        sql.Append(" WHERE SysUserCustomFieldId = @SysUserCustomFieldId AND IsDeleted = 0;");
                         var cmd = new CommandDefinition(sql.ToString(), parameters, transaction: tx, cancellationToken: cancellationToken);
                         var affected = await connection.ExecuteAsync(cmd);
                         if (affected <= 0)
                         {
                             return new BulkUpsertError
                             {
-                                StatuaCode = StatusCodes.Status500InternalServerError,
+                                StatusCode = StatusCodes.Status500InternalServerError,
                                 Message = Messages.SomethingWentWrong
                             };
                         }
@@ -198,8 +256,8 @@ namespace VoiceFirst_Admin.Data.Repositories
 
                 var rows = await connection.ExecuteAsync(new CommandDefinition(sql, new { Id = id, DeletedBy = deletedBy }, transaction: tx, cancellationToken: cancellationToken));
 
-                const string delV = "UPDATE SysUserCustomFieldValidations SET IsDeleted = 1 WHERE SysUserCustomFieldId = @Id;";
-                const string delO = "UPDATE SysUserCustomFieldOptions SET IsDeleted = 1 WHERE SysUserCustomFieldId = @Id;";
+                const string delV = "UPDATE SysUserCustomFieldValidations SET IsActive = 0 WHERE SysUserCustomFieldId = @Id;";
+                const string delO = "UPDATE SysUserCustomFieldOptions SET IsActive = 0 WHERE SysUserCustomFieldId = @Id;";
                 await connection.ExecuteAsync(new CommandDefinition(delV, new { Id = id }, transaction: tx, cancellationToken: cancellationToken));
                 await connection.ExecuteAsync(new CommandDefinition(delO, new { Id = id }, transaction: tx, cancellationToken: cancellationToken));
 
@@ -242,37 +300,73 @@ namespace VoiceFirst_Admin.Data.Repositories
                     @CreatedBy
                 );";
 
-            var parameters = addValidations
-                .Where(v =>
-                    !string.IsNullOrWhiteSpace(v.RuleName) ||
-                    v.RuleValue != null ||
-                    !string.IsNullOrWhiteSpace(v.message))
-                .Select(v => new
+            int affectedRows = 0;
+
+            foreach (var v in addValidations)
+            {
+                if (string.IsNullOrWhiteSpace(v.RuleName) &&
+                    v.RuleValue == null &&
+                    string.IsNullOrWhiteSpace(v.message))
+                                {
+                                    return new BulkUpsertError
+                                    {
+                                        StatusCode = StatusCodes.Status400BadRequest,
+                                        Message = Messages.CustomFieldValidationRequired
+                                    };
+                                }
+                if (string.IsNullOrWhiteSpace(v.RuleName))
+                {
+                    return new BulkUpsertError
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = Messages.CustomFieldValidationRuleNameRequired
+                    };
+                }
+
+                if (v.RuleValue == null)
+                {
+                    return new BulkUpsertError
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = Messages.CustomFieldValidationRuleValueRequired
+                    };
+                }
+
+                if (string.IsNullOrWhiteSpace(v.message))
+                {
+                    return new BulkUpsertError
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = Messages.CustomFieldValidationMessageRequired
+                    };
+                }
+
+                var parameter = new
                 {
                     SysUserCustomFieldId = sysUserCustomFieldId,
-                    v.RuleName,
-                    v.RuleValue,
-                    v.message,
+                    RuleName = v.RuleName,
+                    RuleValue = v.RuleValue,
+                    message = v.message,
                     CreatedBy = createdBy
-                })
-                .ToList();
+                };
 
-            if (!parameters.Any())
-                return null;
+                var cmd = new CommandDefinition(
+                    sql,
+                    parameter,
+                    transaction: tx,
+                    cancellationToken: cancellationToken);
 
-            var cmd = new CommandDefinition(
-                sql,
-                parameters,
-                transaction: tx,
-                cancellationToken: cancellationToken);
+                affectedRows += await connection.ExecuteAsync(cmd);
+            }
 
-            var affected = await connection.ExecuteAsync(cmd);
+            
 
-            if (affected <= 0)
+
+            if (affectedRows != addValidations.Count())
             {
                 return new BulkUpsertError
                 {
-                    StatuaCode = StatusCodes.Status500InternalServerError,
+                    StatusCode = StatusCodes.Status500InternalServerError,
                     Message = Messages.SomethingWentWrong
                 };
             }
@@ -306,33 +400,60 @@ namespace VoiceFirst_Admin.Data.Repositories
                 @CreatedBy
             );";
 
-            var parameters = addOptions
-                .Where(o => !string.IsNullOrWhiteSpace(o.label) || o.value != null)
-                .Select(o => new
+            int affectedRows = 0;
+
+            foreach (var o in addOptions)
+            {
+                if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
+                {
+                    return new BulkUpsertError
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = Messages.CustomFieldOptionRequired
+                    };
+                }
+                if (string.IsNullOrWhiteSpace(o.label))
+                {
+                    return new BulkUpsertError
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = Messages.CustomFieldOptionLabelRequired
+                    };
+                }
+
+                if (o.value == null)
+                {
+                    return new BulkUpsertError
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = Messages.CustomFieldOptionValueRequired
+                    };
+                }
+
+                var parameter = new
                 {
                     SysUserCustomFieldId = sysUserCustomFieldId,
-                    o.label,
-                    o.value,
+                    label = o.label,
+                    value = o.value,
                     CreatedBy = createdBy
-                })
-                .ToList();
+                };
 
-            if (!parameters.Any())
-                return null;
+                var cmd = new CommandDefinition(
+                    sql,
+                    parameter,
+                    transaction: tx,
+                    cancellationToken: cancellationToken);
 
-            var cmd = new CommandDefinition(
-                sql,
-                parameters,
-                transaction: tx,
-                cancellationToken: cancellationToken);
+                affectedRows += await connection.ExecuteAsync(cmd);
+            }
 
-            var affected = await connection.ExecuteAsync(cmd);
+            
 
-            if (affected <= 0)
+            if (affectedRows != addOptions.Count())
             {
                 return new BulkUpsertError
                 {
-                    StatuaCode = StatusCodes.Status500InternalServerError,
+                    StatusCode = StatusCodes.Status500InternalServerError,
                     Message = Messages.SomethingWentWrong
                 };
             }
@@ -401,7 +522,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                         {
                             return new BulkUpsertError
                             {
-                                StatuaCode = StatusCodes.Status500InternalServerError,
+                                StatusCode = StatusCodes.Status500InternalServerError,
                                 Message = Messages.SomethingWentWrong
                             };
                         }
@@ -480,7 +601,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                         {
                             return new BulkUpsertError
                             {
-                                StatuaCode = StatusCodes.Status500InternalServerError,
+                                StatusCode = StatusCodes.Status500InternalServerError,
                                 Message = Messages.SomethingWentWrong
                             };
                         }
@@ -489,6 +610,208 @@ namespace VoiceFirst_Admin.Data.Repositories
             }
 
             return null;
+        }
+
+        public async Task<PagedResultDto<SysUserCustomField>> GetAllAsync(CustomFieldFilterDto filter, CancellationToken cancellationToken = default)
+        {
+            var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+            var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+            var offset = (page - 1) * limit;
+
+            var parameters = new DynamicParameters();
+            parameters.Add("Offset", offset);
+            parameters.Add("Limit", limit);
+
+            var baseSql = new StringBuilder(@"
+                FROM SysUserCustomField f
+                INNER JOIN Users uC ON uC.UserId = f.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = f.UpdatedBy
+                LEFT JOIN Users uD ON uD.UserId = f.DeletedBy
+                WHERE 1=1");
+
+            if (filter.Active.HasValue)
+            {
+                baseSql.Append(" AND f.IsActive = @IsActive");
+                parameters.Add("IsActive", filter.Active.Value);
+            }
+            if (filter.Deleted.HasValue)
+            {
+                baseSql.Append(" AND f.IsDeleted = @IsDeleted");
+                parameters.Add("IsDeleted", filter.Deleted.Value);
+            }
+
+            var searchByMap = new Dictionary<SysUserCustomFieldSearchBy, string>
+            {
+                [SysUserCustomFieldSearchBy.FieldName] = "f.FieldName",
+                [SysUserCustomFieldSearchBy.FieldKey] = "f.FieldKey",
+                [SysUserCustomFieldSearchBy.FieldDataType] = "f.FieldDataType",
+                [SysUserCustomFieldSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
+                [SysUserCustomFieldSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+                [SysUserCustomFieldSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
+            };
+
+            if (!string.IsNullOrWhiteSpace(filter.SearchText))
+            {
+                if (filter.SearchBy.HasValue && searchByMap.TryGetValue(filter.SearchBy.Value, out var col))
+                    baseSql.Append($" AND {col} LIKE @Search");
+                else
+                    baseSql.Append(@" AND (f.FieldName LIKE @Search OR f.FieldKey LIKE @Search OR f.FieldDataType LIKE @Search
+                        OR CONCAT(uC.FirstName,' ',uC.LastName) LIKE @Search OR CONCAT(uU.FirstName,' ',uU.LastName) LIKE @Search)");
+
+                parameters.Add("Search", $"%{filter.SearchText}%");
+            }
+
+            var sortMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["SysUserCustomFieldId"] = "f.SysUserCustomFieldId",
+                ["FieldName"] = "f.FieldName",
+                ["FieldKey"] = "f.FieldKey",
+                ["FieldDataType"] = "f.FieldDataType",
+                ["Active"] = "f.IsActive",
+                ["Deleted"] = "f.IsDeleted",
+                ["CreatedDate"] = "f.CreatedAt",
+                ["ModifiedDate"] = "f.UpdatedAt",
+            };
+
+            var sortOrder = filter.SortOrder == VoiceFirst_Admin.Utilities.DTOs.Shared.SortOrder.Desc ? "DESC" : "ASC";
+            var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "SysUserCustomFieldId" : filter.SortBy;
+            if (!sortMap.TryGetValue(sortKey, out var sortColumn))
+                sortColumn = sortMap["SysUserCustomFieldId"];
+
+            var countSql = "SELECT COUNT(1) " + baseSql;
+            var itemsSql = $@"
+                SELECT f.SysUserCustomFieldId, f.FieldName, f.FieldKey, f.FieldDataType, f.IsActive, f.IsDeleted, f.CreatedAt, f.UpdatedAt,
+                       uC.UserId AS CreatedById, CONCAT(uC.FirstName,' ',uC.LastName) AS CreatedUserName,
+                       uU.UserId AS UpdatedById, CONCAT(uU.FirstName,' ',uU.LastName) AS UpdatedUserName,
+                       uD.UserId AS DeletedById, CONCAT(uD.FirstName,' ',uD.LastName) AS DeletedUserName
+                {baseSql}
+                ORDER BY {sortColumn} {sortOrder}
+                OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
+
+            using var connection = _context.CreateConnection();
+            var totalCount = await connection.ExecuteScalarAsync<int>(new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
+            var items = await connection.QueryAsync<SysUserCustomField>(new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken));
+
+            return new PagedResultDto<SysUserCustomField>
+            {
+                Items = items.ToList(),
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = limit
+            };
+        }
+        public async Task<PagedResultDto<SysUserCustomField>> GetLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
+        {
+            var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+            var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+            var offset = (page - 1) * limit;
+
+            var parameters = new DynamicParameters();
+            parameters.Add("Offset", offset);
+            parameters.Add("Limit", limit);
+
+            var baseSql = new StringBuilder(@"
+                FROM SysUserCustomField f
+                INNER JOIN Users uC ON uC.UserId = f.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = f.UpdatedBy
+                LEFT JOIN Users uD ON uD.UserId = f.DeletedBy
+                WHERE 1=1");
+
+            
+
+            var searchByMap = new Dictionary<SysUserCustomFieldSearchBy, string>
+            {
+                [SysUserCustomFieldSearchBy.FieldName] = "f.FieldName",
+                [SysUserCustomFieldSearchBy.FieldKey] = "f.FieldKey",
+                [SysUserCustomFieldSearchBy.FieldDataType] = "f.FieldDataType",
+                [SysUserCustomFieldSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
+                [SysUserCustomFieldSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+                [SysUserCustomFieldSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
+            };
+
+            if (!string.IsNullOrWhiteSpace(filter.SearchText))
+            {
+                baseSql.Append(@" AND (f.FieldName LIKE @Search OR f.FieldKey LIKE @Search OR f.FieldDataType LIKE @Search
+                        OR CONCAT(uC.FirstName,' ',uC.LastName) LIKE @Search OR CONCAT(uU.FirstName,' ',uU.LastName) LIKE @Search)");
+
+                parameters.Add("Search", $"%{filter.SearchText}%");
+            }
+
+            
+
+            
+            
+
+            var countSql = "SELECT COUNT(1) " + baseSql;
+            var itemsSql = $@"
+                SELECT f.SysUserCustomFieldId, f.FieldName, f.FieldDataType,
+                {baseSql}
+                ORDER BY SysUserCustomFieldId
+                OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
+
+            using var connection = _context.CreateConnection();
+            var totalCount = await connection.ExecuteScalarAsync<int>(new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
+            var items = await connection.QueryAsync<SysUserCustomField>(new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken));
+
+            return new PagedResultDto<SysUserCustomField>
+            {
+                Items = items.ToList(),
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = limit
+            };
+        }
+        public async Task<IEnumerable<SysUserCustomFieldValidations>> GetValidationsByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT 
+                    v.SysUserCustomFieldValidationId,
+                    v.SysUserCustomFieldId,
+                    v.RuleName,
+                    v.RuleValue,
+                    v.message,
+                    v.IsActive,
+                    v.CreatedBy,
+                    v.CreatedAt,
+                    v.UpdatedBy,
+                    v.UpdatedAt,
+                    uC.UserId AS CreatedById,
+                    CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+                    uU.UserId AS UpdatedById,
+                    CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName
+                FROM SysUserCustomFieldValidations v
+                INNER JOIN Users uC ON uC.UserId = v.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = v.UpdatedBy
+                WHERE v.SysUserCustomFieldId = @Id
+                ORDER BY v.SysUserCustomFieldValidationId;";
+            using var conn = _context.CreateConnection();
+            return await conn.QueryAsync<SysUserCustomFieldValidations>(new CommandDefinition(sql, new { Id = fieldId }, cancellationToken: cancellationToken));
+        }
+
+        public async Task<IEnumerable<SysUserCustomFieldOptions>> GetOptionsByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT 
+                    o.SysUserCustomFieldOptionsId,
+                    o.SysUserCustomFieldId,
+                    o.label,
+                    o.value,
+                    o.IsActive,
+                    o.CreatedBy,
+                    o.CreatedAt,
+                    o.UpdatedBy,
+                    o.UpdatedAt,
+                    uC.UserId AS CreatedById,
+                    CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+                    uU.UserId AS UpdatedById,
+                    CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName
+                FROM SysUserCustomFieldOptions o
+                INNER JOIN Users uC ON uC.UserId = o.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = o.UpdatedBy
+                WHERE o.SysUserCustomFieldId = @Id
+                ORDER BY o.SysUserCustomFieldOptionsId;";
+            using var conn = _context.CreateConnection();
+            return await conn.QueryAsync<SysUserCustomFieldOptions>(new CommandDefinition(sql, new { Id = fieldId }, cancellationToken: cancellationToken));
         }
     }
 }

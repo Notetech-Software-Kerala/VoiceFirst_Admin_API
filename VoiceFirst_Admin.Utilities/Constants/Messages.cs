@@ -576,6 +576,36 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string IssueMediaFormatNotFound = "Selected issue media format is not available." + BaseRefreshMessage;
         public const string IssueMediaFormatNotActive = "Selected issue media format is inactive." + BaseRefreshMessage;
 
+        //----------------------- Custom field ------------------------
+
+        public const string CustomFieldAlreadyExists = "Custom field already exists. Please add another name.";
+        public const string CustomFieldKeyAlreadyExists = "Custom field key already exists. Please add another.";
+        public const string CustomFieldAlreadyExistsRecoverable = "Custom field already exists but was deleted. You can recover it.";
+        public const string CustomFieldCreated = "Custom field created successfully.";
+        public const string CustomFieldRecovered = "Custom field recovered successfully.";
+        public const string CustomFieldNotFoundById = "Custom field not found.";
+        public const string CustomFieldsNotFound = "Custom fields not found.";
+        public const string CustomFieldDeleted = "Custom field deleted successfully.";
+        public const string CustomFieldDeletionFailed = "Failed to delete custom field.";
+        public const string CustomFieldRetrieved = "Custom field retrieved successfully.";
+        public const string CustomFieldsRetrieved = "Custom fields retrieved successfully.";
+        public const string CustomFieldUpdated = "Custom field updated successfully.";
+        public const string NoActiveCustomFields = "No active custom fields available.";
+        public const string CustomFieldAlreadyRecovered = "Custom field is already recovered. Please refresh again.";
+        public const string CustomFieldAlreadyDeleted = "Custom field is already deleted. Please refresh again.";
+        public const string CustomFieldNotFound = "Selected custom field is not available." + BaseRefreshMessage;
+        public const string CustomFieldNotActive = "Selected custom field is inactive." + BaseRefreshMessage;
+        public const string CustomFieldValidationRuleNameRequired = "Rule name is required.";
+        public const string CustomFieldValidationRuleValueRequired = "Rule value is required.";
+        public const string CustomFieldValidationMessageRequired = "Message is required.";
+        public const string CustomFieldValidationRequired = "Rule name, rule value, and message are required.";
+        public const string CustomFieldOptionLabelRequired = "Label is required.";
+        public const string CustomFieldOptionValueRequired = "Value is required.";
+        public const string CustomFieldOptionRequired = "Custom Field Option is required.";
+        public const string CustomFieldValidationIdRequired = "Custom field validation id is required.";
+        public const string CustomFieldValidationAtLeastRequired = "At least one field must be provided for update";
+        public const string CustomFieldOptionIdRequired = "Custom field Option id is required.";
+        public const string CustomFieldOptionAtLeastRequired = "At least one field must be provided for update";
         // ===== APPLICATION VERSION =====
         public const string ApplicationVersionAlreadyExists = "This version already exists for the selected application and type.";
         public const string ApplicationVersionCreated = "Application version created successfully.";

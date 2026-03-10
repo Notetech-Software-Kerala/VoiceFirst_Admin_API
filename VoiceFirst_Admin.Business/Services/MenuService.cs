@@ -29,7 +29,7 @@ public class MenuService : IMenuService
 
         var ok = await _repo.BulkUpdateWebMenusAsync(dto, loginId, cancellationToken);
         if (ok!=null) 
-            return ApiResponse<object>.Fail(ok.Message, ok.StatuaCode);
+            return ApiResponse<object>.Fail(ok.Message, ok.StatusCode);
         return ApiResponse<object>.Ok(null!, Messages.WebMenuUpdatedSucessfully);
     }
     public async Task<ApiResponse<object>> BulkUpdateAppMenusAsync(AppMenuBulkUpdateDto dto, int loginId, CancellationToken cancellationToken = default)
@@ -38,7 +38,7 @@ public class MenuService : IMenuService
 
         var ok = await _repo.BulkUpdateAppMenusAsync(dto, loginId, cancellationToken);
         if (ok!=null) 
-            return ApiResponse<object>.Fail(ok.Message, ok.StatuaCode);
+            return ApiResponse<object>.Fail(ok.Message, ok.StatusCode);
         return ApiResponse<object>.Ok(null, Messages.AppMenuUpdatedSucessfully);
     }
     public async Task<ApiResponse<MenuMasterDto>> CreateAsync(MenuCreateDto dto, int loginId, CancellationToken cancellationToken = default)
@@ -273,7 +273,7 @@ public class MenuService : IMenuService
 
             var err = await _repo.UpdateMenuMasterAsync(entity, programIdsModel, updateProgramIdsModel, cancellationToken);
             if (err != null)
-                return ApiResponse<MenuMasterDto>.Fail(err.Message, err.StatuaCode);
+                return ApiResponse<MenuMasterDto>.Fail(err.Message, err.StatusCode);
         }
 
         // -------------------------
