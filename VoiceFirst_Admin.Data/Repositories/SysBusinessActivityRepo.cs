@@ -6,10 +6,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
+using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Enums;
+using VoiceFirst_Admin.Utilities.Models.Common;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 using static Dapper.SqlMapper;
 
@@ -20,9 +22,6 @@ namespace VoiceFirst_Admin.Data.Repositories
         private readonly IDapperContext _context;
 
     
-
-
-
 
         public SysBusinessActivityRepo(IDapperContext context)
         {
@@ -45,7 +44,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<int> CreateAsync
-            (SysBusinessActivity entity,
+            (SysBusinessActivity entity, List<int> CustomFieldIds,
             CancellationToken cancellationToken = default)
         {
             const string sql = @"
@@ -53,16 +52,181 @@ namespace VoiceFirst_Admin.Data.Repositories
                 VALUES (@BusinessActivityName,@CreatedBy);
                 SELECT CAST(SCOPE_IDENTITY() AS int);";
 
-            var cmd = new CommandDefinition(sql, new
+               
+                using var connection = _context.CreateConnection();
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+
+            using var transaction = connection.BeginTransaction();
+            try
             {
-                entity.BusinessActivityName,
-                entity.CreatedBy,
-            }, cancellationToken: cancellationToken);
+                var cmd = new CommandDefinition(sql, new
+                {
+                    entity.BusinessActivityName,
+                    entity.CreatedBy,
+                }, transaction: transaction, cancellationToken: cancellationToken);
+
+                int id = await connection.ExecuteScalarAsync<int>(cmd);
+
+                if (CustomFieldIds != null && CustomFieldIds.Count > 0)
+                {
+                    await InsertCustomFieldLinksAsync(connection, transaction, id, entity.CreatedBy, CustomFieldIds, cancellationToken);
+                }
+
+                transaction.Commit();
+
+                return id;
+            }
+            catch
+            {
+                try { transaction.Rollback(); } catch { }
+                return 0;
+            }
+        }
+        public async Task<bool> UpdateAsync(
+                SysBusinessActivity entity,
+                List<int>? addCustomFieldIds,
+                List<SysBusinessActivityUserCustomFieldLink>? updateCustomFieldIds,
+                CancellationToken cancellationToken = default)
+        {
             using var connection = _context.CreateConnection();
-            int id = await connection.ExecuteScalarAsync<int>(cmd);
-            return id;
+            connection.Open();
+
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                await UpdateBusinessActivityAsync(connection, transaction, entity, cancellationToken);
+                
+                await InsertCustomFieldLinksAsync(connection, transaction, entity.SysBusinessActivityId, entity.UpdatedBy??0, addCustomFieldIds, cancellationToken);
+                await UpdateCustomFieldLinksAsync(connection, transaction, entity.SysBusinessActivityId, entity.UpdatedBy ?? 0, updateCustomFieldIds, cancellationToken);
+
+                transaction.Commit();
+                return true;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
+        private async Task UpdateBusinessActivityAsync(
+            IDbConnection connection,
+            IDbTransaction transaction,
+            SysBusinessActivity entity,
+            CancellationToken cancellationToken)
+        {
+            var sets = new List<string>();
+            var parameters = new DynamicParameters();
+
+            parameters.Add("BusinessActivityName", entity.BusinessActivityName);
+            parameters.Add("Active", entity.IsActive.HasValue
+                ? (entity.IsActive.Value ? 1 : 0)
+                : (int?)null);
+
+            if (!string.IsNullOrWhiteSpace(entity.BusinessActivityName))
+                sets.Add("BusinessActivityName = @BusinessActivityName");
+
+            if (entity.IsActive.HasValue)
+                sets.Add("IsActive = @Active");
+
+            if (sets.Count == 0)
+                return;
+
+            sets.Add("UpdatedBy = @UpdatedBy");
+            sets.Add("UpdatedAt = SYSDATETIME()");
+
+            parameters.Add("UpdatedBy", entity.UpdatedBy);
+            parameters.Add("ActivityId", entity.SysBusinessActivityId);
+
+            var sql = $@"
+UPDATE SysBusinessActivity
+SET {string.Join(", ", sets)}
+WHERE SysBusinessActivityId = @ActivityId
+  AND IsDeleted = 0
+  AND (
+        (@BusinessActivityName IS NOT NULL AND BusinessActivityName <> @BusinessActivityName)
+     OR (@Active IS NOT NULL AND IsActive <> @Active)
+  );";
+
+            await connection.ExecuteAsync(
+                new CommandDefinition(
+                    sql,
+                    parameters,
+                    transaction: transaction,
+                    cancellationToken: cancellationToken));
+        }
+
+        private async Task InsertCustomFieldLinksAsync(
+            IDbConnection connection,
+            IDbTransaction transaction,
+            int SysBusinessActivityId,
+            int CreatedBy,
+            List<int>? addCustomFieldIds,
+            CancellationToken cancellationToken)
+        {
+            if (addCustomFieldIds == null || addCustomFieldIds.Count == 0)
+                return;
+
+            const string sql = @"
+INSERT INTO SysBusinessActivityUserCustomFieldLink
+    (SysBusinessActivityId, SysUserCustomFieldId, CreatedBy)
+VALUES
+    (@ActivityId, @FieldId, @CreatedBy);";
+
+            foreach (var fieldId in addCustomFieldIds.Distinct())
+            {
+                await connection.ExecuteAsync(
+                    new CommandDefinition(
+                        sql,
+                        new
+                        {
+                            ActivityId = SysBusinessActivityId,
+                            FieldId = fieldId,
+                            CreatedBy = CreatedBy
+                        },
+                        transaction: transaction,
+                        cancellationToken: cancellationToken));
+            }
+        }
+
+        private async Task UpdateCustomFieldLinksAsync(
+            IDbConnection connection,
+            IDbTransaction transaction,
+            int SysBusinessActivityId,
+            int UpdatedBy,
+            List<SysBusinessActivityUserCustomFieldLink>? updateCustomFieldIds,
+            CancellationToken cancellationToken)
+        {
+            if (updateCustomFieldIds == null || updateCustomFieldIds.Count == 0)
+                return;
+
+            const string sql = @"
+UPDATE SysBusinessActivityUserCustomFieldLink
+SET
+    IsActive = @IsActive,
+    UpdatedBy = @UpdatedBy,
+    UpdatedAt = SYSDATETIME()
+WHERE SysBusinessActivityUserCustomFieldLinkId = @LinkId
+  AND SysBusinessActivityId = @ActivityId";
+
+            foreach (var item in updateCustomFieldIds)
+            {
+                await connection.ExecuteAsync(
+                    new CommandDefinition(
+                        sql,
+                        new
+                        {
+                            LinkId = item.SysBusinessActivityUserCustomFieldLinkId,
+                            ActivityId = SysBusinessActivityId,
+                            IsActive = item.IsActive,
+                            UpdatedBy = UpdatedBy 
+                        },
+                        transaction: transaction,
+                        cancellationToken: cancellationToken));
+            }
+        }
 
         public async Task<SysBusinessActivityDTO?> GetByIdAsync(
           int ActivityId,
@@ -100,6 +264,39 @@ namespace VoiceFirst_Admin.Data.Repositories
             );
             return entity;
         }
+        public async Task<IEnumerable<SysBusinessActivityUserCustomFieldLink?>> GetCustomFieldByIdAsync(int ActivityId, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT 
+                    s.SysBusinessActivityUserCustomFieldLinkId,
+                    s.SysBusinessActivityId  ,
+                    s.SysUserCustomFieldId  ,
+                    cf.FieldDataType  ,
+                    cf.FieldName  ,
+                    s.IsActive ,
+                    s.CreatedAt ,
+                    s.UpdatedAt ,
+
+                    -- Created User
+                    CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUserName,
+
+                    -- Updated User
+                    CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUserName
+
+
+                FROM dbo.SysBusinessActivityUserCustomFieldLink s
+                INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
+                INNER JOIN dbo.SysUserCustomField cf ON cf.SysUserCustomFieldId = s.SysUserCustomFieldId
+                LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
+                WHERE s.SysBusinessActivityId = @ActivityId;
+                ";
+
+            using var connection = _context.CreateConnection();
+            var entity = await connection.QueryAsync<SysBusinessActivityUserCustomFieldLink>(
+                new CommandDefinition(sql, new { ActivityId = ActivityId }, cancellationToken: cancellationToken)
+            );
+            return entity;
+        }
 
 
 
@@ -127,6 +324,59 @@ namespace VoiceFirst_Admin.Data.Repositories
                 );
                 return dto;
             }
+        public async Task<SysBusinessActivityUserCustomFieldLink> IsCustomFieldExistByActivityAsync(
+          int activityId,int customFieldId,
+          CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+        SELECT *
+        FROM SysBusinessActivityUserCustomFieldLink
+        WHERE SysUserCustomFieldId = @SysUserCustomFieldId
+          AND  SysBusinessActivityId = @ActivityId";
+
+            using var connection = _context.CreateConnection();
+
+            var dto = await connection.QuerySingleOrDefaultAsync<SysBusinessActivityUserCustomFieldLink>(
+                new CommandDefinition(
+                    sql,
+                    new
+                    {
+                        SysUserCustomFieldId = customFieldId,
+                        ActivityId = activityId
+                    },
+                    cancellationToken: cancellationToken
+                )
+            );
+
+            return dto;
+        }
+        public async Task<SysBusinessActivityUserCustomFieldLink?> GetCustomFieldLinkByIdAsync(
+    int customFieldLinkId,
+    int? activityId,
+    CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+        SELECT *
+        FROM SysBusinessActivityUserCustomFieldLink
+        WHERE SysBusinessActivityUserCustomFieldLinkId = @CustomFieldLinkId
+          AND (@ActivityId IS NULL OR SysBusinessActivityId = @ActivityId)";
+
+            using var connection = _context.CreateConnection();
+
+            var dto = await connection.QuerySingleOrDefaultAsync<SysBusinessActivityUserCustomFieldLink>(
+                new CommandDefinition(
+                    sql,
+                    new
+                    {
+                        CustomFieldLinkId = customFieldLinkId,
+                        ActivityId = activityId
+                    },
+                    cancellationToken: cancellationToken
+                )
+            );
+
+            return dto;
+        }
 
 
 
@@ -326,53 +576,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
       
-        public async Task<bool> UpdateAsync(
-           SysBusinessActivity entity,
-           CancellationToken cancellationToken = default)
-            {
-                var sets = new List<string>();
-                var parameters = new DynamicParameters();
-
-                // Always add parameters (nullable-safe)
-                parameters.Add("BusinessActivityName", entity.BusinessActivityName);
-                parameters.Add("Active", entity.IsActive.HasValue
-                    ? (entity.IsActive.Value ? 1 : 0)
-                    : (int?)null);
-
-                if (!string.IsNullOrWhiteSpace(entity.BusinessActivityName))
-                    sets.Add("BusinessActivityName = @BusinessActivityName");
-
-                if (entity.IsActive.HasValue)
-                    sets.Add("IsActive = @Active");
-
-                if (sets.Count == 0)
-                    return false;
-
-                // Audit fields (only when real change occurs)
-                sets.Add("UpdatedBy = @UpdatedBy");
-                sets.Add("UpdatedAt = SYSDATETIME()");
-
-                parameters.Add("UpdatedBy", entity.UpdatedBy);
-                parameters.Add("ActivityId", entity.SysBusinessActivityId);
-
-                var sql = $@"
-                UPDATE SysBusinessActivity
-                SET {string.Join(", ", sets)}
-                WHERE SysBusinessActivityId = @ActivityId
-                  AND IsDeleted = 0
-                  AND (
-                        (@BusinessActivityName IS NOT NULL 
-                            AND BusinessActivityName <> @BusinessActivityName)
-                     OR (@Active IS NOT NULL 
-                            AND IsActive <> @Active)
-                  );";
-
-                using var connection = _context.CreateConnection();
-                var affected = await connection.ExecuteAsync(
-                    new CommandDefinition(sql, parameters, cancellationToken: cancellationToken));
-
-                return affected > 0;
-            }
+        
 
 
 

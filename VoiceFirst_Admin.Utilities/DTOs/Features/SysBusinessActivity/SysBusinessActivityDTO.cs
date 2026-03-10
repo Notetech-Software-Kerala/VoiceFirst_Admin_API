@@ -1,3 +1,5 @@
+using VoiceFirst_Admin.Utilities.DTOs.Features.BusinessActivityUserCustomFieldLink;
+
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity
 {
     public class SysBusinessActivityDTO
@@ -12,5 +14,11 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity
         public DateTime? ModifiedDate { get; set; }
         public string DeletedUser { get; set; } = string.Empty;
         public DateTime? DeletedDate { get; set; }
+    }
+    public class SysBusinessActivityDetailsDTO : SysBusinessActivityDTO
+    {
+        
+
+        public List<BusinessActivityUserCustomFieldDto>? activityCustomFields { get; set; }
     }
 }

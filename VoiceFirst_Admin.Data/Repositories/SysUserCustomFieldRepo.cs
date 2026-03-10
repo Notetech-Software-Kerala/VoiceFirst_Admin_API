@@ -26,7 +26,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             _context = context;
         }
 
-        public async Task<BulkUpsertResult?> CreateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> validations, List<SysUserCustomFieldOptions> options, int createdBy, CancellationToken cancellationToken = default)
+        public async Task<int> CreateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> validations, List<SysUserCustomFieldOptions> options, int createdBy, CancellationToken cancellationToken = default)
         {
             using var connection = _context.CreateConnection();
             connection.Open();
@@ -48,46 +48,23 @@ namespace VoiceFirst_Admin.Data.Repositories
                 var rows = 0;
                 if (validations != null && validations.Any())
                 {
-                    var validationError = await InsertSysUserCustomFieldValidationsAsync(connection, tx, id, validations, createdBy, cancellationToken);
-                    if (validationError != null)
-                    {
-                        return new BulkUpsertResult
-                        {
-                            Success = false,
-                            StatusCode = validationError.StatusCode,
-                            Message = validationError.Message
-                        };
-                        
-                    }
+                     await InsertSysUserCustomFieldValidationsAsync(connection, tx, id, validations, createdBy, cancellationToken);
+                    
                 }
 
                 if (options != null && options.Any())
                 {
-                    var optionError = await InsertSysUserCustomFieldOptionsAsync(connection, tx, id, options, createdBy, cancellationToken);
-                    if (optionError != null)
-                    {
-                        return new BulkUpsertResult
-                        {
-                            Success = false,
-                            StatusCode = optionError.StatusCode,
-                            Message = optionError.Message
-                        };
-                    }
+                     await InsertSysUserCustomFieldOptionsAsync(connection, tx, id, options, createdBy, cancellationToken);
+                    
                 }
 
                 tx.Commit();
-                return new BulkUpsertResult
-                {
-                    Success = true,
-                    Id = id,
-                    StatusCode = StatusCodes.Status201Created,
-                    Message = Messages.CustomFieldCreated
-                };
+                return id;
             }
             catch
             {
                 try { tx.Rollback(); } catch { }
-                throw;
+                return 0;
             }
         }
 
@@ -139,7 +116,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             return field;
         }
 
-        public async Task<BulkUpsertError?> UpdateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> addValidations, List<SysUserCustomFieldOptions> addOptions, IEnumerable<SysUserCustomFieldValidations> validations, IEnumerable<SysUserCustomFieldOptions> options, int updatedBy, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> addValidations, List<SysUserCustomFieldOptions> addOptions, IEnumerable<SysUserCustomFieldValidations> validations, IEnumerable<SysUserCustomFieldOptions> options, int updatedBy, CancellationToken cancellationToken = default)
         {
             using var connection = _context.CreateConnection();
             connection.Open();
@@ -181,15 +158,8 @@ namespace VoiceFirst_Admin.Data.Repositories
                         sql.Append(string.Join(", ", sets));
                         sql.Append(" WHERE SysUserCustomFieldId = @SysUserCustomFieldId AND IsDeleted = 0;");
                         var cmd = new CommandDefinition(sql.ToString(), parameters, transaction: tx, cancellationToken: cancellationToken);
-                        var affected = await connection.ExecuteAsync(cmd);
-                        if (affected <= 0)
-                        {
-                            return new BulkUpsertError
-                            {
-                                StatusCode = StatusCodes.Status500InternalServerError,
-                                Message = Messages.SomethingWentWrong
-                            };
-                        }
+                         await connection.ExecuteAsync(cmd);
+                        
                     }
 
                 }
@@ -198,48 +168,36 @@ namespace VoiceFirst_Admin.Data.Repositories
 
                 if (addValidations != null && addValidations.Any())
                 {
-                    var validationError = await InsertSysUserCustomFieldValidationsAsync(connection, tx, entity.SysUserCustomFieldId, addValidations, updatedBy, cancellationToken);
-                    if (validationError != null)
-                    {
-                        return validationError;
-                    }
+                    await InsertSysUserCustomFieldValidationsAsync(connection, tx, entity.SysUserCustomFieldId, addValidations, updatedBy, cancellationToken);
+                    
                 }
 
                 if (addOptions != null && addOptions.Any())
                 {
-                    var optionError = await InsertSysUserCustomFieldOptionsAsync(connection, tx, entity.SysUserCustomFieldId, addOptions, updatedBy, cancellationToken);
-                    if (optionError != null)
-                    {
-                        return optionError;
-                    }
+                    InsertSysUserCustomFieldOptionsAsync(connection, tx, entity.SysUserCustomFieldId, addOptions, updatedBy, cancellationToken);
+                   
                 }
                 if (validations != null && validations.Any())
                 {
-                    var validationError = await UpdateSysUserCustomFieldValidationsAsync(connection, tx, validations, updatedBy, cancellationToken);
-                    if (validationError != null)
-                    {
-                        return validationError;
-                    }
+                    await UpdateSysUserCustomFieldValidationsAsync(connection, tx, validations, updatedBy, cancellationToken);
+                    
 
                 }
 
 
                 if (options != null && options.Any())
                 {
-                    var optionError = await UpdateSysUserCustomFieldOptionsAsync(connection, tx, options, updatedBy, cancellationToken);
-                    if (optionError != null)
-                    {
-                        return optionError;
-                    }
+                     await UpdateSysUserCustomFieldOptionsAsync(connection, tx, options, updatedBy, cancellationToken);
+                   
                 }
 
                 tx.Commit();
-                return null;
+                return true;
             }
             catch
             {
                 try { tx.Rollback(); } catch { }
-                throw;
+                return false;
             }
         }
         
@@ -271,7 +229,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             }
         }
 
-        private async Task<BulkUpsertError?> InsertSysUserCustomFieldValidationsAsync(
+        private async Task InsertSysUserCustomFieldValidationsAsync(
                     IDbConnection connection,
                     IDbTransaction tx,
                     int sysUserCustomFieldId,
@@ -280,7 +238,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                     CancellationToken cancellationToken)
         {
             if (addValidations == null || !addValidations.Any())
-                return null;
+                return ;
 
             const string sql = @"
                 INSERT INTO SysUserCustomFieldValidations
@@ -304,42 +262,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             foreach (var v in addValidations)
             {
-                if (string.IsNullOrWhiteSpace(v.RuleName) &&
-                    v.RuleValue == null &&
-                    string.IsNullOrWhiteSpace(v.message))
-                                {
-                                    return new BulkUpsertError
-                                    {
-                                        StatusCode = StatusCodes.Status400BadRequest,
-                                        Message = Messages.CustomFieldValidationRequired
-                                    };
-                                }
-                if (string.IsNullOrWhiteSpace(v.RuleName))
-                {
-                    return new BulkUpsertError
-                    {
-                        StatusCode = StatusCodes.Status400BadRequest,
-                        Message = Messages.CustomFieldValidationRuleNameRequired
-                    };
-                }
-
-                if (v.RuleValue == null)
-                {
-                    return new BulkUpsertError
-                    {
-                        StatusCode = StatusCodes.Status400BadRequest,
-                        Message = Messages.CustomFieldValidationRuleValueRequired
-                    };
-                }
-
-                if (string.IsNullOrWhiteSpace(v.message))
-                {
-                    return new BulkUpsertError
-                    {
-                        StatusCode = StatusCodes.Status400BadRequest,
-                        Message = Messages.CustomFieldValidationMessageRequired
-                    };
-                }
+                
 
                 var parameter = new
                 {
@@ -356,24 +279,12 @@ namespace VoiceFirst_Admin.Data.Repositories
                     transaction: tx,
                     cancellationToken: cancellationToken);
 
-                affectedRows += await connection.ExecuteAsync(cmd);
+                 await connection.ExecuteAsync(cmd);
             }
 
             
-
-
-            if (affectedRows != addValidations.Count())
-            {
-                return new BulkUpsertError
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Message = Messages.SomethingWentWrong
-                };
-            }
-
-            return null;
         }
-        private async Task<BulkUpsertError?> InsertSysUserCustomFieldOptionsAsync(
+        private async Task InsertSysUserCustomFieldOptionsAsync(
                 IDbConnection connection,
                 IDbTransaction tx,
                 int sysUserCustomFieldId,
@@ -381,8 +292,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 int createdBy,
                 CancellationToken cancellationToken)
         {
-            if (addOptions == null || !addOptions.Any())
-                return null;
+            
 
             const string sql = @"
             INSERT INTO SysUserCustomFieldOptions
@@ -400,36 +310,11 @@ namespace VoiceFirst_Admin.Data.Repositories
                 @CreatedBy
             );";
 
-            int affectedRows = 0;
+        
 
             foreach (var o in addOptions)
             {
-                if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
-                {
-                    return new BulkUpsertError
-                    {
-                        StatusCode = StatusCodes.Status400BadRequest,
-                        Message = Messages.CustomFieldOptionRequired
-                    };
-                }
-                if (string.IsNullOrWhiteSpace(o.label))
-                {
-                    return new BulkUpsertError
-                    {
-                        StatusCode = StatusCodes.Status400BadRequest,
-                        Message = Messages.CustomFieldOptionLabelRequired
-                    };
-                }
-
-                if (o.value == null)
-                {
-                    return new BulkUpsertError
-                    {
-                        StatusCode = StatusCodes.Status400BadRequest,
-                        Message = Messages.CustomFieldOptionValueRequired
-                    };
-                }
-
+                
                 var parameter = new
                 {
                     SysUserCustomFieldId = sysUserCustomFieldId,
@@ -444,23 +329,16 @@ namespace VoiceFirst_Admin.Data.Repositories
                     transaction: tx,
                     cancellationToken: cancellationToken);
 
-                affectedRows += await connection.ExecuteAsync(cmd);
+                await connection.ExecuteAsync(cmd);
             }
 
             
 
-            if (affectedRows != addOptions.Count())
-            {
-                return new BulkUpsertError
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Message = Messages.SomethingWentWrong
-                };
-            }
+            
 
-            return null;
+     
         }
-        private async Task<BulkUpsertError?> UpdateSysUserCustomFieldOptionsAsync(
+        private async Task UpdateSysUserCustomFieldOptionsAsync(
             IDbConnection connection,
             IDbTransaction tx,
             IEnumerable<dynamic>? options,
@@ -468,7 +346,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             CancellationToken cancellationToken)
         {
             if (options == null || !options.Any())
-                return null;
+                return ;
 
             foreach (var option in options)
             {
@@ -518,21 +396,14 @@ namespace VoiceFirst_Admin.Data.Repositories
 
                         var affected = await connection.ExecuteAsync(cmd);
 
-                        if (affected <= 0)
-                        {
-                            return new BulkUpsertError
-                            {
-                                StatusCode = StatusCodes.Status500InternalServerError,
-                                Message = Messages.SomethingWentWrong
-                            };
-                        }
+                        
                     }
                 }
             }
 
-            return null;
+            
         }
-        private async Task<BulkUpsertError?> UpdateSysUserCustomFieldValidationsAsync(
+        private async Task UpdateSysUserCustomFieldValidationsAsync(
             IDbConnection connection,
             IDbTransaction tx,
             IEnumerable<dynamic>? validations,
@@ -540,7 +411,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             CancellationToken cancellationToken)
         {
             if (validations == null || !validations.Any())
-                return null;
+                return ;
 
             foreach (var validation in validations)
             {
@@ -595,21 +466,14 @@ namespace VoiceFirst_Admin.Data.Repositories
                             transaction: tx,
                             cancellationToken: cancellationToken);
 
-                        var affected = await connection.ExecuteAsync(cmd);
+                         await connection.ExecuteAsync(cmd);
 
-                        if (affected <= 0)
-                        {
-                            return new BulkUpsertError
-                            {
-                                StatusCode = StatusCodes.Status500InternalServerError,
-                                Message = Messages.SomethingWentWrong
-                            };
-                        }
+                        
                     }
                 }
             }
 
-            return null;
+            
         }
 
         public async Task<PagedResultDto<SysUserCustomField>> GetAllAsync(CustomFieldFilterDto filter, CancellationToken cancellationToken = default)
@@ -715,7 +579,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 INNER JOIN Users uC ON uC.UserId = f.CreatedBy
                 LEFT JOIN Users uU ON uU.UserId = f.UpdatedBy
                 LEFT JOIN Users uD ON uD.UserId = f.DeletedBy
-                WHERE 1=1");
+                WHERE Where IsDeleted=0 And IsActive=1");
 
             
 
@@ -744,7 +608,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             var countSql = "SELECT COUNT(1) " + baseSql;
             var itemsSql = $@"
-                SELECT f.SysUserCustomFieldId, f.FieldName, f.FieldDataType,
+                SELECT f.SysUserCustomFieldId, f.FieldName, f.FieldDataType
                 {baseSql}
                 ORDER BY SysUserCustomFieldId
                 OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
