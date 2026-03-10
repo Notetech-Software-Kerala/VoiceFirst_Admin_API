@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using VoiceFirst_Admin.Utilities.DTOs.Features.UserDevice;
+using VoiceFirst_Admin.Utilities.Enums;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Contracts.IRepositories
@@ -36,7 +37,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<int?> GetApplicationVersionIdAsync(
             string version,
             int platformId,
-            string applicationType,
+            ClientType applicationType,
             CancellationToken cancellationToken = default);
 
         Task<bool> UpdatePasswordAsync(

@@ -99,23 +99,14 @@ namespace VoiceFirst_Admin.Business.Services
 
             // 6. Login success — clear failed attempt counter
             await _sessionService.ClearLoginAttemptsAsync(request.Email);
-            var applicationType = string.Empty;
-            if (request.ClientType == ClientType.Web)
-            {
-                applicationType = "Web";
-
-            }
-            else if(request.ClientType == ClientType.Mobile)
-            {
-                applicationType = "IOS";
-            }
+           
 
             var appId = int.Parse(_configuration["ApplicationSettings:DefaultApplicationId"]);
 
             var appVersionId = await _authRepo.GetApplicationVersionIdAsync(
                 request.Device.Version,
                 appId,
-                applicationType,
+                request.ClientType,
                 cancellationToken);
 
             if (appVersionId is null)

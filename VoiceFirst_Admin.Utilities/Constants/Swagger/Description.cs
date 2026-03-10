@@ -111,6 +111,8 @@ namespace VoiceFirst_Admin.Utilities.Constants.Swagger
         public const string ISSUE_MEDIA_FORMAT_RECOVERED = "Recovers a previously deleted issue media format.";
         public const string ISSUE_MEDIA_FORMAT_DELETED = "Deletes the specified issue media format.";
 
+        // Success / operation (application version)
+        public const string APPLICATION_VERSION_CREATED = "Creates a new application version.";
 
     }
 }

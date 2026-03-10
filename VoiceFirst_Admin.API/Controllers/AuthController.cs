@@ -79,7 +79,7 @@ namespace VoiceFirst_Admin.API.Controllers
                     ErrorCodes.Unauthorized));
             }
 
-            if (clientType == ClientType.Mobile && !fromBody)
+            if ((clientType == ClientType.IOS || clientType == ClientType.Android) && !fromBody)
             {
                 return Unauthorized(ApiResponse<object>.Fail(
                     Messages.Unauthorized,
@@ -135,7 +135,7 @@ namespace VoiceFirst_Admin.API.Controllers
         /// </summary>
         private IActionResult BuildTokenResponse(LoginResultDto data, string message, int statusCode)
         {
-            if (data.ClientType == ClientType.Mobile)
+            if (data.ClientType == ClientType.IOS || data.ClientType == ClientType.Android)
             {
                 var mobileResponse = new MobileLoginResponseDto
                 {

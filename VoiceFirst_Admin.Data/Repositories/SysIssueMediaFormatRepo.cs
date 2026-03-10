@@ -1,5 +1,6 @@
 using Dapper;
 using System.Data;
+using System.Data.Common;
 using System.Text;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
@@ -61,6 +62,33 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<bool> RecoverAsync(int id, int loginId, CancellationToken ct = default)
         { const string sql = "UPDATE SysIssueMediaFormat SET IsDeleted=0,DeletedBy=NULL,DeletedAt=NULL,UpdatedBy=@LI,UpdatedAt=SYSDATETIME() WHERE SysIssueMediaFormatId=@Id AND IsDeleted=1"; using var c = _ctx.CreateConnection(); if (c.State != ConnectionState.Open) c.Open(); return await c.ExecuteAsync(new CommandDefinition(sql, new { Id = id, LI = loginId }, cancellationToken: ct)) > 0; }
+
+        public async Task<BulkValidationResult> 
+            IsBulkIdsExistWithTransactionAsync(
+            IEnumerable<int> ids,
+            IDbConnection dbConnection,
+            IDbTransaction dbTransaction,
+            CancellationToken ct = default)
+        {
+            var result = new BulkValidationResult(); 
+            if (ids == null || !ids.Any()) 
+                return result; 
+            const string sql = "SELECT SysIssueMediaFormatId, IsActive, IsDeleted FROM SysIssueMediaFormat WHERE SysIssueMediaFormatId IN @Ids;";
+          
+
+
+            var entities = (await dbConnection.QueryAsync<dynamic>
+                (new CommandDefinition(sql, new { Ids = ids },
+                transaction: dbTransaction, cancellationToken: ct))).ToList(); 
+
+            return new BulkValidationResult 
+            {   IdNotFound = entities.Count != ids.Distinct().Count(),
+                IsDeleted = entities.Any(e => (bool)e.IsDeleted), 
+                IsInactive = entities.Any(e => !(bool)e.IsActive) 
+            };
+        }
+    
+
 
         public async Task<BulkValidationResult> IsBulkIdsExistAsync(IEnumerable<int> ids, CancellationToken ct = default)
         { var result = new BulkValidationResult(); if (ids == null || !ids.Any()) return result; const string sql = "SELECT SysIssueMediaFormatId, IsActive, IsDeleted FROM SysIssueMediaFormat WHERE SysIssueMediaFormatId IN @Ids;"; using var c = _ctx.CreateConnection(); var entities = (await c.QueryAsync<dynamic>(new CommandDefinition(sql, new { Ids = ids }, cancellationToken: ct))).ToList(); return new BulkValidationResult { IdNotFound = entities.Count != ids.Distinct().Count(), IsDeleted = entities.Any(e => (bool)e.IsDeleted), IsInactive = entities.Any(e => !(bool)e.IsActive) }; }

@@ -12,4 +12,5 @@ public interface ISysIssueMediaRuleTypeRepo
     Task<int> BulkUpdateAsync(IEnumerable<SysIssueMediaRuleType> entities, IDbConnection connection, IDbTransaction transaction, CancellationToken ct = default);
     Task<SysIssueMediaRuleType?> GetAsync(int ruleId, int mediaTypeId, IDbConnection connection, IDbTransaction transaction, CancellationToken ct = default);
     Task<bool> UpdateAsync(SysIssueMediaRuleType entity, IDbConnection connection, IDbTransaction transaction, CancellationToken ct = default);
+    Task<IEnumerable<SysIssueMediaRuleType>> GetByRuleIdsAsync(IEnumerable<int> ruleIds, IDbConnection connection, IDbTransaction transaction, CancellationToken ct = default);
 }

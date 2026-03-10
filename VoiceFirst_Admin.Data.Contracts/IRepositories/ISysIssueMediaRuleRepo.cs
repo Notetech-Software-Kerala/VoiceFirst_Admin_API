@@ -7,6 +7,14 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories;
 
 public interface ISysIssueMediaRuleRepo
 {
+    Task<bool>
+              CheckMediaFormatLinksExistAsync(
+                          int issueTypeId,
+                  IEnumerable<int> formatIds,
+                  bool update,
+                  IDbConnection connection,
+                  IDbTransaction transaction,
+                  CancellationToken cancellationToken = default);
     Task<int> CreateAsync(SysIssueMediaRule rule, IDbConnection connection, IDbTransaction transaction, CancellationToken ct = default);
     Task<bool> BulkInsertAsync(int issueTypeId, IEnumerable<IssueMediaRuleCreateDTO> dtos, int createdBy, IDbConnection connection, IDbTransaction transaction, CancellationToken ct = default);
     Task<bool> BulkUpdateAsync(IEnumerable<SysIssueMediaRule> entities, IDbConnection connection, IDbTransaction transaction, CancellationToken ct = default);

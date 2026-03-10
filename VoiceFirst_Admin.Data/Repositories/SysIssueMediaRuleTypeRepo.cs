@@ -81,34 +81,51 @@ public class SysIssueMediaRuleTypeRepo : ISysIssueMediaRuleTypeRepo
         return rows > 0;
     }
 
+   
     public async Task<int> BulkUpdateAsync(
-        IEnumerable<SysIssueMediaRuleType> entities,
-        IDbConnection connection,
-        IDbTransaction transaction,
-        CancellationToken ct = default)
+    IEnumerable<SysIssueMediaRuleType> entities,
+    IDbConnection connection,
+    IDbTransaction transaction,
+    CancellationToken ct = default)
     {
-        if (entities == null || !entities.Any()) return 0;
+        if (entities == null || !entities.Any())
+            return 0;
 
-        const string sql = @"
-            UPDATE SysIssueMediaRuleType
-            SET IsMandatory = @IsMandatory,
-                IsActive = @IsActive,
-                UpdatedBy = @UpdatedBy,
-                UpdatedAt = SYSDATETIME()
-            WHERE IssueMediaRuleId = @IssueMediaRuleId AND IssueMediaTypeId = @IssueMediaTypeId ;";
+        int affectedRows = 0;
 
-        var parameters = entities.Select(d => new
+        foreach (var entity in entities)
         {
-            d.IssueMediaRuleId,
-            d.IssueMediaTypeId,
-            d.IsMandatory,
-            d.IsActive,
-            d.UpdatedBy
-        });
+            var setClauses = new List<string>();
 
-        return await connection.ExecuteAsync(
-            new CommandDefinition(sql, parameters, transaction: transaction, cancellationToken: ct));
+            if (entity.IsMandatory.HasValue)
+                setClauses.Add("IsMandatory = @IsMandatory");
+
+            if (entity.IsActive.HasValue)
+                setClauses.Add("IsActive = @IsActive");
+
+            setClauses.Add("UpdatedBy = @UpdatedBy");
+            setClauses.Add("UpdatedAt = SYSDATETIME()");
+
+            var sql = $@"
+            UPDATE SysIssueMediaRuleType
+            SET {string.Join(", ", setClauses)}
+            WHERE IssueMediaRuleId = @IssueMediaRuleId
+            AND IssueMediaTypeId = @IssueMediaTypeId";
+
+            affectedRows += await connection.ExecuteAsync(
+                new CommandDefinition(
+                    sql,
+                    entity,
+                    transaction: transaction,
+                    cancellationToken: ct
+                ));
+        }
+
+        return affectedRows;
     }
+
+
+
 
     public async Task<SysIssueMediaRuleType?> GetAsync(
         int ruleId,
@@ -149,5 +166,24 @@ public class SysIssueMediaRuleTypeRepo : ISysIssueMediaRuleTypeRepo
                 Id = entity.SysIssueMediaRuleTypeId
             }, transaction: transaction, cancellationToken: ct));
         return affected > 0;
+    }
+
+    public async Task<IEnumerable<SysIssueMediaRuleType>> GetByRuleIdsAsync(
+        IEnumerable<int> ruleIds,
+        IDbConnection connection,
+        IDbTransaction transaction,
+        CancellationToken ct = default)
+    {
+        if (ruleIds == null || !ruleIds.Any())
+            return Enumerable.Empty<SysIssueMediaRuleType>();
+
+        const string sql = @"
+            SELECT SysIssueMediaRuleTypeId, IssueMediaRuleId, IssueMediaTypeId, IsMandatory, IsActive, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt
+            FROM SysIssueMediaRuleType
+            WHERE IssueMediaRuleId IN @RuleIds;";
+
+        return await connection.QueryAsync<SysIssueMediaRuleType>(
+            new CommandDefinition(sql, new { RuleIds = ruleIds },
+            transaction: transaction, cancellationToken: ct));
     }
 }
