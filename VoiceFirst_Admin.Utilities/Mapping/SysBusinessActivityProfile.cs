@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using VoiceFirst_Admin.Utilities.DTOs.Features.BusinessActivityUserCustomFieldLink;
 using VoiceFirst_Admin.Utilities.DTOs.Features.ProgramAction;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.Models.Entities;
@@ -22,7 +23,9 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Item1.Active))
                 .ForMember(d => d.UpdatedBy, o => o.MapFrom(s => s.UserId));
 
-        
+            CreateMap<UpdateBusinessActivityUserCustomFieldDto, SysBusinessActivityUserCustomFieldLink>()
+              .ForMember(d => d.SysBusinessActivityUserCustomFieldLinkId, o => o.MapFrom(s => s.ActivityCustomFieldLinkId))
+              .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Active));
 
             CreateMap<SysBusinessActivity, SysBusinessActivityDTO>()
           .ForMember(d => d.ActivityId, o => o.MapFrom(s => s.SysBusinessActivityId))
@@ -34,8 +37,33 @@ namespace VoiceFirst_Admin.Utilities.Mapping
           .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.UpdatedUserName))
           .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt))
           .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUserName))
-          .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedAt))
-          ;
+          .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedAt));
+
+            CreateMap<SysBusinessActivityUserCustomFieldLink, BusinessActivityUserCustomFieldDto>()
+          .ForMember(d => d.ActivityCustomFieldLinkId, o => o.MapFrom(s => s.SysBusinessActivityUserCustomFieldLinkId))
+          .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
+          .ForMember(d => d.ActivityId, o => o.MapFrom(s => s.SysBusinessActivityId))
+          .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType))
+          .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
+          .ForMember(d => d.Active, o => o.MapFrom(s => s.IsActive))
+          .ForMember(d => d.CreatedUser, o => o.MapFrom(s => s.CreatedUserName))
+          .ForMember(d => d.CreatedDate, o => o.MapFrom(s => s.CreatedAt))
+          .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.UpdatedUserName))
+          .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt));
+
+            CreateMap<SysBusinessActivityDTO, SysBusinessActivityDetailsDTO>()
+          .ForMember(d => d.ActivityId, o => o.MapFrom(s => s.ActivityId))
+          .ForMember(d => d.ActivityName, o => o.MapFrom(s => s.ActivityName))
+          .ForMember(d => d.Active, o => o.MapFrom(s => s.Active))
+          .ForMember(d => d.Deleted, o => o.MapFrom(s => s.Deleted))
+          .ForMember(d => d.CreatedUser, o => o.MapFrom(s => s.CreatedUser))
+          .ForMember(d => d.CreatedDate, o => o.MapFrom(s => s.CreatedDate))
+          .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.ModifiedUser))
+          .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.ModifiedDate))
+          .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUser))
+          .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedDate));
+
+            
 
          
 

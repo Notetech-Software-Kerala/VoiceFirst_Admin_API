@@ -11,11 +11,11 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
     public interface ISysBusinessActivityService
     {
        
-        Task<ApiResponse<SysBusinessActivityDTO>> CreateAsync(SysBusinessActivityCreateDTO dto, int loginId, CancellationToken cancellationToken = default);
-        Task<ApiResponse<SysBusinessActivityDTO>?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<ApiResponse<SysBusinessActivityDetailsDTO>> CreateAsync(SysBusinessActivityCreateDTO dto, int loginId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<SysBusinessActivityDetailsDTO>?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<ApiResponse<PagedResultDto<SysBusinessActivityDTO>>> GetAllAsync(BusinessActivityFilterDTO filter, CancellationToken cancellationToken = default);              
        
-        Task<ApiResponse<SysBusinessActivityDTO>> 
+        Task<ApiResponse<SysBusinessActivityDetailsDTO>> 
             UpdateAsync(
             SysBusinessActivityUpdateDTO dto,
             int sysBusinessActivityId, int loginId,

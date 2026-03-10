@@ -126,10 +126,10 @@ namespace VoiceFirst_Admin.Business.Services
             List<SysUserCustomFieldOptions> userCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.AddOptions);
                 
                 
-            var upsertError = await _repo.CreateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, loginId, cancellationToken);
-            if (upsertError.Success==false )
-                return ApiResponse<CustomFieldDetailDto>.Fail(upsertError.Message,upsertError.StatusCode);
-            var userCustomField = await GetByIdAsync(upsertError.Id??0, cancellationToken);
+            var id = await _repo.CreateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, loginId, cancellationToken);
+            if (id <= 0)
+                return ApiResponse<CustomFieldDetailDto>.Fail(Messages.SomethingWentWrong);
+            var userCustomField = await GetByIdAsync(id, cancellationToken);
 
             return ApiResponse<CustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldCreated);
             
@@ -295,9 +295,9 @@ namespace VoiceFirst_Admin.Business.Services
             List<SysUserCustomFieldOptions> updateCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.UpdateOptions);
            
                
-            var upsertError = await _repo.UpdateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, updateCustomFieldValidations, updateCustomFieldOptions, loginId, cancellationToken);
-            if (upsertError != null)
-                return ApiResponse<CustomFieldDetailDto>.Fail(upsertError.Message, upsertError.StatusCode);
+            var status = await _repo.UpdateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, updateCustomFieldValidations, updateCustomFieldOptions, loginId, cancellationToken);
+            if (status==false)
+                return ApiResponse<CustomFieldDetailDto>.Fail(Messages.SomethingWentWrong);
 
             var userCustomField = await GetByIdAsync(entity.SysUserCustomFieldId, cancellationToken);
             
