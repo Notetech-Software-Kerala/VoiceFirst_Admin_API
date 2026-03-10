@@ -76,8 +76,31 @@ namespace VoiceFirst_Admin.Data.Repositories
 
         public async Task<SysUserCustomField> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            const string sqlField = @"SELECT SysUserCustomFieldId, FieldName, FieldKey, FieldDataType, IsActive, IsDeleted, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt
-                                       FROM SysUserCustomField WHERE SysUserCustomFieldId = @Id;";
+             const string sqlField = @"
+        SELECT 
+            f.SysUserCustomFieldId,
+            f.FieldName,
+            f.FieldKey,
+            f.FieldDataType,
+            f.IsActive,
+            f.IsDeleted,
+            f.CreatedBy,
+            f.CreatedAt,
+            f.UpdatedBy,
+            f.UpdatedAt,
+            f.DeletedBy,
+            f.DeletedAt,
+            uC.UserId AS CreatedById,
+            CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+            uU.UserId AS UpdatedById,
+            CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
+            uD.UserId AS DeletedById,
+            CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
+        FROM SysUserCustomField f
+        INNER JOIN Users uC ON uC.UserId = f.CreatedBy
+        LEFT JOIN Users uU ON uU.UserId = f.UpdatedBy
+        LEFT JOIN Users uD ON uD.UserId = f.DeletedBy
+        WHERE f.SysUserCustomFieldId = @Id;";
             using var conn = _context.CreateConnection();
             var field = await conn.QueryFirstOrDefaultAsync<SysUserCustomField>(new CommandDefinition(sqlField, new { Id = id }, cancellationToken: cancellationToken));
             return field;
@@ -216,8 +239,8 @@ namespace VoiceFirst_Admin.Data.Repositories
 
                 var rows = await connection.ExecuteAsync(new CommandDefinition(sql, new { Id = id, DeletedBy = deletedBy }, transaction: tx, cancellationToken: cancellationToken));
 
-                const string delV = "UPDATE SysUserCustomFieldValidations SET IsDeleted = 1 WHERE SysUserCustomFieldId = @Id;";
-                const string delO = "UPDATE SysUserCustomFieldOptions SET IsDeleted = 1 WHERE SysUserCustomFieldId = @Id;";
+                const string delV = "UPDATE SysUserCustomFieldValidations SET IsActive = 0 WHERE SysUserCustomFieldId = @Id;";
+                const string delO = "UPDATE SysUserCustomFieldOptions SET IsActive = 0 WHERE SysUserCustomFieldId = @Id;";
                 await connection.ExecuteAsync(new CommandDefinition(delV, new { Id = id }, transaction: tx, cancellationToken: cancellationToken));
                 await connection.ExecuteAsync(new CommandDefinition(delO, new { Id = id }, transaction: tx, cancellationToken: cancellationToken));
 
@@ -663,10 +686,26 @@ namespace VoiceFirst_Admin.Data.Repositories
         public async Task<IEnumerable<SysUserCustomFieldValidations>> GetValidationsByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default)
         {
             const string sql = @"
-                SELECT SysUserCustomFieldValidationId, SysUserCustomFieldId, RuleName, RuleValue, message, IsActive, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt
-                FROM SysUserCustomFieldValidations
-                WHERE SysUserCustomFieldId = @Id 
-                ORDER BY SysUserCustomFieldValidationId;";
+                SELECT 
+                    v.SysUserCustomFieldValidationId,
+                    v.SysUserCustomFieldId,
+                    v.RuleName,
+                    v.RuleValue,
+                    v.message,
+                    v.IsActive,
+                    v.CreatedBy,
+                    v.CreatedAt,
+                    v.UpdatedBy,
+                    v.UpdatedAt,
+                    uC.UserId AS CreatedById,
+                    CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+                    uU.UserId AS UpdatedById,
+                    CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName
+                FROM SysUserCustomFieldValidations v
+                INNER JOIN Users uC ON uC.UserId = v.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = v.UpdatedBy
+                WHERE v.SysUserCustomFieldId = @Id
+                ORDER BY v.SysUserCustomFieldValidationId;";
             using var conn = _context.CreateConnection();
             return await conn.QueryAsync<SysUserCustomFieldValidations>(new CommandDefinition(sql, new { Id = fieldId }, cancellationToken: cancellationToken));
         }
@@ -674,10 +713,25 @@ namespace VoiceFirst_Admin.Data.Repositories
         public async Task<IEnumerable<SysUserCustomFieldOptions>> GetOptionsByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default)
         {
             const string sql = @"
-                SELECT SysUserCustomFieldOptionsId, SysUserCustomFieldId, label, value, IsActive, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt
-                FROM SysUserCustomFieldOptions
-                WHERE SysUserCustomFieldId = @Id 
-                ORDER BY SysUserCustomFieldOptionsId;";
+                SELECT 
+                    o.SysUserCustomFieldOptionsId,
+                    o.SysUserCustomFieldId,
+                    o.label,
+                    o.value,
+                    o.IsActive,
+                    o.CreatedBy,
+                    o.CreatedAt,
+                    o.UpdatedBy,
+                    o.UpdatedAt,
+                    uC.UserId AS CreatedById,
+                    CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+                    uU.UserId AS UpdatedById,
+                    CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName
+                FROM SysUserCustomFieldOptions o
+                INNER JOIN Users uC ON uC.UserId = o.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = o.UpdatedBy
+                WHERE o.SysUserCustomFieldId = @Id
+                ORDER BY o.SysUserCustomFieldOptionsId;";
             using var conn = _context.CreateConnection();
             return await conn.QueryAsync<SysUserCustomFieldOptions>(new CommandDefinition(sql, new { Id = fieldId }, cancellationToken: cancellationToken));
         }

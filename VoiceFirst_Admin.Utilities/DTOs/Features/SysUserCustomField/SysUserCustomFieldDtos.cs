@@ -65,22 +65,21 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
         public IEnumerable<UpdateCustomFieldOptionsDto> UpdateOptions { get; set; }
     }
 
-    public class SysUserCustomFieldDetailDto
+    public class SysUserCustomFieldDetailDto : CommonDto
     {
         public int CustomFieldId { get; set; }
         public string FieldName { get; set; }
         public string FieldKey { get; set; }
         public string FieldDataType { get; set; }
-        public bool Active { get; set; }
-        public bool Deleted { get; set; }
-        public string CreatedUser { get; set; } = string.Empty;
-        public DateTime CreatedDate { get; set; }
-        public string ModifiedUser { get; set; } = string.Empty;
-        public DateTime? ModifiedDate { get; set; }
-        public string DeletedUser { get; set; } = string.Empty;
-        public DateTime? DeletedDate { get; set; }
         public IEnumerable<UserCustomFieldValidationsDto> Validations { get; set; }
         public IEnumerable<UserCustomFieldOptionsDto> Options { get; set; }
+    }
+    public class SysUserCustomFieldDto:CommonDto
+    {
+        public int CustomFieldId { get; set; }
+        public string FieldName { get; set; }
+        public string FieldKey { get; set; }
+        public string FieldDataType { get; set; }
     }
     public class UserCustomFieldValidationsDto : PartialCommonDto
     {

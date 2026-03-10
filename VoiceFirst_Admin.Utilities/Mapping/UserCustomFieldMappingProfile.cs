@@ -26,6 +26,20 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt))
                 .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUserName))
                 .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedAt));
+            CreateMap<SysUserCustomField, SysUserCustomFieldDto>()
+                .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
+                .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
+                .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
+                .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey))
+                .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType))
+                .ForMember(d => d.Active, o => o.MapFrom(s => s.IsActive))
+                .ForMember(d => d.Deleted, o => o.MapFrom(s => s.IsDeleted))
+                .ForMember(d => d.CreatedUser, o => o.MapFrom(s => s.CreatedUserName))
+                .ForMember(d => d.CreatedDate, o => o.MapFrom(s => s.CreatedAt))
+                .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.UpdatedUserName))
+                .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt))
+                .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUserName))
+                .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedAt));
 
             CreateMap<UserCustomFieldCreateDto, SysUserCustomField>()
         .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
@@ -82,13 +96,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.UpdatedUserName))
                 .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt));
 
-            CreateMap<SysUserCustomField, SysUserCustomFieldDetailDto>()
-        .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
-        .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
-        .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey))
-        .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType))
-        .ForMember(d => d.Active, o => o.MapFrom(s => s.IsActive ?? false))
-        .ForMember(d => d.Deleted, o => o.MapFrom(s => s.IsDeleted ?? false));
+
         }
     }
 }

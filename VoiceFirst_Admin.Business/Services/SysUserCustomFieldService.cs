@@ -307,24 +307,29 @@ namespace VoiceFirst_Admin.Business.Services
             
         }
 
-        public async Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<SysUserCustomFieldDetailDto>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
+            var field = await _repo.GetByIdAsync(id, cancellationToken);
+            if (field == null) 
+                return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldNotFound, StatusCodes.Status404NotFound);
 
-           
+            if(field.IsDeleted == true)
+                return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyDeleted, StatusCodes.Status409Conflict);
+
             var ok = await _repo.SoftDeleteAsync(id, loginId, cancellationToken);
-                if (!ok)
-                    return ApiResponse<object>.Fail("Failed to delete custom field.");
-
-                return ApiResponse<object>.Ok(null, "Custom field deleted.");
+            if (!ok)
+                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldDeletionFailed);
+            var userCustomField = await GetByIdAsync(id, cancellationToken);
+            return ApiResponse<SysUserCustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldDeleted);
             
         }
 
-        public async Task<PagedResultDto<SysUserCustomFieldDetailDto>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<SysUserCustomFieldDto>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default)
         {
             var entities = await _repo.GetAllAsync(filter, cancellationToken);
-            var list = _mapper.Map<IEnumerable<SysUserCustomFieldDetailDto>>(entities.Items);
+            var list = _mapper.Map<IEnumerable<SysUserCustomFieldDto>>(entities.Items);
             // load actions for each? skip for performance
-            return new PagedResultDto<SysUserCustomFieldDetailDto>
+            return new PagedResultDto<SysUserCustomFieldDto>
             {
                 Items = list,
                 TotalCount = entities.TotalCount,

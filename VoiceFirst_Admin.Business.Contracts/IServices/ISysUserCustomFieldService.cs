@@ -11,8 +11,8 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
     {
         Task<ApiResponse<SysUserCustomFieldDetailDto>> CreateAsync(UserCustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default);
         Task<SysUserCustomFieldDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-        Task<PagedResultDto<SysUserCustomFieldDetailDto>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<SysUserCustomFieldDto>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default);
         Task<ApiResponse<SysUserCustomFieldDetailDto>> UpdateAsync(SysUserCustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default);
-        Task<ApiResponse<object>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<SysUserCustomFieldDetailDto>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
     }
 }
