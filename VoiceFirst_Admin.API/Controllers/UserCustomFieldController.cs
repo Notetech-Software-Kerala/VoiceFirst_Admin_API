@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceFirst_Admin.Business.Contracts.IServices;
+using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField;
+using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.API.Controllers;
@@ -24,7 +26,7 @@ public class CustomFieldController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] UserCustomFieldCreateDto dto, CancellationToken cancellationToken)
     {
-        if (dto == null) return BadRequest(ApiResponse<object>.Fail("Payload required"));
+        if (dto == null) return BadRequest(ApiResponse<object>.Fail(Messages.BadRequest));
         var res = await _service.CreateAsync(dto, userId, cancellationToken);
         return StatusCode(res.StatusCode, res);
     }
@@ -33,8 +35,8 @@ public class CustomFieldController : ControllerBase
     public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
     {
         var item = await _service.GetByIdAsync(id, cancellationToken);
-        if (item == null) return NotFound(ApiResponse<object>.Fail("Not found"));
-        return Ok(ApiResponse<SysUserCustomFieldDetailDto>.Ok(item, "Retrieved"));
+        if (item == null) return NotFound(ApiResponse<object>.Fail(Messages.CustomFieldsNotFound));
+        return Ok(ApiResponse<CustomFieldDetailDto>.Ok(item, Messages.CustomFieldRetrieved));
     }
 
     [HttpPatch("{id:int}")]
@@ -55,6 +57,12 @@ public class CustomFieldController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken)
     {
         var items = await _service.GetAllAsync(filter, cancellationToken);
-        return Ok(ApiResponse<object>.Ok(items, "Custom fields retrieved."));
+        return Ok(ApiResponse<object>.Ok(items, Messages.CustomFieldRetrieved));
+    }
+    [HttpGet]
+    public async Task<IActionResult> GetLookUp([FromQuery] BasicFilterDto filter, CancellationToken cancellationToken)
+    {
+        var items = await _service.GetLookUpAsync(filter, cancellationToken);
+        return Ok(ApiResponse<object>.Ok(items, Messages.CustomFieldRetrieved));
     }
 }

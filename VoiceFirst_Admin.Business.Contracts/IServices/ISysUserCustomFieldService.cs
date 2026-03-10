@@ -9,10 +9,11 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
 {
     public interface ISysUserCustomFieldService
     {
-        Task<ApiResponse<SysUserCustomFieldDetailDto>> CreateAsync(UserCustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default);
-        Task<SysUserCustomFieldDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<ApiResponse<CustomFieldDetailDto>> CreateAsync(UserCustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default);
+        Task<CustomFieldDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<UserCustomFieldLookUpDto>?> GetLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysUserCustomFieldDto>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default);
-        Task<ApiResponse<SysUserCustomFieldDetailDto>> UpdateAsync(SysUserCustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default);
-        Task<ApiResponse<SysUserCustomFieldDetailDto>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<CustomFieldDetailDto>> UpdateAsync(SysUserCustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<CustomFieldDetailDto>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default);
     }
 }

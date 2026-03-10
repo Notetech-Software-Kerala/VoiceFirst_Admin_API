@@ -13,6 +13,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
     {
         Task<BulkUpsertError?> CreateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> validations, List<SysUserCustomFieldOptions> options, int createdBy, CancellationToken cancellationToken = default);
         Task<SysUserCustomField> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<SysUserCustomField>> GetLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysUserCustomFieldValidations>> GetValidationsByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysUserCustomFieldOptions>> GetOptionsByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysUserCustomField>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default);

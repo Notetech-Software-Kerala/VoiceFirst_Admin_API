@@ -1,17 +1,15 @@
+﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
-using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
 {
-    public class UserCustomFieldCreateDto
+    public class SysUserCustomFieldDto : CommonDto
     {
+        public int CustomFieldId { get; set; }
         public string FieldName { get; set; }
         public string FieldKey { get; set; }
         public string FieldDataType { get; set; }
-        public IEnumerable<CustomFieldValidationsDto>? AddValidations { get; set; }
-        public IEnumerable<CustomFieldOptionsDto>? AddOptions { get; set; }
     }
-
-
 }

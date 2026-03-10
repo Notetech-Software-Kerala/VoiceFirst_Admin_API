@@ -12,9 +12,8 @@ namespace VoiceFirst_Admin.Utilities.Mapping
     {
         public UserCustomFieldMappingProfile()
         {
-            CreateMap<SysUserCustomField, SysUserCustomFieldDetailDto>()
+            CreateMap<SysUserCustomField, CustomFieldDetailDto>()
                 .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
-                .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
                 .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
                 .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey))
                 .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType))
@@ -29,7 +28,6 @@ namespace VoiceFirst_Admin.Utilities.Mapping
             CreateMap<SysUserCustomField, SysUserCustomFieldDto>()
                 .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
                 .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
-                .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
                 .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey))
                 .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType))
                 .ForMember(d => d.Active, o => o.MapFrom(s => s.IsActive))
@@ -40,6 +38,11 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt))
                 .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUserName))
                 .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedAt));
+            CreateMap<SysUserCustomField, UserCustomFieldLookUpDto>()
+                .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
+                .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
+                .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType));
+             
 
             CreateMap<UserCustomFieldCreateDto, SysUserCustomField>()
         .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))

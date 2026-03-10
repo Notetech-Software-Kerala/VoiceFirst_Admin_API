@@ -26,24 +26,24 @@ namespace VoiceFirst_Admin.Business.Services
             _mapper = mapper;
         }
 
-        public async Task<ApiResponse<SysUserCustomFieldDetailDto>> CreateAsync(UserCustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<CustomFieldDetailDto>> CreateAsync(UserCustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default)
         {
 
             var exsitFieldKey = await _repo.ExistsByFieldKeyAsync(dto.FieldKey,null, cancellationToken);
             if (exsitFieldKey != null )
             {
                 if(exsitFieldKey.IsDeleted==true)
-                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable,StatusCodes.Status409Conflict);
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable,StatusCodes.Status409Conflict);
                 else
-                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldKeyAlreadyExists, StatusCodes.Status409Conflict);
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldKeyAlreadyExists, StatusCodes.Status409Conflict);
             }
             var exsitFieldNameWithDataType = await _repo.ExistsByFieldNameAndDataTypeAsync(dto.FieldName,dto.FieldDataType, null, cancellationToken);
             if (exsitFieldNameWithDataType != null )
             {
                 if(exsitFieldKey.IsDeleted==true)
-                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable,StatusCodes.Status409Conflict);
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable,StatusCodes.Status409Conflict);
                 else
-                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExists, StatusCodes.Status409Conflict);
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExists, StatusCodes.Status409Conflict);
             }
             if (dto.AddOptions != null && dto.AddOptions.Count() > 0)
             {
@@ -51,7 +51,7 @@ namespace VoiceFirst_Admin.Business.Services
                 {
                     if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldOptionRequired
@@ -59,7 +59,7 @@ namespace VoiceFirst_Admin.Business.Services
                     }
                     if (string.IsNullOrWhiteSpace(o.label))
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldOptionLabelRequired
@@ -68,7 +68,7 @@ namespace VoiceFirst_Admin.Business.Services
 
                     if (o.value == null)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldOptionValueRequired
@@ -84,7 +84,7 @@ namespace VoiceFirst_Admin.Business.Services
                         v.RuleValue == null &&
                         string.IsNullOrWhiteSpace(v.message))
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationRequired
@@ -92,7 +92,7 @@ namespace VoiceFirst_Admin.Business.Services
                     }
                     if (string.IsNullOrWhiteSpace(v.RuleName))
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationRuleNameRequired
@@ -101,7 +101,7 @@ namespace VoiceFirst_Admin.Business.Services
 
                     if (v.RuleValue == null)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationRuleValueRequired
@@ -110,7 +110,7 @@ namespace VoiceFirst_Admin.Business.Services
 
                     if (string.IsNullOrWhiteSpace(v.message))
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationMessageRequired
@@ -128,14 +128,14 @@ namespace VoiceFirst_Admin.Business.Services
                 
             var upsertError = await _repo.CreateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, loginId, cancellationToken);
             if (upsertError != null)
-                return ApiResponse<SysUserCustomFieldDetailDto>.Fail(upsertError.Message,upsertError.StatusCode);
+                return ApiResponse<CustomFieldDetailDto>.Fail(upsertError.Message,upsertError.StatusCode);
             var userCustomField = await GetByIdAsync(entity.SysUserCustomFieldId, cancellationToken);
 
-            return ApiResponse<SysUserCustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldCreated);
+            return ApiResponse<CustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldCreated);
             
         }
 
-        public async Task<SysUserCustomFieldDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<CustomFieldDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             var field = await _repo.GetByIdAsync(id, cancellationToken);
             if (field == null) return null;
@@ -143,30 +143,30 @@ namespace VoiceFirst_Admin.Business.Services
             var validations = await _repo.GetValidationsByFieldIdAsync(id, cancellationToken);
 
             var options = await _repo.GetOptionsByFieldIdAsync(id, cancellationToken);
-            var dto = _mapper.Map<SysUserCustomFieldDetailDto>(field);
+            var dto = _mapper.Map<CustomFieldDetailDto>(field);
             dto.Validations = _mapper.Map<List<UserCustomFieldValidationsDto>>(validations);
             dto.Options = _mapper.Map<List<UserCustomFieldOptionsDto>>(options);
 
             return dto;
         }
 
-        public async Task<ApiResponse<SysUserCustomFieldDetailDto>> UpdateAsync(SysUserCustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<CustomFieldDetailDto>> UpdateAsync(SysUserCustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
         {
             var exsitFieldKey = await _repo.ExistsByFieldKeyAsync(dto.FieldKey, null, cancellationToken);
             if (exsitFieldKey != null)
             {
                 if (exsitFieldKey.IsDeleted == true)
-                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
                 else
-                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldKeyAlreadyExists, StatusCodes.Status409Conflict);
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldKeyAlreadyExists, StatusCodes.Status409Conflict);
             }
             var exsitFieldNameWithDataType = await _repo.ExistsByFieldNameAndDataTypeAsync(dto.FieldName, dto.FieldDataType, null, cancellationToken);
             if (exsitFieldNameWithDataType != null)
             {
                 if (exsitFieldKey.IsDeleted == true)
-                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
                 else
-                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExists, StatusCodes.Status409Conflict);
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExists, StatusCodes.Status409Conflict);
             }
             if (dto.AddOptions != null && dto.AddOptions.Count() > 0)
             {
@@ -174,7 +174,7 @@ namespace VoiceFirst_Admin.Business.Services
                 {
                     if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldOptionRequired
@@ -182,7 +182,7 @@ namespace VoiceFirst_Admin.Business.Services
                     }
                     if (string.IsNullOrWhiteSpace(o.label))
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldOptionLabelRequired
@@ -191,7 +191,7 @@ namespace VoiceFirst_Admin.Business.Services
 
                     if (o.value == null)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldOptionValueRequired
@@ -207,7 +207,7 @@ namespace VoiceFirst_Admin.Business.Services
                         v.RuleValue == null &&
                         string.IsNullOrWhiteSpace(v.message))
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationRequired
@@ -215,7 +215,7 @@ namespace VoiceFirst_Admin.Business.Services
                     }
                     if (string.IsNullOrWhiteSpace(v.RuleName))
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationRuleNameRequired
@@ -224,7 +224,7 @@ namespace VoiceFirst_Admin.Business.Services
 
                     if (v.RuleValue == null)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationRuleValueRequired
@@ -233,7 +233,7 @@ namespace VoiceFirst_Admin.Business.Services
 
                     if (string.IsNullOrWhiteSpace(v.message))
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationMessageRequired
@@ -247,7 +247,7 @@ namespace VoiceFirst_Admin.Business.Services
                 {
                     if (item.CustomFieldValidationId <= 0)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationIdRequired
@@ -255,7 +255,7 @@ namespace VoiceFirst_Admin.Business.Services
                     }
                     if (string.IsNullOrWhiteSpace(item.RuleName) && string.IsNullOrWhiteSpace(item.RuleValue) && string.IsNullOrWhiteSpace(item.message) && !item.Active.HasValue)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldValidationAtLeastRequired
@@ -269,7 +269,7 @@ namespace VoiceFirst_Admin.Business.Services
                 {
                     if (item.CustomFieldOptionsId <= 0)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldOptionIdRequired
@@ -277,7 +277,7 @@ namespace VoiceFirst_Admin.Business.Services
                     }
                     if (string.IsNullOrWhiteSpace(item.value) && string.IsNullOrWhiteSpace(item.label) && !item.Active.HasValue)
                     {
-                        return new ApiResponse<SysUserCustomFieldDetailDto>
+                        return new ApiResponse<CustomFieldDetailDto>
                         {
                             StatusCode = StatusCodes.Status400BadRequest,
                             Message = Messages.CustomFieldOptionAtLeastRequired
@@ -297,30 +297,30 @@ namespace VoiceFirst_Admin.Business.Services
                
             var upsertError = await _repo.UpdateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, updateCustomFieldValidations, updateCustomFieldOptions, loginId, cancellationToken);
             if (upsertError != null)
-                return ApiResponse<SysUserCustomFieldDetailDto>.Fail(upsertError.Message, upsertError.StatusCode);
+                return ApiResponse<CustomFieldDetailDto>.Fail(upsertError.Message, upsertError.StatusCode);
 
             var userCustomField = await GetByIdAsync(entity.SysUserCustomFieldId, cancellationToken);
             
-            return ApiResponse<SysUserCustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldUpdated);
+            return ApiResponse<CustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldUpdated);
            
               
             
         }
 
-        public async Task<ApiResponse<SysUserCustomFieldDetailDto>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<CustomFieldDetailDto>> DeleteAsync(int id, int loginId, CancellationToken cancellationToken = default)
         {
             var field = await _repo.GetByIdAsync(id, cancellationToken);
             if (field == null) 
-                return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldNotFound, StatusCodes.Status404NotFound);
+                return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldNotFound, StatusCodes.Status404NotFound);
 
             if(field.IsDeleted == true)
-                return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyDeleted, StatusCodes.Status409Conflict);
+                return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyDeleted, StatusCodes.Status409Conflict);
 
             var ok = await _repo.SoftDeleteAsync(id, loginId, cancellationToken);
             if (!ok)
-                    return ApiResponse<SysUserCustomFieldDetailDto>.Fail(Messages.CustomFieldDeletionFailed);
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldDeletionFailed);
             var userCustomField = await GetByIdAsync(id, cancellationToken);
-            return ApiResponse<SysUserCustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldDeleted);
+            return ApiResponse<CustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldDeleted);
             
         }
 
@@ -330,6 +330,19 @@ namespace VoiceFirst_Admin.Business.Services
             var list = _mapper.Map<IEnumerable<SysUserCustomFieldDto>>(entities.Items);
             // load actions for each? skip for performance
             return new PagedResultDto<SysUserCustomFieldDto>
+            {
+                Items = list,
+                TotalCount = entities.TotalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.Limit
+            };
+        }
+        public async Task<PagedResultDto<UserCustomFieldLookUpDto>?> GetLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
+        {
+            var entities = await _repo.GetLookUpAsync(filter, cancellationToken);
+            var list = _mapper.Map<IEnumerable<UserCustomFieldLookUpDto>>(entities.Items);
+            // load actions for each? skip for performance
+            return new PagedResultDto<UserCustomFieldLookUpDto>
             {
                 Items = list,
                 TotalCount = entities.TotalCount,

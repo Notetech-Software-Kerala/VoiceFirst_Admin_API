@@ -683,6 +683,67 @@ namespace VoiceFirst_Admin.Data.Repositories
                 PageSize = limit
             };
         }
+        public async Task<PagedResultDto<SysUserCustomField>> GetLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
+        {
+            var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+            var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+            var offset = (page - 1) * limit;
+
+            var parameters = new DynamicParameters();
+            parameters.Add("Offset", offset);
+            parameters.Add("Limit", limit);
+
+            var baseSql = new StringBuilder(@"
+                FROM SysUserCustomField f
+                INNER JOIN Users uC ON uC.UserId = f.CreatedBy
+                LEFT JOIN Users uU ON uU.UserId = f.UpdatedBy
+                LEFT JOIN Users uD ON uD.UserId = f.DeletedBy
+                WHERE 1=1");
+
+            
+
+            var searchByMap = new Dictionary<SysUserCustomFieldSearchBy, string>
+            {
+                [SysUserCustomFieldSearchBy.FieldName] = "f.FieldName",
+                [SysUserCustomFieldSearchBy.FieldKey] = "f.FieldKey",
+                [SysUserCustomFieldSearchBy.FieldDataType] = "f.FieldDataType",
+                [SysUserCustomFieldSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
+                [SysUserCustomFieldSearchBy.UpdatedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
+                [SysUserCustomFieldSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
+            };
+
+            if (!string.IsNullOrWhiteSpace(filter.SearchText))
+            {
+                baseSql.Append(@" AND (f.FieldName LIKE @Search OR f.FieldKey LIKE @Search OR f.FieldDataType LIKE @Search
+                        OR CONCAT(uC.FirstName,' ',uC.LastName) LIKE @Search OR CONCAT(uU.FirstName,' ',uU.LastName) LIKE @Search)");
+
+                parameters.Add("Search", $"%{filter.SearchText}%");
+            }
+
+            
+
+            
+            
+
+            var countSql = "SELECT COUNT(1) " + baseSql;
+            var itemsSql = $@"
+                SELECT f.SysUserCustomFieldId, f.FieldName, f.FieldDataType,
+                {baseSql}
+                ORDER BY SysUserCustomFieldId
+                OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
+
+            using var connection = _context.CreateConnection();
+            var totalCount = await connection.ExecuteScalarAsync<int>(new CommandDefinition(countSql, parameters, cancellationToken: cancellationToken));
+            var items = await connection.QueryAsync<SysUserCustomField>(new CommandDefinition(itemsSql, parameters, cancellationToken: cancellationToken));
+
+            return new PagedResultDto<SysUserCustomField>
+            {
+                Items = items.ToList(),
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = limit
+            };
+        }
         public async Task<IEnumerable<SysUserCustomFieldValidations>> GetValidationsByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default)
         {
             const string sql = @"
