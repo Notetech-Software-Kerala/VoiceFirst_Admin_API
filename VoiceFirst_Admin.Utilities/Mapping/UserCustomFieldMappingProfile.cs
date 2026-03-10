@@ -25,7 +25,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt))
                 .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUserName))
                 .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedAt));
-            CreateMap<SysUserCustomField, SysUserCustomFieldDto>()
+            CreateMap<SysUserCustomField, CustomFieldDto>()
                 .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
                 .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
                 .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey))
@@ -38,28 +38,28 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt))
                 .ForMember(d => d.DeletedUser, o => o.MapFrom(s => s.DeletedUserName))
                 .ForMember(d => d.DeletedDate, o => o.MapFrom(s => s.DeletedAt));
-            CreateMap<SysUserCustomField, UserCustomFieldLookUpDto>()
+            CreateMap<SysUserCustomField, CustomFieldLookUpDto>()
                 .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
                 .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
                 .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType));
              
 
-            CreateMap<UserCustomFieldCreateDto, SysUserCustomField>()
+            CreateMap<CustomFieldCreateDto, SysUserCustomField>()
         .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
         .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey))
         .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType));
 
-            CreateMap<SysUserCustomFieldUpdateDto, SysUserCustomField>()
+            CreateMap<CustomFieldUpdateDto, SysUserCustomField>()
         .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
         .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey))
         .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Active))
         .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType));
 
-            CreateMap<CustomFieldOptionsDto, SysUserCustomFieldOptions>()
+            CreateMap<CreateCustomFieldOptionsDto, SysUserCustomFieldOptions>()
                 .ForMember(d => d.label, o => o.MapFrom(s => s.label))
                 .ForMember(d => d.value, o => o.MapFrom(s => s.value));
 
-            CreateMap<CustomFieldValidationsDto, SysUserCustomFieldValidations>()
+            CreateMap<CreateCustomFieldValidationsDto, SysUserCustomFieldValidations>()
                 .ForMember(d => d.RuleName, o => o.MapFrom(s => s.RuleName))
                 .ForMember(d => d.RuleValue, o => o.MapFrom(s => s.RuleValue))
                 .ForMember(d => d.message, o => o.MapFrom(s => s.message));
@@ -77,7 +77,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Active))
                 .ForMember(d => d.message, o => o.MapFrom(s => s.message));
 
-            CreateMap<SysUserCustomFieldValidations, UserCustomFieldValidationsDto>()
+            CreateMap<SysUserCustomFieldValidations, CustomFieldValidationsDto>()
                 .ForMember(d => d.CustomFieldValidationId, o => o.MapFrom(s => s.SysUserCustomFieldValidationId))
                 .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
                 .ForMember(d => d.RuleName, o => o.MapFrom(s => s.RuleName))
@@ -88,7 +88,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(d => d.ModifiedUser, o => o.MapFrom(s => s.UpdatedUserName))
                 .ForMember(d => d.ModifiedDate, o => o.MapFrom(s => s.UpdatedAt))
                 .ForMember(d => d.message, o => o.MapFrom(s => s.message));
-            CreateMap<SysUserCustomFieldOptions, UserCustomFieldOptionsDto>()
+            CreateMap<SysUserCustomFieldOptions, CustomFieldOptionsDto>()
                 .ForMember(d => d.CustomFieldOptionsId, o => o.MapFrom(s => s.SysUserCustomFieldOptionsId))
                 .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
                 .ForMember(d => d.label, o => o.MapFrom(s => s.label))

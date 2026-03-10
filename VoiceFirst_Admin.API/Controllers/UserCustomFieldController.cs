@@ -24,7 +24,7 @@ public class CustomFieldController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] UserCustomFieldCreateDto dto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromBody] CustomFieldCreateDto dto, CancellationToken cancellationToken)
     {
         if (dto == null) return BadRequest(ApiResponse<object>.Fail(Messages.BadRequest));
         var res = await _service.CreateAsync(dto, userId, cancellationToken);
@@ -40,7 +40,7 @@ public class CustomFieldController : ControllerBase
     }
 
     [HttpPatch("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] SysUserCustomFieldUpdateDto dto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(int id, [FromBody] CustomFieldUpdateDto dto, CancellationToken cancellationToken)
     {
         var res = await _service.UpdateAsync(dto, id, userId, cancellationToken);
         return StatusCode(res.StatusCode, res);
@@ -54,12 +54,12 @@ public class CustomFieldController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll([FromQuery] CustomFieldFilterDto filter, CancellationToken cancellationToken)
     {
         var items = await _service.GetAllAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.CustomFieldRetrieved));
     }
-    [HttpGet]
+    [HttpGet("lookup")]
     public async Task<IActionResult> GetLookUp([FromQuery] BasicFilterDto filter, CancellationToken cancellationToken)
     {
         var items = await _service.GetLookUpAsync(filter, cancellationToken);

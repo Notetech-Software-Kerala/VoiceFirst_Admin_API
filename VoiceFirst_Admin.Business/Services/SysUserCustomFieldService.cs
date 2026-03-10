@@ -26,7 +26,7 @@ namespace VoiceFirst_Admin.Business.Services
             _mapper = mapper;
         }
 
-        public async Task<ApiResponse<CustomFieldDetailDto>> CreateAsync(UserCustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<CustomFieldDetailDto>> CreateAsync(CustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default)
         {
 
             var exsitFieldKey = await _repo.ExistsByFieldKeyAsync(dto.FieldKey,null, cancellationToken);
@@ -127,9 +127,9 @@ namespace VoiceFirst_Admin.Business.Services
                 
                 
             var upsertError = await _repo.CreateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, loginId, cancellationToken);
-            if (upsertError != null)
+            if (upsertError.Success==false )
                 return ApiResponse<CustomFieldDetailDto>.Fail(upsertError.Message,upsertError.StatusCode);
-            var userCustomField = await GetByIdAsync(entity.SysUserCustomFieldId, cancellationToken);
+            var userCustomField = await GetByIdAsync(upsertError.Id??0, cancellationToken);
 
             return ApiResponse<CustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldCreated);
             
@@ -144,13 +144,13 @@ namespace VoiceFirst_Admin.Business.Services
 
             var options = await _repo.GetOptionsByFieldIdAsync(id, cancellationToken);
             var dto = _mapper.Map<CustomFieldDetailDto>(field);
-            dto.Validations = _mapper.Map<List<UserCustomFieldValidationsDto>>(validations);
-            dto.Options = _mapper.Map<List<UserCustomFieldOptionsDto>>(options);
+            dto.Validations = _mapper.Map<List<CustomFieldValidationsDto>>(validations);
+            dto.Options = _mapper.Map<List<CustomFieldOptionsDto>>(options);
 
             return dto;
         }
 
-        public async Task<ApiResponse<CustomFieldDetailDto>> UpdateAsync(SysUserCustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<CustomFieldDetailDto>> UpdateAsync(CustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
         {
             var exsitFieldKey = await _repo.ExistsByFieldKeyAsync(dto.FieldKey, null, cancellationToken);
             if (exsitFieldKey != null)
@@ -324,12 +324,12 @@ namespace VoiceFirst_Admin.Business.Services
             
         }
 
-        public async Task<PagedResultDto<SysUserCustomFieldDto>> GetAllAsync(SysUserCustomFieldFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<CustomFieldDto>> GetAllAsync(CustomFieldFilterDto filter, CancellationToken cancellationToken = default)
         {
             var entities = await _repo.GetAllAsync(filter, cancellationToken);
-            var list = _mapper.Map<IEnumerable<SysUserCustomFieldDto>>(entities.Items);
+            var list = _mapper.Map<IEnumerable<CustomFieldDto>>(entities.Items);
             // load actions for each? skip for performance
-            return new PagedResultDto<SysUserCustomFieldDto>
+            return new PagedResultDto<CustomFieldDto>
             {
                 Items = list,
                 TotalCount = entities.TotalCount,
@@ -337,12 +337,12 @@ namespace VoiceFirst_Admin.Business.Services
                 PageSize = filter.Limit
             };
         }
-        public async Task<PagedResultDto<UserCustomFieldLookUpDto>?> GetLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<CustomFieldLookUpDto>?> GetLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
         {
             var entities = await _repo.GetLookUpAsync(filter, cancellationToken);
-            var list = _mapper.Map<IEnumerable<UserCustomFieldLookUpDto>>(entities.Items);
+            var list = _mapper.Map<IEnumerable<CustomFieldLookUpDto>>(entities.Items);
             // load actions for each? skip for performance
-            return new PagedResultDto<UserCustomFieldLookUpDto>
+            return new PagedResultDto<CustomFieldLookUpDto>
             {
                 Items = list,
                 TotalCount = entities.TotalCount,
