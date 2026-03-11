@@ -82,8 +82,8 @@ public class PasswordService : IPasswordService
                 ErrorCodes.ForgotPasswordCooldown);
         }
 
-        // 3. Look up user first (needed for per-user token tracking)
-        var user = await _userRepo.GetUserByEmailAsync(email, cancellationToken);
+        // 3. Look up user (including deleted/inactive for proper notification)
+        var user = await _userRepo.GetUserByEmailUnfilteredAsync(email, cancellationToken);
 
         if (user is null)
         {
@@ -91,6 +91,33 @@ public class PasswordService : IPasswordService
             return ApiResponse<object>.Ok(
                 null!,
                 Messages.ForgotPasswordEmailSent(email),
+                StatusCodes.Status200OK);
+        }
+
+        // 3b. If user is suspended (deleted or inactive), send suspension notice instead
+        if (user.IsDeleted == true || user.IsActive == false)
+        {
+            var suspendedTemplate = EmailTemplateHelper.GetTemplate("AccountSuspendedEmail");
+            var suspendedBody = suspendedTemplate
+                .Replace("{{UserFullName}}", System.Net.WebUtility.HtmlEncode(user.FirstName + " " + user.LastName))
+                .Replace("{{UserEmail}}", System.Net.WebUtility.HtmlEncode(user.Email))
+                .Replace("{{SupportDocsUrl}}", _configuration["Support:DocsUrl"] ?? "#");
+
+            var suspendedEmailDto = new EmailDTO
+            {
+                from_email = _configuration["Email:FromEmail"]!,
+                from_email_password = _configuration["Email:FromPassword"],
+                to_email = user.Email,
+                email_subject = "Account Suspended – Password Reset Unavailable",
+                email_html_body = suspendedBody
+            };
+
+            EmailHelper.SendMail(suspendedEmailDto);
+
+            // Same response as normal flow to prevent email enumeration
+            return ApiResponse<object>.Ok(
+                null!,
+                Messages.AccountSuspendedEmailSent(email),
                 StatusCodes.Status200OK);
         }
 
@@ -228,6 +255,9 @@ public class PasswordService : IPasswordService
         await _authRepo.InvalidateAllSessionsAsync(user.UserId, cancellationToken);
         await _sessionService.InvalidateAllUserSessionsAsync(user.UserId);
 
+        // 6. Send password changed notification email
+        SendPasswordChangedNotification(user.FirstName, user.LastName, user.Email);
+
         return ApiResponse<object>.Ok(
             null!,
             Messages.ResetPasswordSuccess,
@@ -300,10 +330,34 @@ public class PasswordService : IPasswordService
         await _authRepo.InvalidateAllSessionsAsync(userId, cancellationToken);
         await _sessionService.InvalidateAllUserSessionsAsync(userId, excludeSessionId: sessionId);
 
+        // 7. Send password changed notification email
+        SendPasswordChangedNotification(user.FirstName, user.LastName, user.Email);
+
         return ApiResponse<object>.Ok(
             null!,
             Messages.ChangePasswordSuccess,
             StatusCodes.Status200OK);
+    }
+
+    private void SendPasswordChangedNotification(string firstName, string lastName, string email)
+    {
+        var template = EmailTemplateHelper.GetTemplate("PasswordChangedNotificationEmail");
+        var body = template
+            .Replace("{{UserFullName}}", System.Net.WebUtility.HtmlEncode(firstName + " " + lastName))
+            .Replace("{{UserEmail}}", System.Net.WebUtility.HtmlEncode(email))
+            .Replace("{{ChangedAtUtc}}", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm UTC"))
+            .Replace("{{SupportDocsUrl}}", _configuration["Support:DocsUrl"] ?? "#");
+
+        var emailDto = new EmailDTO
+        {
+            from_email = _configuration["Email:FromEmail"]!,
+            from_email_password = _configuration["Email:FromPassword"],
+            to_email = email,
+            email_subject = "Your password was changed",
+            email_html_body = body
+        };
+
+        EmailHelper.SendMail(emailDto);
     }
 
     private static string HashValue(string value)
