@@ -21,6 +21,7 @@
         public const string Unauthorized = "UNAUTHORIZED";
         public const string Forbidden = "FORBIDDEN";
         public const string Payload = "PAYLOAD_REQUIRED";
+        public const string InvalidMode = "INVALID_MODE";
         public const string InternalServerError = "INTERNAL_SERVER_ERROR";
         public const string NoRowAffected = "NO_ROW_AFFECTED";
         public const string BusinessActivityAlreadyRecovered =
@@ -115,15 +116,17 @@
 
         // ===== AUTH =====
         public const string InvalidOrExpiredToken = "INVALID_OR_EXPIRED_TOKEN";
+        public const string InvalidOrExpiredResetLink = "INVALID_OR_EXPIRED_RESET_LINK";
+        public const string InvalidResetGrant = "INVALID_RESET_GRANT";
         public const string PasswordResetFailed = "PASSWORD_RESET_FAILED";
         public const string ForgotPasswordLimitExceeded = "FORGOT_PASSWORD_LIMIT_EXCEEDED";
-        public const string OtpAttemptsExceeded = "OTP_ATTEMPTS_EXCEEDED";
         public const string ForgotPasswordCooldown = "FORGOT_PASSWORD_COOLDOWN";
         public const string InvalidCredentials = "INVALID_CREDENTIALS";
         public const string AccountLockedOut = "ACCOUNT_LOCKED_OUT";
         public const string AccountInactive = "ACCOUNT_INACTIVE";
         public const string AccountDeleted = "ACCOUNT_DELETED";
         public const string DeviceInfoRequired = "DEVICE_INFO_REQUIRED";
+        public const string FullDeviceInfoRequired = "FULL_DEVICE_INFO_REQUIRED";
         public const string LoginFailed = "LOGIN_FAILED";
         public const string OldPasswordIncorrect = "OLD_PASSWORD_INCORRECT";
         public const string NewPasswordSameAsOld = "NEW_PASSWORD_SAME_AS_OLD";
@@ -160,13 +163,19 @@
         public const string IssueMediaTypeNotFound = "ISSUE_MEDIA_TYPE_NOT_FOUND_DELETED_TRUE";
         public const string IssueMediaTypeAlreadyRecovered = "ISSUE_MEDIA_TYPE_ALREADY_RECOVERED";
         public const string IssueMediaTypeAlreadyDeleted = "ISSUE_MEDIA_TYPE_ALREADY_DELETED";
+        public const string IssueMediaTypeNotActive = "ISSUE_MEDIA_TYPE_NOT_ACTIVE";
 
         // ===== SYS ISSUE MEDIA FORMAT =====
+        public const string IssueMediaFormatAlreadyLinked = "ISSUE_MEDIA_FORMAT_LINKED";
         public const string IssueMediaFormatAlreadyExists = "ISSUE_MEDIA_FORMAT_EXISTS";
         public const string IssueMediaFormatAlreadyExistsRecoverable = "ISSUE_MEDIA_FORMAT_EXISTS_RECOVERABLE";
         public const string IssueMediaFormatNotFoundById = "ISSUE_MEDIA_FORMAT_NOT_FOUND";
         public const string IssueMediaFormatNotFound = "ISSUE_MEDIA_FORMAT_NOT_FOUND_DELETED_TRUE";
         public const string IssueMediaFormatAlreadyRecovered = "ISSUE_MEDIA_FORMAT_ALREADY_RECOVERED";
         public const string IssueMediaFormatAlreadyDeleted = "ISSUE_MEDIA_FORMAT_ALREADY_DELETED";
+        public const string IssueMediaFormatNotActive = "ISSUE_MEDIA_FORMAT_NOT_ACTIVE";
+
+        // ===== APPLICATION VERSION =====
+        public const string ApplicationVersionAlreadyExists = "APPLICATION_VERSION_EXISTS";
     }
 }

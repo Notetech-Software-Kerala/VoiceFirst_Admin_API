@@ -6,5 +6,6 @@ public class SysBusinessActivityCreateDTO
 {
 
 	public string ActivityName { get; set; } = string.Empty;
+	public List<int>? addCustomFieldIds { get; set; }
 
 }

@@ -21,6 +21,7 @@ public interface IMenuRepo
     Task<bool> DeleteMenuProgramLinksAsync(IDbConnection connection, IDbTransaction tx, int menuMasterId, int loginId, CancellationToken cancellationToken = default);
     Task<IEnumerable<MenuProgramLink>> GetAllMenuProrgamByMenuMastersIdAsync(int menuMastersId, CancellationToken cancellationToken = default);
     Task<MenuMaster?> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
+    Task<MenuMaster?> ExistsByRountAsync(string rount, int? excludeId = null, CancellationToken cancellationToken = default);
     Task<WebMenu?> ExistsMenuMasterByWebAsync(int menuMasterId, int? excludeId = null, CancellationToken cancellationToken = default);
     Task<AppMenus?> ExistsMenuMasterByAppAsync(int menuMasterId, int? excludeId = null, CancellationToken cancellationToken = default);
     Task<int> CreateAppMenuAsync(int menuMasterId, int createdBy, CancellationToken cancellationToken);

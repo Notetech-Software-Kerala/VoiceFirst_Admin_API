@@ -9,6 +9,10 @@ public interface IPasswordService
         ForgotPasswordDto request,
         CancellationToken cancellationToken);
 
+    Task<ApiResponse<object>> ValidateResetTokenAsync(
+        string resetToken,
+        CancellationToken cancellationToken);
+
     Task<ApiResponse<object>> ResetPasswordAsync(
         ResetPasswordDto request,
         CancellationToken cancellationToken);

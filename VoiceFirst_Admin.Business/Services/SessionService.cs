@@ -16,7 +16,7 @@ public class SessionService : ISessionService
     private const string SessionKeyPrefix = "session:";
     private const string LoginAttemptKeyPrefix = "login_attempts:";
     private const string LoginLockoutKeyPrefix = "login_lockout:";
-    private const int MaxLoginAttempts = 5;
+    private const int MaxLoginAttempts =10;
     private static readonly TimeSpan LoginLockoutDuration = TimeSpan.FromMinutes(15);
 
     public SessionService(IConnectionMultiplexer redis, JwtSettings jwtSettings)

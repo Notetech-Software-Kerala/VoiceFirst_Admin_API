@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.DTOs.Features.BusinessActivityUserCustomFieldLink;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity;
 using VoiceFirst_Admin.Utilities.DTOs.Shared;
 using VoiceFirst_Admin.Utilities.Enums;
@@ -14,17 +15,19 @@ namespace VoiceFirst_Admin.Business.Services
     public class SysBusinessActivityService : ISysBusinessActivityService
     {
         private readonly ISysBusinessActivityRepo _repo;
+        private readonly ISysUserCustomFieldRepo _sysUserCustomFieldRepo;
         private readonly IMapper _mapper;
         public SysBusinessActivityService(
-            ISysBusinessActivityRepo repository,
+            ISysBusinessActivityRepo repository, ISysUserCustomFieldRepo sysUserCustomFieldRepo,
             IMapper mapper)
         {
             _repo = repository;
+            _sysUserCustomFieldRepo = sysUserCustomFieldRepo;
             _mapper = mapper;
         }
 
 
-        public async Task<ApiResponse<SysBusinessActivityDTO>> CreateAsync(
+        public async Task<ApiResponse<SysBusinessActivityDetailsDTO>> CreateAsync(
           SysBusinessActivityCreateDTO dto,
           int loginId,
           CancellationToken cancellationToken)
@@ -41,66 +44,108 @@ namespace VoiceFirst_Admin.Business.Services
                 {
                     // ❌ Active duplicate
                     
-                    return ApiResponse<SysBusinessActivityDTO>.Fail
+                    return ApiResponse<SysBusinessActivityDetailsDTO>.Fail
                        (Messages.BusinessActivityAlreadyExists,
                        StatusCodes.Status409Conflict,
                        ErrorCodes.BusinessActivityAlreadyExists
                        );
                 }
-                return ApiResponse<SysBusinessActivityDTO>.Fail(                    
+                return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(                    
                      Messages.BusinessActivityAlreadyExistsRecoverable,
                      StatusCodes.Status422UnprocessableEntity,
                       ErrorCodes.BusinessActivityAlreadyExistsRecoverable,
-                      new SysBusinessActivityDTO
+                      new SysBusinessActivityDetailsDTO
                       {
                           ActivityId = existingEntity.ActivityId
                       }
                  );
             }
-
+            if(dto.addCustomFieldIds!=null && dto.addCustomFieldIds.Count() > 0)
+            {
+                foreach (var item in dto.addCustomFieldIds)
+                {
+                    var customfield = await _sysUserCustomFieldRepo.GetByIdAsync(item, cancellationToken);
+                    if (customfield == null)
+                    {
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                            Messages.CustomFieldNotFound,
+                            StatusCodes.Status409Conflict);
+                    }
+                    if (customfield.IsDeleted != false)
+                    {
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                            Messages.CustomFieldAlreadyDeleted,
+                            StatusCodes.Status409Conflict);
+                    }
+                    if (customfield.IsActive != true)
+                    {
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                            Messages.CustomFieldNotActive,
+                            StatusCodes.Status409Conflict);
+                    }
+                }
+            }
 
             var entity = _mapper.Map<SysBusinessActivity>(dto);
             entity.CreatedBy = loginId;
 
             entity.SysBusinessActivityId =
-                await _repo.CreateAsync(entity, cancellationToken);
+                await _repo.CreateAsync(entity, dto.addCustomFieldIds, cancellationToken);
 
             if(entity.SysBusinessActivityId <= 0)
             {
-                return ApiResponse<SysBusinessActivityDTO>.Fail(
+                return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
                     Messages.SomethingWentWrong,
                     StatusCodes.Status500InternalServerError,
                     ErrorCodes.InternalServerError);
             }
 
-            var createdDto =
-                await _repo.GetByIdAsync
-                (entity.SysBusinessActivityId, 
-                cancellationToken);
+            var createdResponse = await GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);
 
-            return ApiResponse<SysBusinessActivityDTO>.Ok(
-                createdDto,
+            if (createdResponse.Data == null)
+            {
+                return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                    Messages.SomethingWentWrong,
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCodes.InternalServerError);
+            }
+
+            return ApiResponse<SysBusinessActivityDetailsDTO>.Ok(
+                createdResponse.Data,
                 Messages.BusinessActivityCreated,
                 StatusCodes.Status201Created);
         }
 
 
-        public async Task<ApiResponse<SysBusinessActivityDTO>?> GetByIdAsync(
+        public async Task<ApiResponse<SysBusinessActivityDetailsDTO>> GetByIdAsync(
           int id,
           CancellationToken cancellationToken = default)
         {
             var dto = await _repo.GetByIdAsync(id, cancellationToken);
+            var dtoDetails = _mapper.Map<SysBusinessActivityDetailsDTO>(dto);
+            var customFields = await _repo.GetCustomFieldByIdAsync(id, cancellationToken);
 
-            if (dto == null)
+            
+
+            if (customFields != null)
+            {
+                var customFieldDtos = _mapper.Map<IEnumerable<BusinessActivityUserCustomFieldDto>>(customFields);
+                dtoDetails.activityCustomFields = customFieldDtos.ToList();
+            }
+            else
+            {
+                dtoDetails.activityCustomFields = new List<BusinessActivityUserCustomFieldDto>();
+            }
+            if (customFields == null)
             {
                
-                return ApiResponse<SysBusinessActivityDTO>.Fail(                   
+                return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(                   
                    Messages.BusinessActivityNotFoundById,
                    StatusCodes.Status404NotFound,
                     ErrorCodes.BusinessActivityNotFoundById);
             }
-            return ApiResponse <SysBusinessActivityDTO>.Ok(
-                dto,
+            return ApiResponse <SysBusinessActivityDetailsDTO>.Ok(
+                dtoDetails,
                 Messages.BusinessActivityRetrieved,
                 StatusCodes.Status200OK);
         }
@@ -142,7 +187,7 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
 
-        public async Task<ApiResponse<SysBusinessActivityDTO>> UpdateAsync(
+        public async Task<ApiResponse<SysBusinessActivityDetailsDTO>> UpdateAsync(
           SysBusinessActivityUpdateDTO dto,
           int sysBusinessActivityId,
           int loginId,
@@ -156,7 +201,7 @@ namespace VoiceFirst_Admin.Business.Services
             if (existDto == null )
             {
 
-                return ApiResponse<SysBusinessActivityDTO>.Fail(
+                return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
                    Messages.BusinessActivityNotFoundById,
                    StatusCodes.Status404NotFound,
                     ErrorCodes.BusinessActivityNotFoundById);              
@@ -165,7 +210,7 @@ namespace VoiceFirst_Admin.Business.Services
             {
 
                
-                 return ApiResponse<SysBusinessActivityDTO>.Fail(
+                 return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
                   Messages.BusinessActivityNotFound,
                   StatusCodes.Status409Conflict,
                    ErrorCodes.BusinessActivityNotFound);
@@ -186,39 +231,99 @@ namespace VoiceFirst_Admin.Business.Services
                     {
                         // ❌ Active duplicate
 
-                        return ApiResponse<SysBusinessActivityDTO>.Fail
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail
                            (Messages.BusinessActivityAlreadyExists,
                            StatusCodes.Status409Conflict,
                            ErrorCodes.BusinessActivityAlreadyExists
                            );
                     }
-                    return ApiResponse<SysBusinessActivityDTO>.Fail(
+                    return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
                          Messages.BusinessActivityAlreadyExistsRecoverable,
                          StatusCodes.Status422UnprocessableEntity,
                           ErrorCodes.BusinessActivityAlreadyExistsRecoverable,
-                          new SysBusinessActivityDTO
+                          new SysBusinessActivityDetailsDTO
                           {
                               ActivityId = existingEntity.ActivityId
                           }
                      );
                 }
             }
+            if (dto.addCustomFieldIds != null && dto.addCustomFieldIds.Count() > 0)
+            {
+                foreach (var item in dto.addCustomFieldIds)
+                {
+                    var customfield = await _sysUserCustomFieldRepo.GetByIdAsync(item, cancellationToken);
+                    if (customfield == null)
+                    {
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                            Messages.CustomFieldNotFound,
+                            StatusCodes.Status404NotFound);
+                    }
+                    if (customfield.IsDeleted != false)
+                    {
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                            Messages.CustomFieldAlreadyDeleted,
+                            StatusCodes.Status409Conflict);
+                    }
+                    if (customfield.IsActive != true)
+                    {
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                            Messages.CustomFieldNotActive,
+                            StatusCodes.Status409Conflict);
+                    }
+                    var alreadyExsit = await _repo.IsCustomFieldExistByActivityAsync(sysBusinessActivityId,item, cancellationToken);
+                    if (alreadyExsit != null)
+                    {
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                            Messages.CustomFieldAlreadyExistsByActivity,
+                            StatusCodes.Status404NotFound);
+                    }
+                }
+            }
+            if (dto.updateCustomField != null && dto.updateCustomField.Count() > 0)
+            {
+                foreach (var item in dto.updateCustomField)
+                {
+                    var customfield = await _repo.GetCustomFieldLinkByIdAsync(item.ActivityCustomFieldLinkId, sysBusinessActivityId, cancellationToken);
+                    if (customfield == null)
+                    {
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                            Messages.CustomFieldNotFound,
+                            StatusCodes.Status404NotFound);
+                    }
+                    
+                    if (customfield.IsActive == item.Active)
+                    {
+                        return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                            Messages.CustomFieldAlreadyRequestedStatus,
+                            StatusCodes.Status409Conflict);
+                    }
+                }
+            }
 
             var entity = _mapper.Map<SysBusinessActivity>((dto,sysBusinessActivityId,loginId));
-            var updated = await _repo.UpdateAsync(entity, cancellationToken);
+            var updateCustomField = _mapper.Map<List<SysBusinessActivityUserCustomFieldLink>>(dto.updateCustomField);
+            var updated = await _repo.UpdateAsync(entity, dto.addCustomFieldIds, updateCustomField, cancellationToken);
 
             if (!updated)
-                return ApiResponse<SysBusinessActivityDTO>.Fail(
+                return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
                     Messages.BusinessActivityUpdated,
                     StatusCodes.Status204NoContent,
                     ErrorCodes.NoRowAffected);
-       
 
-            var updatedEntity = await _repo.GetByIdAsync
-                (sysBusinessActivityId, cancellationToken);
 
-            return ApiResponse <SysBusinessActivityDTO>.Ok
-                ( updatedEntity,
+            var createdResponse = await GetByIdAsync(entity.SysBusinessActivityId, cancellationToken);
+
+            if (createdResponse.Data == null)
+            {
+                return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
+                    Messages.SomethingWentWrong,
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCodes.InternalServerError);
+            }
+
+            return ApiResponse <SysBusinessActivityDetailsDTO>.Ok
+                (createdResponse.Data,
                 Messages.BusinessActivityUpdated,
                 statusCode: StatusCodes.Status200OK);
         }

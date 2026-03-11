@@ -1,10 +1,6 @@
 using Dapper;
-using System.Collections.Generic;
-using System.Linq;
 using System.Data;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.SysIssueType;
@@ -22,237 +18,19 @@ namespace VoiceFirst_Admin.Data.Repositories
             _context = context;
         }
 
-        public async Task<Dictionary<string, bool>> IsBulkMediaRulesExistAsync(int issueTypeId, IEnumerable<int> issueMediaFormatIds, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
+
+        public async Task<SysIssueTypeDTO> GetIdAndDeletedByNameAsync
+           (string name, int? excludeId = null, CancellationToken cancellationToken = default)
         {
-            var result = new Dictionary<string, bool>
-            {
-                ["idNotFound"] = false,
-                ["inActive"] = false
-            };
+            var sql = "SELECT IsDeleted As Deleted, SysIssueTypeId As IssueTypeId FROM SysIssueType WHERE IssueType = @IssueTypeName";
+            if (excludeId.HasValue)
+                sql += " AND SysIssueTypeId <> @ExcludeId";
 
-            if (issueMediaFormatIds == null || !issueMediaFormatIds.Any())
-                return result;
-
-            const string sql = @"
-                SELECT IssueMediaFormatId, IsActive FROM SysIssueMediaRule
-                WHERE IssueTypeId = @IssueTypeId AND IssueMediaFormatId IN @Ids ;";
-
-            var entities = (await connection.QueryAsync<dynamic>(new CommandDefinition(sql, new { IssueTypeId = issueTypeId, Ids = issueMediaFormatIds }, transaction: transaction, cancellationToken: cancellationToken))).ToList();
-
-            if (entities.Count != issueMediaFormatIds.Distinct().Count())
-                result["idNotFound"] = true;
-
-            if (entities.Any(e => e.IsActive == false))
-                result["inActive"] = true;
-
-            return result;
+            var cmd = new CommandDefinition(sql, new { IssueTypeName = name, ExcludeId = excludeId }, cancellationToken: cancellationToken);
+            using var connection = _context.CreateConnection();
+            var entity = await connection.QueryFirstOrDefaultAsync<SysIssueTypeDTO>(cmd);
+            return entity;
         }
-
-        public async Task<bool> BulkUpdateMediaRulesAsync(
-           IEnumerable<SysIssueMediaRule> entities,
-           IDbConnection connection,
-           IDbTransaction transaction,
-           CancellationToken cancellationToken = default)
-        {
-            if (entities == null || !entities.Any())
-                return false;
-
-            const string sql = @"
-                UPDATE SysIssueMediaRule
-                SET 
-                    [Min] = CASE 
-                                WHEN @Min IS NOT NULL THEN @Min 
-                                ELSE [Min] 
-                            END,
-                    [Max] = CASE 
-                                WHEN @Max IS NOT NULL THEN @Max 
-                                ELSE [Max] 
-                            END,
-                    MaxSizeMB = CASE 
-                                    WHEN @MaxSizeMB IS NOT NULL THEN @MaxSizeMB 
-                                    ELSE MaxSizeMB 
-                                END,
-                    IsActive = CASE 
-                                    WHEN @IsActive IS NOT NULL THEN @IsActive 
-                                    ELSE IsActive 
-                               END,
-                    UpdatedBy = @UpdatedBy,
-                    UpdatedAt = SYSDATETIME()
-                WHERE IssueTypeId = @IssueTypeId 
-                  AND IssueMediaFormatId = @IssueMediaFormatId
-                  AND (
-                        (@Min IS NOT NULL AND ISNULL([Min], -1) <> ISNULL(@Min, -1))
-                     OR (@Max IS NOT NULL AND ISNULL([Max], -1) <> ISNULL(@Max, -1))
-                     OR (@MaxSizeMB IS NOT NULL AND ISNULL(MaxSizeMB, -1) <> ISNULL(@MaxSizeMB, -1))
-                     OR (@IsActive IS NOT NULL AND ISNULL(IsActive, 0) <> ISNULL(@IsActive, 0))
-                  );";
-
-            var rows = await connection.ExecuteAsync(
-                new CommandDefinition(sql, entities, transaction: transaction, cancellationToken: cancellationToken));
-            return rows > 0;
-        }
-
-
-        public async Task<bool> BulkInsertMediaRulesAsync(int issueTypeId, IEnumerable<IssueMediaRuleCreateDTO> dtos, int createdBy, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            if (dtos == null || !dtos.Any()) return false;
-
-            const string sql = @"
-                INSERT INTO SysIssueMediaRule (IssueTypeId, IssueMediaFormatId, [Min], [Max], MaxSizeMB, CreatedBy)
-                VALUES (@IssueTypeId, @IssueMediaFormatId, @Min, @Max, @MaxSizeMB, @CreatedBy);";
-
-            var parameters = dtos.Select(d => new
-            {
-                IssueTypeId = issueTypeId,
-                IssueMediaFormatId = d.IssueMediaFormatId,
-                Min = d.Min,
-                Max = d.Max,
-                MaxSizeMB = d.MaxSizeMB,
-                CreatedBy = createdBy
-            });
-
-            var rows = await connection.ExecuteAsync(new CommandDefinition(sql, parameters, transaction: transaction, cancellationToken: cancellationToken));
-            return rows > 0;
-        }
-
-        public async Task<IEnumerable<SysIssueMediaRule>> GetRulesByIssueTypeAndFormatsAsync(int issueTypeId, IEnumerable<int> formatIds, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            if (formatIds == null || !formatIds.Any()) return Enumerable.Empty<SysIssueMediaRule>();
-
-            const string sql = @"SELECT * FROM SysIssueMediaRule WHERE IssueTypeId = @IssueTypeId AND IssueMediaFormatId IN @Ids;";
-            return await connection.QueryAsync<SysIssueMediaRule>(new CommandDefinition(sql, new { IssueTypeId = issueTypeId, Ids = formatIds }, transaction: transaction, cancellationToken: cancellationToken));
-        }
-
-        public async Task<Dictionary<string, bool>> IsBulkMediaTypesExistAsync(IEnumerable<int> mediaTypeIds, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            var result = new Dictionary<string, bool>
-            {
-                ["idNotFound"] = false,
-                ["inActive"] = false
-            };
-
-            if (mediaTypeIds == null || !mediaTypeIds.Any()) return result;
-
-            const string sql = @"SELECT SysIssueMediaTypeId, IsActive FROM SysIssueMediaType WHERE SysIssueMediaTypeId IN @Ids;";
-            var entities = (await connection.QueryAsync<dynamic>(new CommandDefinition(sql, new { Ids = mediaTypeIds }, transaction: transaction, cancellationToken: cancellationToken))).ToList();
-
-            if (entities.Count != mediaTypeIds.Distinct().Count()) result["idNotFound"] = true;
-            if (entities.Any(e => e.IsActive == false)) result["inActive"] = true;
-
-            return result;
-        }
-
-
-
-
-        public async Task<int> BulkUpdateMediaRuleTypesAsync(IEnumerable<SysIssueMediaRuleType> dtos, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            if (dtos == null || !dtos.Any()) return 0;
-
-            const string sql = @"
-                UPDATE SysIssueMediaRuleType
-                SET IsMandatory = @IsMandatory,
-                    IsActive = @IsActive,
-                    UpdatedBy = @UpdatedBy,
-                    UpdatedAt = SYSDATETIME()
-                WHERE IssueMediaRuleId = @IssueMediaRuleId AND IssueMediaTypeId = @IssueMediaTypeId ;";
-
-            var parameters = dtos.Select(d => new
-            {
-                IssueMediaRuleId = d.IssueMediaRuleId,
-                IssueMediaTypeId = d.IssueMediaTypeId,
-                IsMandatory = d.IsMandatory,
-                IsActive = d.IsActive,
-                UpdatedBy = d.UpdatedBy
-            });
-
-            return await connection.ExecuteAsync(new CommandDefinition(sql, parameters, transaction: transaction, cancellationToken: cancellationToken));
-        }
-
-        public async Task<bool> BulkInsertMediaRuleTypesAsync(IEnumerable<SysIssueMediaRuleType> dtos, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            if (dtos == null || !dtos.Any()) return false;
-
-            const string sql = @"
-                INSERT INTO SysIssueMediaRuleType (IssueMediaRuleId, IssueMediaTypeId, IsMandatory, CreatedBy)
-                VALUES (@IssueMediaRuleId, @IssueMediaTypeId, @IsMandatory, @CreatedBy);";
-
-            var parameters = dtos.Select(d => new
-            {
-                IssueMediaRuleId = d.IssueMediaRuleId,
-                IssueMediaTypeId = d.IssueMediaTypeId,
-                IsMandatory = d.IsMandatory,
-                CreatedBy = d.CreatedBy
-            });
-
-            var rows = await connection.ExecuteAsync(new CommandDefinition(sql, parameters, transaction: transaction, cancellationToken: cancellationToken));
-            return rows > 0;
-        }
-
-        public async 
-            Task<SysIssueMediaRule?> 
-            GetMediaRuleByIssueTypeAndFormatAsync
-            (int issueTypeId, 
-            int issueMediaFormatId, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-                SELECT TOP 1 * FROM SysIssueMediaRule
-                WHERE IssueTypeId = @IssueTypeId AND IssueMediaFormatId = @IssueMediaFormatId;
-            ";
-            var result = await connection.QuerySingleOrDefaultAsync<SysIssueMediaRule>(
-                new CommandDefinition(sql, new { IssueTypeId = issueTypeId, IssueMediaFormatId = issueMediaFormatId }, transaction: transaction, cancellationToken: cancellationToken));
-            return result;
-        }
-
-
-        public async Task<bool> UpdateMediaRuleAsync(SysIssueMediaRule rule, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-                UPDATE SysIssueMediaRule
-                SET [Min] = @Min,
-                    [Max] = @Max,
-                    MaxSizeMB = @MaxSizeMB,
-                    IsActive = @IsActive,
-                    UpdatedBy = @UpdatedBy,
-                    UpdatedAt = SYSDATETIME()
-                WHERE SysIssueMediaRuleId = @Id;
-            ";
-            var affected = await connection.ExecuteAsync(new CommandDefinition(sql, new { Min = rule.Min, Max = rule.Max, MaxSizeMB = rule.MaxSizeMB, IsActive = rule.IsActive, UpdatedBy = rule.UpdatedBy, Id = rule.SysIssueMediaRuleId }, transaction: transaction, cancellationToken: cancellationToken));
-            return affected > 0;
-        }
-
-        public async Task<SysIssueMediaRuleType?> GetMediaRuleTypeAsync(int ruleId, int issueMediaTypeId, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-                SELECT TOP 1 * FROM SysIssueMediaRuleType
-                WHERE IssueMediaRuleId = @RuleId AND IssueMediaTypeId = @IssueMediaTypeId;
-            ";
-            return await connection.QuerySingleOrDefaultAsync<SysIssueMediaRuleType>(new CommandDefinition(sql, new { RuleId = ruleId, IssueMediaTypeId = issueMediaTypeId }, transaction: transaction, cancellationToken: cancellationToken));
-        }
-
-        public async Task<bool> UpdateMediaRuleTypeAsync(SysIssueMediaRuleType dto, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-                UPDATE SysIssueMediaRuleType
-                SET IsMandatory = @IsMandatory,
-                    IsActive = @IsActive,
-                    UpdatedBy = @UpdatedBy,
-                    UpdatedAt = SYSDATETIME()
-                WHERE SysIssueMediaRuleTypeId = @Id;
-            ";
-            var affected = await connection.ExecuteAsync(new CommandDefinition(sql, new { IsMandatory = dto.IsMandatory, IsActive = dto.IsActive, UpdatedBy = dto.UpdatedBy, Id = dto.SysIssueMediaRuleTypeId }, transaction: transaction, cancellationToken: cancellationToken));
-            return affected > 0;
-        }
-
-        public async Task<int> CreateMediaRuleTypeAsync(SysIssueMediaRuleType dto, IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-                INSERT INTO SysIssueMediaRuleType (IssueMediaRuleId, IssueMediaTypeId, IsMandatory, CreatedBy)
-                VALUES (@IssueMediaRuleId, @IssueMediaTypeId, @IsMandatory, @CreatedBy);
-                SELECT CAST(SCOPE_IDENTITY() AS int);";
-            return await connection.ExecuteScalarAsync<int>(new CommandDefinition(sql, new { IssueMediaRuleId = dto.IssueMediaRuleId, IssueMediaTypeId = dto.IssueMediaTypeId, IsMandatory = dto.IsMandatory, CreatedBy = dto.CreatedBy }, transaction: transaction, cancellationToken: cancellationToken));
-        }
-
 
         public async Task<SysIssueTypeDTO> IssueTypeExistsAsync
             (string name, int? excludeId = null, CancellationToken cancellationToken = default)
@@ -268,24 +46,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
-        public async Task<int> CreateAsync
-            (SysIssueType entity,
-            CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-                INSERT INTO SysIssueType (IssueType, CreatedBy)
-                VALUES (@IssueType, @CreatedBy);
-                SELECT CAST(SCOPE_IDENTITY() AS int);";
-
-            var cmd = new CommandDefinition(sql, new
-            {
-                entity.IssueType,
-                entity.CreatedBy,
-            }, cancellationToken: cancellationToken);
-            using var connection = _context.CreateConnection();
-            int id = await connection.ExecuteScalarAsync<int>(cmd);
-            return id;
-        }
+       
 
 
         public async Task<SysIssueTypeDTO?> GetByIdAsync(
@@ -408,7 +169,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                     cancellationToken: cancellationToken
                 )
             );
-            return dto;
+             return dto;
         }
 
 
@@ -734,60 +495,6 @@ namespace VoiceFirst_Admin.Data.Repositories
                 entity.CreatedBy,
             }, transaction: transaction, cancellationToken: cancellationToken);
             return await connection.ExecuteScalarAsync<int>(cmd);
-        }
-
-
-        public async Task<int> CreateMediaRuleAsync(
-            SysIssueMediaRule rule,
-            IDbConnection connection,
-            IDbTransaction transaction,
-            CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-                INSERT INTO SysIssueMediaRule (IssueTypeId, IssueMediaFormatId, [Min], [Max], MaxSizeMB, CreatedBy)
-                VALUES (@IssueTypeId, @IssueMediaFormatId, @Min, @Max, @MaxSizeMB, @CreatedBy);
-                SELECT CAST(SCOPE_IDENTITY() AS int);";
-
-            return await connection.ExecuteScalarAsync<int>(
-                new CommandDefinition(sql, new
-                {
-                    rule.IssueTypeId,
-                    rule.IssueMediaFormatId,
-                    rule.Min,
-                    rule.Max,
-                    rule.MaxSizeMB,
-                    rule.CreatedBy
-                }, transaction: transaction, cancellationToken: cancellationToken));
-        }
-
-
-        public async Task<bool> BulkInsertMediaRuleTypesAsync(
-            int ruleId,
-            IEnumerable<IssueMediaRuleTypeCreateDTO> mediaTypes,
-            int createdBy,
-            IDbConnection connection,
-            IDbTransaction transaction,
-            CancellationToken cancellationToken = default)
-        {
-            if (mediaTypes == null || !mediaTypes.Any())
-                return false;
-
-            const string sql = @"
-                INSERT INTO SysIssueMediaRuleType (IssueMediaRuleId, IssueMediaTypeId, IsMandatory, CreatedBy)
-                VALUES (@IssueMediaRuleId, @IssueMediaTypeId, @IsMandatory, @CreatedBy);";
-
-            var parameters = mediaTypes.Select(mt => new
-            {
-                IssueMediaRuleId = ruleId,
-                mt.IssueMediaTypeId,
-                mt.IsMandatory,
-                CreatedBy = createdBy
-            });
-
-            var rowsAffected = await connection.ExecuteAsync(
-                new CommandDefinition(sql, parameters, transaction: transaction, cancellationToken: cancellationToken));
-
-            return rowsAffected > 0;
         }
 
     }

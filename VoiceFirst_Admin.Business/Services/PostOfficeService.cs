@@ -309,8 +309,8 @@ public class PostOfficeService : IPostOfficeService
             entity = new PostOffice
             {
                 PostOfficeId = id,
-                PostOfficeName = dto.PostOfficeName ?? string.Empty,
-                CountryId = dto.CountryId ?? 0,
+                PostOfficeName = dto.PostOfficeName,
+                CountryId = dto.CountryId,
                 DivisionOneId = dto.DivOneId,
                 DivisionTwoId = dto.DivTwoId,
                 DivisionThreeId = dto.DivThreeId,
@@ -375,7 +375,7 @@ public class PostOfficeService : IPostOfficeService
         }
         else
         {
-            return ApiResponse<PostOfficeDto>.Fail(error.Message, error.StatuaCode);
+            return ApiResponse<PostOfficeDto>.Fail(error.Message, error.StatusCode);
         }
         
     }

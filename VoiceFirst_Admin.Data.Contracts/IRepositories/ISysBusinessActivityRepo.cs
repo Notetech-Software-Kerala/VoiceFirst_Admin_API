@@ -10,10 +10,11 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface ISysBusinessActivityRepo
     {
-        Task<int> CreateAsync(SysBusinessActivity entity, CancellationToken cancellationToken = default);
+        Task<int> CreateAsync(SysBusinessActivity entity,List<int> CustomFieldIds, CancellationToken cancellationToken = default);
         Task<SysBusinessActivityDTO?> GetByIdAsync(int ActivityId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<SysBusinessActivityUserCustomFieldLink>> GetCustomFieldByIdAsync(int ActivityId, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(BusinessActivityFilterDTO filter, CancellationToken cancellationToken = default);     
-        Task<bool> UpdateAsync(SysBusinessActivity entity, CancellationToken cancellationToken = default);
+        Task<bool> UpdateAsync(SysBusinessActivity entity, List<int> addCustomFieldIds,List<SysBusinessActivityUserCustomFieldLink> updateCustomFieldIds, CancellationToken cancellationToken = default);
         Task<SysBusinessActivityDTO> BusinessActivityExistsAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id,int deletedBy, CancellationToken cancellationToken = default);
         Task<List<SysBusinessActivityActiveDTO?>> GetActiveAsync(CancellationToken cancellationToken = default);
@@ -21,6 +22,14 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<SysBusinessActivityDTO> IsIdExistAsync(
           int activityId,
           CancellationToken cancellationToken = default);
+        Task<SysBusinessActivityUserCustomFieldLink> IsCustomFieldExistByActivityAsync(
+          int activityId, int customFieldId,
+          CancellationToken cancellationToken = default);
+        Task<SysBusinessActivityUserCustomFieldLink?> GetCustomFieldLinkByIdAsync(
+    int customFieldLinkId,
+    int? activityId,
+    CancellationToken cancellationToken = default);
+        
 
     }
 }

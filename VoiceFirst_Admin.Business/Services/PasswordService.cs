@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
 using System.Security.Cryptography;
@@ -21,14 +22,13 @@ public class PasswordService : IPasswordService
     private readonly IConnectionMultiplexer _redis;
     private readonly IConfiguration _configuration;
 
-    private static readonly TimeSpan OtpExpiry = TimeSpan.FromMinutes(5);
-    private const string OtpKeyPrefix = "pwd_reset:";
+    private static readonly TimeSpan GrantExpiry = TimeSpan.FromMinutes(5);
     private const string RateLimitKeyPrefix = "pwd_reset_count:";
-    private const string OtpAttemptKeyPrefix = "otp_attempts:";
     private const string CooldownKeyPrefix = "pwd_reset_lock:";
-    private const int MaxForgotPasswordPerDay = 3;
-    private const int MaxOtpAttempts = 5;
-    private static readonly TimeSpan RateLimitExpiry = TimeSpan.FromHours(24);
+    private const string GrantKeyPrefix = "pwd_reset_grant:";
+    private const string UserTokenKeyPrefix = "pwd_reset_user:";
+    private const int MaxForgotPasswordRequests = 3;
+    private static readonly TimeSpan RateLimitExpiry = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan CooldownExpiry = TimeSpan.FromSeconds(30);
 
     public PasswordService(
@@ -50,13 +50,19 @@ public class PasswordService : IPasswordService
         CancellationToken cancellationToken)
     {
         var db = _redis.GetDatabase();
-        var email = request.Email!;
+        var email = request.Email!.Trim().ToLowerInvariant();
+        var emailHash = HashValue(email);
 
-        // 1. Rate limit: max 3 requests per day per email
-        var rateLimitKey = $"{RateLimitKeyPrefix}{email}";
-        var currentCount = await db.StringGetAsync(rateLimitKey);
+        // 1. Rate limit: max 3 requests per 2 minutes per email (atomic increment-first)
+        var rateLimitKey = $"{RateLimitKeyPrefix}{emailHash}";
+        var newCount = await db.StringIncrementAsync(rateLimitKey);
 
-        if (currentCount.HasValue && (int)currentCount >= MaxForgotPasswordPerDay)
+        if (newCount == 1)
+        {
+            await db.KeyExpireAsync(rateLimitKey, RateLimitExpiry);
+        }
+
+        if (newCount > MaxForgotPasswordRequests)
         {
             return ApiResponse<object>.Fail(
                 Messages.ForgotPasswordLimitExceeded,
@@ -65,7 +71,7 @@ public class PasswordService : IPasswordService
         }
 
         // 2. Distributed lock: prevent OTP spam (1 OTP per 30 seconds)
-        var cooldownKey = $"{CooldownKeyPrefix}{email}";
+        var cooldownKey = $"{CooldownKeyPrefix}{emailHash}";
         var lockAcquired = await db.StringSetAsync(cooldownKey, "1", CooldownExpiry, When.NotExists);
 
         if (!lockAcquired)
@@ -76,58 +82,119 @@ public class PasswordService : IPasswordService
                 ErrorCodes.ForgotPasswordCooldown);
         }
 
-        // Increment rate limit counter (set 24h expiry on first request)
-        var newCount = await db.StringIncrementAsync(rateLimitKey);
-        if (newCount == 1)
-        {
-            await db.KeyExpireAsync(rateLimitKey, RateLimitExpiry);
-        }
-
-        var user = await _userRepo.GetUserByEmailAsync(email, cancellationToken);
+        // 3. Look up user (including deleted/inactive for proper notification)
+        var user = await _userRepo.GetUserByEmailUnfilteredAsync(email, cancellationToken);
 
         if (user is null)
         {
             // Return success to prevent email enumeration
             return ApiResponse<object>.Ok(
                 null!,
-                Messages.ForgotPasswordEmailSent,
+                Messages.ForgotPasswordEmailSent(email),
                 StatusCodes.Status200OK);
         }
 
-        // 3. Generate 8-digit OTP
-        var otp = RandomNumberGenerator.GetInt32(10000000, 99999999).ToString();
+        // 3b. If user is suspended (deleted or inactive), send suspension notice instead
+        if (user.IsDeleted == true || user.IsActive == false)
+        {
+            var suspendedTemplate = EmailTemplateHelper.GetTemplate("AccountSuspendedEmail");
+            var suspendedBody = suspendedTemplate
+                .Replace("{{UserFullName}}", System.Net.WebUtility.HtmlEncode(user.FirstName + " " + user.LastName))
+                .Replace("{{UserEmail}}", System.Net.WebUtility.HtmlEncode(user.Email))
+                .Replace("{{SupportDocsUrl}}", _configuration["Support:DocsUrl"] ?? "#");
 
-        // 4. Hash OTP before storing in Redis
-        var otpHash = HashOtp(otp);
+            var suspendedEmailDto = new EmailDTO
+            {
+                from_email = _configuration["Email:FromEmail"]!,
+                from_email_password = _configuration["Email:FromPassword"],
+                to_email = user.Email,
+                email_subject = "Account Suspended – Password Reset Unavailable",
+                email_html_body = suspendedBody
+            };
 
-        var redisKey = $"{OtpKeyPrefix}{email}";
-        await db.StringSetAsync(redisKey, otpHash, OtpExpiry);
+            EmailHelper.SendMail(suspendedEmailDto);
 
-        // Reset OTP attempt counter for this email
-        var attemptKey = $"{OtpAttemptKeyPrefix}{email}";
-        await db.KeyDeleteAsync(attemptKey);
+            // Same response as normal flow to prevent email enumeration
+            return ApiResponse<object>.Ok(
+                null!,
+                Messages.AccountSuspendedEmailSent(email),
+                StatusCodes.Status200OK);
+        }
 
-        // Send OTP via email
+        // 4. Generate opaque reset token
+        var resetToken = GenerateResetToken();
+        var tokenHash = HashValue(resetToken);
+
+        // 5. Invalidate any previous active token for this user (only latest token valid)
+        var userTokenKey = $"{UserTokenKeyPrefix}{user.UserId}";
+        var previousTokenHash = await db.StringGetDeleteAsync(userTokenKey);
+
+        if (!previousTokenHash.IsNullOrEmpty)
+        {
+            await db.KeyDeleteAsync($"{GrantKeyPrefix}{previousTokenHash}");
+        }
+
+        // 6. Store new token with dual-key pattern
+        var grantKey = $"{GrantKeyPrefix}{tokenHash}";
+        await db.StringSetAsync(grantKey, email, GrantExpiry);
+        await db.StringSetAsync(userTokenKey, tokenHash, GrantExpiry);
+
+        // Build reset link (token in path to avoid leaking in logs/analytics/browser history)
+        var resetLink =
+            $"{_configuration["Frontend:BaseUrl"]?.TrimEnd('/')}/reset-password/" +
+            $"{Uri.EscapeDataString(resetToken)}";
+
+  
+
+        // Load email template and populate placeholders
+        var template = EmailTemplateHelper.GetTemplate("ResetPasswordEmail");
+        var emailBody = template
+            .Replace("{{UserFullName}}", System.Net.WebUtility.HtmlEncode(user.FirstName + " " + user.LastName))
+            .Replace("{{UserEmail}}", System.Net.WebUtility.HtmlEncode(user.Email))
+            .Replace("{{ResetLink}}", resetLink)
+
+            .Replace("{{SupportDocsUrl}}", _configuration["Support:DocsUrl"] ?? "#");
+
+        // Send password reset link via email
         var emailDto = new EmailDTO
         {
             from_email = _configuration["Email:FromEmail"]!,
             from_email_password = _configuration["Email:FromPassword"],
             to_email = user.Email,
-            email_subject = "Password Reset OTP",
-            email_html_body = $@"
-                <h2>Password Reset</h2>
-                <p>Hi {user.FirstName},</p>
-                <p>Your password reset OTP is:</p>
-                <h1 style='letter-spacing:8px;font-weight:bold;'>{otp}</h1>
-                <p>This OTP will expire in 60 seconds.</p>
-                <p>If you did not request this, please ignore this email.</p>"
+            email_subject = "Reset your password",
+            email_html_body = emailBody
         };
 
         EmailHelper.SendMail(emailDto);
 
         return ApiResponse<object>.Ok(
             null!,
-            Messages.ForgotPasswordEmailSent,
+            Messages.ForgotPasswordEmailSent(email),
+            StatusCodes.Status200OK);
+    }
+
+    public async Task<ApiResponse<object>> ValidateResetTokenAsync(
+ 
+        string resetToken,
+        CancellationToken cancellationToken)
+    {
+
+        // Look up token in Redis (keyed by hash of token)
+        var db = _redis.GetDatabase();
+        var grantKey = $"{GrantKeyPrefix}{HashValue(resetToken)}";
+        var storedEmail = await db.StringGetAsync(grantKey);
+
+        if (storedEmail.IsNullOrEmpty)
+        {
+            return ApiResponse<object>.Fail(
+                Messages.InvalidOrExpiredResetLink,
+                StatusCodes.Status410Gone,
+                ErrorCodes.InvalidOrExpiredResetLink);
+        }
+
+        return ApiResponse<object>.Ok(
+            null!,
+            Messages.ResetTokenValid,
             StatusCodes.Status200OK);
     }
 
@@ -135,64 +202,38 @@ public class PasswordService : IPasswordService
         ResetPasswordDto request,
         CancellationToken cancellationToken)
     {
+        var grantToken = request.PasswordResetGrant!;
+
+        // 1. Atomically retrieve and consume the grant token (single-use, prevents replay)
         var db = _redis.GetDatabase();
-        var email = request.Email;
+        var grantKey = $"{GrantKeyPrefix}{HashValue(grantToken)}";
+        var storedEmail = await db.StringGetDeleteAsync(grantKey);
 
-        // 1. Check OTP attempt limit (max 5 attempts)
-        var attemptKey = $"{OtpAttemptKeyPrefix}{email}";
-        var attempts = await db.StringGetAsync(attemptKey);
-
-        if (attempts.HasValue && (int)attempts >= MaxOtpAttempts)
+        if (storedEmail.IsNullOrEmpty)
         {
-            var otpKey = $"{OtpKeyPrefix}{email}";
-            await db.KeyDeleteAsync(otpKey);
-            await db.KeyDeleteAsync(attemptKey);
-
             return ApiResponse<object>.Fail(
-                Messages.OtpAttemptsExceeded,
-                StatusCodes.Status429TooManyRequests,
-                ErrorCodes.OtpAttemptsExceeded);
+                Messages.InvalidResetGrant,
+                StatusCodes.Status410Gone,
+                ErrorCodes.InvalidResetGrant);
         }
 
-        // 2. Validate hashed OTP from Redis
-        var redisKey = $"{OtpKeyPrefix}{email}";
-        var storedOtpHash = await db.StringGetAsync(redisKey);
-
-        var incomingOtpHash = HashOtp(request.Otp);
-
-        if (storedOtpHash.IsNullOrEmpty
-            || !CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(storedOtpHash!),
-                Encoding.UTF8.GetBytes(incomingOtpHash)))
-        {
-            var newAttempts = await db.StringIncrementAsync(attemptKey);
-            if (newAttempts == 1)
-            {
-                await db.KeyExpireAsync(attemptKey, OtpExpiry);
-            }
-
-            return ApiResponse<object>.Fail(
-                Messages.InvalidOrExpiredToken,
-                StatusCodes.Status400BadRequest,
-                ErrorCodes.InvalidOrExpiredToken);
-        }
-
+        var email = (string)storedEmail!;
         var user = await _userRepo.GetUserByEmailAsync(email, cancellationToken);
 
         if (user is null)
         {
             return ApiResponse<object>.Fail(
-                Messages.InvalidOrExpiredToken,
+                Messages.InvalidResetGrant,
                 StatusCodes.Status400BadRequest,
-                ErrorCodes.InvalidOrExpiredToken);
+                ErrorCodes.InvalidResetGrant);
         }
 
-        // 3. Hash the new password
+        // 2. Hash the new password
         var hashResult = await PasswordHasher.HashPasswordAsync(request.NewPassword);
         var hashKey = Convert.FromBase64String(hashResult.Hash);
         var saltKey = Convert.FromBase64String(hashResult.Salt);
 
-        // 4. Update password in database
+        // 3. Update password in database
         var updated = await _authRepo.UpdatePasswordAsync(
             user.UserId, hashKey, saltKey, cancellationToken);
 
@@ -204,18 +245,21 @@ public class PasswordService : IPasswordService
                 ErrorCodes.PasswordResetFailed);
         }
 
-        // 5. Cleanup: remove OTP and attempt counter from Redis
-        await db.KeyDeleteAsync(redisKey);
-        await db.KeyDeleteAsync(attemptKey);
+        // 4. Clean up the per-user token tracking key
+        var userTokenKey = $"{UserTokenKeyPrefix}{user.UserId}";
+        await db.KeyDeleteAsync(userTokenKey);
 
-        // 6. Invalidate all active sessions for this user (force re-login)
+        // 5. Invalidate all active sessions for this user (force re-login)
         await _authRepo.InvalidateAllSessionsAsync(user.UserId, cancellationToken);
         await _sessionService.InvalidateAllUserSessionsAsync(user.UserId);
+
+        // 6. Send password changed notification email
+        SendPasswordChangedNotification(user.FirstName, user.LastName, user.Email);
 
         return ApiResponse<object>.Ok(
             null!,
             Messages.ResetPasswordSuccess,
-            StatusCodes.Status200OK);
+            StatusCodes.Status200OK); 
     }
 
     public async Task<ApiResponse<object>> ChangePasswordAsync(
@@ -284,15 +328,49 @@ public class PasswordService : IPasswordService
         await _authRepo.InvalidateAllSessionsAsync(userId, cancellationToken);
         await _sessionService.InvalidateAllUserSessionsAsync(userId, excludeSessionId: sessionId);
 
+        // 7. Send password changed notification email
+        SendPasswordChangedNotification(user.FirstName, user.LastName, user.Email);
+
         return ApiResponse<object>.Ok(
             null!,
             Messages.ChangePasswordSuccess,
             StatusCodes.Status200OK);
     }
 
-    private static string HashOtp(string otp)
+    private void SendPasswordChangedNotification(string firstName, string lastName, string email)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(otp));
+        var template = EmailTemplateHelper.GetTemplate("PasswordChangedNotificationEmail");
+        var body = template
+            .Replace("{{UserFullName}}", System.Net.WebUtility.HtmlEncode(firstName + " " + lastName))
+            .Replace("{{UserEmail}}", System.Net.WebUtility.HtmlEncode(email))
+            .Replace("{{ChangedAtUtc}}", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm UTC"))
+            .Replace("{{SupportDocsUrl}}", _configuration["Support:DocsUrl"] ?? "#");
+
+        var emailDto = new EmailDTO
+        {
+            from_email = _configuration["Email:FromEmail"]!,
+            from_email_password = _configuration["Email:FromPassword"],
+            to_email = email,
+            email_subject = "Your password was changed",
+            email_html_body = body
+        };
+
+        EmailHelper.SendMail(emailDto);
+    }
+
+    private static string HashValue(string value)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
         return Convert.ToBase64String(bytes);
+    }
+
+    /// <summary>
+    /// Generates a cryptographically random, opaque reset token.
+    /// The email is stored server-side in Redis, never embedded in the token.
+    /// </summary>
+    private static string GenerateResetToken()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        return WebEncoders.Base64UrlEncode(bytes);
     }
 }

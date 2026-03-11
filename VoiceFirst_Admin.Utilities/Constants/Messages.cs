@@ -29,6 +29,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string EmployeeUpdated = "Employee updated successfully.";
         // New generic messages
         public const string PayloadRequired = "Payload is required.";
+        public const string InvalidMode = "The 'mode' query parameter is required and must be 'cookie' or 'token'.";
         public const string NotFound = "Not found.";
         public const string PostOfficesAreAlreadyLinked = "Some post offices are already linked.Please refresh again.";
         public const string ZipCodesAreAlreadyLinked = "Some Zip codes  are already linked.Please refresh again.";
@@ -59,7 +60,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         // OTP
         public const string InvalidOtp = "Invalid OTP.";
         public const string OtpExpired = "OTP expired.";
-        public const string ForgotPasswordLimitExceeded = "You have exceeded the maximum number of password reset requests for today. Please try again tomorrow.";
+        public const string ForgotPasswordLimitExceeded = "You have exceeded the maximum number of password reset requests. Please try again after 2 minutes.";
         public const string OtpAttemptsExceeded = "Too many invalid OTP attempts. Please request a new OTP.";
         public const string ForgotPasswordCooldown = "Please wait before requesting another OTP.";
 
@@ -70,6 +71,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string AccountInactive = "Your account is inactive. Please contact support.";
         public const string AccountDeleted = "Your account has been deleted. Please contact support.";
         public const string DeviceInfoRequired = "Device information is required.";
+        public const string FullDeviceInfoRequired = "Full device details are required for a new device or application version.";
 
         // Change Password
         public const string ChangePasswordSuccess = "Password changed successfully. Please login again on other devices.";
@@ -445,7 +447,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string MenuRetrieveSucessfully = "Menu retrieve sucessfully.";
         public const string WebMenuRetrieveSucessfully = "Web menu retrieve sucessfully.";
         public const string AppMenuRetrieveSucessfully = "App Menu retrieve sucessfully.";
-        public const string MenuNameAlreadyExists = "Menu name already exists.";
+        public const string MenuNameAlreadyExists = "Menu name already exists in the plateform.";
+        public const string MenuRountAlreadyExists = "Menu route already exists in the plateform.u can use it.";
+        public const string MenuRountAlreadyExistsWithIsDelete = "Menu route already exists in the plateform.u can use it.";
         public const string MenuMasterAlreadyExistsInWeb = "Menu master already exists in web.";
         public const string MenuMasterAlreadyExistsInApp = "Menu master already exists in app.";
         public const string MenuNameExistsInTrash = "This menu name exists in trash. Restore it to use again.";
@@ -454,7 +458,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string ParentMenuNotFound = "Parent menu not found..";
         public const string CannotAddOrUpdate = "Cannot add/reorder children under a parent that has a route.";
 
-        // Country / Division messages
+        // Country / Division messagesup
         public const string CountryRequired = "Country is required.";
         public const string CountryNotFound = "Selected country not found.";
         public const string DivisionOneNotFound = "Selected division one not found for the country.";
@@ -466,9 +470,19 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string DivisionTwoRequiredForDivisionThree = "Division two is required when supplying division three.";
 
         // ===== FORGOT / RESET PASSWORD =====
-        public const string ForgotPasswordEmailSent = "If this email is registered, a password-reset OTP has been sent.";
+        public static string ForgotPasswordEmailSent(string email)
+        {
+            return $"Please check the email address {email} for instructions to reset your password.";
+        }
+        public static string AccountSuspendedEmailSent(string email)
+        {
+            return $"Please check the email address {email} for instructions to reset your password.";
+        }
+        public const string ResetTokenValid = "Reset link is valid.";
         public const string ResetPasswordSuccess = "Password has been reset successfully.";
-        public const string InvalidOrExpiredToken = "The OTP is invalid or has expired.";
+        public const string InvalidOrExpiredToken = "The token is invalid or has expired.";
+        public const string InvalidOrExpiredResetLink = "The reset link is invalid or has expired.";
+        public const string InvalidResetGrant = "Invalid or expired password reset grant. Please restart the process.";
         public const string PasswordResetFailed = "Password reset failed. Please try again.";
 
         // ===== SYS ISSUE TYPE =====
@@ -492,6 +506,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
             "Issue types retrieved successfully.";
         public const string IssueTypeUpdated =
             "Issue type updated successfully.";
+        public const string NoChangesDetected =
+            "No changes detected. Please modify at least one field and try again.";
         public const string NoActiveIssueTypes =
             "No active issue types available.";
         public const string IssueTypeAlreadyRecovered =
@@ -547,9 +563,11 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string NoActiveIssueMediaTypes = "No active issue media types available.";
         public const string IssueMediaTypeAlreadyRecovered = "Issue media type is already recovered. Please refresh again.";
         public const string IssueMediaTypeAlreadyDeleted = "Issue media type is already deleted. Please refresh again.";
-        public const string IssueMediaTypeNotFound = "Selected issue media type is not available." + BaseRefreshMessage;
+        public const string IssueMediaTypeNotAvailable = "Selected issue media type is not available." + BaseRefreshMessage;
+        public const string IssueMediaTypeNotActive = "Selected issue media type is inactive." + BaseRefreshMessage;
 
         // ===== SYS ISSUE MEDIA FORMAT =====
+        public const string IssueMediaFormatAlreadyLinked = "Issue media format is already linked.";
         public const string IssueMediaFormatAlreadyExists = "Issue media format already exists. Please add another name.";
         public const string IssueMediaFormatAlreadyExistsRecoverable = "Issue media format already exists but was deleted. You can recover it.";
         public const string IssueMediaFormatCreated = "Issue media format created successfully.";
@@ -564,6 +582,43 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string IssueMediaFormatAlreadyRecovered = "Issue media format is already recovered. Please refresh again.";
         public const string IssueMediaFormatAlreadyDeleted = "Issue media format is already deleted. Please refresh again.";
         public const string IssueMediaFormatNotFound = "Selected issue media format is not available." + BaseRefreshMessage;
+        public const string IssueMediaFormatNotActive = "Selected issue media format is inactive." + BaseRefreshMessage;
+
+        //----------------------- Custom field ------------------------
+
+        public const string CustomFieldAlreadyExists = "Custom field already exists. Please add another name.";
+        public const string CustomFieldAlreadyExistsByActivity = "Custom field already exists in this activity. Please add another name.";
+        public const string CustomFieldKeyAlreadyExists = "Custom field key already exists. Please add another.";
+        public const string CustomFieldAlreadyExistsRecoverable = "Custom field already exists but was deleted. You can recover it.";
+        public const string CustomFieldCreated = "Custom field created successfully.";
+        public const string CustomFieldRecovered = "Custom field recovered successfully.";
+        public const string CustomFieldNotFoundById = "Custom field not found.";
+        public const string CustomFieldAlreadyRequestedStatus = "Custom field link is already in the requested status.";
+        public const string CustomFieldsNotFound = "Custom fields not found.";
+        public const string CustomFieldDeleted = "Custom field deleted successfully.";
+        public const string CustomFieldDeletionFailed = "Failed to delete custom field.";
+        public const string CustomFieldRetrieved = "Custom field retrieved successfully.";
+        public const string CustomFieldsRetrieved = "Custom fields retrieved successfully.";
+        public const string CustomFieldUpdated = "Custom field updated successfully.";
+        public const string NoActiveCustomFields = "No active custom fields available.";
+        public const string CustomFieldAlreadyRecovered = "Custom field is already recovered. Please refresh again.";
+        public const string CustomFieldAlreadyDeleted = "Custom field is already deleted. Please refresh again.";
+        public const string CustomFieldNotFound = "Selected custom field is not available." + BaseRefreshMessage;
+        public const string CustomFieldNotActive = "Selected custom field is inactive." + BaseRefreshMessage;
+        public const string CustomFieldValidationRuleNameRequired = "Rule name is required.";
+        public const string CustomFieldValidationRuleValueRequired = "Rule value is required.";
+        public const string CustomFieldValidationMessageRequired = "Message is required.";
+        public const string CustomFieldValidationRequired = "Rule name, rule value, and message are required.";
+        public const string CustomFieldOptionLabelRequired = "Label is required.";
+        public const string CustomFieldOptionValueRequired = "Value is required.";
+        public const string CustomFieldOptionRequired = "Custom Field Option is required.";
+        public const string CustomFieldValidationIdRequired = "Custom field validation id is required.";
+        public const string CustomFieldValidationAtLeastRequired = "At least one field must be provided for update";
+        public const string CustomFieldOptionIdRequired = "Custom field Option id is required.";
+        public const string CustomFieldOptionAtLeastRequired = "At least one field must be provided for update";
+        // ===== APPLICATION VERSION =====
+        public const string ApplicationVersionAlreadyExists = "This version already exists for the selected application and type.";
+        public const string ApplicationVersionCreated = "Application version created successfully.";
 
     }
 }

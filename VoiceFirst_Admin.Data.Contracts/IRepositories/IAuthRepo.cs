@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using VoiceFirst_Admin.Utilities.DTOs.Features.UserDevice;
+using VoiceFirst_Admin.Utilities.Enums;
 using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Contracts.IRepositories
@@ -34,7 +35,9 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             CancellationToken cancellationToken = default);
 
         Task<int?> GetApplicationVersionIdAsync(
-            int version,
+            string version,
+            int platformId,
+            ClientType applicationType,
             CancellationToken cancellationToken = default);
 
         Task<bool> UpdatePasswordAsync(
@@ -45,6 +48,11 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 
         Task<IEnumerable<string>> GetActiveRolesByUserIdAsync(
             int userId,
+            CancellationToken cancellationToken = default);
+
+        Task<bool> DeviceExistsAsync(
+            string deviceId,
+            int applicationVersionId,
             CancellationToken cancellationToken = default);
     }
 }

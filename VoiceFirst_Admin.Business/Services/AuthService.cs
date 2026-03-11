@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using VoiceFirst_Admin.Business.Contracts.IServices;
@@ -17,15 +18,18 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly IAuthRepo _authRepo;
         private readonly ISessionService _sessionService;
         private readonly JwtSettings _jwtSettings;
+        private readonly IConfiguration _configuration;
 
         public AuthService(
             IAuthRepo authRepo,
             ISessionService sessionService,
+            IConfiguration configuration,
             JwtSettings jwtSettings)
         {
             _authRepo = authRepo;
             _sessionService = sessionService;
             _jwtSettings = jwtSettings;
+            _configuration = configuration;
         }
 
         public async Task<ApiResponse<LoginResultDto>> LoginAsync(
@@ -74,11 +78,13 @@ namespace VoiceFirst_Admin.Business.Services
 
             if (!isPasswordValid)
             {
-                var (lockedOut, remaining) = await _sessionService.RecordFailedLoginAsync(request.Email);
+                var (lockedOut, remaining) = await _sessionService.
+                    RecordFailedLoginAsync(request.Email);
 
                 if (lockedOut)
                 {
-                    var minutesLeft = await _sessionService.GetLockoutMinutesRemainingAsync(request.Email);
+                    var minutesLeft = await _sessionService.
+                        GetLockoutMinutesRemainingAsync(request.Email);
                     return ApiResponse<LoginResultDto>.Fail(
                         string.Format(Messages.AccountLockedOut, minutesLeft),
                         StatusCodes.Status429TooManyRequests,
@@ -93,10 +99,15 @@ namespace VoiceFirst_Admin.Business.Services
 
             // 6. Login success — clear failed attempt counter
             await _sessionService.ClearLoginAttemptsAsync(request.Email);
+           
 
-            // 7. Resolve ApplicationVersionId
+            var appId = int.Parse(_configuration["ApplicationSettings:DefaultApplicationId"]);
+
             var appVersionId = await _authRepo.GetApplicationVersionIdAsync(
-                request.Device.Version, cancellationToken);
+                request.Device.Version,
+                appId,
+                request.ClientType,
+                cancellationToken);
 
             if (appVersionId is null)
             {
@@ -104,6 +115,23 @@ namespace VoiceFirst_Admin.Business.Services
                     Messages.PayloadInvalid,
                     StatusCodes.Status400BadRequest,
                     ErrorCodes.ValidationFailed);
+            }
+
+            // 7b. If device+version is new, require full device details
+            var deviceExists = await _authRepo.DeviceExistsAsync(
+                request.Device.DeviceID, appVersionId.Value, cancellationToken);
+
+            if (!deviceExists &&
+                (string.IsNullOrWhiteSpace(request.Device.DeviceName)
+                 || string.IsNullOrWhiteSpace(request.Device.DeviceType)
+                 || string.IsNullOrWhiteSpace(request.Device.OS)
+                 || string.IsNullOrWhiteSpace(request.Device.Manufacturer)
+                 || string.IsNullOrWhiteSpace(request.Device.Model)))
+            {
+                return ApiResponse<LoginResultDto>.Fail(
+                    Messages.FullDeviceInfoRequired,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.FullDeviceInfoRequired);
             }
 
             // 8. Upsert device
@@ -116,8 +144,7 @@ namespace VoiceFirst_Admin.Business.Services
                 OS = request.Device.OS,
                 OSVersion = request.Device.OSVersion,
                 Manufacturer = request.Device.Manufacturer,
-                Model = request.Device.Model,
-                ClientType = (int)request.ClientType
+                Model = request.Device.Model
             };
 
             var deviceResult = await _authRepo.UpsertDeviceAsync(
@@ -127,9 +154,13 @@ namespace VoiceFirst_Admin.Business.Services
 
             // Use the stored ClientType from DB — not the request value.
             // First registration locks the device type; subsequent logins use the stored one.
-            var clientType = Enum.IsDefined(typeof(ClientType), deviceResult.ClientType)
-                ? (ClientType)deviceResult.ClientType
-                : ClientType.Web;
+            if (!Enum.TryParse<ClientType>(deviceResult.ClientType, true, out var clientType))
+            {
+                return ApiResponse<LoginResultDto>.Fail(
+                    Messages.PayloadInvalid,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.ValidationFailed);
+            }
 
             // 9. Create login session
             var sessionId = await _authRepo.CreateSessionAsync(
@@ -324,7 +355,8 @@ namespace VoiceFirst_Admin.Business.Services
         }
 
         private static Dictionary<string, object?> BuildClaims(
-            Users user, int sessionId, int deviceId, IEnumerable<string> roles, long tokenVersion, ClientType clientType)
+            Users user, int sessionId, int deviceId,
+            IEnumerable<string> roles, long tokenVersion, ClientType clientType)
         {
             return new Dictionary<string, object?>
             {

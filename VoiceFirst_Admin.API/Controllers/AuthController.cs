@@ -1,8 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VoiceFirst_Admin.API.Security;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
 using VoiceFirst_Admin.Utilities.DTOs.Features.Auth;
@@ -80,7 +79,7 @@ namespace VoiceFirst_Admin.API.Controllers
                     ErrorCodes.Unauthorized));
             }
 
-            if (clientType == ClientType.Mobile && !fromBody)
+            if ((clientType == ClientType.IOS || clientType == ClientType.Android) && !fromBody)
             {
                 return Unauthorized(ApiResponse<object>.Fail(
                     Messages.Unauthorized,
@@ -136,7 +135,7 @@ namespace VoiceFirst_Admin.API.Controllers
         /// </summary>
         private IActionResult BuildTokenResponse(LoginResultDto data, string message, int statusCode)
         {
-            if (data.ClientType == ClientType.Mobile)
+            if (data.ClientType == ClientType.IOS || data.ClientType == ClientType.Android)
             {
                 var mobileResponse = new MobileLoginResponseDto
                 {
@@ -161,15 +160,8 @@ namespace VoiceFirst_Admin.API.Controllers
             return StatusCode(clientResponse.StatusCode, clientResponse);
         }
 
-        /// <summary>
-        /// SHA256 hash of User-Agent header — binds the session to the originating browser/client.
-        /// </summary>
         private string ComputeFingerprint()
-        {
-            var userAgent = Request.Headers.UserAgent.ToString();
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(userAgent));
-            return Convert.ToBase64String(bytes);
-        }
+            => FingerprintHelper.Compute(Request.Headers);
 
         /// <summary>
         /// Peek at the clientType claim from the JWT without full validation.
@@ -193,7 +185,7 @@ namespace VoiceFirst_Admin.API.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Path = "/",
                 Expires = expiresAtUtc
             });
@@ -205,7 +197,7 @@ namespace VoiceFirst_Admin.API.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Path = "/"
             });
         }

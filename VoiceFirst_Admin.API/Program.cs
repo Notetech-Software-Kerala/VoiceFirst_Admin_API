@@ -71,6 +71,9 @@ builder.Services.AddScoped<ISysIssueStatusRepo, SysIssueStatusRepo>();
 builder.Services.AddScoped<ISysIssueCharacterTypeRepo, SysIssueCharacterTypeRepo>();
 builder.Services.AddScoped<ISysIssueMediaTypeRepo, SysIssueMediaTypeRepo>();
 builder.Services.AddScoped<ISysIssueMediaFormatRepo, SysIssueMediaFormatRepo>();
+builder.Services.AddScoped<ISysIssueMediaRuleRepo, SysIssueMediaRuleRepo>();
+builder.Services.AddScoped<ISysIssueMediaRuleTypeRepo, SysIssueMediaRuleTypeRepo>();
+builder.Services.AddScoped<ISysUserCustomFieldRepo, SysUserCustomFieldRepo>();
 // Services
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -91,6 +94,7 @@ builder.Services.AddScoped<ISysIssueMediaTypeService, SysIssueMediaTypeService>(
 builder.Services.AddScoped<ISysIssueMediaFormatService, SysIssueMediaFormatService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
+builder.Services.AddScoped<ISysUserCustomFieldService, SysUserCustomFieldService>();
 // AutoMapper
 builder.Services.AddAutoMapper(
     typeof(ProgramActionMappingProfile).Assembly,
@@ -153,13 +157,13 @@ var audience = jwtSettings.Audience;
         {
             Example = new OpenApiObject
             {
-                ["email"] = new OpenApiString("akhila@notetech.com"),
+                ["email"] = new OpenApiString("richardantony737@gmail.com"),
                 ["password"] = new OpenApiString("123456"),
-                ["clientType"] = new OpenApiString("Web"),
+                ["clientType"] = new OpenApiInteger((int)VoiceFirst_Admin.Utilities.Enums.ClientType.Android),
                 ["device"] = new OpenApiObject
                 {
                     ["deviceID"] = new OpenApiString("IMEI-867530912345678"),
-                    ["version"] = new OpenApiInteger(1),
+                    ["version"] = new OpenApiString("1.0.0"),
                     ["deviceName"] = new OpenApiString("Pixel 8 Pro"),
                     ["deviceType"] = new OpenApiString("Mobile"),
                     ["os"] = new OpenApiString("Android"),
@@ -255,10 +259,8 @@ builder.Services
             }
 
             // Verify browser/client fingerprint matches the login origin
-            var userAgent = context.HttpContext.Request.Headers.UserAgent.ToString();
-            var fpBytes = System.Security.Cryptography.SHA256.HashData(
-                Encoding.UTF8.GetBytes(userAgent));
-            var fingerprint = Convert.ToBase64String(fpBytes);
+            var fingerprint = FingerprintHelper.Compute(
+                context.HttpContext.Request.Headers);
 
             if (!fields.TryGetValue("fingerprint", out var storedFp)
                 || storedFp != fingerprint)

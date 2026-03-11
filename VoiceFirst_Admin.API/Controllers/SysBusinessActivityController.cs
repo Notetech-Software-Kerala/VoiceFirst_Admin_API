@@ -56,7 +56,7 @@ public class SysBusinessActivityController : ControllerBase
     /// <response code="500">
     /// Internal server error. An unexpected error occurred while processing the request.
     /// </response>
-    [Authorize]
+    //[Authorize]
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<SysBusinessActivityDTO>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]

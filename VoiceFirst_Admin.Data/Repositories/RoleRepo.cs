@@ -262,6 +262,11 @@ public class RoleRepo : IRoleRepo
                 sets.Add("RolePurpose = @RolePurpose");
                 parameters.Add("RolePurpose", entity.RolePurpose);
             }
+            if (entity.IsActive.HasValue)
+            {
+                sets.Add("IsActive = @IsActive");
+                parameters.Add("IsActive", entity.IsActive);
+            }
 
             if (entity.ApplicationId != default)
             {
@@ -298,7 +303,7 @@ public class RoleRepo : IRoleRepo
                     transaction.Rollback();
                     return new BulkUpsertError
                     {
-                        StatuaCode = StatusCodes.Status500InternalServerError,
+                        StatusCode = StatusCodes.Status500InternalServerError,
                         Message = Messages.SomethingWentWrong
                     };
                 }
@@ -318,7 +323,7 @@ public class RoleRepo : IRoleRepo
                 {
                     transaction.Rollback();
                     return new BulkUpsertError
-                    { Message = addError.Message, StatuaCode = addError.StatuaCode };
+                    { Message = addError.Message, StatusCode = addError.StatusCode };
                 }
 
             }
@@ -337,7 +342,7 @@ public class RoleRepo : IRoleRepo
                 {
                     transaction.Rollback();
                     return new BulkUpsertError
-                    { Message = updateError.Message, StatuaCode = updateError.StatuaCode };
+                    { Message = updateError.Message, StatusCode = updateError.StatusCode };
                 }
 
             }
@@ -490,7 +495,7 @@ public class RoleRepo : IRoleRepo
         try
         {
             if (planActionLink.Count() == 0)
-                return new BulkUpsertError { Message = Messages.BadRequest, StatuaCode = StatusCodes.Status400BadRequest };
+                return new BulkUpsertError { Message = Messages.BadRequest, StatusCode = StatusCodes.Status400BadRequest };
             foreach (var item in planActionLink)
             {
 
@@ -513,7 +518,7 @@ public class RoleRepo : IRoleRepo
                     {
                         if (existingMap.TryGetValue(aid, out var existingLink))
                         {
-                            return new BulkUpsertError { Message = Messages.ProgramActionAlreadyLinked, StatuaCode = StatusCodes.Status409Conflict };
+                            return new BulkUpsertError { Message = Messages.ProgramActionAlreadyLinked, StatusCode = StatusCodes.Status409Conflict };
                         }
                         await BulkInsertPlanRoleActionLinksAsync(connection, transaction, planRoleId, item.ActionLinkIds, loginId, cancellationToken);
                     }
@@ -528,7 +533,7 @@ public class RoleRepo : IRoleRepo
         catch (SqlException ex) when (ex.Number == 50001)
         {
             transaction.Rollback();
-            return new BulkUpsertError { Message = ex.Message, StatuaCode = StatusCodes.Status400BadRequest };
+            return new BulkUpsertError { Message = ex.Message, StatusCode = StatusCodes.Status400BadRequest };
         }
     }
     public async Task<PlanRoleLink> GetRolePlanLinkAsync(int planRoleLinkId, CancellationToken cancellationToken = default)
@@ -565,7 +570,7 @@ public class RoleRepo : IRoleRepo
         {
 
             if (UpdateActionLinks == null || UpdateActionLinks.Count() == 0)
-                return new BulkUpsertError { Message = Messages.BadRequest, StatuaCode = StatusCodes.Status400BadRequest };
+                return new BulkUpsertError { Message = Messages.BadRequest, StatusCode = StatusCodes.Status400BadRequest };
             foreach (var item in UpdateActionLinks)
             {
                 var existingLinks = (await connection.QueryAsync<PlanRoleProgramActionLink>(
@@ -603,7 +608,7 @@ public class RoleRepo : IRoleRepo
                         }
                         else
                         {
-                            return new BulkUpsertError { Message = Messages.ProgramActionLinkNotFound, StatuaCode = StatusCodes.Status404NotFound };
+                            return new BulkUpsertError { Message = Messages.ProgramActionLinkNotFound, StatusCode = StatusCodes.Status404NotFound };
                         }
                     }
                 }
@@ -617,7 +622,7 @@ public class RoleRepo : IRoleRepo
         catch (SqlException ex) when (ex.Number == 50001 || ex.Number == 50002)
         {
             transaction.Rollback();
-            return new BulkUpsertError { Message = ex.Message, StatuaCode = StatusCodes.Status400BadRequest };
+            return new BulkUpsertError { Message = ex.Message, StatusCode = StatusCodes.Status400BadRequest };
         }
     }
 

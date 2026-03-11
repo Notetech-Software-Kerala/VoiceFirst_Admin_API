@@ -115,8 +115,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             P.FacebookId,
             P.GoogleId,
             P.Email,
-            C.CountryId AS MobileCountryCodeId,
-            ISNULL(c.CountryDialCode ,'') AS MobileCountryCode,
+            C.CountryId AS DialCodeId,
+            ISNULL(c.CountryDialCode ,'') AS DialCode,
             P.MobileNo,
             P.BirthYear,                
             p.IsActive AS Active,
@@ -153,6 +153,28 @@ namespace VoiceFirst_Admin.Data.Repositories
                        HashKey, SaltKey, IsDeleted, IsActive
                 FROM dbo.Users
                 WHERE Email = @Email AND IsDeleted = 0;
+            ";
+
+            using var connection = _context.CreateConnection();
+
+            return await connection.QuerySingleOrDefaultAsync<Users>(
+                new CommandDefinition(
+                    sql,
+                    new { Email = email },
+                    cancellationToken: cancellationToken
+                )
+            );
+        }
+
+        public async Task<Users?> GetUserByEmailUnfilteredAsync(
+            string email,
+            CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT UserId, FirstName, LastName, Email,
+                       HashKey, SaltKey, IsDeleted, IsActive
+                FROM dbo.Users
+                WHERE Email = @Email;
             ";
 
             using var connection = _context.CreateConnection();
@@ -368,28 +390,28 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<PagedResultDto<EmployeeDto>> GetAllAsync(
-    EmployeeFilterDto filter,
-    int loginUserId,
-    CancellationToken cancellationToken = default)
-        {
-            var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
-            var limit = filter.Limit <= 0 ? 10 : filter.Limit;
-            var offset = (page - 1) * limit;
+        EmployeeFilterDto filter,
+        int loginUserId,
+        CancellationToken cancellationToken = default)
+            {
+                var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
+                var limit = filter.Limit <= 0 ? 10 : filter.Limit;
+                var offset = (page - 1) * limit;
 
-            var parameters = new DynamicParameters();
-            parameters.Add("Offset", offset);
-            parameters.Add("Limit", limit);
-            parameters.Add("LoginUserId", loginUserId);
+                var parameters = new DynamicParameters();
+                parameters.Add("Offset", offset);
+                parameters.Add("Limit", limit);
+                parameters.Add("LoginUserId", loginUserId);
 
-            var baseSql = new StringBuilder(@"
-        FROM Users p
-        LEFT JOIN Country a ON a.CountryId = p.MobileCountryId            
-        INNER JOIN Users uC ON uC.UserId = p.CreatedBy
-        LEFT JOIN Users uU ON uU.UserId = p.UpdatedBy
-        LEFT JOIN Users uD ON uD.UserId = p.DeletedBy
-        WHERE 1=1
-        AND p.UserId != @LoginUserId
-    ");
+                var baseSql = new StringBuilder(@"
+            FROM Users p
+            LEFT JOIN Country a ON a.CountryId = p.MobileCountryId            
+            INNER JOIN Users uC ON uC.UserId = p.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = p.UpdatedBy
+            LEFT JOIN Users uD ON uD.UserId = p.DeletedBy
+            WHERE 1=1
+            AND p.UserId != @LoginUserId
+        ");
 
             // ✅ Filters
             if (filter.Deleted.HasValue)
@@ -450,7 +472,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 [EmployeeSearchBy.MobileNo] = "p.MobileNo",
                 [EmployeeSearchBy.Gender] = "p.Gender",
                 [EmployeeSearchBy.BirthYear] = "p.BirthYear",
-                [EmployeeSearchBy.MobileCountryCode] = "a.CountryDialCode",
+                [EmployeeSearchBy.DialCode] = "a.CountryDialCode",
                 [EmployeeSearchBy.CreatedUser] = "CONCAT(uC.FirstName,' ',uC.LastName)",
                 [EmployeeSearchBy.ModifiedUser] = "CONCAT(uU.FirstName,' ',uU.LastName)",
                 [EmployeeSearchBy.DeletedUser] = "CONCAT(uD.FirstName,' ',uD.LastName)"
@@ -493,7 +515,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 ["MobileNo"] = "p.MobileNo",
                 ["Gender"] = "p.Gender",
                 ["BirthYear"] = "p.BirthYear",
-                ["MobileCountryCode"] = "a.CountryDialCode",
+                ["DialCode"] = "a.CountryDialCode",
                 ["Active"] = "p.IsActive",
                 ["Deleted"] = "p.IsDeleted",
                 ["CreatedDate"] = "p.CreatedAt",
@@ -522,8 +544,8 @@ namespace VoiceFirst_Admin.Data.Repositories
             p.Gender,
             p.MobileNo,
             p.BirthYear,
-            ISNULL(a.CountryDialCode,'') AS MobileCountryCode,
-            p.MobileCountryId AS MobileCountryCodeId,
+            ISNULL(a.CountryDialCode,'') AS DialCode,
+            p.MobileCountryId AS DialCodeId,
             p.IsActive AS Active,
             p.IsDeleted AS [Deleted],
             CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
