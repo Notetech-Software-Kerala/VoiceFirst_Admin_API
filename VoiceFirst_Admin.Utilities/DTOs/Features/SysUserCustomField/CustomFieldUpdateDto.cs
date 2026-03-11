@@ -15,6 +15,6 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
         public IEnumerable<CreateCustomFieldValidationsDto>? AddValidations { get; set; }
         public IEnumerable<CreateCustomFieldOptionsDto>? AddOptions { get; set; }
         public IEnumerable<UpdateCustomFieldValidationsDto>? UpdateValidations { get; set; }
-        public IEnumerable<UpdateCustomFieldOptionsDto> UpdateOptions { get; set; }
+        public IEnumerable<UpdateCustomFieldOptionsDto>? UpdateOptions { get; set; }
     }
 }
