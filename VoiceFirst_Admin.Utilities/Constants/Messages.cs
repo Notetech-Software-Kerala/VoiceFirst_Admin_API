@@ -474,6 +474,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
         {
             return $"Please check the email address {email} for instructions to reset your password.";
         }
+        public static string AccountSuspendedEmailSent(string email)
+        {
+            return $"Please check the email address {email} for instructions to reset your password.";
+        }
         public const string ResetTokenValid = "Reset link is valid.";
         public const string ResetPasswordSuccess = "Password has been reset successfully.";
         public const string InvalidOrExpiredToken = "The token is invalid or has expired.";

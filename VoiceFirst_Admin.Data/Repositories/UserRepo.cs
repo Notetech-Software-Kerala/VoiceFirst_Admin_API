@@ -166,6 +166,28 @@ namespace VoiceFirst_Admin.Data.Repositories
             );
         }
 
+        public async Task<Users?> GetUserByEmailUnfilteredAsync(
+            string email,
+            CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT UserId, FirstName, LastName, Email,
+                       HashKey, SaltKey, IsDeleted, IsActive
+                FROM dbo.Users
+                WHERE Email = @Email;
+            ";
+
+            using var connection = _context.CreateConnection();
+
+            return await connection.QuerySingleOrDefaultAsync<Users>(
+                new CommandDefinition(
+                    sql,
+                    new { Email = email },
+                    cancellationToken: cancellationToken
+                )
+            );
+        }
+
 
 
         public async Task<int> CreateAsync(

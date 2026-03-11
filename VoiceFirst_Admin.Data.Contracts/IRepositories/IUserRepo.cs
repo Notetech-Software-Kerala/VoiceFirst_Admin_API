@@ -18,6 +18,10 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             string email,
             CancellationToken cancellationToken = default);
 
+        Task<Users?> GetUserByEmailUnfilteredAsync(
+            string email,
+            CancellationToken cancellationToken = default);
+
         Task<bool> UpdateAsync(
          Users entity,
          IDbConnection connection,
