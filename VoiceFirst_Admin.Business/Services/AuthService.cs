@@ -46,7 +46,7 @@ namespace VoiceFirst_Admin.Business.Services
             var user = await _authRepo.GetUserForLoginAsync(
                 request.Email, cancellationToken);
 
-            if (user is null)
+            if (user is null || user.IsDeleted == true || user.IsActive == false)
             {
                 return ApiResponse<LoginResultDto>.Fail(
                     Messages.InvalidCredentials,
@@ -54,23 +54,7 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.InvalidCredentials);
             }
 
-            // 3. Check account status
-            if (user.IsDeleted == true)
-            {
-                return ApiResponse<LoginResultDto>.Fail(
-                    Messages.AccountDeleted,
-                    StatusCodes.Status403Forbidden,
-                    ErrorCodes.AccountDeleted);
-            }
-
-            if (user.IsActive == false)
-            {
-                return ApiResponse<LoginResultDto>.Fail(
-                    Messages.AccountInactive,
-                    StatusCodes.Status403Forbidden,
-                    ErrorCodes.AccountInactive);
-            }
-
+           
             // 4. Check login lockout
             if (await _sessionService.IsLoginLockedOutAsync(request.Email))
             {
@@ -186,6 +170,9 @@ namespace VoiceFirst_Admin.Business.Services
                 Messages.LoginSuccess,
                 StatusCodes.Status200OK);
         }
+
+
+
 
         public async Task<ApiResponse<LoginResultDto>> RefreshTokenAsync(
             string refreshToken,

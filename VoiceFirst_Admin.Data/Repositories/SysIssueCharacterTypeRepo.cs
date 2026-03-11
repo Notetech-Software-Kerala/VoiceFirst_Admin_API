@@ -26,6 +26,28 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
+        public async Task<IssueCharacterTypeStateDto?>
+        GetIdAndDeletedByNameAsync(
+        string name,
+        CancellationToken cancellationToken)
+        {
+            const string sql = @"
+                SELECT 
+                    SysIssueCharacterTypeId AS IssueCharacterTypeId,
+                    IsDeleted AS Deleted
+                FROM SysIssueCharacterType
+                WHERE IssueCharacterType = @Name;
+            ";
+
+            using var connection = _context.CreateConnection();
+
+            return await connection.QueryFirstOrDefaultAsync
+                <IssueCharacterTypeStateDto>(
+                    new CommandDefinition(sql, new { Name = name },
+                    cancellationToken: cancellationToken));
+        }
+
+
         public async Task<SysIssueCharacterTypeDTO> CreateAsync(
          SysIssueCharacterType entity,
          CancellationToken cancellationToken = default)
