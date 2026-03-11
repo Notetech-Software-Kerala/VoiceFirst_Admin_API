@@ -215,6 +215,7 @@ namespace VoiceFirst_Admin.Business.Services
                     cancellationToken);
 
                 await _uow.CommitAsync();
+
                 // Send welcome email with temporary password
                 EmailHelper.SendMail(new EmailDTO
                 {
@@ -225,6 +226,7 @@ namespace VoiceFirst_Admin.Business.Services
                     email_html_body = $"<p>Dear {employee.FirstName},</p><p>Your account has been created.</p><p>Temporary password: <strong>{password}</strong></p><p>Please sign in and change your password immediately.</p>",
                     signature_content = "<p>Regards,<br/>VoiceFirst Admin Team</p>"
                 });
+
                 return ApiResponse<EmployeeDetailDto>.Ok(
                     dtoOut!,
                     Messages.EmployeeCreated,

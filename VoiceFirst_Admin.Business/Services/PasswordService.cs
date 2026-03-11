@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
-using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
 using VoiceFirst_Admin.Business.Contracts.IServices;
@@ -26,6 +26,7 @@ public class PasswordService : IPasswordService
     private const string RateLimitKeyPrefix = "pwd_reset_count:";
     private const string CooldownKeyPrefix = "pwd_reset_lock:";
     private const string GrantKeyPrefix = "pwd_reset_grant:";
+    private const string UserTokenKeyPrefix = "pwd_reset_user:";
     private const int MaxForgotPasswordRequests = 3;
     private static readonly TimeSpan RateLimitExpiry = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan CooldownExpiry = TimeSpan.FromSeconds(30);
@@ -44,7 +45,7 @@ public class PasswordService : IPasswordService
         _configuration = configuration;
     }
 
-    public async Task<ApiResponse<ForgotPasswordResultDto>> ForgotPasswordAsync(
+    public async Task<ApiResponse<object>> ForgotPasswordAsync(
         ForgotPasswordDto request,
         CancellationToken cancellationToken)
     {
@@ -63,7 +64,7 @@ public class PasswordService : IPasswordService
 
         if (newCount > MaxForgotPasswordRequests)
         {
-            return ApiResponse<ForgotPasswordResultDto>.Fail(
+            return ApiResponse<object>.Fail(
                 Messages.ForgotPasswordLimitExceeded,
                 StatusCodes.Status429TooManyRequests,
                 ErrorCodes.ForgotPasswordLimitExceeded);
@@ -75,34 +76,50 @@ public class PasswordService : IPasswordService
 
         if (!lockAcquired)
         {
-            return ApiResponse<ForgotPasswordResultDto>.Fail(
+            return ApiResponse<object>.Fail(
                 Messages.ForgotPasswordCooldown,
                 StatusCodes.Status429TooManyRequests,
                 ErrorCodes.ForgotPasswordCooldown);
         }
 
-        // Generate opaque reset token (email is stored server-side in Redis)
-        var resetToken = GenerateResetToken();
-
+        // 3. Look up user first (needed for per-user token tracking)
         var user = await _userRepo.GetUserByEmailAsync(email, cancellationToken);
 
         if (user is null)
         {
-            // Return success with a dummy token to prevent email enumeration
-            return ApiResponse<ForgotPasswordResultDto>.Ok(
-                new ForgotPasswordResultDto { ResetToken = resetToken },
-                Messages.ForgotPasswordEmailSent,
+            // Return success to prevent email enumeration
+            return ApiResponse<object>.Ok(
+                null!,
+                Messages.ForgotPasswordEmailSent(email),
                 StatusCodes.Status200OK);
         }
 
-        // 3. Store token â†’ email mapping in Redis (single-use, 5-minute expiry)
-        var grantKey = $"{GrantKeyPrefix}{HashValue(resetToken)}";
-        await db.StringSetAsync(grantKey, email, GrantExpiry);
+        // 4. Generate opaque reset token
+        var resetToken = GenerateResetToken();
+        var tokenHash = HashValue(resetToken);
 
-        // Build reset link
+        // 5. Invalidate any previous active token for this user (only latest token valid)
+        var userTokenKey = $"{UserTokenKeyPrefix}{user.UserId}";
+        var previousTokenHash = await db.StringGetDeleteAsync(userTokenKey);
+
+        if (!previousTokenHash.IsNullOrEmpty)
+        {
+            await db.KeyDeleteAsync($"{GrantKeyPrefix}{previousTokenHash}");
+        }
+
+        // 6. Store new token with dual-key pattern
+        var grantKey = $"{GrantKeyPrefix}{tokenHash}";
+        await db.StringSetAsync(grantKey, email, GrantExpiry);
+        await db.StringSetAsync(userTokenKey, tokenHash, GrantExpiry);
+
+        // Build reset link (token in path to avoid leaking in logs/analytics/browser history)
         var resetLink =
-            $"{_configuration["Frontend:BaseUrl"]?.TrimEnd('/')}/reset-password?" +
-            $"reset-token={Uri.EscapeDataString(resetToken)}";
+            $"{_configuration["Frontend:BaseUrl"]?.TrimEnd('/')}/reset-password/" +
+            $"{Uri.EscapeDataString(resetToken)}";
+
+        var localresetLink =
+           $"{_configuration["Frontend:BaseLocalUrl"]?.TrimEnd('/')}/reset-password/" +
+           $"{Uri.EscapeDataString(resetToken)}";
 
         // Load email template and populate placeholders
         var template = EmailTemplateHelper.GetTemplate("ResetPasswordEmail");
@@ -110,6 +127,7 @@ public class PasswordService : IPasswordService
             .Replace("{{UserFullName}}", System.Net.WebUtility.HtmlEncode(user.FirstName + " " + user.LastName))
             .Replace("{{UserEmail}}", System.Net.WebUtility.HtmlEncode(user.Email))
             .Replace("{{ResetLink}}", resetLink)
+            .Replace("{{ResetLink}}", localresetLink)
             .Replace("{{SupportDocsUrl}}", _configuration["Support:DocsUrl"] ?? "#");
 
         // Send password reset link via email
@@ -124,9 +142,9 @@ public class PasswordService : IPasswordService
 
         EmailHelper.SendMail(emailDto);
 
-        return ApiResponse<ForgotPasswordResultDto>.Ok(
-            new ForgotPasswordResultDto { ResetToken = resetToken },
-            Messages.ForgotPasswordEmailSent,
+        return ApiResponse<object>.Ok(
+            null!,
+            Messages.ForgotPasswordEmailSent(email),
             StatusCodes.Status200OK);
     }
 
@@ -202,7 +220,11 @@ public class PasswordService : IPasswordService
                 ErrorCodes.PasswordResetFailed);
         }
 
-        // 4. Invalidate all active sessions for this user (force re-login)
+        // 4. Clean up the per-user token tracking key
+        var userTokenKey = $"{UserTokenKeyPrefix}{user.UserId}";
+        await db.KeyDeleteAsync(userTokenKey);
+
+        // 5. Invalidate all active sessions for this user (force re-login)
         await _authRepo.InvalidateAllSessionsAsync(user.UserId, cancellationToken);
         await _sessionService.InvalidateAllUserSessionsAsync(user.UserId);
 
@@ -297,6 +319,6 @@ public class PasswordService : IPasswordService
     private static string GenerateResetToken()
     {
         var bytes = RandomNumberGenerator.GetBytes(32);
-        return Base64Url.EncodeToString(bytes);
+        return WebEncoders.Base64UrlEncode(bytes);
     }
 }

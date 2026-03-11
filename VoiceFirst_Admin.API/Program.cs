@@ -159,11 +159,11 @@ var audience = jwtSettings.Audience;
             {
                 ["email"] = new OpenApiString("richardantony737@gmail.com"),
                 ["password"] = new OpenApiString("123456"),
-                ["clientType"] = new OpenApiString("Web"),
+                ["clientType"] = new OpenApiInteger((int)VoiceFirst_Admin.Utilities.Enums.ClientType.Android),
                 ["device"] = new OpenApiObject
                 {
                     ["deviceID"] = new OpenApiString("IMEI-867530912345678"),
-                    ["version"] = new OpenApiString("1"),
+                    ["version"] = new OpenApiString("1.0.0"),
                     ["deviceName"] = new OpenApiString("Pixel 8 Pro"),
                     ["deviceType"] = new OpenApiString("Mobile"),
                     ["os"] = new OpenApiString("Android"),

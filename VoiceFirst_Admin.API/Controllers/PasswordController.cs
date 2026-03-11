@@ -34,20 +34,15 @@ public class PasswordController : ControllerBase
         var response = await _passwordService.ForgotPasswordAsync(
             request, cancellationToken);
 
-        // Don't expose the reset token — it is delivered via the email link
-        var result = ApiResponse<object>.Ok(
-            null!, response.Message, response.StatusCode);
-
-        return StatusCode(result.StatusCode, result);
+        return StatusCode(response.StatusCode, response);
     }
 
-    [HttpGet("validate-reset-token")]
+    [HttpGet("validate-reset-token/{resetToken}")]
     public async Task<IActionResult> ValidateResetToken(
-        [FromQuery] string ResetToken,
+        [FromRoute] string resetToken,
         CancellationToken cancellationToken)
     {
-        if (ResetToken == null
-            || string.IsNullOrWhiteSpace(ResetToken))
+        if (string.IsNullOrWhiteSpace(resetToken))
         {
             return BadRequest(ApiResponse<object>.Fail(
                 Messages.PayloadRequired,
@@ -56,7 +51,7 @@ public class PasswordController : ControllerBase
         }
 
         var response = await _passwordService.ValidateResetTokenAsync(
-            ResetToken, cancellationToken);
+            resetToken, cancellationToken);
 
         return StatusCode(response.StatusCode, response);
     }

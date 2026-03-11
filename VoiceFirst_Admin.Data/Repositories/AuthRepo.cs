@@ -65,27 +65,67 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
         public async Task<DeviceUpsertResult> UpsertDeviceAsync(
-            UserDevice device,
-            CancellationToken cancellationToken = default)
+    UserDevice device,
+    CancellationToken cancellationToken = default)
         {
             const string sql = @"
-                MERGE dbo.UserDevice AS target
-                USING (SELECT @DeviceID AS DeviceID, @ApplicationVersionId AS ApplicationVersionId) AS source
-                ON target.DeviceID = source.DeviceID AND target.ApplicationVersionId = source.ApplicationVersionId
-                WHEN MATCHED THEN
-                    UPDATE SET
-                        DeviceName    = @DeviceName,
-                        DeviceType    = @DeviceType,
-                        OS            = @OS,
-                        OSVersion     = @OSVersion,
-                        Manufacturer  = @Manufacturer,
-                        Model         = @Model,
-                        UpdatedAt     = SYSDATETIME()
-                WHEN NOT MATCHED THEN
-                    INSERT (DeviceID, ApplicationVersionId, DeviceName, DeviceType, OS, OSVersion, Manufacturer, Model, ClientType, CreatedAt, IsDeleted)
-                    VALUES (@DeviceID, @ApplicationVersionId, @DeviceName, @DeviceType, @OS, @OSVersion, @Manufacturer, @Model, @ClientType, SYSDATETIME(), 0)
-                OUTPUT inserted.UserDeviceId, inserted.ClientType;
-            ";
+MERGE dbo.UserDevice AS target
+USING 
+(
+    SELECT 
+        @DeviceID AS DeviceId,
+        @ApplicationVersionId AS ApplicationVersionId
+) AS source
+ON target.DeviceId = source.DeviceId
+AND target.ApplicationVersionId = source.ApplicationVersionId
+
+WHEN MATCHED THEN
+    UPDATE SET
+        DeviceName   = @DeviceName,
+        DeviceType   = @DeviceType,
+        OS           = @OS,
+        OSVersion    = @OSVersion,
+        Manufacturer = @Manufacturer,
+        Model        = @Model,
+        UpdatedAt    = SYSDATETIME()
+
+WHEN NOT MATCHED THEN
+    INSERT
+    (
+        DeviceId,
+        ApplicationVersionId,
+        DeviceName,
+        DeviceType,
+        OS,
+        OSVersion,
+        Manufacturer,
+        Model,
+        CreatedAt,
+        IsDeleted
+    )
+    VALUES
+    (
+        @DeviceID,
+        @ApplicationVersionId,
+        @DeviceName,
+        @DeviceType,
+        @OS,
+        @OSVersion,
+        @Manufacturer,
+        @Model,
+        SYSDATETIME(),
+        0
+    );
+
+SELECT TOP 1 
+    d.UserDeviceId, 
+    av.Type AS ClientType
+FROM dbo.UserDevice d
+INNER JOIN dbo.ApplicationVersion av
+    ON av.ApplicationVersionId = d.ApplicationVersionId
+WHERE d.DeviceId = @DeviceID
+AND d.ApplicationVersionId = @ApplicationVersionId;
+";
 
             using var connection = _context.CreateConnection();
 
@@ -101,8 +141,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                         device.OS,
                         device.OSVersion,
                         device.Manufacturer,
-                        device.Model,
-                        device.ClientType
+                        device.Model
                     },
                     cancellationToken: cancellationToken
                 )
@@ -110,32 +149,32 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
         public async Task<int> CreateSessionAsync(
-            int userId,
-            int userDeviceId,
-            CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
-                -- Deactivate previous sessions for this user on this device
-                UPDATE dbo.UserDeviceLogin
-                SET IsCurrentSession = 0, UpdatedAt = SYSDATETIME()
-                WHERE UserId = @UserId AND UserDeviceId = @UserDeviceId AND IsCurrentSession = 1;
+                int userId,
+                int userDeviceId,
+                CancellationToken cancellationToken = default)
+            {
+                const string sql = @"
+                    -- Deactivate previous sessions for this user on this device
+                    UPDATE dbo.UserDeviceLogin
+                    SET IsCurrentSession = 0, UpdatedAt = SYSDATETIME()
+                    WHERE UserId = @UserId AND UserDeviceId = @UserDeviceId AND IsCurrentSession = 1;
 
-                -- Create new session
-                INSERT INTO dbo.UserDeviceLogin (UserId, UserDeviceId, CreatedAt, IsCurrentSession)
-                VALUES (@UserId, @UserDeviceId, SYSDATETIME(), 1);
+                    -- Create new session
+                    INSERT INTO dbo.UserDeviceLogin (UserId, UserDeviceId, CreatedAt, IsCurrentSession)
+                    VALUES (@UserId, @UserDeviceId, SYSDATETIME(), 1);
 
-                SELECT CAST(SCOPE_IDENTITY() AS INT);
-            ";
+                    SELECT CAST(SCOPE_IDENTITY() AS INT);
+                ";
 
-            using var connection = _context.CreateConnection();
+                using var connection = _context.CreateConnection();
 
-            return await connection.ExecuteScalarAsync<int>(
-                new CommandDefinition(
-                    sql,
-                    new { UserId = userId, UserDeviceId = userDeviceId },
-                    cancellationToken: cancellationToken
-                )
-            );
+                return await connection.ExecuteScalarAsync<int>(
+                    new CommandDefinition(
+                        sql,
+                        new { UserId = userId, UserDeviceId = userDeviceId },
+                        cancellationToken: cancellationToken
+                    )
+                );
         }
 
         public async Task InvalidateSessionAsync(
@@ -181,23 +220,31 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
         public async Task<int?> GetApplicationVersionIdAsync(
-            string version, int platformId,
-            ClientType applicationType,
-            CancellationToken cancellationToken = default)
+       string version,
+       int platformId,
+       ClientType applicationType,
+       CancellationToken cancellationToken = default)
         {
             const string sql = @"
-                SELECT ApplicationVersionId
-                FROM dbo.ApplicationVersion
-                WHERE Version   = @Version   AND IsActive  = 1
-                AND Type = @Type AND ApplicationId = @ApplicationId;
-            ";
+        SELECT ApplicationVersionId
+        FROM dbo.ApplicationVersion
+        WHERE Version = @Version
+        AND IsActive = 1
+        AND Type = @Type
+        AND ApplicationId = @ApplicationId;
+    ";
 
             using var connection = _context.CreateConnection();
 
             return await connection.QuerySingleOrDefaultAsync<int?>(
                 new CommandDefinition(
                     sql,
-                    new { Version = version , Type= applicationType, ApplicationId = platformId },
+                    new
+                    {
+                        Version = version,
+                        Type = applicationType.ToString(),
+                        ApplicationId = platformId
+                    },
                     cancellationToken: cancellationToken
                 )
             );

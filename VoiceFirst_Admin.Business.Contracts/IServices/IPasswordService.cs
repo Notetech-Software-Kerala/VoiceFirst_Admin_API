@@ -5,7 +5,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices;
 
 public interface IPasswordService
 {
-    Task<ApiResponse<ForgotPasswordResultDto>> ForgotPasswordAsync(
+    Task<ApiResponse<object>> ForgotPasswordAsync(
         ForgotPasswordDto request,
         CancellationToken cancellationToken);
 

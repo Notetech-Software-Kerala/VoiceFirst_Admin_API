@@ -469,7 +469,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string DivisionTwoRequiredForDivisionThree = "Division two is required when supplying division three.";
 
         // ===== FORGOT / RESET PASSWORD =====
-        public const string ForgotPasswordEmailSent = "If this email is registered, a password reset link has been sent.";
+        public static string ForgotPasswordEmailSent(string email)
+        {
+            return $"If this email ({email}) is registered, a password reset link has been sent.";
+        }
         public const string ResetTokenValid = "Reset link is valid.";
         public const string ResetPasswordSuccess = "Password has been reset successfully.";
         public const string InvalidOrExpiredToken = "The token is invalid or has expired.";

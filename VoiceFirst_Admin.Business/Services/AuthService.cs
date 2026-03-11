@@ -127,8 +127,7 @@ namespace VoiceFirst_Admin.Business.Services
                 OS = request.Device.OS,
                 OSVersion = request.Device.OSVersion,
                 Manufacturer = request.Device.Manufacturer,
-                Model = request.Device.Model,
-                ClientType = (int)request.ClientType
+                Model = request.Device.Model
             };
 
             var deviceResult = await _authRepo.UpsertDeviceAsync(
@@ -138,8 +137,8 @@ namespace VoiceFirst_Admin.Business.Services
 
             // Use the stored ClientType from DB — not the request value.
             // First registration locks the device type; subsequent logins use the stored one.
-            var clientType = Enum.IsDefined(typeof(ClientType), deviceResult.ClientType)
-                ? (ClientType)deviceResult.ClientType
+            var clientType = Enum.TryParse<ClientType>(deviceResult.ClientType, true, out var ct)
+                ? ct
                 : ClientType.Web;
 
             // 9. Create login session
