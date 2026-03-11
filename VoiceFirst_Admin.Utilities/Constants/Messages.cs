@@ -471,7 +471,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         // ===== FORGOT / RESET PASSWORD =====
         public static string ForgotPasswordEmailSent(string email)
         {
-            return $"If this email ({email}) is registered, a password reset link has been sent.";
+            return $"Please check the email address {email} for instructions to reset your password.";
         }
         public const string ResetTokenValid = "Reset link is valid.";
         public const string ResetPasswordSuccess = "Password has been reset successfully.";

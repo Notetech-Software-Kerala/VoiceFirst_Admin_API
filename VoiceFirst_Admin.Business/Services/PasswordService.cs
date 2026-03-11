@@ -127,7 +127,7 @@ public class PasswordService : IPasswordService
             .Replace("{{UserFullName}}", System.Net.WebUtility.HtmlEncode(user.FirstName + " " + user.LastName))
             .Replace("{{UserEmail}}", System.Net.WebUtility.HtmlEncode(user.Email))
             .Replace("{{ResetLink}}", resetLink)
-            .Replace("{{ResetLink}}", localresetLink)
+            .Replace("{{LocalResetLink}}", localresetLink)
             .Replace("{{SupportDocsUrl}}", _configuration["Support:DocsUrl"] ?? "#");
 
         // Send password reset link via email
