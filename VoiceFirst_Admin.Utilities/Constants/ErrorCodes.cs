@@ -126,6 +126,7 @@
         public const string AccountInactive = "ACCOUNT_INACTIVE";
         public const string AccountDeleted = "ACCOUNT_DELETED";
         public const string DeviceInfoRequired = "DEVICE_INFO_REQUIRED";
+        public const string FullDeviceInfoRequired = "FULL_DEVICE_INFO_REQUIRED";
         public const string LoginFailed = "LOGIN_FAILED";
         public const string OldPasswordIncorrect = "OLD_PASSWORD_INCORRECT";
         public const string NewPasswordSameAsOld = "NEW_PASSWORD_SAME_AS_OLD";

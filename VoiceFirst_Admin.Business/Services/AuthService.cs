@@ -117,6 +117,23 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.ValidationFailed);
             }
 
+            // 7b. If device+version is new, require full device details
+            var deviceExists = await _authRepo.DeviceExistsAsync(
+                request.Device.DeviceID, appVersionId.Value, cancellationToken);
+
+            if (!deviceExists &&
+                (string.IsNullOrWhiteSpace(request.Device.DeviceName)
+                 || string.IsNullOrWhiteSpace(request.Device.DeviceType)
+                 || string.IsNullOrWhiteSpace(request.Device.OS)
+                 || string.IsNullOrWhiteSpace(request.Device.Manufacturer)
+                 || string.IsNullOrWhiteSpace(request.Device.Model)))
+            {
+                return ApiResponse<LoginResultDto>.Fail(
+                    Messages.FullDeviceInfoRequired,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.FullDeviceInfoRequired);
+            }
+
             // 8. Upsert device
             var device = new UserDevice
             {
@@ -137,9 +154,13 @@ namespace VoiceFirst_Admin.Business.Services
 
             // Use the stored ClientType from DB — not the request value.
             // First registration locks the device type; subsequent logins use the stored one.
-            var clientType = Enum.TryParse<ClientType>(deviceResult.ClientType, true, out var ct)
-                ? ct
-                : ClientType.Web;
+            if (!Enum.TryParse<ClientType>(deviceResult.ClientType, true, out var clientType))
+            {
+                return ApiResponse<LoginResultDto>.Fail(
+                    Messages.PayloadInvalid,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.ValidationFailed);
+            }
 
             // 9. Create login session
             var sessionId = await _authRepo.CreateSessionAsync(

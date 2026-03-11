@@ -49,5 +49,10 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<IEnumerable<string>> GetActiveRolesByUserIdAsync(
             int userId,
             CancellationToken cancellationToken = default);
+
+        Task<bool> DeviceExistsAsync(
+            string deviceId,
+            int applicationVersionId,
+            CancellationToken cancellationToken = default);
     }
 }

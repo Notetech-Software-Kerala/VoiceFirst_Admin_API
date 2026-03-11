@@ -71,6 +71,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string AccountInactive = "Your account is inactive. Please contact support.";
         public const string AccountDeleted = "Your account has been deleted. Please contact support.";
         public const string DeviceInfoRequired = "Device information is required.";
+        public const string FullDeviceInfoRequired = "Full device details are required for a new device or application version.";
 
         // Change Password
         public const string ChangePasswordSuccess = "Password changed successfully. Please login again on other devices.";

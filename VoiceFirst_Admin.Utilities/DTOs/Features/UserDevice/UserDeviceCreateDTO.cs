@@ -8,11 +8,11 @@ public class UserDeviceCreateDto
     public string DeviceID { get; set; } = string.Empty;
     public string Version { get; set; } 
     public string? DeviceName { get; set; }
-    public string DeviceType { get; set; } = string.Empty;
-    public string OS { get; set; } = string.Empty;
+    public string? DeviceType { get; set; }
+    public string? OS { get; set; }
     public string OSVersion { get; set; } = string.Empty;
-    public string Manufacturer { get; set; } = string.Empty;
-    public string Model { get; set; } = string.Empty;
+    public string? Manufacturer { get; set; }
+    public string? Model { get; set; }
 
 
 }

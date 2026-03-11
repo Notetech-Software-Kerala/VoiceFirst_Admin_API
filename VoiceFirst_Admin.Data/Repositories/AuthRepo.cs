@@ -81,12 +81,12 @@ AND target.ApplicationVersionId = source.ApplicationVersionId
 
 WHEN MATCHED THEN
     UPDATE SET
-        DeviceName   = @DeviceName,
-        DeviceType   = @DeviceType,
-        OS           = @OS,
+        DeviceName   = ISNULL(@DeviceName, target.DeviceName),
+        DeviceType   = ISNULL(@DeviceType, target.DeviceType),
+        OS           = ISNULL(@OS, target.OS),
         OSVersion    = @OSVersion,
-        Manufacturer = @Manufacturer,
-        Model        = @Model,
+        Manufacturer = ISNULL(@Manufacturer, target.Manufacturer),
+        Model        = ISNULL(@Model, target.Model),
         UpdatedAt    = SYSDATETIME()
 
 WHEN NOT MATCHED THEN
@@ -108,11 +108,11 @@ WHEN NOT MATCHED THEN
         @DeviceID,
         @ApplicationVersionId,
         @DeviceName,
-        @DeviceType,
-        @OS,
+        ISNULL(@DeviceType, ''),
+        ISNULL(@OS, ''),
         @OSVersion,
-        @Manufacturer,
-        @Model,
+        ISNULL(@Manufacturer, ''),
+        ISNULL(@Model, ''),
         SYSDATETIME(),
         0
     );
@@ -294,6 +294,32 @@ AND d.ApplicationVersionId = @ApplicationVersionId;
                 new CommandDefinition(
                     sql,
                     new { UserId = userId },
+                    cancellationToken: cancellationToken
+                )
+            );
+        }
+
+        public async Task<bool> DeviceExistsAsync(
+            string deviceId,
+            int applicationVersionId,
+            CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+                SELECT CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM dbo.UserDevice
+                    WHERE DeviceId = @DeviceId
+                      AND ApplicationVersionId = @ApplicationVersionId
+                      AND IsDeleted = 0
+                ) THEN 1 ELSE 0 END;
+            ";
+
+            using var connection = _context.CreateConnection();
+
+            return await connection.ExecuteScalarAsync<bool>(
+                new CommandDefinition(
+                    sql,
+                    new { DeviceId = deviceId, ApplicationVersionId = applicationVersionId },
                     cancellationToken: cancellationToken
                 )
             );
