@@ -174,7 +174,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
                 if (addOptions != null && addOptions.Any())
                 {
-                    InsertSysUserCustomFieldOptionsAsync(connection, tx, entity.SysUserCustomFieldId, addOptions, updatedBy, cancellationToken);
+                    await InsertSysUserCustomFieldOptionsAsync(connection, tx, entity.SysUserCustomFieldId, addOptions, updatedBy, cancellationToken);
                    
                 }
                 if (validations != null && validations.Any())
@@ -579,7 +579,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 INNER JOIN Users uC ON uC.UserId = f.CreatedBy
                 LEFT JOIN Users uU ON uU.UserId = f.UpdatedBy
                 LEFT JOIN Users uD ON uD.UserId = f.DeletedBy
-                WHERE Where IsDeleted=0 And IsActive=1");
+                WHERE f.IsDeleted=0 And f.IsActive=1");
 
             
 
