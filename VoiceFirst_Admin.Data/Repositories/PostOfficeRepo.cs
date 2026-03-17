@@ -459,10 +459,11 @@ public class PostOfficeRepo : IPostOfficeRepo
         };
 
         var sortOrder = filter.SortOrder == Utilities.DTOs.Shared.SortOrder.Desc ? "DESC" : "ASC";
-        var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "PostOfficeId" : filter.SortBy;
+
+        var sortKey = string.IsNullOrWhiteSpace(filter.SortBy) ? "PostOfficeName" : filter.SortBy;
 
         if (!sortMap.TryGetValue(sortKey, out var sortColumn))
-            sortColumn = sortMap["PostOfficeId"];
+            sortColumn = sortMap["PostOfficeName"];
 
         var countSql = "SELECT COUNT(1) " + baseSql;
 
