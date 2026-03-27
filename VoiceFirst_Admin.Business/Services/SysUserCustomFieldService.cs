@@ -37,96 +37,98 @@ namespace VoiceFirst_Admin.Business.Services
                 else
                     return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldKeyAlreadyExists, StatusCodes.Status409Conflict);
             }
-            var exsitFieldNameWithDataType = await _repo.ExistsByFieldNameAndDataTypeAsync(dto.FieldName,dto.FieldDataType, null, cancellationToken);
-            if (exsitFieldNameWithDataType != null )
-            {
-                if(exsitFieldKey.IsDeleted==true)
-                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable,StatusCodes.Status409Conflict);
-                else
-                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExists, StatusCodes.Status409Conflict);
-            }
-            if (dto.AddOptions != null && dto.AddOptions.Count() > 0)
-            {
-                foreach (var o in dto.AddOptions)
-                {
-                    if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldOptionRequired
-                        };
-                    }
-                    if (string.IsNullOrWhiteSpace(o.label))
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldOptionLabelRequired
-                        };
-                    }
 
-                    if (o.value == null)
+            if (dto.AddCustomFieldDataType != null && dto.AddCustomFieldDataType.Count() > 0)
+            {
+                foreach (var dt in dto.AddCustomFieldDataType)
+                {
+                    var exsitFieldDataType = await _repo.ExistsByFieldDataTypeByIdAsync(dt.FieldDataTypeId, cancellationToken);
+                    if (exsitFieldDataType == null)
                     {
-                        return new ApiResponse<CustomFieldDetailDto>
+                        return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldDataTypeNotExists, StatusCodes.Status404NotFound);
+                    }
+                    if (dt.AddOptions != null && dt.AddOptions.Count() > 0)
+                    {
+                        foreach (var o in dt.AddOptions)
                         {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldOptionValueRequired
-                        };
+                            if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionRequired
+                                };
+                            }
+                            if (string.IsNullOrWhiteSpace(o.label))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionLabelRequired
+                                };
+                            }
+
+                            if (o.value == null)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionValueRequired
+                                };
+                            }
+                        }
+                    }
+                    if (dt.AddValidations != null && dt.AddValidations.Count() > 0)
+                    {
+                        foreach (var v in dt.AddValidations)
+                        {
+                            if (v.RuleId > 0 &&
+                                v.RuleValue == null &&
+                                string.IsNullOrWhiteSpace(v.Message))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationRequired
+                                };
+                            }
+                            var exsitValidationRule = await _repo.ExistsByValidationRuleByIdAsync(v.RuleId, cancellationToken);
+                            if (exsitValidationRule == null)
+                            {
+                                return ApiResponse<CustomFieldDetailDto>.Fail(Messages.ValidationRuleNotExists, StatusCodes.Status404NotFound);
+                            }
+
+                            if (v.RuleValue == null)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationRuleValueRequired
+                                };
+                            }
+
+                            if (string.IsNullOrWhiteSpace(v.Message))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationMessageRequired
+                                };
+                            }
+                        }
                     }
                 }
-            }
-            if (dto.AddValidations != null && dto.AddValidations.Count() > 0)
-            {
-                foreach (var v in dto.AddValidations)
-                {
-                    if (string.IsNullOrWhiteSpace(v.RuleName) &&
-                        v.RuleValue == null &&
-                        string.IsNullOrWhiteSpace(v.message))
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationRequired
-                        };
-                    }
-                    if (string.IsNullOrWhiteSpace(v.RuleName))
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationRuleNameRequired
-                        };
-                    }
 
-                    if (v.RuleValue == null)
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationRuleValueRequired
-                        };
-                    }
-
-                    if (string.IsNullOrWhiteSpace(v.message))
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationMessageRequired
-                        };
-                    }
-                }
             }
-            
             var entity = _mapper.Map<SysUserCustomField>(dto);
+            
 
-            List<SysUserCustomFieldValidations> userCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.AddValidations);
+            //List<SysUserCustomFieldValidations> userCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.AddValidations);
                 
-            List<SysUserCustomFieldOptions> userCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.AddOptions);
+            //List<SysUserCustomFieldOptions> userCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.AddOptions);
                 
                 
-            var id = await _repo.CreateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, loginId, cancellationToken);
+            var id = await _repo.CreateAsync(entity, dto.AddCustomFieldDataType, loginId, cancellationToken);
             if (id <= 0)
                 return ApiResponse<CustomFieldDetailDto>.Fail(Messages.SomethingWentWrong);
             var userCustomField = await GetByIdAsync(id, cancellationToken);
@@ -139,163 +141,276 @@ namespace VoiceFirst_Admin.Business.Services
         {
             var field = await _repo.GetByIdAsync(id, cancellationToken);
             if (field == null) return null;
-
-            var validations = await _repo.GetValidationsByFieldIdAsync(id, cancellationToken);
-
-            var options = await _repo.GetOptionsByFieldIdAsync(id, cancellationToken);
             var dto = _mapper.Map<CustomFieldDetailDto>(field);
-            dto.Validations = _mapper.Map<List<CustomFieldValidationsDto>>(validations);
-            dto.Options = _mapper.Map<List<CustomFieldOptionsDto>>(options);
+            var Fieldlink = await _repo.GetFieldDataTypeByFieldIdAsync(id, cancellationToken);
+            if (Fieldlink != null)
+            {
+                List<CustomFieldDataTypeDetailsDto> customFieldDataTypes = new List<CustomFieldDataTypeDetailsDto>();  
+                foreach (var f in Fieldlink)
+                {
+                    var customFieldDataTypeObj = _mapper.Map<CustomFieldDataTypeDetailsDto>(f);
+
+                    var validations = await _repo.GetValidationsByFieldLinkIdAsync(f.SysUserCustomFieldDataTypeLinkId, cancellationToken);
+
+                    var options = await _repo.GetOptionsByFieldLinkIdAsync(f.SysUserCustomFieldDataTypeLinkId, cancellationToken);
+
+                    customFieldDataTypeObj.Validations = _mapper.Map<List<CustomFieldValidationsDto>>(validations);
+                    customFieldDataTypeObj.Options = _mapper.Map<List<CustomFieldOptionsDto>>(options);
+                    customFieldDataTypes.Add(customFieldDataTypeObj);
+                }
+                dto.FieldDataTypes = customFieldDataTypes;
+            }
+            
 
             return dto;
         }
 
         public async Task<ApiResponse<CustomFieldDetailDto>> UpdateAsync(CustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
         {
-            var exsitFieldKey = await _repo.ExistsByFieldKeyAsync(dto.FieldKey, null, cancellationToken);
-            if (exsitFieldKey != null)
+            if(dto.FieldKey!=null )
             {
-                if (exsitFieldKey.IsDeleted == true)
-                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
-                else
-                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldKeyAlreadyExists, StatusCodes.Status409Conflict);
-            }
-            var exsitFieldNameWithDataType = await _repo.ExistsByFieldNameAndDataTypeAsync(dto.FieldName, dto.FieldDataType, null, cancellationToken);
-            if (exsitFieldNameWithDataType != null)
-            {
-                if (exsitFieldKey.IsDeleted == true)
-                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
-                else
-                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExists, StatusCodes.Status409Conflict);
-            }
-            if (dto.AddOptions != null && dto.AddOptions.Count() > 0)
-            {
-                foreach (var o in dto.AddOptions)
+                var exsitFieldKey = await _repo.ExistsByFieldKeyAsync(dto.FieldKey, null, cancellationToken);
+                if (exsitFieldKey != null)
                 {
-                    if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
+                    if (exsitFieldKey.IsDeleted == true)
+                        return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
+                    else
+                        return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldKeyAlreadyExists, StatusCodes.Status409Conflict);
+                }
+            }
+            if(dto.FieldName!=null)
+            {
+                var exsitName = await _repo.ExistsByFieldNameAsync(dto.FieldName,  cancellationToken);
+                if (exsitName != null)
+                {
+                    if (exsitName.IsDeleted == true)
+                        return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomNameAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
+                    else
+                        return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldNameAlreadyExists, StatusCodes.Status409Conflict);
+                }
+            }
+            if(dto.addCustomFieldDataTypes!=null && dto.addCustomFieldDataTypes.Count() > 0)
+            {
+                foreach (var dt in dto.addCustomFieldDataTypes)
+                {
+                    var exsitFieldDataType = await _repo.ExistsByFieldDataTypeByIdAsync(dt.FieldDataTypeId, cancellationToken);
+                    if (exsitFieldDataType == null)
                     {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldOptionRequired
-                        };
+                        return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldDataTypeNotExists, StatusCodes.Status404NotFound);
                     }
-                    if (string.IsNullOrWhiteSpace(o.label))
+                    var exsitFieldNameWithDataType = await _repo.ExistsByFieldIdAndDataTypeIdIdAsync(id, dt.FieldDataTypeId, cancellationToken);
+                    if (exsitFieldNameWithDataType != null)
                     {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldOptionLabelRequired
-                        };
+                        return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomNameAndDataTypeAlreadyExistsRecoverable, StatusCodes.Status409Conflict);
                     }
 
-                    if (o.value == null)
+                    if (dt.AddOptions != null && dt.AddOptions.Count() > 0)
                     {
-                        return new ApiResponse<CustomFieldDetailDto>
+                        foreach (var o in dt.AddOptions)
                         {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldOptionValueRequired
-                        };
+                            if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionRequired
+                                };
+                            }
+                            if (string.IsNullOrWhiteSpace(o.label))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionLabelRequired
+                                };
+                            }
+
+                            if (o.value == null)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionValueRequired
+                                };
+                            }
+                        }
                     }
-                }
-            }
-            if (dto.AddValidations != null && dto.AddValidations.Count() > 0)
-            {
-                foreach (var v in dto.AddValidations)
-                {
-                    if (string.IsNullOrWhiteSpace(v.RuleName) &&
-                        v.RuleValue == null &&
-                        string.IsNullOrWhiteSpace(v.message))
+                    if (dt.AddValidations != null && dt.AddValidations.Count() > 0)
                     {
-                        return new ApiResponse<CustomFieldDetailDto>
+                        foreach (var v in dt.AddValidations)
                         {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationRequired
-                        };
-                    }
-                    if (string.IsNullOrWhiteSpace(v.RuleName))
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationRuleNameRequired
-                        };
+                            if (v.RuleId > 0 &&
+                                    v.RuleValue == null &&
+                                    string.IsNullOrWhiteSpace(v.Message))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationRequired
+                                };
+                            }
+                            var exsitValidationRule = await _repo.ExistsByValidationRuleByIdAsync(v.RuleId, cancellationToken);
+                            if (exsitValidationRule == null)
+                            {
+                                return ApiResponse<CustomFieldDetailDto>.Fail(Messages.ValidationRuleNotExists, StatusCodes.Status404NotFound);
+                            }
+
+
+                            if (v.RuleValue == null)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationRuleValueRequired
+                                };
+                            }
+
+                            if (string.IsNullOrWhiteSpace(v.Message))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationMessageRequired
+                                };
+                            }
+                        }
                     }
 
-                    if (v.RuleValue == null)
+                }
+            }
+            if (dto.UpdateCustomFieldDataTypes != null && dto.UpdateCustomFieldDataTypes.Count() > 0)
+            {
+                foreach (var dt in dto.UpdateCustomFieldDataTypes)
+                {
+                    if (dt.AddOptions != null && dt.AddOptions.Count() > 0)
                     {
-                        return new ApiResponse<CustomFieldDetailDto>
+                        foreach (var o in dt.AddOptions)
                         {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationRuleValueRequired
-                        };
-                    }
+                            if (string.IsNullOrWhiteSpace(o.label) && o.value == null)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionRequired
+                                };
+                            }
+                            if (string.IsNullOrWhiteSpace(o.label))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionLabelRequired
+                                };
+                            }
 
-                    if (string.IsNullOrWhiteSpace(v.message))
+                            if (o.value == null)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionValueRequired
+                                };
+                            }
+                        }
+                    }
+                    if (dt.AddValidations != null && dt.AddValidations.Count() > 0)
                     {
-                        return new ApiResponse<CustomFieldDetailDto>
+                        foreach (var v in dt.AddValidations)
                         {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationMessageRequired
-                        };
+                            if (v.RuleId > 0 &&
+                                    v.RuleValue == null &&
+                                    string.IsNullOrWhiteSpace(v.Message))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationRequired
+                                };
+                            }
+                            var exsitValidationRule = await _repo.ExistsByValidationRuleByIdAsync(v.RuleId, cancellationToken);
+                            if (exsitValidationRule == null)
+                            {
+                                return ApiResponse<CustomFieldDetailDto>.Fail(Messages.ValidationRuleNotExists, StatusCodes.Status404NotFound);
+                            }
+
+                            if (v.RuleValue == null)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationRuleValueRequired
+                                };
+                            }
+
+                            if (string.IsNullOrWhiteSpace(v.Message))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationMessageRequired
+                                };
+                            }
+                        }
+                    }
+                    if (dt.UpdateValidations != null && dt.UpdateValidations.Count() > 0)
+                    {
+                        foreach (var item in dt.UpdateValidations)
+                        {
+                            if (item.CustomFieldValidationId <= 0)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationIdRequired
+                                };
+                            }
+                            if ( string.IsNullOrWhiteSpace(item.RuleValue) && string.IsNullOrWhiteSpace(item.message) && !item.Active.HasValue)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldValidationAtLeastRequired
+                                };
+                            }
+                        }
+                    }
+                    if (dt.UpdateOptions != null && dt.UpdateOptions.Count() > 0)
+                    {
+                        foreach (var item in dt.UpdateOptions)
+                        {
+                            if (item.CustomFieldOptionsId <= 0)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionIdRequired
+                                };
+                            }
+                            if (string.IsNullOrWhiteSpace(item.value) && string.IsNullOrWhiteSpace(item.label) && !item.Active.HasValue)
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = Messages.CustomFieldOptionAtLeastRequired
+                                };
+                            }
+                        }
                     }
                 }
             }
-            if (dto.UpdateValidations != null && dto.UpdateValidations.Count() > 0)
-            {
-                foreach (var item in dto.UpdateValidations)
-                {
-                    if (item.CustomFieldValidationId <= 0)
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationIdRequired
-                        };
-                    }
-                    if (string.IsNullOrWhiteSpace(item.RuleName) && string.IsNullOrWhiteSpace(item.RuleValue) && string.IsNullOrWhiteSpace(item.message) && !item.Active.HasValue)
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldValidationAtLeastRequired
-                        };
-                    }
-                }
-            }
-            if (dto.UpdateOptions != null && dto.UpdateOptions.Count() > 0)
-            {
-                foreach (var item in dto.UpdateOptions)
-                {
-                    if (item.CustomFieldOptionsId <= 0)
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldOptionIdRequired
-                        };
-                    }
-                    if (string.IsNullOrWhiteSpace(item.value) && string.IsNullOrWhiteSpace(item.label) && !item.Active.HasValue)
-                    {
-                        return new ApiResponse<CustomFieldDetailDto>
-                        {
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            Message = Messages.CustomFieldOptionAtLeastRequired
-                        };
-                    }
-                }
-            }
+
+                    
             var entity = _mapper.Map<SysUserCustomField>(dto);
             entity.SysUserCustomFieldId = id;
                 
-            List<SysUserCustomFieldValidations> userCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.AddValidations);
+            //List<SysUserCustomFieldValidations> userCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.AddValidations);
 
-            List<SysUserCustomFieldOptions> userCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.AddOptions);
-            List<SysUserCustomFieldValidations> updateCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.UpdateValidations);
-            List<SysUserCustomFieldOptions> updateCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.UpdateOptions);
+            //List<SysUserCustomFieldOptions> userCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.AddOptions);
+            //List<SysUserCustomFieldValidations> updateCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.UpdateValidations);
+            //List<SysUserCustomFieldOptions> updateCustomFieldOptions = _mapper.Map<List<SysUserCustomFieldOptions>>(dto.UpdateOptions);
            
                
-            var status = await _repo.UpdateAsync(entity, userCustomFieldValidations, userCustomFieldOptions, updateCustomFieldValidations, updateCustomFieldOptions, loginId, cancellationToken);
+            var status = await _repo.UpdateAsync(entity, dto.UpdateCustomFieldDataTypes, dto.addCustomFieldDataTypes, loginId, cancellationToken);
             if (status==false)
                 return ApiResponse<CustomFieldDetailDto>.Fail(Messages.SomethingWentWrong);
 
@@ -349,6 +464,26 @@ namespace VoiceFirst_Admin.Business.Services
                 PageNumber = filter.PageNumber,
                 PageSize = filter.Limit
             };
+        }
+        public async Task<PagedResultDto<RuleLookUpDto>?> GetRuleLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
+        {
+            var entities = await _repo.ValidationRuleLookupAsync(filter, cancellationToken);
+            var list = _mapper.Map<IEnumerable<RuleLookUpDto>>(entities.Items);
+            // load actions for each? skip for performance
+            return new PagedResultDto<RuleLookUpDto>
+            {
+                Items = list,
+                TotalCount = entities.TotalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.Limit
+            };
+        }
+        public async Task<List<DataTypeLookUpDto>> GetDataTypeLookUpAsync( CancellationToken cancellationToken = default)
+        {
+            var entities = await _repo.FieldDataTypeLookupAsync( cancellationToken);
+            var list = _mapper.Map<IEnumerable<DataTypeLookUpDto>>(entities);
+            // load actions for each? skip for performance
+            return list.ToList();
         }
     }
 }

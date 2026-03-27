@@ -11,15 +11,21 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface ISysUserCustomFieldRepo
     {
-        Task<int> CreateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> validations, List<SysUserCustomFieldOptions> options, int createdBy, CancellationToken cancellationToken = default);
+        Task<int> CreateAsync(SysUserCustomField entity, List<CustomFieldDataTypeDto>? customFieldDataTypes,  int createdBy, CancellationToken cancellationToken = default);
         Task<SysUserCustomField> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysUserCustomField>> GetLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default);
-        Task<IEnumerable<SysUserCustomFieldValidations>> GetValidationsByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<SysUserCustomFieldOptions>> GetOptionsByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<SysUserCustomFieldDataTypeLink>> GetFieldDataTypeByFieldIdAsync(int fieldId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<SysUserCustomFieldValidations>> GetValidationsByFieldLinkIdAsync(int fieldLinkId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<SysUserCustomFieldOptions>> GetOptionsByFieldLinkIdAsync(int fieldLinkId, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysUserCustomField>> GetAllAsync(CustomFieldFilterDto filter, CancellationToken cancellationToken = default);
-        Task<bool> UpdateAsync(SysUserCustomField entity, List<SysUserCustomFieldValidations> addValidations, List<SysUserCustomFieldOptions> addOptions, IEnumerable<SysUserCustomFieldValidations> validations, IEnumerable<SysUserCustomFieldOptions> options, int updatedBy, CancellationToken cancellationToken = default);
+        Task<bool> UpdateAsync(SysUserCustomField entity, List<UpdateCustomFieldDataTypeDto>? UpdateCustomFieldDataTypes, List<CustomFieldDataTypeDto>? addCustomFieldDataTypes, int updatedBy, CancellationToken cancellationToken = default);
         Task<bool> SoftDeleteAsync(int id, int deletedBy, CancellationToken cancellationToken = default);
         Task<SysUserCustomField> ExistsByFieldKeyAsync(string fieldKey, int? excludeId = null, CancellationToken cancellationToken = default);
-        Task<SysUserCustomField> ExistsByFieldNameAndDataTypeAsync(string fieldName, string fieldDataType, int? excludeId = null, CancellationToken cancellationToken = default);
+        Task<SysUserCustomFieldDataType> ExistsByFieldDataTypeByIdAsync(int id,  CancellationToken cancellationToken = default);
+        Task<IEnumerable<SysUserCustomFieldDataType>> FieldDataTypeLookupAsync(CancellationToken cancellationToken = default);
+        Task<SysUserCustomFieldValidationsRule> ExistsByValidationRuleByIdAsync(int id,  CancellationToken cancellationToken = default);
+        Task<PagedResultDto<SysUserCustomFieldValidationsRule>> ValidationRuleLookupAsync(BasicFilterDto filter, CancellationToken cancellationToken = default);
+        Task<SysUserCustomFieldDataTypeLink> ExistsByFieldIdAndDataTypeIdIdAsync(int customerFieldId, int fieldDataTypeId, CancellationToken cancellationToken = default);
+        Task<SysUserCustomField> ExistsByFieldNameAsync(string fieldName, CancellationToken cancellationToken = default);
     }
 }

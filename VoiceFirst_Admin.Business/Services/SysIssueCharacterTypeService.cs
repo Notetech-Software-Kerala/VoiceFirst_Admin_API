@@ -20,9 +20,9 @@ namespace VoiceFirst_Admin.Business.Services
 
         public SysIssueCharacterTypeService
             (
-            ISysIssueCharacterTypeRepo repository, 
+            ISysIssueCharacterTypeRepo repository,
             IMapper mapper)
-        { 
+        {
             _repo = repository; _mapper = mapper;
         }
 
@@ -92,9 +92,7 @@ namespace VoiceFirst_Admin.Business.Services
                 ErrorCodes.IssueCharacterTypeAlreadyExists,
                 minimalDto);
         }
-           
 
-        
 
 
 

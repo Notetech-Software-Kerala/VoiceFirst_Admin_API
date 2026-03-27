@@ -10,7 +10,16 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
         public string? FieldName { get; set; }
         [RegularExpression(@"^[a-zA-Z0-9_]+$", ErrorMessage = "Rule name can contain only letters, numbers, and underscore. Spaces are not allowed.")]
         public string? FieldKey { get; set; }
-        public string? FieldDataType { get; set; }
+        public bool? Active { get; set; }
+        public List<UpdateCustomFieldDataTypeDto>? UpdateCustomFieldDataTypes { get; set; }
+        public List<CustomFieldDataTypeDto>? addCustomFieldDataTypes { get; set; }
+
+    }
+    public class UpdateCustomFieldDataTypeDto
+    {
+        public int CustomFieldLinkId { get; set; }
+        //public int FieldDataTypeId { get; set; }
+        public string ValueDataType { get; set; }
         public bool? Active { get; set; }
         public IEnumerable<CreateCustomFieldValidationsDto>? AddValidations { get; set; }
         public IEnumerable<CreateCustomFieldOptionsDto>? AddOptions { get; set; }

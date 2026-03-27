@@ -8,8 +8,9 @@ namespace VoiceFirst_Admin.Utilities.Models.Entities
     public class SysUserCustomField : BaseModel
     {
         public int SysUserCustomFieldId { get; set; }
+        public int SysUserCustomFieldDataTypeLinkId { get; set; }
         public string FieldName { get; set; } 
         public string FieldKey { get; set; } 
-        public string FieldDataType { get; set; } 
+        public string? FieldDataType { get; set; } 
     }
 }

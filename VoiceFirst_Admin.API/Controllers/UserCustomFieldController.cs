@@ -65,4 +65,16 @@ public class CustomFieldController : ControllerBase
         var items = await _service.GetLookUpAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.CustomFieldRetrieved));
     }
+    [HttpGet("lookup/datatype")]
+    public async Task<IActionResult> GetDataTypeLookUp( CancellationToken cancellationToken)
+    {
+        var items = await _service.GetDataTypeLookUpAsync( cancellationToken);
+        return Ok(ApiResponse<object>.Ok(items, Messages.CustomFieldRetrieved));
+    }
+    [HttpGet("lookup/validation-rule")]
+    public async Task<IActionResult> GetRuleLookUp([FromQuery] BasicFilterDto filter, CancellationToken cancellationToken)
+    {
+        var items = await _service.GetRuleLookUpAsync(filter, cancellationToken);
+        return Ok(ApiResponse<object>.Ok(items, Messages.CustomFieldRetrieved));
+    }
 }

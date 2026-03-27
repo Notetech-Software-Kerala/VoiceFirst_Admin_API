@@ -593,7 +593,12 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string CustomFieldAlreadyExists = "Custom field already exists. Please add another name.";
         public const string CustomFieldAlreadyExistsByActivity = "Custom field already exists in this activity. Please add another name.";
         public const string CustomFieldKeyAlreadyExists = "Custom field key already exists. Please add another.";
-        public const string CustomFieldAlreadyExistsRecoverable = "Custom field already exists but was deleted. You can recover it.";
+        public const string CustomFieldNameAlreadyExists = "Custom field name already exists. Please add another.";
+        public const string CustomFieldDataTypeNotExists = "Custom field dataType not exists."+ BaseRefreshMessage;
+        public const string ValidationRuleNotExists = "Validation rule not exists."+ BaseRefreshMessage;
+        public const string CustomFieldAlreadyExistsRecoverable = "Custom field key already exists but was deleted. You can recover it.";
+        public const string CustomNameAlreadyExistsRecoverable = "Custom field name already exists but was deleted. You can recover it.";
+        public const string CustomNameAndDataTypeAlreadyExistsRecoverable = "Custom field name and data type already linked.";
         public const string CustomFieldCreated = "Custom field created successfully.";
         public const string CustomFieldRecovered = "Custom field recovered successfully.";
         public const string CustomFieldNotFoundById = "Custom field not found.";

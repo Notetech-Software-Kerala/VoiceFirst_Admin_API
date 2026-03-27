@@ -144,7 +144,10 @@ public class PasswordService : IPasswordService
             $"{_configuration["Frontend:BaseUrl"]?.TrimEnd('/')}/reset-password/" +
             $"{Uri.EscapeDataString(resetToken)}";
 
-  
+       var resetLinkForMobile =
+             $"{_configuration["Frontend:BaseUrlForMobile"]?.TrimEnd('/')}/reset-password/" +
+            $"{Uri.EscapeDataString(resetToken)}";
+
 
         // Load email template and populate placeholders
         var template = EmailTemplateHelper.GetTemplate("ResetPasswordEmail");
@@ -152,7 +155,7 @@ public class PasswordService : IPasswordService
             .Replace("{{UserFullName}}", System.Net.WebUtility.HtmlEncode(user.FirstName + " " + user.LastName))
             .Replace("{{UserEmail}}", System.Net.WebUtility.HtmlEncode(user.Email))
             .Replace("{{ResetLink}}", resetLink)
-
+            .Replace("{{ResetLinkForMobile}}", resetLinkForMobile)
             .Replace("{{SupportDocsUrl}}", _configuration["Support:DocsUrl"] ?? "#");
 
         // Send password reset link via email
