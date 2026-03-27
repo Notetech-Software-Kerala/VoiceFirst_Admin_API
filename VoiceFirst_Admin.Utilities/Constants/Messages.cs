@@ -78,6 +78,10 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string OldPasswordIncorrect = "Current password is incorrect.";
         public const string NewPasswordSameAsOld = "New password cannot be the same as the current password.";
         public const string ChangePasswordFailed = "Password change failed. Please try again.";
+
+
+        //User Profile
+        public const string UserProfile = "User profile retrieved successfully.";
  
 
 

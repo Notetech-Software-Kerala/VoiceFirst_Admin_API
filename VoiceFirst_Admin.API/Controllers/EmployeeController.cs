@@ -12,12 +12,12 @@ namespace VoiceFirst_Admin.API.Controllers
 {
     [Route("api/employee")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class EmployeeController : ControllerBase
     {
-        private readonly IUserService _service;
+        private readonly IEmployeeService _service;
         const int userId = 1;
 
-        public UserController(IUserService service)
+        public EmployeeController(IEmployeeService service)
         {
             _service = service;
         }

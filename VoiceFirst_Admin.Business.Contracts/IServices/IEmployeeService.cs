@@ -7,7 +7,7 @@ using VoiceFirst_Admin.Utilities.Models.Common;
 
 namespace VoiceFirst_Admin.Business.Contracts.IServices
 {
-    public interface IUserService
+    public interface IEmployeeService
     {
         Task<ApiResponse<EmployeeDetailDto>> UpdateAsync(
              int updateUserId,
