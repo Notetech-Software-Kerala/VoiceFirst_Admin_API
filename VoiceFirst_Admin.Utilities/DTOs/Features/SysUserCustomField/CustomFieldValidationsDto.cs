@@ -8,7 +8,8 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
     public class CustomFieldValidationsDto : PartialCommonDto
     {
         public int CustomFieldValidationId { get; set; }
-        public int CustomFieldId { get; set; }
+        public int CustomFieldLinkId { get; set; }
+        public int RuleId { get; set; }
         public string RuleName { get; set; }
         public string RuleValue { get; set; }
         public string message { get; set; }

@@ -221,9 +221,9 @@ namespace VoiceFirst_Admin.Business.Services
             if (!string.IsNullOrWhiteSpace(dto.ActivityName))
             {
                 var existingEntity = await _repo.BusinessActivityExistsAsync(
-               dto.ActivityName,
-               sysBusinessActivityId,
-               cancellationToken);
+                   dto.ActivityName,
+                   sysBusinessActivityId,
+                   cancellationToken);
 
                 if (existingEntity is not null)
                 {

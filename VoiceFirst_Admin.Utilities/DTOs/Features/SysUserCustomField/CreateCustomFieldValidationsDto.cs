@@ -9,8 +9,8 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
     {
  
         [RegularExpression(@"^[a-zA-Z0-9_]+$", ErrorMessage = "Rule name can contain only letters, numbers, and underscore. Spaces are not allowed.")]
-        public string RuleName { get; set; }
+        public int RuleId { get; set; }
         public string RuleValue { get; set; }
-        public string message { get; set; }
+        public string Message { get; set; }
     }
 }

@@ -8,7 +8,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
     public class CustomFieldOptionsDto : PartialCommonDto
     {
         public int CustomFieldOptionsId { get; set; }
-        public int CustomFieldId { get; set; }
+        public int CustomFieldLinkId { get; set; }
         public string label { get; set; }
         public string value { get; set; }
     }

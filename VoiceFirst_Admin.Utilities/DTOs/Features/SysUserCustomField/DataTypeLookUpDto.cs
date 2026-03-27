@@ -4,10 +4,9 @@ using System.Text;
 
 namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
 {
-    public class CustomFieldLookUpDto 
+    public class DataTypeLookUpDto
     {
-        public int CustomFieldLinkId { get; set; }
-        public string FieldName { get; set; }
+        public int FieldDataTypeId { get; set; }
         public string FieldDataType { get; set; }
     }
 }
