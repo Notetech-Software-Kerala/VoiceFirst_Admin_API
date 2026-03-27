@@ -601,7 +601,9 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string CustomFieldAlreadyRequestedStatus = "Custom field link is already in the requested status.";
         public const string CustomFieldsNotFound = "Custom fields not found.";
         public const string CustomFieldDeleted = "Custom field deleted successfully.";
+        public const string CustomFieldRestored = "Custom field restored successfully.";
         public const string CustomFieldDeletionFailed = "Failed to delete custom field.";
+        public const string CustomFieldRestoreFailed = "Failed to restore custom field.";
         public const string CustomFieldRetrieved = "Custom field retrieved successfully.";
         public const string CustomFieldsRetrieved = "Custom fields retrieved successfully.";
         public const string CustomFieldUpdated = "Custom field updated successfully.";

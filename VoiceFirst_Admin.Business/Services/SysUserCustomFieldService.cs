@@ -402,6 +402,7 @@ namespace VoiceFirst_Admin.Business.Services
                     
             var entity = _mapper.Map<SysUserCustomField>(dto);
             entity.SysUserCustomFieldId = id;
+            entity.UpdatedBy = loginId;
                 
             //List<SysUserCustomFieldValidations> userCustomFieldValidations = _mapper.Map<List<SysUserCustomFieldValidations>>(dto.AddValidations);
 
@@ -436,6 +437,22 @@ namespace VoiceFirst_Admin.Business.Services
                     return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldDeletionFailed);
             var userCustomField = await GetByIdAsync(id, cancellationToken);
             return ApiResponse<CustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldDeleted);
+            
+        }
+        public async Task<ApiResponse<CustomFieldDetailDto>> RestoreAsync(int id, int loginId, CancellationToken cancellationToken = default)
+        {
+            var field = await _repo.GetByIdAsync(id, cancellationToken);
+            if (field == null) 
+                return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldNotFound, StatusCodes.Status404NotFound);
+
+            if(field.IsDeleted == false)
+                return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldAlreadyRecovered, StatusCodes.Status409Conflict);
+
+            var ok = await _repo.RestoreAsync(id, loginId, cancellationToken);
+            if (!ok)
+                    return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldRestoreFailed);
+            var userCustomField = await GetByIdAsync(id, cancellationToken);
+            return ApiResponse<CustomFieldDetailDto>.Ok(userCustomField, Messages.CustomFieldRestored);
             
         }
 

@@ -52,6 +52,12 @@ public class CustomFieldController : ControllerBase
         var res = await _service.DeleteAsync(id, userId, cancellationToken);
         return StatusCode(res.StatusCode, res);
     }
+    [HttpPatch("restore/{id:int}")]
+    public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
+    {
+        var res = await _service.RestoreAsync(id, userId, cancellationToken);
+        return StatusCode(res.StatusCode, res);
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] CustomFieldFilterDto filter, CancellationToken cancellationToken)

@@ -10,7 +10,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
     public interface ISysBusinessActivityRepo
     {
-        Task<int> CreateAsync(SysBusinessActivity entity,List<int> CustomFieldIds, CancellationToken cancellationToken = default);
+        Task<int> CreateAsync(SysBusinessActivity entity,List<int> addCustomFieldLinkIds, CancellationToken cancellationToken = default);
         Task<SysBusinessActivityDTO?> GetByIdAsync(int ActivityId, CancellationToken cancellationToken = default);
         Task<IEnumerable<SysBusinessActivityUserCustomFieldLink>> GetCustomFieldByIdAsync(int ActivityId, CancellationToken cancellationToken = default);
         Task<PagedResultDto<SysBusinessActivityDTO>> GetAllAsync(BusinessActivityFilterDTO filter, CancellationToken cancellationToken = default);     

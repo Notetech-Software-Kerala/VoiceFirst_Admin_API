@@ -44,7 +44,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<int> CreateAsync
-            (SysBusinessActivity entity, List<int> CustomFieldIds,
+            (SysBusinessActivity entity, List<int> addCustomFieldLinkIds,
             CancellationToken cancellationToken = default)
         {
             const string sql = @"
@@ -68,9 +68,9 @@ namespace VoiceFirst_Admin.Data.Repositories
 
                 int id = await connection.ExecuteScalarAsync<int>(cmd);
 
-                if (CustomFieldIds != null && CustomFieldIds.Count > 0)
+                if (addCustomFieldLinkIds != null && addCustomFieldLinkIds.Count > 0)
                 {
-                    await InsertCustomFieldLinksAsync(connection, transaction, id, entity.CreatedBy, CustomFieldIds, cancellationToken);
+                    await InsertCustomFieldLinksAsync(connection, transaction, id, entity.CreatedBy, addCustomFieldLinkIds, cancellationToken);
                 }
 
                 transaction.Commit();
@@ -171,11 +171,11 @@ WHERE SysBusinessActivityId = @ActivityId
 
             const string sql = @"
 INSERT INTO SysBusinessActivityUserCustomFieldLink
-    (SysBusinessActivityId, SysUserCustomFieldId, CreatedBy)
+    (SysBusinessActivityId, SysUserCustomFieldDataTypeLinkId, CreatedBy)
 VALUES
-    (@ActivityId, @FieldId, @CreatedBy);";
+    (@ActivityId, @FieldLinkId, @CreatedBy);";
 
-            foreach (var fieldId in addCustomFieldIds.Distinct())
+            foreach (var fieldLinkId in addCustomFieldIds.Distinct())
             {
                 await connection.ExecuteAsync(
                     new CommandDefinition(
@@ -183,7 +183,7 @@ VALUES
                         new
                         {
                             ActivityId = SysBusinessActivityId,
-                            FieldId = fieldId,
+                            FieldLinkId = fieldLinkId,
                             CreatedBy = CreatedBy
                         },
                         transaction: transaction,
@@ -270,8 +270,8 @@ WHERE SysBusinessActivityUserCustomFieldLinkId = @LinkId
                 SELECT 
                     s.SysBusinessActivityUserCustomFieldLinkId,
                     s.SysBusinessActivityId  ,
-                    s.SysUserCustomFieldId  ,
-                    cf.FieldDataType  ,
+                    s.SysUserCustomFieldDataTypeLinkId  ,
+                    dT.FieldDataType  ,
                     cf.FieldName  ,
                     s.IsActive ,
                     s.CreatedAt ,
@@ -286,7 +286,9 @@ WHERE SysBusinessActivityUserCustomFieldLinkId = @LinkId
 
                 FROM dbo.SysBusinessActivityUserCustomFieldLink s
                 INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
-                INNER JOIN dbo.SysUserCustomField cf ON cf.SysUserCustomFieldId = s.SysUserCustomFieldId
+                INNER JOIN dbo.SysUserCustomFieldDataType dT ON dT.SysUserCustomFieldDataTypeId = s.SysUserCustomFieldDataTypeId
+                INNER JOIN dbo.SysUserCustomFieldDataTypeLink cfl ON cfl.SysUserCustomFieldDataTypeLinkId = s.SysUserCustomFieldDataTypeLinkId
+                INNER JOIN dbo.SysUserCustomField cf ON cf.SysUserCustomFieldId = cfl.SysUserCustomFieldId
                 LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
                 WHERE s.SysBusinessActivityId = @ActivityId;
                 ";
