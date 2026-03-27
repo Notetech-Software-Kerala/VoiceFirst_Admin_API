@@ -22,9 +22,9 @@ using VoiceFirst_Admin.Utilities.Security;
 
 namespace VoiceFirst_Admin.Business.Services
 {
-    public class UserService : IUserService
+    public class EmployeeService : IEmployeeService
     {
-        private readonly IUserRepo _repo;
+        private readonly IEmployeeRepository _repo;
         private readonly IUserRoleLinkRepo _userRoleLinkRepo;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _uow;
@@ -34,8 +34,8 @@ namespace VoiceFirst_Admin.Business.Services
         private readonly ISessionService _sessionService;
 
 
-        public UserService(
-            IUserRepo repo,
+        public EmployeeService(
+            IEmployeeRepository repo,
             IUserRoleLinkRepo userRoleLinkRepo,
             IMapper mapper,
             IUnitOfWork uow,
@@ -208,13 +208,13 @@ namespace VoiceFirst_Admin.Business.Services
                     _uow.Transaction,
                     cancellationToken);
 
-                var dtoOut = await _repo.GetByIdAsync
-                    (createdId,
-                     _uow.Connection,
-                    _uow.Transaction,
-                    cancellationToken);
+              
 
                 await _uow.CommitAsync();
+
+                var dtoOut = await _repo.GetByIdAsync
+                  (createdId,
+                  cancellationToken);
 
                 // Send welcome email with temporary password
                 EmailHelper.SendMail(new EmailDTO
@@ -597,10 +597,11 @@ namespace VoiceFirst_Admin.Business.Services
                     ErrorCodes.NoRowAffected);
                 }
 
-                var dtoOut = await _repo.GetByIdAsync(updateUserId,
-                    _uow.Connection, _uow.Transaction, cancellationToken);
+  
 
                 await _uow.CommitAsync();
+                var dtoOut = await _repo.GetByIdAsync(updateUserId,
+                cancellationToken);
 
                 if (dto.Active == false)
                 {
@@ -625,24 +626,19 @@ namespace VoiceFirst_Admin.Business.Services
            GetByIdAsync(int id,
            CancellationToken cancellationToken = default)
         {
-            await _uow.BeginAsync();
 
             var dto = await _repo.GetByIdAsync
                 (id,
-                _uow.Connection,
-                _uow.Transaction,
                 cancellationToken);
-
-            await _uow.CommitAsync();
 
             if (dto == null)
             {
-
                 return ApiResponse<EmployeeDetailDto>.Fail(
                    Messages.EmployeeNotFoundById,
                    StatusCodes.Status404NotFound,
                     ErrorCodes.EmployeeNotFoundById);
             }
+            dto.Roles = await _userRoleLinkRepo.GetRoleLinksByUserIdAsync(id, cancellationToken);
             return ApiResponse<EmployeeDetailDto>.Ok(
                 dto,
                 Messages.EmployeeRetrieved,

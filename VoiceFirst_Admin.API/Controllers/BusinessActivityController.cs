@@ -12,12 +12,12 @@ using VoiceFirst_Admin.Utilities.Models.Common;
 
 [ApiController]
 [Route("api/activity")]
-public class SysBusinessActivityController : ControllerBase
+public class BusinessActivityController : ControllerBase
 {
     private readonly ISysBusinessActivityService _service;
     private readonly IUserContext _userContext;
 
-    public SysBusinessActivityController(ISysBusinessActivityService service, IUserContext userContext)
+    public BusinessActivityController(ISysBusinessActivityService service, IUserContext userContext)
     {
         _service = service;
         _userContext = userContext;
@@ -119,7 +119,6 @@ public class SysBusinessActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<PagedResultDto<SysBusinessActivityDTO>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    [HttpGet]
     [SwaggerResponseDescription(StatusCodes.Status200OK, Description.ACTIVITIES_RETRIEVED, Messages.BusinessActivitiesRetrieved)]
     [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
     [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]

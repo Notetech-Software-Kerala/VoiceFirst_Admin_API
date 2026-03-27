@@ -9,7 +9,7 @@ using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Contracts.IRepositories
 {
-    public interface IUserRepo
+    public interface IEmployeeRepository
     {
 
 
@@ -60,8 +60,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
             CancellationToken cancellationToken = default);
 
         Task<EmployeeDetailDto?> GetByIdAsync
-         (int id, IDbConnection connection,
-           IDbTransaction transaction,
+         (int id,
            CancellationToken cancellationToken = default);
 
 

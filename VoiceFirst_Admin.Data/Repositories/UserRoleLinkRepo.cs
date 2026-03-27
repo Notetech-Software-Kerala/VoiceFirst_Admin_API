@@ -109,31 +109,77 @@ namespace VoiceFirst_Admin.Data.Repositories
         }
 
 
-        public async Task<IEnumerable<UserRoleLinksDto>>
-           GetRoleLinksByUserIdAsync(int userId, IDbConnection connection,
-           IDbTransaction transaction, CancellationToken cancellationToken = default)
-        {
-            const string sql = @"
+        public async Task<List<UserRoleLinksDto>> GetRoleLinksByUserIdAsync(
+             int userId,
+             CancellationToken cancellationToken = default)
+                {
+                    const string sql = @"
             SELECT 
                 l.SysRoleId AS RoleId,
-                a.RoleName AS RoleName,
+                r.RoleName AS RoleName,
                 l.IsActive AS Active,
-              
-                CONCAT(uC.FirstName, ' ', ISNULL(uC.LastName, '')) AS CreatedUser,
-                l.CreatedAt AS CreatedDate,
-                CONCAT(uU.FirstName, ' ', ISNULL(uU.LastName, '')) AS ModifiedUser,
-                l.UpdatedAt AS ModifiedDate
-            FROM UserRoleLink l
-            INNER JOIN SysRoles a ON a.SysRoleId = l.SysRoleId
-            INNER JOIN Users uC ON uC.UserId = l.CreatedBy
-            LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
-            WHERE l.UserId = @UserId ;
-            ";
 
-            return await connection.QueryAsync<UserRoleLinksDto>(
-                new CommandDefinition(sql, new { UserId = userId },
-                transaction, cancellationToken: cancellationToken));
+                LTRIM(RTRIM(CONCAT(uC.FirstName, ' ', uC.LastName))) AS CreatedUser,
+                l.CreatedAt AS CreatedDate,
+
+                LTRIM(RTRIM(CONCAT(uU.FirstName, ' ', uU.LastName))) AS ModifiedUser,
+                l.UpdatedAt AS ModifiedDate
+
+            FROM UserRoleLink l
+            INNER JOIN SysRoles r ON r.SysRoleId = l.SysRoleId
+            LEFT JOIN Users uC ON uC.UserId = l.CreatedBy
+            LEFT JOIN Users uU ON uU.UserId = l.UpdatedBy
+
+            WHERE l.UserId = @UserId
+              AND (l.IsActive = 1 OR l.IsActive IS NULL)
+
+            ORDER BY l.CreatedAt ASC;
+            ";
+                        var connection = _context.CreateConnection();
+                        var result = await connection.QueryAsync<UserRoleLinksDto>(
+                        new CommandDefinition(
+                            sql,
+                            new { UserId = userId },
+                            cancellationToken: cancellationToken));
+
+                    return result.ToList();
         }
+
+
+
+        public async Task<List<string>> GetRoleNamesByUserIdAsync(
+          int userId,
+          CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                const string sql = @"
+                  SELECT 
+
+                r.RoleName AS RoleName
+           
+            FROM UserRoleLink l
+            INNER JOIN SysRoles r ON r.SysRoleId = l.SysRoleId
+            WHERE l.UserId = @UserId
+              AND (l.IsActive = 1 OR l.IsActive IS NULL)
+            ORDER BY r.RoleName ASC;
+            ";
+                var connection = _context.CreateConnection();
+                var result = await connection.QueryAsync<string>(
+                    new CommandDefinition(
+                        sql,
+                        new { UserId = userId },
+                        cancellationToken: cancellationToken));
+
+                return result.ToList();
+            }
+            catch (Exception ex)
+            {
+                throw ;
+            }
+        }
+
+
 
         public async Task<bool> BulkUpdateUserRoleLinksAsync(
            int UserId,
@@ -144,14 +190,14 @@ namespace VoiceFirst_Admin.Data.Repositories
            CancellationToken cancellationToken)
         {
             const string sql = @"
-        UPDATE UserRoleLink
-        SET IsActive   = @IsActive,
-            UpdatedBy = @UpdatedBy,
-            UpdatedAt = SYSDATETIME()
-        WHERE UserId = @UserId
-          AND SysRoleId = @RoleId
-          AND IsActive <> @IsActive;
-        ";
+            UPDATE UserRoleLink
+            SET IsActive   = @IsActive,
+                UpdatedBy = @UpdatedBy,
+                UpdatedAt = SYSDATETIME()
+            WHERE UserId = @UserId
+              AND SysRoleId = @RoleId
+              AND IsActive <> @IsActive;
+            ";
 
             var parameters = dtos.Select(dto => new
             {

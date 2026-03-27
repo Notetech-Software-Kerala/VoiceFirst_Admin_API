@@ -17,7 +17,7 @@ namespace VoiceFirst_Admin.Business.Services;
 public class PasswordService : IPasswordService
 {
     private readonly IAuthRepo _authRepo;
-    private readonly IUserRepo _userRepo;
+    private readonly IEmployeeRepository _userRepo;
     private readonly ISessionService _sessionService;
     private readonly IConnectionMultiplexer _redis;
     private readonly IConfiguration _configuration;
@@ -33,7 +33,7 @@ public class PasswordService : IPasswordService
 
     public PasswordService(
         IAuthRepo authRepo,
-        IUserRepo userRepo,
+        IEmployeeRepository userRepo,
         ISessionService sessionService,
         IConnectionMultiplexer redis,
         IConfiguration configuration)

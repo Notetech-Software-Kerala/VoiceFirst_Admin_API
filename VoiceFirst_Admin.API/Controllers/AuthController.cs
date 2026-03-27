@@ -1,6 +1,8 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using System.Text.Json;
 using VoiceFirst_Admin.API.Security;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
@@ -21,6 +23,72 @@ namespace VoiceFirst_Admin.API.Controllers
         public AuthController(IAuthService authService)
         {
             _authService = authService;
+        }
+        [HttpGet("ask")]
+        public async Task<IActionResult> Ask(string prompt)
+        {
+            try
+            {
+                using var client = new HttpClient
+                {
+                    Timeout = TimeSpan.FromMinutes(5)
+                };
+
+                
+                var requestBody = new
+                {
+                    model = "llama3:8b",
+                    prompt = prompt,
+                    stream = false,
+                    keep_alive = "5m"
+                };
+
+                var content = new StringContent(
+                    JsonSerializer.Serialize(requestBody),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                var response = await client.PostAsync("http://localhost:11434/api/generate", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)response.StatusCode, "Error calling Ollama");
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var doc = JsonDocument.Parse(json);
+
+                var root = doc.RootElement;
+
+                var aiResponse = root.GetProperty("response").GetString();
+                var doneReason = root.GetProperty("done_reason").GetString();
+
+                // 🔁 Retry if model just loaded
+                if (string.IsNullOrEmpty(aiResponse) && doneReason == "load")
+                {
+                    var retryResponse = await client.PostAsync("http://localhost:11434/api/generate", content);
+
+                    var retryJson = await retryResponse.Content.ReadAsStringAsync();
+                    var retryDoc = JsonDocument.Parse(retryJson);
+
+                    aiResponse = retryDoc.RootElement.GetProperty("response").GetString();
+                }
+
+                return Ok(new
+                {
+                    prompt,
+                    response = aiResponse
+                });
+            }
+            catch (TaskCanceledException)
+            {
+                return StatusCode(408, "Request timeout. Ollama may be loading the model.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPost("login")]

@@ -18,14 +18,14 @@ namespace VoiceFirst_Admin.API.Controllers
 {
     [Route("api/program")]
     [ApiController]
-    public class SysProgramController : ControllerBase
+    public class ProgramController : ControllerBase
     {
         private readonly ISysProgramService _service;
         private static readonly int userId = 1;
         private readonly ApplicationSettings _applicationSettings;
 
 
-        public SysProgramController(ISysProgramService service ,
+        public ProgramController(ISysProgramService service ,
             IOptions<ApplicationSettings> applicationSettings)
         {
             _service = service;

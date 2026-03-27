@@ -32,11 +32,14 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
                IDbTransaction transaction,
                CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<UserRoleLinksDto>>
+        Task<List<UserRoleLinksDto>>
        GetRoleLinksByUserIdAsync(
-            int userId, 
-            IDbConnection connection,
-            IDbTransaction transaction, 
+            int userId,
             CancellationToken cancellationToken = default);
+
+        Task<List<string>>
+         GetRoleNamesByUserIdAsync(
+              int userId,
+              CancellationToken cancellationToken = default);
     }
 }

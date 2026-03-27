@@ -17,12 +17,12 @@ using VoiceFirst_Admin.Utilities.Models.Entities;
 
 namespace VoiceFirst_Admin.Data.Repositories
 {
-    public class UserRepo:IUserRepo
+    public class EmployeeRepository:IEmployeeRepository
     {
         private readonly IDapperContext _context;
         private readonly IUserRoleLinkRepo _userRoleLinkRepo;
 
-        public UserRepo(IDapperContext context, IUserRoleLinkRepo userRoleLinkRepo)
+        public EmployeeRepository(IDapperContext context, IUserRoleLinkRepo userRoleLinkRepo)
         {
             _context = context;
             _userRoleLinkRepo = userRoleLinkRepo;
@@ -98,8 +98,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
 
         public async Task<EmployeeDetailDto?> GetByIdAsync
-          (int id, IDbConnection connection, 
-            IDbTransaction transaction, 
+          (int id, 
             CancellationToken cancellationToken = default)
         {
 
@@ -134,12 +133,12 @@ namespace VoiceFirst_Admin.Data.Repositories
         LEFT JOIN Users uD ON uD.UserId = p.DeletedBy
         WHERE p.UserId = @UserId;";
 
-
+            var connection = _context.CreateConnection();
             var dto = await connection.QueryFirstOrDefaultAsync<EmployeeDetailDto>(
-                new CommandDefinition(sql, new { UserId = id }, transaction, cancellationToken: cancellationToken));
+                new CommandDefinition(sql, new { UserId = id }, cancellationToken: cancellationToken));
             if (dto == null) return null;
 
-            var links = await _userRoleLinkRepo.GetRoleLinksByUserIdAsync(id, connection, transaction, cancellationToken);
+            var links = await _userRoleLinkRepo.GetRoleLinksByUserIdAsync(id,cancellationToken);
             dto.Roles = links.ToList();
             return dto;
         }

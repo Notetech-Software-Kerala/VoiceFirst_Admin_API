@@ -61,9 +61,10 @@ builder.Services.AddScoped<ICountryRepo, CountryRepo>();
 builder.Services.AddScoped<IPlanRepo, PlanRepo>();
 builder.Services.AddScoped<IRoleRepo, RoleRepo>();
 builder.Services.AddScoped<IMenuRepo, MenuRepo>();
-builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IAuthRepo, AuthRepo>();
 builder.Services.AddScoped<IUserRoleLinkRepo,UserRoleLinkRepo>();
+builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 
 builder.Services.AddScoped<IPlaceRepo, PlaceRepo>();
 builder.Services.AddScoped<ISysIssueTypeRepo, SysIssueTypeRepo>();
@@ -74,11 +75,12 @@ builder.Services.AddScoped<ISysIssueMediaFormatRepo, SysIssueMediaFormatRepo>();
 builder.Services.AddScoped<ISysIssueMediaRuleRepo, SysIssueMediaRuleRepo>();
 builder.Services.AddScoped<ISysIssueMediaRuleTypeRepo, SysIssueMediaRuleTypeRepo>();
 builder.Services.AddScoped<ISysUserCustomFieldRepo, SysUserCustomFieldRepo>();
+
 // Services
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IProgramActionService, ProgramActionService>();
 builder.Services.AddScoped<ISysBusinessActivityService, SysBusinessActivityService>();
 builder.Services.AddScoped<IPlatformService, PlatformService>();
@@ -95,6 +97,7 @@ builder.Services.AddScoped<ISysIssueMediaFormatService, SysIssueMediaFormatServi
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
 builder.Services.AddScoped<ISysUserCustomFieldService, SysUserCustomFieldService>();
+builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 // AutoMapper
 builder.Services.AddAutoMapper(
     typeof(ProgramActionMappingProfile).Assembly,
