@@ -286,8 +286,9 @@ WHERE SysBusinessActivityUserCustomFieldLinkId = @LinkId
 
                 FROM dbo.SysBusinessActivityUserCustomFieldLink s
                 INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
-                INNER JOIN dbo.SysUserCustomFieldDataType dT ON dT.SysUserCustomFieldDataTypeId = s.SysUserCustomFieldDataTypeId
+                
                 INNER JOIN dbo.SysUserCustomFieldDataTypeLink cfl ON cfl.SysUserCustomFieldDataTypeLinkId = s.SysUserCustomFieldDataTypeLinkId
+                INNER JOIN dbo.SysUserCustomFieldDataType dT ON dT.SysUserCustomFieldDataTypeId = cfl.SysUserCustomFieldDataTypeId
                 INNER JOIN dbo.SysUserCustomField cf ON cf.SysUserCustomFieldId = cfl.SysUserCustomFieldId
                 LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
                 WHERE s.SysBusinessActivityId = @ActivityId;
@@ -327,14 +328,37 @@ WHERE SysBusinessActivityUserCustomFieldLinkId = @LinkId
                 return dto;
             }
         public async Task<SysBusinessActivityUserCustomFieldLink> IsCustomFieldExistByActivityAsync(
-          int activityId,int customFieldId,
+          int activityId,int fieldDataTypeLinkId,
           CancellationToken cancellationToken = default)
         {
             const string sql = @"
-        SELECT *
-        FROM SysBusinessActivityUserCustomFieldLink
-        WHERE SysUserCustomFieldId = @SysUserCustomFieldId
-          AND  SysBusinessActivityId = @ActivityId";
+                SELECT 
+                    s.SysBusinessActivityUserCustomFieldLinkId,
+                    s.SysBusinessActivityId  ,
+                    s.SysUserCustomFieldDataTypeLinkId  ,
+                    dT.FieldDataType  ,
+                    cf.FieldName  ,
+                    s.IsActive ,
+                    s.CreatedAt ,
+                    s.UpdatedAt ,
+
+                    -- Created User
+                    CONCAT(cu.FirstName, ' ', ISNULL(cu.LastName, '')) AS CreatedUserName,
+
+                    -- Updated User
+                    CONCAT(uu.FirstName, ' ', ISNULL(uu.LastName, '')) AS UpdatedUserName
+
+
+                FROM dbo.SysBusinessActivityUserCustomFieldLink s
+                INNER JOIN dbo.Users cu ON cu.UserId = s.CreatedBy
+                
+                INNER JOIN dbo.SysUserCustomFieldDataTypeLink cfl ON cfl.SysUserCustomFieldDataTypeLinkId = s.SysUserCustomFieldDataTypeLinkId
+                INNER JOIN dbo.SysUserCustomFieldDataType dT ON dT.SysUserCustomFieldDataTypeId = cfl.SysUserCustomFieldDataTypeId
+                INNER JOIN dbo.SysUserCustomField cf ON cf.SysUserCustomFieldId = cfl.SysUserCustomFieldId
+                LEFT JOIN dbo.Users uu ON uu.UserId = s.UpdatedBy
+                WHERE s.SysBusinessActivityId = @ActivityId And s.SysUserCustomFieldDataTypeLinkId=@FieldDataTypeLinkId;
+                ";
+
 
             using var connection = _context.CreateConnection();
 
@@ -343,7 +367,7 @@ WHERE SysBusinessActivityUserCustomFieldLinkId = @LinkId
                     sql,
                     new
                     {
-                        SysUserCustomFieldId = customFieldId,
+                        FieldDataTypeLinkId = fieldDataTypeLinkId,
                         ActivityId = activityId
                     },
                     cancellationToken: cancellationToken

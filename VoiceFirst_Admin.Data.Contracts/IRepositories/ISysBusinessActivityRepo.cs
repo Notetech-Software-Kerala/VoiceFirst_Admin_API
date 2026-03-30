@@ -23,7 +23,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
           int activityId,
           CancellationToken cancellationToken = default);
         Task<SysBusinessActivityUserCustomFieldLink> IsCustomFieldExistByActivityAsync(
-          int activityId, int customFieldId,
+          int activityId, int fieldDataTypeLinkId,
           CancellationToken cancellationToken = default);
         Task<SysBusinessActivityUserCustomFieldLink?> GetCustomFieldLinkByIdAsync(
     int customFieldLinkId,

@@ -116,6 +116,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             l.ValueDataType,
             dT.FieldDataType,
             f.FieldName,
+            f.IsActive,
             f.IsDeleted,
             f.CreatedBy,
             f.CreatedAt,
