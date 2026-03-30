@@ -45,7 +45,10 @@ namespace VoiceFirst_Admin.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<object>.Fail(
+                    ex.Message,
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCodes.InternalServerError));
             }
         }
 
@@ -76,7 +79,10 @@ namespace VoiceFirst_Admin.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<object>.Fail(
+                    ex.Message,
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCodes.InternalServerError));
             }
         }
     }

@@ -88,11 +88,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                 sets.Add("Gender = @Gender");
             }
 
-            if (!string.IsNullOrWhiteSpace(entity.Gender))
-            {
-                parameters.Add("Gender", entity.Gender);
-                sets.Add("Gender = @Gender");
-            }
+           
 
             if (!string.IsNullOrWhiteSpace(entity.MobileNo))
             {

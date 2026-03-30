@@ -18,7 +18,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.userId))
 
                 // Nullable → Required safety
-                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Item1.Email ?? string.Empty))
+          
                 .ForMember(dest => dest.MobileNo, opt => opt.MapFrom(src => src.Item1.MobileNo ?? string.Empty))
 
                 // Different property name
@@ -30,9 +30,10 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                         ? (short?)null
                         : Convert.ToInt16(src.Item1.BirthYear)
                 ))
- 
+
 
                 // Ignore properties not coming from DTO
+                .ForMember(dest => dest.Email, opt => opt.Ignore())
                 .ForMember(dest => dest.HashKey, opt => opt.Ignore())
                 .ForMember(dest => dest.SaltKey, opt => opt.Ignore())
                 .ForMember(dest => dest.LinkedinId, opt => opt.Ignore())
