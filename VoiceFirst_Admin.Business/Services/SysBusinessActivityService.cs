@@ -60,11 +60,11 @@ namespace VoiceFirst_Admin.Business.Services
                       }
                  );
             }
-            if(dto.addCustomFieldIds!=null && dto.addCustomFieldIds.Count() > 0)
+            if(dto.addCustomFieldLinkIds != null && dto.addCustomFieldLinkIds.Count() > 0)
             {
-                foreach (var item in dto.addCustomFieldIds)
+                foreach (var item in dto.addCustomFieldLinkIds)
                 {
-                    var customfield = await _sysUserCustomFieldRepo.GetByIdAsync(item, cancellationToken);
+                    var customfield = await _sysUserCustomFieldRepo.GetByLinkIdAsync(item, cancellationToken);
                     if (customfield == null)
                     {
                         return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
@@ -90,7 +90,7 @@ namespace VoiceFirst_Admin.Business.Services
             entity.CreatedBy = loginId;
 
             entity.SysBusinessActivityId =
-                await _repo.CreateAsync(entity, dto.addCustomFieldIds, cancellationToken);
+                await _repo.CreateAsync(entity, dto.addCustomFieldLinkIds, cancellationToken);
 
             if(entity.SysBusinessActivityId <= 0)
             {
@@ -130,11 +130,11 @@ namespace VoiceFirst_Admin.Business.Services
             if (customFields != null)
             {
                 var customFieldDtos = _mapper.Map<IEnumerable<BusinessActivityUserCustomFieldDto>>(customFields);
-                dtoDetails.activityCustomFields = customFieldDtos.ToList();
+                dtoDetails.activityCustomFieldLinks = customFieldDtos.ToList();
             }
             else
             {
-                dtoDetails.activityCustomFields = new List<BusinessActivityUserCustomFieldDto>();
+                dtoDetails.activityCustomFieldLinks = new List<BusinessActivityUserCustomFieldDto>();
             }
             if (customFields == null)
             {

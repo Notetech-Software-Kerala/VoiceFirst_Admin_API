@@ -19,6 +19,6 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysBusinessActivity
     {
         
 
-        public List<BusinessActivityUserCustomFieldDto>? activityCustomFields { get; set; }
+        public List<BusinessActivityUserCustomFieldDto>? activityCustomFieldLinks { get; set; }
     }
 }

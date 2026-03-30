@@ -106,6 +106,38 @@ namespace VoiceFirst_Admin.Data.Repositories
             var field = await conn.QueryFirstOrDefaultAsync<SysUserCustomField>(new CommandDefinition(sqlField, new { Id = id }, cancellationToken: cancellationToken));
             return field;
         }
+        public async Task<SysUserCustomFieldDataTypeLink> GetByLinkIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+             const string sqlField = @"
+        SELECT 
+            l.SysUserCustomFieldDataTypeLinkId,
+            l.SysUserCustomFieldId,
+            l.SysUserCustomFieldDataTypeId,
+            l.ValueDataType,
+            dT.FieldDataType,
+            f.FieldName,
+            f.IsActive,
+            f.IsDeleted,
+            f.CreatedBy,
+            f.CreatedAt,
+            f.UpdatedBy,
+            f.UpdatedAt,
+            f.DeletedBy,
+            f.DeletedAt,
+            CONCAT(uC.FirstName, ' ', uC.LastName) AS CreatedUserName,
+            CONCAT(uU.FirstName, ' ', uU.LastName) AS UpdatedUserName,
+            CONCAT(uD.FirstName, ' ', uD.LastName) AS DeletedUserName
+        FROM SysUserCustomFieldDataTypeLink l
+        INNER JOIN SysUserCustomField f ON f.SysUserCustomFieldId = l.SysUserCustomFieldId
+        INNER JOIN SysUserCustomFieldDataType dT ON dT.SysUserCustomFieldDataTypeId = l.SysUserCustomFieldDataTypeId
+        INNER JOIN Users uC ON uC.UserId = f.CreatedBy
+        LEFT JOIN Users uU ON uU.UserId = f.UpdatedBy
+        LEFT JOIN Users uD ON uD.UserId = f.DeletedBy
+        WHERE f.SysUserCustomFieldId = @Id;";
+            using var conn = _context.CreateConnection();
+            var field = await conn.QueryFirstOrDefaultAsync<SysUserCustomFieldDataTypeLink>(new CommandDefinition(sqlField, new { Id = id }, cancellationToken: cancellationToken));
+            return field;
+        }
         public async Task<SysUserCustomField> ExistsByFieldKeyAsync(string fieldKey, int? excludeId = null, CancellationToken cancellationToken = default)
         {
             const string sqlField = @"SELECT SysUserCustomFieldId, FieldName, FieldKey, IsActive, IsDeleted, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt
@@ -232,7 +264,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                     {
                         sets.Add("UpdatedBy = @UpdatedBy");
                         sets.Add("UpdatedAt = SYSDATETIME()");
-                        parameters.Add("UpdatedBy", entity.UpdatedBy);
+                        parameters.Add("UpdatedBy", updatedBy);
                         parameters.Add("SysUserCustomFieldId", entity.SysUserCustomFieldId);
                         var sql = new StringBuilder();
                         sql.Append("UPDATE SysUserCustomField SET ");
@@ -245,14 +277,14 @@ namespace VoiceFirst_Admin.Data.Repositories
 
                 }
 
-                if (addCustomFieldDataTypes.Count() > 0 && addCustomFieldDataTypes != null)
+                if (addCustomFieldDataTypes != null && addCustomFieldDataTypes.Count() > 0 )
                 {
                     await InsertSysUserCustomFieldDataTypesAsync(
                         connection,
                         tx,
                         entity.SysUserCustomFieldId,
                         addCustomFieldDataTypes,
-                        entity.UpdatedBy??0,
+                        updatedBy,
                         cancellationToken);
 
 
@@ -290,6 +322,33 @@ namespace VoiceFirst_Admin.Data.Repositories
             {
                 const string sql = @"UPDATE SysUserCustomField
                                  SET IsDeleted = 1, DeletedBy = @DeletedBy, DeletedAt = SYSDATETIME()
+                                 WHERE SysUserCustomFieldId = @Id;";
+
+                var rows = await connection.ExecuteAsync(new CommandDefinition(sql, new { Id = id, DeletedBy = deletedBy }, transaction: tx, cancellationToken: cancellationToken));
+
+                const string delV = "UPDATE SysUserCustomFieldDataTypeLink SET IsActive = 0 WHERE SysUserCustomFieldId = @Id;";
+                
+                await connection.ExecuteAsync(new CommandDefinition(delV, new { Id = id }, transaction: tx, cancellationToken: cancellationToken));
+                //await connection.ExecuteAsync(new CommandDefinition(delO, new { Id = id }, transaction: tx, cancellationToken: cancellationToken));
+
+                tx.Commit();
+                return rows > 0;
+            }
+            catch
+            {
+                try { tx.Rollback(); } catch { }
+                throw;
+            }
+        }
+        public async Task<bool> RestoreAsync(int id, int deletedBy, CancellationToken cancellationToken = default)
+        {
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var tx = connection.BeginTransaction();
+            try
+            {
+                const string sql = @"UPDATE SysUserCustomField
+                                 SET IsDeleted = 0, DeletedBy = null, DeletedAt = null
                                  WHERE SysUserCustomFieldId = @Id;";
 
                 var rows = await connection.ExecuteAsync(new CommandDefinition(sql, new { Id = id, DeletedBy = deletedBy }, transaction: tx, cancellationToken: cancellationToken));

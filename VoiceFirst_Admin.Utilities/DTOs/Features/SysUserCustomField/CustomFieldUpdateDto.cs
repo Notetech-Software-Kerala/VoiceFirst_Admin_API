@@ -19,7 +19,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
     {
         public int CustomFieldLinkId { get; set; }
         //public int FieldDataTypeId { get; set; }
-        public string ValueDataType { get; set; }
+        public string? ValueDataType { get; set; }
         public bool? Active { get; set; }
         public IEnumerable<CreateCustomFieldValidationsDto>? AddValidations { get; set; }
         public IEnumerable<CreateCustomFieldOptionsDto>? AddOptions { get; set; }
