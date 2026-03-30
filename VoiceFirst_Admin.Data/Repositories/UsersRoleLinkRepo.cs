@@ -9,11 +9,11 @@ using VoiceFirst_Admin.Utilities.DTOs.Features.UserRoleLink;
 
 namespace VoiceFirst_Admin.Data.Repositories
 {
-    public class UserRoleLinkRepo: IUserRoleLinkRepo
+    public class UsersRoleLinkRepo: IUserRoleLinkRepo
     {
         private readonly IDapperContext _context;
 
-        public UserRoleLinkRepo(IDapperContext context)
+        public UsersRoleLinkRepo(IDapperContext context)
         {
             _context = context;
         }

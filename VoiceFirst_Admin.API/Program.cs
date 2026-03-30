@@ -63,8 +63,8 @@ builder.Services.AddScoped<IRoleRepo, RoleRepo>();
 builder.Services.AddScoped<IMenuRepo, MenuRepo>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IAuthRepo, AuthRepo>();
-builder.Services.AddScoped<IUserRoleLinkRepo,UserRoleLinkRepo>();
-builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+builder.Services.AddScoped<IUserRoleLinkRepo,UsersRoleLinkRepo>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<IPlaceRepo, PlaceRepo>();
 builder.Services.AddScoped<ISysIssueTypeRepo, SysIssueTypeRepo>();
@@ -97,7 +97,7 @@ builder.Services.AddScoped<ISysIssueMediaFormatService, SysIssueMediaFormatServi
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
 builder.Services.AddScoped<ISysUserCustomFieldService, SysUserCustomFieldService>();
-builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+builder.Services.AddScoped<IUserService, UserService>();
 // AutoMapper
 builder.Services.AddAutoMapper(
     typeof(ProgramActionMappingProfile).Assembly,
