@@ -1,21 +1,13 @@
 ﻿using Dapper;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Text;
-using System.Transactions;
 using VoiceFirst_Admin.Data.Contracts.IContext;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
 using VoiceFirst_Admin.Utilities.DTOs.Features.User;
-using VoiceFirst_Admin.Utilities.DTOs.Features.Users;
 using VoiceFirst_Admin.Utilities.Models.Entities;
-using static Dapper.SqlMapper;
 
 namespace VoiceFirst_Admin.Data.Repositories
 {
-    public class UserRepository: IUserRepository
+    public class UserRepository : IUserRepository
     {
-        
         private readonly IDapperContext _dapperContext;
 
         public UserRepository(IDapperContext dapperContext)
@@ -23,42 +15,36 @@ namespace VoiceFirst_Admin.Data.Repositories
             _dapperContext = dapperContext;
         }
 
-
-        public async Task<UserProfileDto?> GetProfileAsync
-          (int userId, 
+        public async Task<UserProfileDto?> GetProfileAsync(
+            int userId,
             CancellationToken cancellationToken = default)
         {
-
-
             const string sql = @"
-            SELECT 
-                P.FirstName,
-                P.LastName,
-                P.BirthYear,
-                P.Gender,
-                P.Email,
-                C.CountryId AS DialCodeId,
-                ISNULL(c.CountryDialCode ,'') AS DialCode,
-                P.MobileNo,
-                P.BirthYear
-            FROM Users p
-            LEFT JOIN Country c ON c.CountryId = p.MobileCountryId     
-            WHERE p.UserId = @UserId;";
-            var connection = _dapperContext.CreateConnection(); 
+                SELECT 
+                    P.FirstName,
+                    P.LastName,
+                    P.Gender,
+                    P.Email,
+                    C.CountryId AS DialCodeId,
+                    ISNULL(c.CountryDialCode ,'') AS DialCode,
+                    P.MobileNo,
+                    P.BirthYear
+                FROM Users p
+                LEFT JOIN Country c ON c.CountryId = p.MobileCountryId     
+                WHERE p.UserId = @UserId;";
+
+            using var connection = _dapperContext.CreateConnection();
 
             var dto = await connection.QueryFirstOrDefaultAsync<UserProfileDto>(
                 new CommandDefinition(sql, new { UserId = userId }, cancellationToken: cancellationToken));
+
             return dto;
         }
 
-
-
-        public async Task<bool> UpdateProfileAsync
-        (
-         Users entity,
-         CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateProfileAsync(
+            Users entity,
+            CancellationToken cancellationToken = default)
         {
-
             var sets = new List<string>();
             var parameters = new DynamicParameters();
 
@@ -67,6 +53,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             // -------------------------
             parameters.Add("UserId", entity.UserId);
             parameters.Add("UpdatedBy", entity.UserId);
+
             // -------------------------
             // OPTIONAL PARAMETERS (ONLY WHEN VALID)
             // -------------------------
@@ -88,29 +75,23 @@ namespace VoiceFirst_Admin.Data.Repositories
                 sets.Add("Gender = @Gender");
             }
 
-           
-
             if (!string.IsNullOrWhiteSpace(entity.MobileNo))
             {
                 parameters.Add("MobileNo", entity.MobileNo);
                 sets.Add("MobileNo = @MobileNo");
             }
 
-
             if (entity.MobileCountryId > 0)
             {
                 parameters.Add("MobileCountryId", entity.MobileCountryId);
                 sets.Add("MobileCountryId = @MobileCountryId");
             }
-      
 
             if (entity.BirthYear > 0)
             {
                 parameters.Add("BirthYear", entity.BirthYear);
                 sets.Add("BirthYear = @BirthYear");
             }
-
-        
 
             // Nothing to update
             if (sets.Count == 0)
@@ -119,7 +100,6 @@ namespace VoiceFirst_Admin.Data.Repositories
             // -------------------------
             // AUDIT FIELDS
             // -------------------------
-      
             sets.Add("UpdatedBy = @UpdatedBy");
             sets.Add("UpdatedAt = SYSDATETIME()");
 
@@ -130,23 +110,17 @@ namespace VoiceFirst_Admin.Data.Repositories
                 UPDATE Users
                 SET {string.Join(", ", sets)}
                 WHERE UserId = @UserId
-                  AND IsDeleted = 0 AND IsActive = 1;
-                ";
+                  AND IsDeleted = 0 AND IsActive = 1;";
 
-            var connection = _dapperContext.CreateConnection();
+            using var connection = _dapperContext.CreateConnection();
+
             var affected = await connection.ExecuteAsync(
                 new CommandDefinition(
                     sql,
                     parameters,
-                    cancellationToken: cancellationToken
-                ));
+                    cancellationToken: cancellationToken));
 
             return affected > 0;
         }
-
-
-
-
-
     }
 }

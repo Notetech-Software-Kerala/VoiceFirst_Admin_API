@@ -35,6 +35,14 @@ namespace VoiceFirst_Admin.Utilities.Middlewares
 
                 switch (ex)
                 {
+                    case UnauthorizedAccessException:
+                        statusCode = StatusCodes.Status401Unauthorized;
+                        response = ApiResponse<object>.Fail(
+                            "Unauthorized.",
+                            statusCode,
+                            "UNAUTHORIZED");
+                        break;
+
                     case BusinessNotFoundException notFound:
                         statusCode = StatusCodes.Status404NotFound;
                         response = ApiResponse<object>.Fail(

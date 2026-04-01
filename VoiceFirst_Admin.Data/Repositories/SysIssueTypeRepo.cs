@@ -132,7 +132,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                     WHERE t.IssueMediaRuleId IN @RuleIds ;";
 
                 var types = (await connection.QueryAsync<IssueMediaRuleTypeDTO>(new CommandDefinition(typesSql, new { RuleIds = ruleIds }, cancellationToken: cancellationToken))).ToList();
-
+                 
                 // group types into their rules
                 foreach (var rule in rules)
                 {

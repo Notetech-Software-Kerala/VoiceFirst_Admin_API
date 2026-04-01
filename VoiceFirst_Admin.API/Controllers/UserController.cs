@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Utilities.Constants;
+using VoiceFirst_Admin.Utilities.Constants.Swagger;
 using VoiceFirst_Admin.Utilities.DTOs.Features.User;
 using VoiceFirst_Admin.Utilities.Models.Common;
 
@@ -10,80 +11,62 @@ namespace VoiceFirst_Admin.API.Controllers
 {
     [Route("api/users")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
-        private readonly IUserService _userProfileService;
+        private readonly IUserService _userService;
+        private readonly IUserContext _userContext;
 
-        public UserController(IUserService userProfileService)
+        public UserController(IUserService userService, IUserContext userContext)
         {
-            _userProfileService = userProfileService;
+            _userService = userService;
+            _userContext = userContext;
         }
 
-
-        [HttpGet]
-        [Route("me")]
-        [Authorize]
+        [HttpGet("me")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(StatusCodes.Status200OK, Description.USER_PROFILE_RETRIEVED, Messages.UserProfile)]
+        [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.UserNotFound)]
+        [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
         public async Task<IActionResult> GetProfileAsync(CancellationToken cancellationToken)
         {
-            try
-            {
-                var userIdClaim = User.FindFirst("sub")?.Value;
-
-
-                if (string.IsNullOrWhiteSpace(userIdClaim)
-                   )
-                {
-                    return Unauthorized(ApiResponse<object>.Fail(
-                        Messages.Unauthorized,
-                        StatusCodes.Status401Unauthorized,
-                        ErrorCodes.Unauthorized));
-                }
-
-                var userId = int.Parse(userIdClaim);
-                var profileResponse = await _userProfileService.GetProfileAsync(userId, cancellationToken);
-                return Ok(profileResponse);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<object>.Fail(
-                    ex.Message,
-                    StatusCodes.Status500InternalServerError,
-                    ErrorCodes.InternalServerError));
-            }
+            var result = await _userService.GetProfileAsync(_userContext.UserId, cancellationToken);
+            return StatusCode(result.StatusCode, result);
         }
 
-
-
-        [HttpPatch]
-        [Route("me")]
-        [Authorize]
-        public async Task<IActionResult> UpdateProfileAsync([FromBody] UserProfileUpdateDto userProfileUpdateDto, CancellationToken cancellationToken)
+        [HttpPatch("me")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        [SwaggerResponseDescription(StatusCodes.Status200OK, Description.USER_PROFILE_UPDATED, Messages.UserProfileUpdated)]
+        [SwaggerResponseDescription(StatusCodes.Status400BadRequest, Description.BADREQUEST_400, Messages.PayloadRequired)]
+        [SwaggerResponseDescription(StatusCodes.Status401Unauthorized, Description.UNAUTHORIZED_401, Messages.Unauthorized)]
+        [SwaggerResponseDescription(StatusCodes.Status404NotFound, Description.NOTFOUND_404, Messages.UserNotFound)]
+        [SwaggerResponseDescription(StatusCodes.Status500InternalServerError, Description.SERVERERROR_500, Messages.InternalServerError)]
+        public async Task<IActionResult> UpdateProfileAsync(
+            [FromBody] UserProfileUpdateDto userProfileUpdateDto,
+            CancellationToken cancellationToken)
         {
-            try
+            if (userProfileUpdateDto == null)
             {
-                var userIdClaim = User.FindFirst("sub")?.Value;
-
-
-                if (string.IsNullOrWhiteSpace(userIdClaim)
-                   )
-                {
-                    return Unauthorized(ApiResponse<object>.Fail(
-                        Messages.Unauthorized,
-                        StatusCodes.Status401Unauthorized,
-                        ErrorCodes.Unauthorized));
-                }
-
-                var userId = int.Parse(userIdClaim);
-                var profileResponse = await _userProfileService.UpdateProfileAsync(userId, userProfileUpdateDto, cancellationToken);
-                return Ok(profileResponse);
+                return BadRequest(ApiResponse<object>.Fail(
+                    Messages.PayloadRequired,
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.Payload));
             }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<object>.Fail(
-                    ex.Message,
-                    StatusCodes.Status500InternalServerError,
-                    ErrorCodes.InternalServerError));
-            }
+
+            var result = await _userService.UpdateProfileAsync(
+                _userContext.UserId, userProfileUpdateDto, cancellationToken);
+
+            return StatusCode(result.StatusCode, result);
         }
     }
 }

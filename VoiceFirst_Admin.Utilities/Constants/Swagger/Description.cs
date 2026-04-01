@@ -114,5 +114,8 @@ namespace VoiceFirst_Admin.Utilities.Constants.Swagger
         // Success / operation (application version)
         public const string APPLICATION_VERSION_CREATED = "Creates a new application version.";
 
+        // Success / operation (user profile)
+        public const string USER_PROFILE_RETRIEVED = "Returns the authenticated user's profile.";
+        public const string USER_PROFILE_UPDATED = "Updates the authenticated user's profile.";
     }
 }

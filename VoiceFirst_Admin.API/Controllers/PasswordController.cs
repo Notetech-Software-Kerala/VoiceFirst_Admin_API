@@ -12,10 +12,12 @@ namespace VoiceFirst_Admin.API.Controllers;
 public class PasswordController : ControllerBase
 {
     private readonly IPasswordService _passwordService;
+    private readonly IUserContext _userContext;
 
-    public PasswordController(IPasswordService passwordService)
+    public PasswordController(IPasswordService passwordService, IUserContext userContext)
     {
         _passwordService = passwordService;
+        _userContext = userContext;
     }
 
     [HttpPost("forgot")]
@@ -93,23 +95,8 @@ public class PasswordController : ControllerBase
                 ErrorCodes.Payload));
         }
 
-        var userIdClaim = User.FindFirst("sub")?.Value;
-        var sessionIdClaim = User.FindFirst("sessionId")?.Value;
-
-        if (string.IsNullOrWhiteSpace(userIdClaim)
-            || string.IsNullOrWhiteSpace(sessionIdClaim))
-        {
-            return Unauthorized(ApiResponse<object>.Fail(
-                Messages.Unauthorized,
-                StatusCodes.Status401Unauthorized,
-                ErrorCodes.Unauthorized));
-        }
-
-        var userId = int.Parse(userIdClaim);
-        var sessionId = int.Parse(sessionIdClaim);
-
         var response = await _passwordService.ChangePasswordAsync(
-            userId, sessionId, request, cancellationToken);
+            _userContext.UserId, _userContext.SessionId, request, cancellationToken);
 
         return StatusCode(response.StatusCode, response);
     }

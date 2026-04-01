@@ -19,10 +19,12 @@ namespace VoiceFirst_Admin.API.Controllers
         private const string RefreshTokenCookieName = "refreshToken";
 
         private readonly IAuthService _authService;
+        private readonly IUserContext _userContext;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IUserContext userContext)
         {
             _authService = authService;
+            _userContext = userContext;
         }
 
 
@@ -177,23 +179,8 @@ namespace VoiceFirst_Admin.API.Controllers
         public async Task<IActionResult> Logout(
             CancellationToken cancellationToken)
         {
-            var userIdClaim = User.FindFirst("sub")?.Value;
-            var sessionIdClaim = User.FindFirst("sessionId")?.Value;
-
-            if (string.IsNullOrWhiteSpace(userIdClaim)
-                || string.IsNullOrWhiteSpace(sessionIdClaim))
-            {
-                return Unauthorized(ApiResponse<object>.Fail(
-                    Messages.Unauthorized,
-                    StatusCodes.Status401Unauthorized,
-                    ErrorCodes.Unauthorized));
-            }
-
-            var userId = int.Parse(userIdClaim);
-            var sessionId = int.Parse(sessionIdClaim);
-
             var response = await _authService.LogoutAsync(
-                userId, sessionId, cancellationToken);
+                _userContext.UserId, _userContext.SessionId, cancellationToken);
 
             ClearRefreshTokenCookie();
 
