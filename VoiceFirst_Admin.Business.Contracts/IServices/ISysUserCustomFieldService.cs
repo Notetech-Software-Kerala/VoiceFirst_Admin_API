@@ -12,7 +12,7 @@ namespace VoiceFirst_Admin.Business.Contracts.IServices
         Task<ApiResponse<CustomFieldDetailDto>> CreateAsync(CustomFieldCreateDto dto, int loginId, CancellationToken cancellationToken = default);
         Task<CustomFieldDetailDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<CustomFieldLookUpDto>?> GetLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default);
-        Task<PagedResultDto<RuleLookUpDto>?> GetRuleLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<RuleLookUpDto>?> GetRuleLookUpAsync(ValidationRuleFilterDto filter, CancellationToken cancellationToken = default);
         Task<List<DataTypeLookUpDto>> GetDataTypeLookUpAsync( CancellationToken cancellationToken = default);
         Task<PagedResultDto<CustomFieldDto>> GetAllAsync(CustomFieldFilterDto filter, CancellationToken cancellationToken = default);
         Task<ApiResponse<CustomFieldDetailDto>> UpdateAsync(CustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default);

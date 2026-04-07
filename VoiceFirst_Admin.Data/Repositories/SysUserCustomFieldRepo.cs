@@ -183,7 +183,7 @@ namespace VoiceFirst_Admin.Data.Repositories
             var rule = await conn.QueryFirstOrDefaultAsync<SysUserCustomFieldValidationsRule>(new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken));
             return rule;
         }
-        public async Task<PagedResultDto<SysUserCustomFieldValidationsRule>> ValidationRuleLookupAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<SysUserCustomFieldValidationsRule>> ValidationRuleLookupAsync(ValidationRuleFilterDto filter, CancellationToken cancellationToken = default)
         {
             var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
             var limit = filter.Limit <= 0 ? 10 : filter.Limit;
@@ -192,10 +192,12 @@ namespace VoiceFirst_Admin.Data.Repositories
             var parameters = new DynamicParameters();
             parameters.Add("Offset", offset);
             parameters.Add("Limit", limit);
+            parameters.Add("FieldDataTypeId", filter.FieldDataTypeId);
 
             var baseSql = new StringBuilder(@"
-                FROM SysUserCustomFieldValidationsRule 
-                WHERE 1=1");
+                FROM SysUserFieldDataTypeRuleLink l 
+                INNER JOIN SysUserCustomFieldValidationsRule r ON r.SysUserCustomFieldValidationRuleId = l.SysUserCustomFieldValidationRuleId
+                WHERE l.SysUserCustomFieldDataTypeId = @FieldDataTypeId");
 
 
 
@@ -203,7 +205,7 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             if (!string.IsNullOrWhiteSpace(filter.SearchText))
             {
-                baseSql.Append(@" AND RuleName LIKE @Search ");
+                baseSql.Append(@" AND r.RuleName LIKE @Search ");
 
                 parameters.Add("Search", $"%{filter.SearchText}%");
             }
@@ -215,9 +217,9 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             var countSql = "SELECT COUNT(1) " + baseSql;
             var itemsSql = $@"
-                SELECT * 
+                SELECT r.SysUserCustomFieldValidationRuleId, r.RuleName
                 {baseSql}
-                ORDER BY SysUserCustomFieldValidationRuleId
+                ORDER BY l.SysUserCustomFieldValidationRuleId
                 OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;";
 
             using var connection = _context.CreateConnection();

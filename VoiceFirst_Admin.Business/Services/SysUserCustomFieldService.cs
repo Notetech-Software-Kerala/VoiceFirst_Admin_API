@@ -482,8 +482,9 @@ namespace VoiceFirst_Admin.Business.Services
                 PageSize = filter.Limit
             };
         }
-        public async Task<PagedResultDto<RuleLookUpDto>?> GetRuleLookUpAsync(BasicFilterDto filter, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<RuleLookUpDto>?> GetRuleLookUpAsync(ValidationRuleFilterDto filter, CancellationToken cancellationToken = default)
         {
+            
             var entities = await _repo.ValidationRuleLookupAsync(filter, cancellationToken);
             var list = _mapper.Map<IEnumerable<RuleLookUpDto>>(entities.Items);
             // load actions for each? skip for performance

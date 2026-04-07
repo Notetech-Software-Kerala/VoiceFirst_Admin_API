@@ -78,7 +78,7 @@ public class CustomFieldController : ControllerBase
         return Ok(ApiResponse<object>.Ok(items, Messages.CustomFieldRetrieved));
     }
     [HttpGet("lookup/validation-rule")]
-    public async Task<IActionResult> GetRuleLookUp([FromQuery] BasicFilterDto filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetRuleLookUp([FromQuery] ValidationRuleFilterDto filter, CancellationToken cancellationToken)
     {
         var items = await _service.GetRuleLookUpAsync(filter, cancellationToken);
         return Ok(ApiResponse<object>.Ok(items, Messages.CustomFieldRetrieved));
