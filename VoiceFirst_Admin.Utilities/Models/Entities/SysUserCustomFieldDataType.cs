@@ -8,5 +8,6 @@ namespace VoiceFirst_Admin.Utilities.Models.Entities
     {
         public int SysUserCustomFieldDataTypeId { get; set; }
         public string FieldDataType { get; set; }
+        public bool? HasOptions { get; set; }
     }
 }

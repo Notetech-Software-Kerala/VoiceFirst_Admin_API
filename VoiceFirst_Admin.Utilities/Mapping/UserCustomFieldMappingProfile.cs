@@ -51,6 +51,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
         .ForMember(d => d.RuleName, o => o.MapFrom(s => s.RuleName));
             CreateMap<SysUserCustomFieldDataType, DataTypeLookUpDto>()
         .ForMember(d => d.FieldDataTypeId, o => o.MapFrom(s => s.SysUserCustomFieldDataTypeId))
+        .ForMember(d => d.IncludesOptions, o => o.MapFrom(s => s.HasOptions))
         .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType));
 
             CreateMap<CustomFieldUpdateDto, SysUserCustomField>()
