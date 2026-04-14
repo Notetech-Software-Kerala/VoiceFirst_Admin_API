@@ -157,7 +157,7 @@ namespace VoiceFirst_Admin.Data.Repositories
         public async Task<SysUserCustomFieldDataTypeLink> ExistsByFieldIdAndDataTypeIdIdAsync(int customerFieldId, int fieldDataTypeId, CancellationToken cancellationToken = default)
         {
             const string sqlField = @"SELECT *
-                                       FROM SysUserCustomFieldDataTypeLink WHERE SysUserCustomFieldId = @SysUserCustomFieldId,SysUserCustomFieldDataTypeId=@FieldDataTypeId ";
+                                       FROM SysUserCustomFieldDataTypeLink WHERE SysUserCustomFieldId = @SysUserCustomFieldId And SysUserCustomFieldDataTypeId=@FieldDataTypeId ";
             using var conn = _context.CreateConnection();
             var field = await conn.QueryFirstOrDefaultAsync<SysUserCustomFieldDataTypeLink>(new CommandDefinition(sqlField, new { SysUserCustomFieldId = customerFieldId, FieldDataTypeId = fieldDataTypeId }, cancellationToken: cancellationToken));
             return field;

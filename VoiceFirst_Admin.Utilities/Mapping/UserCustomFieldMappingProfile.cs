@@ -44,20 +44,20 @@ namespace VoiceFirst_Admin.Utilities.Mapping
 
 
             CreateMap<CustomFieldCreateDto, SysUserCustomField>()
-        .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
-        .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey));
+                .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
+                .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey));
             CreateMap<SysUserCustomFieldValidationsRule, RuleLookUpDto>()
-        .ForMember(d => d.RuleId, o => o.MapFrom(s => s.SysUserCustomFieldValidationRuleId))
-        .ForMember(d => d.RuleName, o => o.MapFrom(s => s.RuleName));
+                .ForMember(d => d.RuleId, o => o.MapFrom(s => s.SysUserCustomFieldValidationRuleId))
+                .ForMember(d => d.RuleName, o => o.MapFrom(s => s.RuleName));
             CreateMap<SysUserCustomFieldDataType, DataTypeLookUpDto>()
-        .ForMember(d => d.FieldDataTypeId, o => o.MapFrom(s => s.SysUserCustomFieldDataTypeId))
-        .ForMember(d => d.IncludesOptions, o => o.MapFrom(s => s.HasOptions))
-        .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType));
+                .ForMember(d => d.FieldDataTypeId, o => o.MapFrom(s => s.SysUserCustomFieldDataTypeId))
+                .ForMember(d => d.IncludesOptions, o => o.MapFrom(s => s.HasOptions))
+                .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType));
 
             CreateMap<CustomFieldUpdateDto, SysUserCustomField>()
-        .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
-        .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey))
-        .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Active));
+                .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
+                .ForMember(d => d.FieldKey, o => o.MapFrom(s => s.FieldKey))
+                .ForMember(d => d.IsActive, o => o.MapFrom(s => s.Active));
 
             CreateMap<CreateCustomFieldOptionsDto, SysUserCustomFieldOptions>()
                 .ForMember(d => d.label, o => o.MapFrom(s => s.label))
