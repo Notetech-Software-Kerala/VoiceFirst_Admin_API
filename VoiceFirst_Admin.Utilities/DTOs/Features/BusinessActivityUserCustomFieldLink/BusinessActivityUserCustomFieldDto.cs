@@ -8,8 +8,8 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.BusinessActivityUserCustomFie
     public class BusinessActivityUserCustomFieldDto : PartialCommonDto
     {
         public int ActivityCustomFieldLinkId { get; set; }
+        public int CustomFieldLinkId { get; set; }
         public int ActivityId { get; set; }
-        public int CustomFieldId { get; set; }
         public string? FieldDataType { get; set; }
         public string? FieldName { get; set; }
     }

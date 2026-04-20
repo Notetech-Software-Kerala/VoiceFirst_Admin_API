@@ -248,9 +248,9 @@ namespace VoiceFirst_Admin.Business.Services
                      );
                 }
             }
-            if (dto.addCustomFieldIds != null && dto.addCustomFieldIds.Count() > 0)
+            if (dto.addCustomFieldLinkIds != null && dto.addCustomFieldLinkIds.Count() > 0)
             {
-                foreach (var item in dto.addCustomFieldIds)
+                foreach (var item in dto.addCustomFieldLinkIds)
                 {
                     var customfield = await _sysUserCustomFieldRepo.GetByIdAsync(item, cancellationToken);
                     if (customfield == null)
@@ -280,9 +280,9 @@ namespace VoiceFirst_Admin.Business.Services
                     }
                 }
             }
-            if (dto.updateCustomField != null && dto.updateCustomField.Count() > 0)
+            if (dto.updateCustomFieldLinks != null && dto.updateCustomFieldLinks.Count() > 0)
             {
-                foreach (var item in dto.updateCustomField)
+                foreach (var item in dto.updateCustomFieldLinks)
                 {
                     var customfield = await _repo.GetCustomFieldLinkByIdAsync(item.ActivityCustomFieldLinkId, sysBusinessActivityId, cancellationToken);
                     if (customfield == null)
@@ -302,8 +302,8 @@ namespace VoiceFirst_Admin.Business.Services
             }
 
             var entity = _mapper.Map<SysBusinessActivity>((dto,sysBusinessActivityId,loginId));
-            var updateCustomField = _mapper.Map<List<SysBusinessActivityUserCustomFieldLink>>(dto.updateCustomField);
-            var updated = await _repo.UpdateAsync(entity, dto.addCustomFieldIds, updateCustomField, cancellationToken);
+            var updateCustomField = _mapper.Map<List<SysBusinessActivityUserCustomFieldLink>>(dto.updateCustomFieldLinks);
+            var updated = await _repo.UpdateAsync(entity, dto.addCustomFieldLinkIds, updateCustomField, cancellationToken);
 
             if (!updated)
                 return ApiResponse<SysBusinessActivityDetailsDTO>.Fail(
