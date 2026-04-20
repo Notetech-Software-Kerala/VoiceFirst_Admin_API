@@ -11,7 +11,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.User
         public string? Email { get; set; }
         public string Gender { get; set; }
         public string? MobileNo { get; set; }
-        public string? BirthYear { get; set; }
+        public int? BirthYear { get; set; }
         public int DialCodeId { get; set; }
         public string DialCode { get; set; }
         public List<string> Roles { get; set; } = new();

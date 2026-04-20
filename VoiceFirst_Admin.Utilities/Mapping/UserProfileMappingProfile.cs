@@ -24,11 +24,11 @@ namespace VoiceFirst_Admin.Utilities.Mapping
                 // Different property name
                 .ForMember(dest => dest.MobileCountryId, opt => opt.MapFrom(src => src.Item1.DialCodeId))
 
-                // String → short conversion
+                // int? → short? conversion
                 .ForMember(dest => dest.BirthYear, opt => opt.MapFrom(src =>
-                    string.IsNullOrEmpty(src.Item1.BirthYear)
-                        ? (short?)null
-                        : Convert.ToInt16(src.Item1.BirthYear)
+                    src.Item1.BirthYear.HasValue
+                        ? (short)src.Item1.BirthYear.Value
+                        : (short?)null
                 ))
 
 

@@ -10,7 +10,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.User
         public string? LastName { get; set; } 
         public string? Gender { get; set; }
         public string? MobileNo { get; set; }
-        public string? BirthYear { get; set; }
+        public int? BirthYear { get; set; }
         public int? DialCodeId { get; set; }
     }
 }

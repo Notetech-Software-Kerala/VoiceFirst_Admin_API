@@ -46,60 +46,77 @@ namespace VoiceFirst_Admin.Data.Repositories
             CancellationToken cancellationToken = default)
         {
             var sets = new List<string>();
+            var conditions = new List<string>();
             var parameters = new DynamicParameters();
 
-            // -------------------------
-            // REQUIRED PARAMETERS
-            // -------------------------
             parameters.Add("UserId", entity.UserId);
             parameters.Add("UpdatedBy", entity.UserId);
 
             // -------------------------
-            // OPTIONAL PARAMETERS (ONLY WHEN VALID)
+            // FirstName
             // -------------------------
             if (!string.IsNullOrWhiteSpace(entity.FirstName))
             {
                 parameters.Add("FirstName", entity.FirstName);
                 sets.Add("FirstName = @FirstName");
+                conditions.Add("(FirstName IS NULL OR FirstName <> @FirstName)");
             }
 
+            // -------------------------
+            // LastName
+            // -------------------------
             if (!string.IsNullOrWhiteSpace(entity.LastName))
             {
                 parameters.Add("LastName", entity.LastName);
                 sets.Add("LastName = @LastName");
+                conditions.Add("(LastName IS NULL OR LastName <> @LastName)");
             }
 
+            // -------------------------
+            // Gender
+            // -------------------------
             if (!string.IsNullOrWhiteSpace(entity.Gender))
             {
                 parameters.Add("Gender", entity.Gender);
                 sets.Add("Gender = @Gender");
+                conditions.Add("(Gender IS NULL OR Gender <> @Gender)");
             }
 
+            // -------------------------
+            // MobileNo
+            // -------------------------
             if (!string.IsNullOrWhiteSpace(entity.MobileNo))
             {
                 parameters.Add("MobileNo", entity.MobileNo);
                 sets.Add("MobileNo = @MobileNo");
+                conditions.Add("(MobileNo IS NULL OR MobileNo <> @MobileNo)");
             }
 
+            // -------------------------
+            // MobileCountryId
+            // -------------------------
             if (entity.MobileCountryId > 0)
             {
                 parameters.Add("MobileCountryId", entity.MobileCountryId);
                 sets.Add("MobileCountryId = @MobileCountryId");
+                conditions.Add("MobileCountryId <> @MobileCountryId");
             }
 
+            // -------------------------
+            // BirthYear
+            // -------------------------
             if (entity.BirthYear > 0)
             {
                 parameters.Add("BirthYear", entity.BirthYear);
                 sets.Add("BirthYear = @BirthYear");
+                conditions.Add("BirthYear <> @BirthYear");
             }
 
             // Nothing to update
             if (sets.Count == 0)
                 return false;
 
-            // -------------------------
-            // AUDIT FIELDS
-            // -------------------------
+            // Audit
             sets.Add("UpdatedBy = @UpdatedBy");
             sets.Add("UpdatedAt = SYSDATETIME()");
 
@@ -107,10 +124,13 @@ namespace VoiceFirst_Admin.Data.Repositories
             // SQL
             // -------------------------
             var sql = $@"
-                UPDATE Users
-                SET {string.Join(", ", sets)}
-                WHERE UserId = @UserId
-                  AND IsDeleted = 0 AND IsActive = 1;";
+                    UPDATE Users
+                    SET {string.Join(", ", sets)}
+                    WHERE UserId = @UserId
+                      AND IsDeleted = 0
+                      AND IsActive = 1
+                      AND ({string.Join(" OR ", conditions)});
+                    ";
 
             using var connection = _dapperContext.CreateConnection();
 

@@ -82,6 +82,7 @@ namespace VoiceFirst_Admin.Utilities.Constants
 
         //User Profile
         public const string UserProfile = "User profile retrieved successfully.";
+        public const string UserProfileNoUpdation = "No changes detected. The submitted values are the same as the current profile.";
         public const string UserProfileUpdated = "User profile updated successfully.";
         public const string UserProfileUpdateFailed = "Failed to update user profile. Please try again.";
 
