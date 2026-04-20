@@ -639,6 +639,8 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string CustomFieldOptionInvalidDate = "Option value must be a valid date.";
         public const string CustomFieldOptionInvalid = "Option value is invalid.";
         public const string CustomFieldValueDataTypeRequired = "Value data type is required.";
+        public const string CustomFieldOptionsNotAllowed = "Options are not allowed for this field data type.";
+        public const string CustomFieldOptionsRequired = "Options are required for this field data type.";
         // ===== APPLICATION VERSION =====
         public const string ApplicationVersionAlreadyExists = "This version already exists for the selected application and type.";
         public const string ApplicationVersionCreated = "Application version created successfully.";

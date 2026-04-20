@@ -47,6 +47,21 @@ namespace VoiceFirst_Admin.Business.Services
                     {
                         return ApiResponse<CustomFieldDetailDto>.Fail(Messages.CustomFieldDataTypeNotExists, StatusCodes.Status404NotFound);
                     }
+                    if (exsitFieldDataType.HasOptions == false && dt.AddOptions != null && dt.AddOptions.Count() > 0)
+                    {
+                        return ApiResponse<CustomFieldDetailDto>.Fail(
+                            Messages.CustomFieldOptionsNotAllowed,
+                            StatusCodes.Status400BadRequest
+                        );
+                    }
+
+                    if (exsitFieldDataType.HasOptions == true && (dt.AddOptions == null || !dt.AddOptions.Any()))
+                    {
+                        return ApiResponse<CustomFieldDetailDto>.Fail(
+                            Messages.CustomFieldOptionsRequired,
+                            StatusCodes.Status400BadRequest
+                        );
+                    }
                     if (dt.AddOptions != null && dt.AddOptions.Count() > 0)
                     {
                         foreach (var o in dt.AddOptions)
