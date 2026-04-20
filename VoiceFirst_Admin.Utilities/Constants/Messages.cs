@@ -629,6 +629,16 @@ namespace VoiceFirst_Admin.Utilities.Constants
         public const string CustomFieldValidationAtLeastRequired = "At least one field must be provided for update";
         public const string CustomFieldOptionIdRequired = "Custom field Option id is required.";
         public const string CustomFieldOptionAtLeastRequired = "At least one field must be provided for update";
+        public const string CustomFieldOptionInvalidVarchar = "Option value must be a valid text.";
+        public const string CustomFieldOptionInvalidNVarchar = "Option value must be a valid unicode text.";
+        public const string CustomFieldOptionInvalidInt = "Option value must be a valid integer.";
+        public const string CustomFieldOptionInvalidFloat = "Option value must be a valid float.";
+        public const string CustomFieldOptionInvalidDecimal = "Option value must be a valid decimal.";
+        public const string CustomFieldOptionInvalidBit = "Option value must be a valid boolean (true/false/0/1).";
+        public const string CustomFieldOptionInvalidDateTime = "Option value must be a valid date and time.";
+        public const string CustomFieldOptionInvalidDate = "Option value must be a valid date.";
+        public const string CustomFieldOptionInvalid = "Option value is invalid.";
+        public const string CustomFieldValueDataTypeRequired = "Value data type is required.";
         // ===== APPLICATION VERSION =====
         public const string ApplicationVersionAlreadyExists = "This version already exists for the selected application and type.";
         public const string ApplicationVersionCreated = "Application version created successfully.";

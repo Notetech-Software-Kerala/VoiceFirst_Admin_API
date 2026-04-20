@@ -76,6 +76,14 @@ namespace VoiceFirst_Admin.Business.Services
                                     Message = Messages.CustomFieldOptionValueRequired
                                 };
                             }
+                            if (!IsValidValueByDataType(dt.ValueDataType, o.value))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = GetValueDataTypeErrorMessage(dt.ValueDataType)
+                                };
+                            }
                         }
                     }
                     if (dt.AddValidations != null && dt.AddValidations.Count() > 0)
@@ -115,6 +123,7 @@ namespace VoiceFirst_Admin.Business.Services
                                     Message = Messages.CustomFieldValidationMessageRequired
                                 };
                             }
+                           
                         }
                     }
                 }
@@ -164,7 +173,7 @@ namespace VoiceFirst_Admin.Business.Services
 
             return dto;
         }
-
+        
         public async Task<ApiResponse<CustomFieldDetailDto>> UpdateAsync(CustomFieldUpdateDto dto, int id, int loginId, CancellationToken cancellationToken = default)
         {
             if(dto.FieldKey!=null )
@@ -309,6 +318,15 @@ namespace VoiceFirst_Admin.Business.Services
                                 {
                                     StatusCode = StatusCodes.Status400BadRequest,
                                     Message = Messages.CustomFieldOptionValueRequired
+                                };
+                            }
+
+                            if (!IsValidValueByDataType(dt.ValueDataType, o.value))
+                            {
+                                return new ApiResponse<CustomFieldDetailDto>
+                                {
+                                    StatusCode = StatusCodes.Status400BadRequest,
+                                    Message = GetValueDataTypeErrorMessage(dt.ValueDataType)
                                 };
                             }
                         }
@@ -502,6 +520,69 @@ namespace VoiceFirst_Admin.Business.Services
             var list = _mapper.Map<IEnumerable<DataTypeLookUpDto>>(entities);
             // load actions for each? skip for performance
             return list.ToList();
+        }
+
+        // private helper methods
+
+        private static bool IsValidValueByDataType(ValueDataType? dataType, object? value)
+        {
+            if (!dataType.HasValue || value == null)
+                return false;
+
+            var stringValue = value.ToString()?.Trim();
+
+            if (string.IsNullOrWhiteSpace(stringValue))
+                return false;
+
+            switch (dataType)
+            {
+                case ValueDataType.Varchar:
+                case ValueDataType.NVarchar:
+                    return true;
+
+                case ValueDataType.Int:
+                    return int.TryParse(stringValue, out _);
+
+                case ValueDataType.Float:
+                    return float.TryParse(stringValue, out _);
+
+                case ValueDataType.Decimal:
+                    return decimal.TryParse(stringValue, out _);
+
+                case ValueDataType.Bit:
+                    return bool.TryParse(stringValue, out _) ||
+                           stringValue == "0" ||
+                           stringValue == "1";
+
+                case ValueDataType.DateTime:
+                    return DateTime.TryParse(stringValue, out _);
+
+                case ValueDataType.Date:
+                    return DateOnly.TryParse(stringValue, out _);
+                // If your project does not support DateOnly, use:
+                // return DateTime.TryParse(stringValue, out _);
+
+                default:
+                    return false;
+            }
+        }
+        private static string GetValueDataTypeErrorMessage(ValueDataType? dataType)
+        {
+            if (!dataType.HasValue)
+                return Messages.CustomFieldValueDataTypeRequired;
+
+            return dataType.Value switch
+            {
+                ValueDataType.Varchar => Messages.CustomFieldOptionInvalidVarchar,
+                ValueDataType.NVarchar => Messages.CustomFieldOptionInvalidNVarchar,
+                ValueDataType.Int => Messages.CustomFieldOptionInvalidInt,
+                ValueDataType.Float => Messages.CustomFieldOptionInvalidFloat,
+                ValueDataType.Decimal => Messages.CustomFieldOptionInvalidDecimal,
+                ValueDataType.Bit => Messages.CustomFieldOptionInvalidBit,
+                ValueDataType.DateTime => Messages.CustomFieldOptionInvalidDateTime,
+                ValueDataType.Date => Messages.CustomFieldOptionInvalidDate,
+                _ => Messages.CustomFieldOptionInvalid
+            };
         }
     }
 }
