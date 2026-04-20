@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Globalization;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using VoiceFirst_Admin.Business.Contracts.IServices;
 using VoiceFirst_Admin.Data.Contracts.IRepositories;
@@ -46,6 +47,12 @@ namespace VoiceFirst_Admin.Business.Services
             UserProfileUpdateDto userProfileUpdateDto,
             CancellationToken cancellationToken = default)
         {
+            if (!string.IsNullOrWhiteSpace(userProfileUpdateDto.Gender))
+            {
+                userProfileUpdateDto.Gender = CultureInfo.InvariantCulture.TextInfo
+                    .ToTitleCase(userProfileUpdateDto.Gender.Trim().ToLowerInvariant());
+            }
+
             var user = _mapper.Map<Users>((userProfileUpdateDto, userId));
 
             var updated = await _userRepository.UpdateProfileAsync(user, cancellationToken);
@@ -53,7 +60,7 @@ namespace VoiceFirst_Admin.Business.Services
             if (!updated)
             {
                 return ApiResponse<UserProfileDto>.Fail(
-                    Messages.UserProfileUpdateFailed,
+                    Messages.UserProfileNoUpdation,
                     StatusCodes.Status204NoContent,
                     ErrorCodes.NoRowAffected);
             }
