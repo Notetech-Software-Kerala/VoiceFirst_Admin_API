@@ -533,6 +533,18 @@ namespace VoiceFirst_Admin.Business.Services
         {
             var entities = await _repo.FieldDataTypeLookupAsync( cancellationToken);
             var list = _mapper.Map<IEnumerable<DataTypeLookUpDto>>(entities);
+            foreach (var item in list)
+            {
+                var valueDataTypes = await _repo.GetAllowedValueDataTypesByFieldDataTypeIdAsync(item.FieldDataTypeId, cancellationToken);
+                if(valueDataTypes.Any() && valueDataTypes.Count() > 0)
+                {
+                    item.AllowedValueDataTypes = valueDataTypes;
+                }
+                
+            }
+            
+            
+
             // load actions for each? skip for performance
             return list.ToList();
         }

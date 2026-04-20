@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Tokens.Experimental;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -787,7 +788,27 @@ namespace VoiceFirst_Admin.Data.Repositories
 
             
         }
+        public async Task<List<string>> GetAllowedValueDataTypesByFieldDataTypeIdAsync(
+    int fieldDataTypeId,
+    CancellationToken cancellationToken)
+        {
+            const string sql = @"
+        SELECT ValueDataType
+        FROM dbo.SysUserCustomFieldDataTypeValueTypeMap
+        WHERE SysUserCustomFieldDataTypeId = @FieldDataTypeId
+          AND IsActive = 1
+        ORDER BY ValueDataType;";
+            using var connection = _context.CreateConnection();
+            var result = await connection.QueryAsync<string>(
+                new CommandDefinition(
+                    sql,
+                    new { FieldDataTypeId = fieldDataTypeId },
+                    cancellationToken: cancellationToken
+                )
+            );
 
+            return result.ToList();
+        }
         public async Task<PagedResultDto<SysUserCustomField>> GetAllAsync(CustomFieldFilterDto filter, CancellationToken cancellationToken = default)
         {
             var page = filter.PageNumber <= 0 ? 1 : filter.PageNumber;
