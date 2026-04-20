@@ -409,7 +409,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                         {
                             SysUserCustomFieldId = sysUserCustomFieldId,
                             SysUserCustomFieldDataTypeId = cfd.FieldDataTypeId,
-                            ValueDataType = cfd.ValueDataType,
+                            ValueDataType = cfd.ValueDataType.ToString(),
                             CreatedBy = createdBy
                         },
                         transaction: tx,
@@ -508,7 +508,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                     await InsertSysUserCustomFieldValidationsAsync(
                         connection,
                         tx,
-                        sysUserCustomFieldId,
+                        updateDataType.CustomFieldLinkId,
                         updateDataType.AddValidations,
                         updatedBy,
                         cancellationToken
@@ -520,7 +520,7 @@ namespace VoiceFirst_Admin.Data.Repositories
                     await InsertSysUserCustomFieldOptionsAsync(
                         connection,
                         tx,
-                        sysUserCustomFieldId,
+                        updateDataType.CustomFieldLinkId,
                         updateDataType.AddOptions,
                         updatedBy,
                         cancellationToken
