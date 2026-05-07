@@ -23,7 +23,7 @@ namespace VoiceFirst_Admin.Utilities.DTOs.Features.SysUserCustomField
             [Required(ErrorMessage = "Field data type is required.")]
             public int FieldDataTypeId { get; set; }
             public ValueDataType ValueDataType { get; set; }
-            public IEnumerable<CreateCustomFieldValidationsDto>? AddValidations { get; set; }
+            public IEnumerable<CreateCustomFieldValidationsDto>? AddValidations { get; set; } 
             public IEnumerable<CreateCustomFieldOptionsDto>? AddOptions { get; set; }
         }
 

@@ -26,6 +26,7 @@ namespace VoiceFirst_Admin.Data.Contracts.IRepositories
         Task<SysUserCustomFieldDataType> ExistsByFieldDataTypeByIdAsync(int id,  CancellationToken cancellationToken = default);
         Task<IEnumerable<SysUserCustomFieldDataType>> FieldDataTypeLookupAsync(CancellationToken cancellationToken = default);
         Task<SysUserCustomFieldValidationsRule> ExistsByValidationRuleByIdAsync(int id,  CancellationToken cancellationToken = default);
+        Task<List<string>> GetAllowedValueDataTypesByFieldDataTypeIdAsync(int fieldDataTypeId, CancellationToken cancellationToken);
         Task<PagedResultDto<SysUserCustomFieldValidationsRule>> ValidationRuleLookupAsync(ValidationRuleFilterDto filter, CancellationToken cancellationToken = default);
         Task<SysUserCustomFieldDataTypeLink> ExistsByFieldIdAndDataTypeIdIdAsync(int customerFieldId, int fieldDataTypeId, CancellationToken cancellationToken = default);
         Task<SysUserCustomField> ExistsByFieldNameAsync(string fieldName, CancellationToken cancellationToken = default);

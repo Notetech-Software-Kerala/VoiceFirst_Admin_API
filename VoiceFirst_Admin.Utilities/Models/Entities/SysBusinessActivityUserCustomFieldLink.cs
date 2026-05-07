@@ -10,7 +10,7 @@ namespace VoiceFirst_Admin.Utilities.Models.Entities
     {
         public int SysBusinessActivityUserCustomFieldLinkId { get; set; }
         public int SysBusinessActivityId { get; set; }
-        public int SysUserCustomFieldId { get; set; }
+        public int SysUserCustomFieldDataTypeLinkId { get; set; }
         public string? FieldDataType { get; set; }
         public string? FieldName { get; set; }
     }

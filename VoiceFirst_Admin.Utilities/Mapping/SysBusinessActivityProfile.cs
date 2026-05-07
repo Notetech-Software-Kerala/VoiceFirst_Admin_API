@@ -41,7 +41,7 @@ namespace VoiceFirst_Admin.Utilities.Mapping
 
             CreateMap<SysBusinessActivityUserCustomFieldLink, BusinessActivityUserCustomFieldDto>()
           .ForMember(d => d.ActivityCustomFieldLinkId, o => o.MapFrom(s => s.SysBusinessActivityUserCustomFieldLinkId))
-          .ForMember(d => d.CustomFieldId, o => o.MapFrom(s => s.SysUserCustomFieldId))
+          .ForMember(d => d.CustomFieldLinkId, o => o.MapFrom(s => s.SysUserCustomFieldDataTypeLinkId))
           .ForMember(d => d.ActivityId, o => o.MapFrom(s => s.SysBusinessActivityId))
           .ForMember(d => d.FieldDataType, o => o.MapFrom(s => s.FieldDataType))
           .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
