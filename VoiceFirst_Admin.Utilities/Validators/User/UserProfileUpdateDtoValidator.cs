@@ -47,16 +47,14 @@ namespace VoiceFirst_Admin.Utilities.Validators.User
 
             // -------------------------
             // Mobile Number (basic + advanced)
-            // -------------------------
+            // -------------------------       
             When(x => x.MobileNo != null, () =>
             {
                 RuleFor(x => x.MobileNo)
-                    .NotEmpty()
-                    .Matches(@"^[0-9+]+$")
-                    .WithMessage("Mobile number can contain only digits and '+'")
-                    .MinimumLength(7)
-                    .MaximumLength(15);
+                    .Matches(@"^[0-9]{6,14}$")
+                    .WithMessage("Mobile number must contain only digits (6 to 14 digits, without country code)");
             });
+
 
             // -------------------------
             // Dial Code (Dial Code FK)
